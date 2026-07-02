@@ -286,9 +286,10 @@ export default function Home() {
     }
   };
 
-  const filteredDresses = dressesList.filter(dress => {
-    const matchesSearch = dress.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesPrice = dress.price <= maxPrice;
+  const filteredDresses = (dressesList || []).filter((dress: any) => {
+    if (!dress) return false;
+    const matchesSearch = (dress.name || '').toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesPrice = (Number(dress.price) || 0) <= maxPrice;
     const matchesSize = selectedSize === 'All' || dress.size === selectedSize;
     const matchesFav = !showOnlyFavorites || favorites.includes(dress.id);
     return matchesSearch && matchesPrice && matchesSize && matchesFav;
@@ -317,7 +318,7 @@ export default function Home() {
 
       {/* 🛍️ סרגל עליון מהיר */}
       <nav className="relative z-30 max-w-7xl mx-auto px-6 pt-6 flex justify-between items-center">
-        <div className="text-sm font-serif tracking-widest text-[#8b6508] font-bold">שמלה להשכיר</div>
+        <div className="text-sm font-serif tracking-widest text-[#8b6508] font-bold">LUXE COUTURE</div>
         <div className="flex gap-3 flex-wrap">
           <button 
             onClick={() => setIsAddDressOpen(true)} 
@@ -424,7 +425,7 @@ export default function Home() {
           <div className="text-center py-12 text-[#8b6508] font-bold">טוען קולקציה יוקרתית...</div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
-            {filteredDresses.map((dress) => {
+            {filteredDresses.map((dress: any) => {
               const currentImgIndex = currentImageIndexes[dress.id] || 0;
               const isFav = favorites.includes(dress.id);
               const inCart = cart.some(item => item.id === dress.id);
@@ -589,7 +590,7 @@ export default function Home() {
                 <div className="text-center py-20 text-neutral-400 text-sm">הסל שלך ריק כרגע. סמני שמלות שמוצאות חן בעינייך!</div>
               ) : (
                 <div className="mt-4 space-y-3 overflow-y-auto max-h-[60vh] pr-1">
-                  {cart.map(item => (
+                  {cart.map((item: any) => (
                     <div key={item.id} className="flex gap-3 bg-neutral-50 p-3 rounded-xl border border-neutral-100 items-center justify-between">
                       <div className="flex items-center gap-3">
                         <img src={Array.isArray(item.images) ? item.images[0] : item.images} alt={item.name} className="w-14 h-14 object-cover rounded-lg border border-[#eadaaf]" />
@@ -749,7 +750,7 @@ export default function Home() {
                   <div className="mt-4">
                     <span className="text-[10px] font-black text-red-500 block mb-1">🚨 תאריכים שכבר תפוסים וסגורים:</span>
                     <div className="flex gap-1.5 flex-wrap">
-                      {bookedDates[selectedDress.id].map((d, index) => (
+                      {bookedDates[selectedDress.id].map((d: any, index: number) => (
                         <span key={index} className="text-[10px] bg-red-50 text-red-600 px-2 py-0.5 rounded-md border border-red-100 font-bold">{d}</span>
                       ))}
                     </div>
@@ -762,7 +763,7 @@ export default function Home() {
                 <div className="mt-6 p-6 bg-emerald-50 border-2 border-dashed border-emerald-400 rounded-xl text-center animate-bounce">
                   <span className="text-3xl block mb-2">🎉</span>
                   <h4 className="text-emerald-800 font-black text-sm">השריון נרשם במסד הנתונים בהצלחה!</h4>
-                  <p className="text-emerald-600 text-xs mt-1 font-medium">הודעת SMS חגיגית עם אישור נשלחה לנייד שלך.</p>
+                  <p className="text-emerald-600 text-xs mt-1 font-medium">הודעת SMS חגיגית smudge אישור נשלחה לנייד שלך.</p>
                 </div>
               ) : (
                 <form onSubmit={handlePlaceOrder} className="mt-6 space-y-3 pt-4 border-t border-neutral-100">
