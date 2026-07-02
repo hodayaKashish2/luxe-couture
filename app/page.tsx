@@ -6,7 +6,7 @@ import React, { useState, useEffect } from 'react';
 const INITIAL_DRESSES = [
   { 
     id: 1, 
-    name: "שמלת ערב קלאסית קורל", 
+    name: "שמלת ערב קלאסית הודיה", 
     price: 350, 
     size: "M", 
     condition: "like-new",
