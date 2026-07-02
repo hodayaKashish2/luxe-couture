@@ -2,49 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 
-// נתוני השמלות המורחבים (התחלתיים)
-const INITIAL_DRESSES = [
-  { 
-    id: 1, 
-    name: "שמלת ערב קלאסית הודיה", 
-    price: 350, 
-    size: "M", 
-    condition: "like-new",
-    images: [
-      "https://images.unsplash.com/photo-1566174053879-31528523f8ae?w=600&auto=format&fit=crop&q=80",
-      "https://images.unsplash.com/photo-1496747611176-843222e1e57c?w=600&auto=format&fit=crop&q=80",
-      "https://images.unsplash.com/photo-1539008835657-9e8e818128e5?w=600&auto=format&fit=crop&q=80"
-    ], 
-    description: "שמלת ערב נשפכת בגוון קורל יוקרתי, מתאימה לחתונה או אירוע ערב חגיגי. בד נעים ומחטב." 
-  },
-  { 
-    id: 2, 
-    name: "שמלת סאטן אמרלד", 
-    price: 420, 
-    size: "S", 
-    condition: "new",
-    images: [
-      "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=600&auto=format&fit=crop&q=80",
-      "https://images.unsplash.com/photo-1612336307429-8a898d10e223?w=600&auto=format&fit=crop&q=80",
-      "https://images.unsplash.com/photo-1518049360962-53651b57c0e8?w=600&auto=format&fit=crop&q=80"
-    ], 
-    description: "שמלת סאטן מבריקה בגזרת מקסי בצבע ירוק אמרלד עמוק. שסע עדין ברגל ומחשוף קלאסי." 
-  },
-  { 
-    id: 3, 
-    name: "שמלת נשף נפוחה שחורה", 
-    price: 550, 
-    size: "L", 
-    condition: "used",
-    images: [
-      "https://images.unsplash.com/photo-1518049360962-53651b57c0e8?w=600&auto=format&fit=crop&q=80",
-      "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=600&auto=format&fit=crop&q=80",
-      "https://images.unsplash.com/photo-1566174053879-31528523f8ae?w=600&auto=format&fit=crop&q=80"
-    ], 
-    description: "שמלת נשף דרמטית לחובבות המראה האצילי. חלקה העליון מחוך תומך וחלקה התחתון עשיר בטול." 
-  }
-];
-
+// נתוני ה-FAQs וה-Reviews נשארים סטטיים כפי שהיו בקוד המקורי שלך
 const FAQS = [
   { q: "האם המחיר כולל ניקוי יבש?", a: "בטח! כל השמלות עוברות ניקוי יבש מקצועי קפדני לפני ואחרי כל השכרה. את מקבלת את השמלה מוכנה ללבישה ומחזירה אותה ככה, אנחנו דואגים להכל." },
   { q: "איך מתבצע תהליך המדידות וההתאמה?", a: "לאחר שריון השמלה באתר, אנחנו נתאם איתך הגעה לסטודיו חגיגי למדידות. במידת הצורך נבצע מכפלת או התאמות קלות שלא פוגעות בגזרת השמלה המקורית." },
@@ -59,8 +17,10 @@ const REVIEWS = [
 ];
 
 export default function Home() {
-  // רשימת שמלות דינמית
-  const [dressesList, setDressesList] = useState(INITIAL_DRESSES);
+  // חיבור דינמי למסד הנתונים
+  const [supabase, setSupabase] = useState<any>(null);
+  const [dressesList, setDressesList] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   // פילטרים
   const [searchTerm, setSearchTerm] = useState('');
@@ -68,9 +28,9 @@ export default function Home() {
   const [selectedSize, setSelectedSize] = useState('All');
   const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
 
-  // מועדפים וסל (שמירה ב-State)
+  // מועדפים וסל
   const [favorites, setFavorites] = useState<number[]>([]);
-  const [cart, setCart] = useState<typeof INITIAL_DRESSES>([]);
+  const [cart, setCart] = useState<any[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
 
   // מודאל הוספת שמלה חדשה
@@ -85,15 +45,9 @@ export default function Home() {
     images: [] as string[]
   });
 
-  // תאריכים תפוסים (מניעת כפל הזמנות - סימולציה)
-  const [bookedDates, setBookedDates] = useState<{ [dressId: number]: string[] }>({
-    1: ['2026-07-15', '2026-08-01'],
-    2: ['2026-07-20'],
-    3: []
-  });
-
-  // מודאלים ושריון
-  const [selectedDress, setSelectedDress] = useState<typeof INITIAL_DRESSES[0] | null>(null);
+  // תאריכים תפוסים ומודאל שריון
+  const [bookedDates, setBookedDates] = useState<{ [dressId: number]: string[] }>({});
+  const [selectedDress, setSelectedDress] = useState<any | null>(null);
   const [orderName, setOrderName] = useState('');
   const [orderPhone, setOrderPhone] = useState('');
   const [orderEmail, setOrderEmail] = useState('');
@@ -101,55 +55,105 @@ export default function Home() {
   const [isOrdered, setIsOrdered] = useState(false);
   const [dateError, setDateError] = useState('');
 
-  // אינדקס גלריה לכל כרטיס
-  const [currentImageIndexes, setCurrentImageIndexes] = useState<{ [key: number]: number }>({
-    1: 0, 2: 0, 3: 0
-  });
+  // אינדקס גלריה לכל כרטיס ואקורדיון
+  const [currentImageIndexes, setCurrentImageIndexes] = useState<{ [key: number]: number }>({});
   const [modalImageIndex, setModalImageIndex] = useState(0);
-
-  // אקורדיון FAQ פעיל
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
 
-  // טעינת מועדפים מהדפדפן
+  // טעינת Supabase בצורה דינמית וטעינת מועדפים מהדפדפן
   useEffect(() => {
+    const initSupabase = async () => {
+      try {
+        const supabaseJS = await import('@supabase/supabase-js');
+        const url = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+        const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+        if (url && key) {
+          const client = supabaseJS.createClient(url, key);
+          setSupabase(client);
+        } else {
+          console.warn("Supabase credentials missing in Environment Variables.");
+          setLoading(false);
+        }
+      } catch (e) {
+        console.error("Failed to load Supabase SDK dynamically", e);
+        setLoading(false);
+      }
+    };
+    initSupabase();
+
     const savedFavs = localStorage.getItem('luxe_favs');
     if (savedFavs) setFavorites(JSON.parse(savedFavs));
     const savedCart = localStorage.getItem('luxe_cart');
     if (savedCart) setCart(JSON.parse(savedCart));
   }, []);
 
+  // משיכת נתונים מהמסד ברגע שחיבור ה-Supabase מוכן
+  useEffect(() => {
+    if (supabase) {
+      fetchDressesAndBookings();
+    }
+  }, [supabase]);
+
+  const fetchDressesAndBookings = async () => {
+    try {
+      setLoading(true);
+      // שליפת שמלות
+      const { data: dresses, error: dressesError } = await supabase
+        .from('dresses')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (dressesError) throw dressesError;
+
+      // שליפת תאריכים תפוסים מהמסד
+      const { data: bookings, error: bookingsError } = await supabase
+        .from('bookings')
+        .select('dress_id, date');
+
+      if (bookingsError) throw bookingsError;
+
+      const booked: { [dressId: number]: string[] } = {};
+      bookings?.forEach((b: any) => {
+        if (!booked[b.dress_id]) booked[b.dress_id] = [];
+        booked[b.dress_id].push(b.date);
+      });
+
+      setDressesList(dresses || []);
+      setBookedDates(booked);
+
+      // איפוס אינדקסים לגלריות
+      const indexes: { [key: number]: number } = {};
+      dresses?.forEach((d: any) => { indexes[d.id] = 0; });
+      setCurrentImageIndexes(indexes);
+    } catch (error) {
+      console.error('Error loading data from Supabase:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const toggleFavorite = (id: number, e: React.MouseEvent) => {
     e.stopPropagation();
-    let updated;
-    if (favorites.includes(id)) {
-      updated = favorites.filter(favId => favId !== id);
-    } else {
-      updated = [...favorites, id];
-    }
+    let updated = favorites.includes(id) ? favorites.filter(favId => favId !== id) : [...favorites, id];
     setFavorites(updated);
     localStorage.setItem('luxe_favs', JSON.stringify(updated));
   };
 
-  const toggleCart = (dress: typeof INITIAL_DRESSES[0], e: React.MouseEvent) => {
+  const toggleCart = (dress: any, e: React.MouseEvent) => {
     e.stopPropagation();
-    let updated;
-    if (cart.some(item => item.id === dress.id)) {
-      updated = cart.filter(item => item.id !== dress.id);
-    } else {
-      updated = [...cart, dress];
-    }
+    let updated = cart.some(item => item.id === dress.id) ? cart.filter(item => item.id !== dress.id) : [...cart, dress];
     setCart(updated);
     localStorage.setItem('luxe_cart', JSON.stringify(updated));
   };
 
   const nextImage = (dressId: number, maxImages: number, e: React.MouseEvent) => {
     e.stopPropagation();
-    setCurrentImageIndexes(prev => ({ ...prev, [dressId]: (prev[dressId] + 1) % maxImages }));
+    setCurrentImageIndexes(prev => ({ ...prev, [dressId]: ((prev[dressId] || 0) + 1) % maxImages }));
   };
 
   const prevImage = (dressId: number, maxImages: number, e: React.MouseEvent) => {
     e.stopPropagation();
-    setCurrentImageIndexes(prev => ({ ...prev, [dressId]: (prev[dressId] - 1 + maxImages) % maxImages }));
+    setCurrentImageIndexes(prev => ({ ...prev, [dressId]: ((prev[dressId] || 0) - 1 + maxImages) % maxImages }));
   };
 
   const checkDateAvailability = (date: string, dressId: number) => {
@@ -170,10 +174,25 @@ export default function Home() {
 
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!orderName || !orderPhone || !orderEmail || !orderDate || !selectedDress) return;
+    if (!supabase || !orderName || !orderPhone || !orderEmail || !orderDate || !selectedDress) return;
     if (!checkDateAvailability(orderDate, selectedDress.id)) return;
+
     try {
-      const response = await fetch('/api/send-sms', {
+      // שמירת ההזמנה במסד הנתונים בטבלת bookings
+      const { error: dbError } = await supabase.from('bookings').insert([
+        { 
+          dress_id: selectedDress.id, 
+          date: orderDate, 
+          customer_name: orderName, 
+          customer_phone: orderPhone, 
+          customer_email: orderEmail 
+        }
+      ]);
+
+      if (dbError) throw dbError;
+
+      // שליחת ה-SMS
+      await fetch('/api/send-sms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -185,31 +204,26 @@ export default function Home() {
         }),
       });
 
-      const data = await response.json();
-      if (data.success) {
-        setBookedDates(prev => ({
-          ...prev,
-          [selectedDress.id]: [...(prev[selectedDress.id] || []), orderDate]
-        }));
-        setIsOrdered(true);
-        setTimeout(() => {
-          setIsOrdered(false);
-          setSelectedDress(null);
-          setOrderName('');
-          setOrderPhone('');
-          setOrderEmail('');
-          setOrderDate('');
-        }, 4000);
-      } else {
-        alert('הייתה בעיה ברישום ההזמנה במערכת');
-      }
+      setBookedDates(prev => ({
+        ...prev,
+        [selectedDress.id]: [...(prev[selectedDress.id] || []), orderDate]
+      }));
+      
+      setIsOrdered(true);
+      setTimeout(() => {
+        setIsOrdered(false);
+        setSelectedDress(null);
+        setOrderName('');
+        setOrderPhone('');
+        setOrderEmail('');
+        setOrderDate('');
+      }, 4000);
     } catch (error) {
-      console.error('Error:', error);
-      alert('תקלה בתקשורת עם השרת');
+      console.error('Error placing order:', error);
+      alert('הייתה בעיה ברישום ההזמנה במערכת');
     }
   };
 
-  // פונקציית טיפול בהעלאת תמונות מקומיות
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const filesArray = Array.from(e.target.files);
@@ -221,34 +235,48 @@ export default function Home() {
     }
   };
 
-  // פונקציית הגשת הטופס להוספת שמלה
-  const handleAddDressSubmit = (e: React.FormEvent) => {
+  const handleAddDressSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newDressData.name || !newDressData.price || !newDressData.size) {
+    if (!supabase || !newDressData.name || !newDressData.price || !newDressData.size) {
       alert('אנא מלאי שדות חובה (שם, מחיר ומידה)');
       return;
     }
 
-    const newDress = {
-      id: Date.now(), // מזהה ייחודי זמני
-      name: newDressData.name,
-      price: Number(newDressData.price),
-      size: newDressData.size,
-      condition: newDressData.condition,
-      images: newDressData.images.length > 0 ? newDressData.images : ["https://images.unsplash.com/photo-1566174053879-31528523f8ae?w=600&auto=format&fit=crop&q=80"],
-      description: `${newDressData.description || 'אין תיאור זמין.'} | צבע: ${newDressData.color || 'לא צוין'} | מצב: ${
-        newDressData.condition === 'new' ? 'חדש עם תווית' : newDressData.condition === 'like-new' ? 'כמו חדש' : 'יד שנייה'
-      }`
-    };
+    const descriptionString = `${newDressData.description || 'אין תיאור זמין.'} | צבע: ${newDressData.color || 'לא צוין'} | מצב: ${
+      newDressData.condition === 'new' ? 'חדש עם תווית' : newDressData.condition === 'like-new' ? 'כמו חדש' : 'יד שנייה'
+    }`;
 
-    setDressesList(prev => [newDress, ...prev]);
-    setIsAddDressOpen(false); // סגירת המודאל
-    setNewDressData({ name: '', price: '', size: '', color: '', condition: 'new', description: '', images: [] }); // איפוס
-    alert('השמלה התווספה בהצלחה לקולקציה באתר!');
+    const finalImages = newDressData.images.length > 0 ? newDressData.images : ["https://images.unsplash.com/photo-1566174053879-31528523f8ae?w=600&auto=format&fit=crop&q=80"];
+
+    try {
+      // הוספה ישירה לטבלת dresses במסד הנתונים
+      const { data, error } = await supabase.from('dresses').insert([
+        {
+          name: newDressData.name,
+          price: Number(newDressData.price),
+          size: newDressData.size,
+          condition: newDressData.condition,
+          images: finalImages,
+          description: descriptionString
+        }
+      ]).select();
+
+      if (error) throw error;
+
+      if (data) {
+        setDressesList(prev => [data[0], ...prev]);
+      }
+      setIsAddDressOpen(false);
+      setNewDressData({ name: '', price: '', size: '', color: '', condition: 'new', description: '', images: [] });
+      alert('השמלה התווספה בהצלחה למסד הנתונים ולקולקציה באתר!');
+    } catch (error) {
+      console.error('Error adding dress:', error);
+      alert('שגיאה בהוספת השמלה למסד הנתונים');
+    }
   };
 
   const filteredDresses = dressesList.filter(dress => {
-    const matchesSearch = dress.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = dress.name?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesPrice = dress.price <= maxPrice;
     const matchesSize = selectedSize === 'All' || dress.size === selectedSize;
     const matchesFav = !showOnlyFavorites || favorites.includes(dress.id);
@@ -259,7 +287,7 @@ export default function Home() {
     <main className="min-h-screen bg-gradient-to-b from-[#fbf8f0] via-[#f3ebd6] to-[#e8dcbd] text-[#332c1e] pb-24 relative overflow-hidden" dir="rtl">
       
       {/* 🌟 מפל נצנצים וחלקיקי זהב זוהרים */}
-      <div 
+      <div
         className="absolute inset-0 opacity-[0.25] pointer-events-none"
         style={{
           backgroundImage: `
@@ -280,17 +308,16 @@ export default function Home() {
       <nav className="relative z-30 max-w-7xl mx-auto px-6 pt-6 flex justify-between items-center">
         <div className="text-sm font-serif tracking-widest text-[#8b6508] font-bold">LUXE COUTURE</div>
         <div className="flex gap-3 flex-wrap">
-          {/* כפתור הוספת שמלה חדש */}
-          <button 
-            onClick={() => setIsAddDressOpen(true)} 
+          <button
+            onClick={() => setIsAddDressOpen(true)}
             className="px-4 py-2 bg-gradient-to-r from-[#d4af37] to-[#b8860b] hover:from-[#b8860b] hover:to-[#8b6508] text-white rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-1.5"
           >
             <span>➕</span>
             <span>הוספת שמלה לאתר</span>
           </button>
           
-          <button 
-            onClick={() => setShowOnlyFavorites(!showOnlyFavorites)} 
+          <button
+            onClick={() => setShowOnlyFavorites(!showOnlyFavorites)}
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border border-[#dfc48c] shadow-sm ${
               showOnlyFavorites ? 'bg-[#d4af37] text-white' : 'bg-white/90 text-[#8b6508]'
             }`}
@@ -299,7 +326,7 @@ export default function Home() {
             <span>מועדפים ({favorites.length})</span>
           </button>
           
-          <button 
+          <button
             onClick={() => setIsCartOpen(true)}
             className="px-4 py-2 bg-[#2c261a] hover:bg-[#b8860b] text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-md"
           >
@@ -382,100 +409,105 @@ export default function Home() {
 
       {/* 👗 גלריית השמלות */}
       <section className="max-w-6xl mx-auto px-4 relative z-10">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
-          {filteredDresses.map((dress) => {
-            const currentImgIndex = currentImageIndexes[dress.id] || 0;
-            const isFav = favorites.includes(dress.id);
-            const inCart = cart.some(item => item.id === dress.id);
-            return (
-              <div 
-                key={dress.id} 
-                className="group flex flex-col h-full bg-white rounded-2xl overflow-hidden border-2 border-[#ebd3a4]/60 shadow-[0_10px_30px_rgba(212,175,55,0.06)] hover:shadow-[0_25px_60px_rgba(212,175,55,0.22)] hover:border-[#d4af37] transition-all duration-300 transform hover:-translate-y-1"
-              >
-                {/* 📸 גלריית התמונות */}
-                <div className="h-[430px] w-full relative overflow-hidden bg-[#faf8f3] p-2.5">
-                  <div className="w-full h-full rounded-xl overflow-hidden relative border border-[#f0e2c3]">
+        {loading ? (
+          <div className="text-center py-12 text-[#8b6508] font-bold animate-pulse">טוען קולקציה יוקרתית ממסד הנתונים...</div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+            {filteredDresses.map((dress) => {
+              const currentImgIndex = currentImageIndexes[dress.id] || 0;
+              const dressImages = Array.isArray(dress.images) ? dress.images : [dress.images];
+              const isFav = favorites.includes(dress.id);
+              const inCart = cart.some(item => item.id === dress.id);
+              return (
+                <div 
+                  key={dress.id} 
+                  className="group flex flex-col h-full bg-white rounded-2xl overflow-hidden border-2 border-[#ebd3a4]/60 shadow-[0_10px_30px_rgba(212,175,55,0.06)] hover:shadow-[0_25px_60px_rgba(212,175,55,0.22)] hover:border-[#d4af37] transition-all duration-300 transform hover:-translate-y-1"
+                >
+                  {/* 📸 גלריית התמונות */}
+                  <div className="h-[430px] w-full relative overflow-hidden bg-[#faf8f3] p-2.5">
+                    <div className="w-full h-full rounded-xl overflow-hidden relative border border-[#f0e2c3]">
+                      
+                      <button 
+                        onClick={(e) => toggleFavorite(dress.id, e)}
+                        className="absolute top-3 left-3 z-10 bg-white/90 hover:bg-white w-8 h-8 rounded-full flex items-center justify-center shadow-md border border-[#eadaaf] text-sm transition transform active:scale-90"
+                      >
+                        {isFav ? '❤️' : '🤍'}
+                      </button>
+
+                      <span className="absolute top-3 right-3 z-10 bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white text-[10px] font-black px-3 py-1 rounded shadow-md">
+                        מידה {dress.size}
+                      </span>
+
+                      {/* חצים */}
+                      {dressImages.length > 1 && (
+                        <>
+                          <button 
+                            onClick={(e) => prevImage(dress.id, dressImages.length, e)}
+                            className="absolute left-2.5 top-1/2 -translate-y-1/2 z-20 bg-white/95 text-[#b8860b] w-9 h-9 rounded-full flex items-center justify-center shadow-lg border border-[#e8cc92] font-black text-lg hover:bg-gradient-to-r hover:from-[#d4af37] hover:to-[#b8860b] hover:text-white transition-all opacity-0 group-hover:opacity-100"
+                          >
+                            ‹
+                          </button>
+                          <button 
+                            onClick={(e) => nextImage(dress.id, dressImages.length, e)}
+                            className="absolute right-2.5 top-1/2 -translate-y-1/2 z-20 bg-white/95 text-[#b8860b] w-9 h-9 rounded-full flex items-center justify-center shadow-lg border border-[#e8cc92] font-black text-lg hover:bg-gradient-to-r hover:from-[#d4af37] hover:to-[#b8860b] hover:text-white transition-all opacity-0 group-hover:opacity-100"
+                          >
+                            ›
+                          </button>
+                        </>
+                      )}
+
+                      <img src={dressImages[currentImgIndex]} alt={dress.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" />
+
+                      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex gap-1 bg-white/95 px-2.5 py-1 rounded-full shadow-md border border-[#e0cba0]">
+                        {dressImages.map((_, idx) => (
+                          <div key={idx} className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${idx === currentImgIndex ? 'bg-[#d4af37] w-3.5' : 'bg-[#e5d9bd]'}`} />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* פרטי השמלה והמחיר */}
+                  <div className="p-5 flex flex-col flex-grow bg-gradient-to-b from-white to-[#fdfbf7]">
+                    <div className="flex justify-between items-start gap-2">
+                      <h3 className="text-lg font-bold text-neutral-900 tracking-wide group-hover:text-[#b8860b] transition-colors">{dress.name}</h3>
+                      <button 
+                        onClick={(e) => toggleCart(dress, e)}
+                        className={`text-xs p-1.5 rounded-lg border transition ${
+                          inCart ? 'bg-[#f4ebd4] border-[#d4af37] text-[#b8860b]' : 'border-neutral-200 hover:bg-neutral-50'
+                        }`}
+                        title={inCart ? "הסר מהסל" : "הוסף לסל שריונות מרוכז"}
+                      >
+                        {inCart ? '🛒 בסל' : '➕ לסל'}
+                      </button>
+                    </div>
+                    <p className="mt-1.5 text-xs text-[#6e634c] font-normal leading-relaxed line-clamp-2 flex-grow">
+                      {dress.description}
+                    </p>
                     
-                    <button 
-                      onClick={(e) => toggleFavorite(dress.id, e)}
-                      className="absolute top-3 left-3 z-10 bg-white/90 hover:bg-white w-8 h-8 rounded-full flex items-center justify-center shadow-md border border-[#eadaaf] text-sm transition transform active:scale-90"
-                    >
-                      {isFav ? '❤️' : '🤍'}
-                    </button>
-
-                    <span className="absolute top-3 right-3 z-10 bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white text-[10px] font-black px-3 py-1 rounded shadow-md">
-                      מידה {dress.size}
-                    </span>
-
-                    {/* חצים */}
-                    {dress.images.length > 1 && (
-                      <>
-                        <button 
-                          onClick={(e) => prevImage(dress.id, dress.images.length, e)}
-                          className="absolute left-2.5 top-1/2 -translate-y-1/2 z-20 bg-white/95 text-[#b8860b] w-9 h-9 rounded-full flex items-center justify-center shadow-lg border border-[#e8cc92] font-black text-lg hover:bg-gradient-to-r hover:from-[#d4af37] hover:to-[#b8860b] hover:text-white transition-all opacity-0 group-hover:opacity-100"
-                        >
-                          ‹
-                        </button>
-                        <button 
-                          onClick={(e) => nextImage(dress.id, dress.images.length, e)}
-                          className="absolute right-2.5 top-1/2 -translate-y-1/2 z-20 bg-white/95 text-[#b8860b] w-9 h-9 rounded-full flex items-center justify-center shadow-lg border border-[#e8cc92] font-black text-lg hover:bg-gradient-to-r hover:from-[#d4af37] hover:to-[#b8860b] hover:text-white transition-all opacity-0 group-hover:opacity-100"
-                        >
-                          ›
-                        </button>
-                      </>
-                    )}
-
-                    <img src={dress.images[currentImgIndex]} alt={dress.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" />
-
-                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex gap-1 bg-white/95 px-2.5 py-1 rounded-full shadow-md border border-[#e0cba0]">
-                      {dress.images.map((_, idx) => (
-                        <div key={idx} className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${idx === currentImgIndex ? 'bg-[#d4af37] w-3.5' : 'bg-[#e5d9bd]'}`} />
-                      ))}
+                    <div className="flex justify-between items-center mt-5 pt-4 border-t-2 border-dotted border-[#f0e6cc]">
+                      <div className="flex flex-col">
+                        <span className="text-[9px] uppercase tracking-widest text-[#b8860b] font-black">השכרה חגיגית</span>
+                        <span className="text-neutral-900 font-black text-lg">₪{dress.price}</span>
+                      </div>
+                      <button 
+                        onClick={() => {
+                          setSelectedDress(dress);
+                          setModalImageIndex(currentImgIndex);
+                        }} 
+                        className="bg-gradient-to-r from-[#2c261a] to-[#4a3f2b] hover:from-[#d4af37] hover:to-[#b8860b] text-white text-xs font-bold px-4 py-3 rounded-xl transition-all duration-300 shadow-md hover:shadow-lg transform active:scale-98"
+                      >
+                        שרייני לערב הזוהר שלך
+                      </button>
                     </div>
                   </div>
                 </div>
-
-                {/* פרטי השמלה והמחיר */}
-                <div className="p-5 flex flex-col flex-grow bg-gradient-to-b from-white to-[#fdfbf7]">
-                  <div className="flex justify-between items-start gap-2">
-                    <h3 className="text-lg font-bold text-neutral-900 tracking-wide group-hover:text-[#b8860b] transition-colors">{dress.name}</h3>
-                    <button 
-                      onClick={(e) => toggleCart(dress, e)}
-                      className={`text-xs p-1.5 rounded-lg border transition ${
-                        inCart ? 'bg-[#f4ebd4] border-[#d4af37] text-[#b8860b]' : 'border-neutral-200 hover:bg-neutral-50'
-                      }`}
-                      title={inCart ? "הסר מהסל" : "הוסף לסל שריונות מרוכז"}
-                    >
-                      {inCart ? '🛒 בסל' : '➕ לסל'}
-                    </button>
-                  </div>
-                  <p className="mt-1.5 text-xs text-[#6e634c] font-normal leading-relaxed line-clamp-2 flex-grow">
-                    {dress.description}
-                  </p>
-                  
-                  <div className="flex justify-between items-center mt-5 pt-4 border-t-2 border-dotted border-[#f0e6cc]">
-                    <div className="flex flex-col">
-                      <span className="text-[9px] uppercase tracking-widest text-[#b8860b] font-black">השכרה חגיגית</span>
-                      <span className="text-neutral-900 font-black text-lg">₪{dress.price}</span>
-                    </div>
-                    <button 
-                      onClick={() => {
-                        setSelectedDress(dress);
-                        setModalImageIndex(currentImgIndex);
-                      }} 
-                      className="bg-gradient-to-r from-[#2c261a] to-[#4a3f2b] hover:from-[#d4af37] hover:to-[#b8860b] text-white text-xs font-bold px-4 py-3 rounded-xl transition-all duration-300 shadow-md hover:shadow-lg transform active:scale-98"
-                    >
-                      שרייני לערב הזוהר שלך
-                    </button>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </section>
 
-      {/* ✨ מודאל חדש: שאלון הוספת שמלה לאתר ✨ */}
+      {/* ✨ מודאל הוספת שמלה לאתר ✨ */}
       {isAddDressOpen && (
         <div className="fixed inset-0 bg-neutral-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4 overflow-y-auto">
           <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl relative border-2 border-[#d4af37] max-h-[90vh] overflow-y-auto" style={{ direction: 'rtl' }}>
@@ -493,7 +525,6 @@ export default function Home() {
             </div>
 
             <form onSubmit={handleAddDressSubmit} className="flex flex-col gap-4">
-              {/* שם השמלה */}
               <div>
                 <label className="block text-xs font-bold text-[#8b6508] mb-1">שם הדגם / השמלה *</label>
                 <input 
@@ -507,7 +538,6 @@ export default function Home() {
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                {/* מחיר השכרה */}
                 <div>
                   <label className="block text-xs font-bold text-[#8b6508] mb-1">מחיר השכרה (₪) *</label>
                   <input 
@@ -520,7 +550,6 @@ export default function Home() {
                   />
                 </div>
 
-                {/* מידה */}
                 <div>
                   <label className="block text-xs font-bold text-[#8b6508] mb-1">מידה *</label>
                   <select 
@@ -539,7 +568,6 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* צבע השמלה */}
               <div>
                 <label className="block text-xs font-bold text-[#8b6508] mb-1">צבע השמלה</label>
                 <input 
@@ -551,7 +579,6 @@ export default function Home() {
                 />
               </div>
 
-              {/* מצב השמלה */}
               <div>
                 <label className="block text-xs font-bold text-[#8b6508] mb-2">מצב השמלה</label>
                 <div className="flex gap-4 bg-neutral-50 p-2.5 rounded-xl border border-[#decfa8] justify-around">
@@ -591,27 +618,25 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* תיאור קצר */}
               <div>
                 <label className="block text-xs font-bold text-[#8b6508] mb-1">תיאור השמלה וסוג הבד</label>
                 <textarea 
-                  rows={3}
-                  placeholder="ספרי על השמלה, סוג הבד, התאמה לאירועים..."
+                  rows={3} 
+                  placeholder="ספרי על השמלה, סוג הבד, התאמה לאירועים..." 
                   value={newDressData.description} 
                   onChange={(e) => setNewDressData({...newDressData, description: e.target.value})} 
                   className="w-full p-2.5 bg-neutral-50 border border-[#decfa8] rounded-xl text-xs font-medium focus:outline-none focus:border-[#d4af37] resize-none" 
                 />
               </div>
 
-              {/* העלאת תמונות */}
               <div>
                 <label className="block text-xs font-bold text-[#8b6508] mb-1">העלאת תמונות של השמלה</label>
                 <input 
                   type="file" 
                   multiple 
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  className="w-full p-2 bg-neutral-50 border border-dashed border-[#decfa8] rounded-xl text-xs file:ml-4 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-[#f4ebd4] file:text-[#8b6508] hover:file:bg-[#eadaaf] cursor-pointer"
+                  accept="image/*" 
+                  onChange={handleImageUpload} 
+                  className="w-full p-2 bg-neutral-50 border border-dashed border-[#decfa8] rounded-xl text-xs file:ml-4 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-[#f4ebd4] file:text-[#8b6508] hover:file:bg-[#eadaaf] cursor-pointer" 
                 />
                 {newDressData.images.length > 0 && (
                   <div className="flex gap-2 flex-wrap mt-2 bg-neutral-50 p-2 rounded-xl border border-neutral-100">
@@ -622,14 +647,109 @@ export default function Home() {
                 )}
               </div>
 
-              {/* כפתור אישור */}
-              <button 
-                type="submit" 
-                className="w-full bg-gradient-to-r from-[#d4af37] via-[#b8860b] to-[#d4af37] hover:from-[#b8860b] hover:to-[#8b6508] text-white text-xs font-black py-3.5 rounded-xl shadow-lg mt-2 transition-transform active:scale-98"
-              >
+              <button type="submit" className="w-full bg-gradient-to-r from-[#d4af37] via-[#b8860b] to-[#d4af37] hover:from-[#b8860b] hover:to-[#8b6508] text-white text-xs font-black py-3.5 rounded-xl shadow-lg mt-2 transition-transform active:scale-98">
                 פרסמי שמלה בקולקציה ✨
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* 🔮 מודאל שריון תאריך ספציפי לשמלה 🔮 */}
+      {selectedDress && (
+        <div className="fixed inset-0 bg-neutral-900/70 backdrop-blur-md z-50 flex items-center justify-center p-4" onClick={() => setSelectedDress(null)}>
+          <div className="bg-white rounded-3xl w-full max-w-xl overflow-hidden border border-[#ebd4a8] shadow-2xl relative grid grid-cols-1 md:grid-cols-2" onClick={e => e.stopPropagation()} style={{ direction: 'rtl' }}>
+            
+            <button 
+              onClick={() => setSelectedDress(null)}
+              className="absolute top-4 left-4 bg-white/90 hover:bg-[#d4af37] text-[#b8860b] hover:text-white w-8 h-8 rounded-full flex items-center justify-center shadow-md border border-[#eadaaf] font-bold z-30 transition-all"
+            >
+              ✕
+            </button>
+
+            {/* צד ימין - תמונה מקדימה */}
+            <div className="h-48 md:h-full w-full bg-neutral-100 relative">
+              <img 
+                src={Array.isArray(selectedDress.images) ? selectedDress.images[modalImageIndex] : selectedDress.images} 
+                alt={selectedDress.name} 
+                className="w-full h-full object-cover" 
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
+              <div className="absolute bottom-4 right-4 text-white">
+                <span className="text-[10px] uppercase font-black tracking-widest text-[#d4af37]">שריון דגם</span>
+                <h4 className="text-base font-black">{selectedDress.name}</h4>
+              </div>
+            </div>
+
+            {/* צד שמאל - טופס */}
+            <div className="p-6 flex flex-col justify-center bg-gradient-to-b from-white to-[#fffdf9]">
+              {isOrdered ? (
+                <div className="text-center py-8 space-y-3">
+                  <div className="text-4xl animate-bounce">✨👑✨</div>
+                  <h4 className="text-lg font-black text-[#8b6508]">השריון בוצע בהצלחה!</h4>
+                  <p className="text-xs text-neutral-600 leading-relaxed">אישור הזמנה ופרטי הסטודיו למדידות נשלחו אלייך כעת ב-SMS.</p>
+                </div>
+              ) : (
+                <form onSubmit={handlePlaceOrder} className="space-y-3">
+                  <div>
+                    <label className="block text-[10px] font-black text-[#8b6508] mb-1">שם מלא *</label>
+                    <input 
+                      type="text" 
+                      required 
+                      value={orderName}
+                      onChange={e => setOrderName(e.target.value)}
+                      placeholder="ישראל ישראלית" 
+                      className="w-full p-2 border border-[#dfc48c] rounded-xl text-xs bg-neutral-50/50" 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black text-[#8b6508] mb-1">מספר טלפון נייד *</label>
+                    <input 
+                      type="tel" 
+                      required 
+                      value={orderPhone}
+                      onChange={e => setOrderPhone(e.target.value)}
+                      placeholder="050-1234567" 
+                      className="w-full p-2 border border-[#dfc48c] rounded-xl text-xs bg-neutral-50/50" 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black text-[#8b6508] mb-1">כתובת אימייל *</label>
+                    <input 
+                      type="email" 
+                      required 
+                      value={orderEmail}
+                      onChange={e => setOrderEmail(e.target.value)}
+                      placeholder="name@example.com" 
+                      className="w-full p-2 border border-[#dfc48c] rounded-xl text-xs bg-neutral-50/50" 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black text-[#8b6508] mb-1">בחרי את תאריך האירוע *</label>
+                    <input 
+                      type="date" 
+                      required 
+                      value={orderDate}
+                      onChange={e => handleDateChange(e.target.value)}
+                      className="w-full p-2 border border-[#dfc48c] rounded-xl text-xs bg-neutral-50/50 font-bold accent-[#d4af37]" 
+                    />
+                    {dateError && <p className="text-[10px] text-red-500 font-bold mt-1 leading-tight">{dateError}</p>}
+                  </div>
+
+                  <button 
+                    type="submit" 
+                    disabled={!!dateError}
+                    className={`w-full text-white text-xs font-black py-3.5 rounded-xl mt-1 transition-all duration-300 shadow-lg transform active:scale-98 ${
+                      dateError 
+                        ? 'bg-neutral-300 cursor-not-allowed shadow-none' 
+                        : 'bg-gradient-to-r from-[#d4af37] via-[#b8860b] to-[#d4af37] hover:from-[#b8860b] hover:to-[#8b6508]'
+                    }`}
+                  >
+                    אשרי שריון דגם חלומותיי
+                  </button>
+                </form>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -641,6 +761,7 @@ export default function Home() {
           <h2 className="text-3xl font-serif italic text-neutral-900 mt-1">מה הלקוחות שלנו מספרות</h2>
           <div className="w-12 h-[1.5px] bg-[#d4af37] mx-auto mt-3"></div>
         </div>
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {REVIEWS.map((rev, index) => (
             <div key={index} className="bg-white/80 backdrop-blur-md p-6 rounded-2xl border border-[#eadaaf] shadow-sm flex flex-col justify-between">
@@ -665,12 +786,13 @@ export default function Home() {
           <h2 className="text-3xl font-serif italic text-neutral-900">שאלות ותשובות נפוצות</h2>
           <div className="w-12 h-[1.5px] bg-[#d4af37] mx-auto mt-3"></div>
         </div>
+
         <div className="flex flex-col gap-3">
           {FAQS.map((faq, idx) => {
             const isOpen = activeFaq === idx;
             return (
               <div key={idx} className="bg-white border border-[#ebd4a8] rounded-xl overflow-hidden shadow-sm transition-all">
-                <button 
+                <button
                   onClick={() => setActiveFaq(isOpen ? null : idx)}
                   className="w-full p-4 text-right flex justify-between items-center font-bold text-xs text-neutral-900 hover:bg-neutral-50 transition"
                 >
@@ -691,153 +813,31 @@ export default function Home() {
       {/* 🛒 מודאל מגירה צידית - סל השריונות */}
       {isCartOpen && (
         <div className="fixed inset-0 bg-neutral-900/50 backdrop-blur-sm z-50 flex justify-end">
-          <div className="bg-white w-full max-w-md h-full p-6 shadow-2xl flex flex-col justify-between border-r-2 border-[#d4af37]">
+          <div className="bg-white w-full max-w-md h-full p-6 shadow-2xl flex flex-col justify-between border-r-2 border-[#d4af37]" style={{ direction: 'rtl' }}>
             <div>
               <div className="flex justify-between items-center pb-4 border-b border-neutral-200">
                 <h3 className="text-lg font-bold text-neutral-900">סל השריונות שלך 🛒</h3>
                 <button onClick={() => setIsCartOpen(false)} className="text-neutral-400 hover:text-black font-bold text-lg">✕</button>
               </div>
-              
+
               {cart.length === 0 ? (
                 <p className="text-xs text-[#6e634c] text-center py-12">הסל שלך עדיין ריק. הוסיפי שמלות כדי לבצע הזמנה מרוכזת.</p>
               ) : (
                 <div className="flex flex-col gap-4 mt-4 overflow-y-auto max-h-[60vh] p-1">
-                  {cart.map(item => (
-                    <div key={item.id} className="flex gap-3 items-center bg-gradient-to-r from-neutral-50 to-[#fffdf9] p-2 rounded-xl border border-[#ebd4a8]">
-                      <img src={item.images[0]} alt={item.name} className="w-16 h-16 object-cover rounded-lg border" />
-                      <div className="flex-grow">
-                        <h4 className="text-xs font-bold text-neutral-950">{item.name}</h4>
-                        <span className="text-[10px] text-[#b8860b] block">מידה {item.size}</span>
-                        <span className="text-xs font-black text-neutral-900">₪{item.price}</span>
+                  {cart.map(item => {
+                    const itemImages = Array.isArray(item.images) ? item.images : [item.images];
+                    return (
+                      <div key={item.id} className="flex gap-3 items-center bg-gradient-to-r from-neutral-50 to-[#fffdf9] p-2 rounded-xl border border-[#ebd4a8]">
+                        <img src={itemImages[0]} alt={item.name} className="w-16 h-16 object-cover rounded-lg border" />
+                        <div className="flex-grow">
+                          <h4 className="text-xs font-bold text-neutral-950">{item.name}</h4>
+                          <span className="text-[10px] text-[#b8860b] block">מידה {item.size}</span>
+                          <span className="text-xs font-black text-neutral-900">₪{item.price}</span>
+                        </div>
                       </div>
-                      <button 
-                        onClick={(e) => toggleCart(item, e)} 
-                        className="text-neutral-400 hover:text-red-500 text-xs px-2"
-                      >
-                        הסר
-                      </button>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
-              )}
-            </div>
-
-            {cart.length > 0 && (
-              <div className="border-t border-neutral-200 pt-4">
-                <div className="flex justify-between items-center mb-4">
-                  <span className="text-xs font-bold text-neutral-600">סה״כ זמני להשכרה:</span>
-                  <span className="text-lg font-black text-neutral-950">₪{cart.reduce((acc, item) => acc + item.price, 0)}</span>
-                </div>
-                <button 
-                  onClick={() => {
-                    setIsCartOpen(false);
-                    setSelectedDress(cart[0]);
-                  }}
-                  className="w-full bg-[#2c261a] hover:bg-[#b8860b] text-white text-xs font-bold py-3 rounded-xl transition shadow-md"
-                >
-                  המשכי לשריון מרוכז בסטודיו
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* 🔒 מודאל שריון קריסטלי חכם */}
-      {selectedDress && (
-        <div className="fixed inset-0 bg-neutral-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[85vh] overflow-hidden shadow-2xl relative flex flex-col md:flex-row border-2 border-[#d4af37]">
-            <button 
-              onClick={() => {
-                setSelectedDress(null);
-                setDateError('');
-              }} 
-              className="absolute top-4 left-4 z-30 bg-white hover:bg-[#d4af37] text-[#b8860b] hover:text-white w-8 h-8 rounded-full flex items-center justify-center border-2 border-[#ebd4a8] shadow-md font-bold transition-all"
-            >
-              ✕
-            </button>
-
-            {/* גלריה מודאל */}
-            <div className="w-full md:w-1/2 h-48 md:h-auto relative bg-neutral-50 border-l border-[#f2e6cc]">
-              {selectedDress.images.length > 1 && (
-                <>
-                  <button 
-                    onClick={() => setModalImageIndex((prev) => (prev - 1 + selectedDress.images.length) % selectedDress.images.length)}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 z-20 bg-white/95 text-[#b8860b] w-8 h-8 rounded-full flex items-center justify-center shadow-md font-black"
-                  >
-                    ‹
-                  </button>
-                  <button 
-                    onClick={() => setModalImageIndex((prev) => (prev + 1) % selectedDress.images.length)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 z-20 bg-white/95 text-[#b8860b] w-8 h-8 rounded-full flex items-center justify-center shadow-md font-black"
-                  >
-                    ›
-                  </button>
-                </>
-              )}
-              <img src={selectedDress.images[modalImageIndex]} alt={selectedDress.name} className="w-full h-full object-cover" />
-            </div>
-
-            {/* טופס שריון בקליק */}
-            <div className="w-full md:w-1/2 p-6 flex flex-col justify-between overflow-y-auto bg-gradient-to-b from-[#fffdf9] to-[#faf6eb]">
-              {isOrdered ? (
-                <div className="text-center my-auto py-10">
-                  <span className="text-3xl block mb-2">✨ ✨ ✨</span>
-                  <h3 className="text-xl font-black text-neutral-900">הדגם שוריין עבורך בהצלחה!</h3>
-                  <p className="mt-2 text-[#5c5037] text-xs font-medium leading-relaxed">
-                    אישור ההזמנה נשלח בהצלחה ל-<strong>{orderEmail}</strong>. מנהלת האירועים תיצור איתך קשר בהקדם לתיאום מדידות אחרונות.
-                  </p>
-                </div>
-              ) : (
-                <form onSubmit={handlePlaceOrder} className="flex flex-col gap-3">
-                  <div>
-                    <span className="text-[9px] uppercase tracking-widest bg-gradient-to-r from-[#b8860b] to-[#d4af37] bg-clip-text text-transparent font-black block mb-1">
-                      ✦ LUXURY RED CARPET SELECTION ✦
-                    </span>
-                    <h3 className="text-xl font-bold text-neutral-950 tracking-wide">{selectedDress.name}</h3>
-                    <p className="text-xs text-[#5c5037] mt-1 font-normal leading-relaxed">{selectedDress.description}</p>
-                    <div className="mt-3 bg-gradient-to-r from-[#fdfcf7] to-[#f4ebd4] p-3 rounded-xl border border-[#decfa8] flex justify-between items-center shadow-sm">
-                      <span className="text-xs text-[#5c5037] font-bold">מחיר השכרה לערב נוצץ:</span>
-                      <span className="text-base font-black text-neutral-950">₪{selectedDress.price}</span>
-                    </div>
-                  </div>
-
-                  <div className="w-full h-[1px] bg-[#ebdcb6] my-0.5"></div>
-
-                  <h4 className="text-xs font-black text-[#8b6508] tracking-wide">פרטי קשר לשריון מידי</h4>
-                  
-                  <input type="text" placeholder="שם מלא" required value={orderName} onChange={(e) => setOrderName(e.target.value)} className="p-3 bg-white border border-[#decfa8] rounded-xl text-xs font-medium focus:outline-none focus:border-[#d4af37]" />
-                  <input type="tel" placeholder="מספר טלפון זמין" required value={orderPhone} onChange={(e) => setOrderPhone(e.target.value)} className="p-3 bg-white border border-[#decfa8] rounded-xl text-xs font-medium focus:outline-none focus:border-[#d4af37]" />
-                  <input type="email" placeholder="כתובת אימייל לאישור קליל" required value={orderEmail} onChange={(e) => setOrderEmail(e.target.value)} className="p-3 bg-white border border-[#decfa8] rounded-xl text-xs font-medium text-left focus:outline-none focus:border-[#d4af37]" dir="ltr" />
-                  
-                  <div className="flex flex-col">
-                    <label className="text-[10px] text-[#8b6508] font-black mb-1">תאריך האירוע החגיגי שלך</label>
-                    <input 
-                      type="date" 
-                      required 
-                      value={orderDate} 
-                      onChange={(e) => handleDateChange(e.target.value)} 
-                      className="p-3 bg-white border border-[#decfa8] rounded-xl text-xs text-right font-medium focus:outline-none focus:border-[#d4af37]" 
-                    />
-                    {dateError && (
-                      <p className="text-[11px] text-red-600 font-bold mt-1 bg-red-50 p-2 rounded-lg border border-red-200">
-                        {dateError}
-                      </p>
-                    )}
-                  </div>
-
-                  <button 
-                    type="submit" 
-                    disabled={!!dateError}
-                    className={`w-full text-white text-xs font-black py-3.5 rounded-xl mt-1 transition-all duration-300 shadow-lg transform active:scale-98 ${
-                      dateError 
-                        ? 'bg-neutral-300 cursor-not-allowed shadow-none' 
-                        : 'bg-gradient-to-r from-[#d4af37] via-[#b8860b] to-[#d4af37] hover:from-[#b8860b] hover:to-[#8b6508]'
-                    }`}
-                  >
-                    אשרי שריון דגם חלומותיי
-                  </button>
-                </form>
               )}
             </div>
           </div>
@@ -846,13 +846,17 @@ export default function Home() {
 
       {/* 📱 כפתור צף קבוע לצ'אט מהיר ב-WhatsApp */}
       <a 
-        href="https://wa.me/972500000000?text=%D7%94%D7%99%D7%95%D7%A5%20%D7%90%D7%A0%D7%99%20%D7%99%D7%A9%D7%9E%D7%97%20%D7%9C%D7%91%D7%A4%D7%A8%D7%98%D7%99%D7%9D%20%D7%A2%D7%9C%20%D7%A9%D7%9E%D7%94%20%D7%9E%D7%94%D7%90%AA%D7%A5" 
-        target="_blank" 
+        href="https://wa.me/972500000000?text=%D7%94%D7%99%D7%95%D7%A5%20%D7%90%D7%A0%D7%99%20%D7%99%D7%A9%D7%9E%D7%97%20%D7%9C%D7%91%D7%A4%D7%A8%D7%98%D7%99%D7%9D"
+        target="_blank"
         rel="noopener noreferrer"
-        className="fixed bottom-6 right-6 z-40 bg-[#25D366] text-white p-3.5 rounded-full shadow-[0_8px_30px_rgba(37,211,102,0.4)] hover:bg-[#20ba5a] transition-all hover:scale-105 flex items-center justify-center font-bold text-lg"
-        title="צ'אט מהיר ב-WhatsApp"
+        className="fixed bottom-6 left-6 z-50 bg-[#25D366] hover:bg-[#20ba5a] text-white p-3.5 rounded-full shadow-[0_8px_24px_rgba(37,211,102,0.3)] transition-all transform hover:scale-110 active:scale-95 flex items-center justify-center border border-white/20 group"
       >
-        💬 <span className="text-xs font-bold mr-1 block sm:inline">צרי קשר</span>
+        <span className="absolute left-14 bg-neutral-900 text-white text-[10px] font-bold px-2.5 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-md whitespace-nowrap">
+          דברי איתנו ב-WhatsApp 💬
+        </span>
+        <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+          <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.731-1.456L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.825 1.451 5.436 0 9.86-4.37 9.863-9.748.002-2.607-1.013-5.059-2.859-6.91C16.63 2.094 14.177 1.07 11.579 1.07c-5.438 0-9.864 4.372-9.867 9.75-.001 1.696.452 3.35 1.309 4.826l-.41 1.496 1.542-.404zm12.512-6.52c-.29-.145-1.71-.845-1.975-.941-.266-.096-.459-.145-.653.145-.193.29-.748.941-.917 1.134-.169.192-.338.217-.628.072-.29-.145-1.223-.45-2.33-1.439-.86-.767-1.44-1.716-1.609-2.007-.169-.29-.017-.447.128-.591.13-.13.29-.338.435-.507.145-.169.193-.29.29-.483.096-.193.048-.361-.024-.507-.072-.145-.653-1.573-.895-2.155-.236-.57-.476-.492-.653-.502-.169-.008-.362-.01-.555-.01-.193 0-.507.072-.772.361-.266.29-1.013.99-1.013 2.414 0 1.423 1.037 2.798 1.182 2.992.145.193 2.04 3.115 4.939 4.368.69.298 1.229.476 1.649.609.693.22 1.324.19 1.822.115.555-.084 1.71-.699 1.952-1.374.24-.675.24-1.253.169-1.374-.073-.121-.266-.193-.555-.338z"/>
+        </svg>
       </a>
 
     </main>
