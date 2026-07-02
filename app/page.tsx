@@ -15,7 +15,7 @@ const INITIAL_DRESSES = [
       "https://images.unsplash.com/photo-1496747611176-843222e1e57c?w=600&auto=format&fit=crop&q=80",
       "https://images.unsplash.com/photo-1539008835657-9e8e818128e5?w=600&auto=format&fit=crop&q=80"
     ], 
-    description: "שמלת ערב נשפכת בגוון קורל יוקרתי, מתאימה לחתונה או אירוע ערב חגיגי. בד נעים ומחטב." 
+    description: "שמלת ערב נשפכת בגוון קורל יוקרתי, מתאימה לחתונה או אירוע ערב חגיגי. בד נעים ומחטב."
   },
   { 
     id: 2, 
@@ -28,7 +28,7 @@ const INITIAL_DRESSES = [
       "https://images.unsplash.com/photo-1612336307429-8a898d10e223?w=600&auto=format&fit=crop&q=80",
       "https://images.unsplash.com/photo-1518049360962-53651b57c0e8?w=600&auto=format&fit=crop&q=80"
     ], 
-    description: "שמלת סאטן מבריקה בגזרת מקסי בצבע ירוק אמרלד עמוק. שסע עדין ברגל ומחשוף קלאסי." 
+    description: "שמלת סאטן מבריקה בגזרת מקסי בצבע ירוק אמרלד עמוק. שסע עדין ברגל ומחשוף קלאסי."
   },
   { 
     id: 3, 
@@ -41,7 +41,7 @@ const INITIAL_DRESSES = [
       "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=600&auto=format&fit=crop&q=80",
       "https://images.unsplash.com/photo-1566174053879-31528523f8ae?w=600&auto=format&fit=crop&q=80"
     ], 
-    description: "שמלת נשף דרמטית לחובבות המראה האצילי. חלקה העליון מחוך תומך וחלקה התחתון עשיר בטול." 
+    description: "שמלת נשף דרמטית לחובבות המראה האצילי. חלקה העליון מחוך תומך וחלקה התחתון עשיר בטול."
   }
 ];
 
@@ -172,6 +172,7 @@ export default function Home() {
     e.preventDefault();
     if (!orderName || !orderPhone || !orderEmail || !orderDate || !selectedDress) return;
     if (!checkDateAvailability(orderDate, selectedDress.id)) return;
+    
     try {
       const response = await fetch('/api/send-sms', {
         method: 'POST',
@@ -235,7 +236,8 @@ export default function Home() {
       price: Number(newDressData.price),
       size: newDressData.size,
       condition: newDressData.condition,
-      images: newDressData.images.length > 0 ? newDressData.images : ["https://images.unsplash.com/photo-1566174053879-31528523f8ae?w=600&auto=format&fit=crop&q=80"],
+      images: newDressData.images.length > 0 ?
+        newDressData.images : ["https://images.unsplash.com/photo-1566174053879-31528523f8ae?w=600&auto=format&fit=crop&q=80"],
       description: `${newDressData.description || 'אין תיאור זמין.'} | צבע: ${newDressData.color || 'לא צוין'} | מצב: ${
         newDressData.condition === 'new' ? 'חדש עם תווית' : newDressData.condition === 'like-new' ? 'כמו חדש' : 'יד שנייה'
       }`
@@ -475,7 +477,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ✨ מודאל חדש: שאלון הוספת שמלה לאתר ✨ */}
+      {/* ✨ ממודאל חדש: שאלון הוספת שמלה לאתר ✨ */}
       {isAddDressOpen && (
         <div className="fixed inset-0 bg-neutral-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4 overflow-y-auto">
           <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl relative border-2 border-[#d4af37] max-h-[90vh] overflow-y-auto" style={{ direction: 'rtl' }}>
@@ -637,7 +639,7 @@ export default function Home() {
       {/* 💬 סקשן חוות דעת לקוחות */}
       <section className="max-w-6xl mx-auto px-4 mt-24 relative z-10">
         <div className="text-center mb-10">
-          <span className="text-xs uppercase font-black text-[#b8860b] tracking-widest">REAL GLAMOUR STORIES</span>
+          <span className="text-xs uppercase font-black text-[#b8860b] tracking-wide">REAL GLAMOUR STORIES</span>
           <h2 className="text-3xl font-serif italic text-neutral-900 mt-1">מה הלקוחות שלנו מספרות</h2>
           <div className="w-12 h-[1.5px] bg-[#d4af37] mx-auto mt-3"></div>
         </div>
