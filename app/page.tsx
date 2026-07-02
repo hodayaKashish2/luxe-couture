@@ -317,7 +317,7 @@ export default function Home() {
 
       {/* 🛍️ סרגל עליון מהיר */}
       <nav className="relative z-30 max-w-7xl mx-auto px-6 pt-6 flex justify-between items-center">
-        <div className="text-sm font-serif tracking-widest text-[#8b6508] font-bold">LUXE COUTURE</div>
+        <div className="text-sm font-serif tracking-widest text-[#8b6508] font-bold">שמלה להשכיר</div>
         <div className="flex gap-3 flex-wrap">
           <button 
             onClick={() => setIsAddDressOpen(true)} 
