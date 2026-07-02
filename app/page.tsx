@@ -1,3 +1,4 @@
+'use client';
 
 import React, { useState, useEffect } from 'react';
 
@@ -16,18 +17,17 @@ const REVIEWS = [
 ];
 
 export default function Home() {
-  // חיבור דינמי למסד הנתונים
-  const [supabase, setSupabase] = useState<any>(null);
+  // רשימת שמלות שמתחילה ריקה ונטענת מה-API
   const [dressesList, setDressesList] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // פילטרים
+  // פילטרים לשמלות
   const [searchTerm, setSearchTerm] = useState('');
   const [maxPrice, setMaxPrice] = useState(600);
   const [selectedSize, setSelectedSize] = useState('All');
   const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
 
-  // מועדפים וסל
+  // מועדפים וסל שריונות
   const [favorites, setFavorites] = useState<number[]>([]);
   const [cart, setCart] = useState<any[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -44,7 +44,7 @@ export default function Home() {
     images: [] as string[]
   });
 
-  // תאריכים תפוסים ומודאל שריון
+  // תאריכים ומודאל שריון הזמנה
   const [bookedDates, setBookedDates] = useState<{ [dressId: number]: string[] }>({});
   const [selectedDress, setSelectedDress] = useState<any | null>(null);
   const [orderName, setOrderName] = useState('');
@@ -54,82 +54,33 @@ export default function Home() {
   const [isOrdered, setIsOrdered] = useState(false);
   const [dateError, setDateError] = useState('');
 
-  // אינדקס גלריה לכל כרטיס ואקורדיון
+  // אינדקס גלריות ואקורדיון
   const [currentImageIndexes, setCurrentImageIndexes] = useState<{ [key: number]: number }>({});
-  const [modalImageIndex, setModalImageIndex] = useState(0);
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
 
-  // טעינת Supabase בצורה דינמית וטעינת מועדפים מהדפדפן
+  // טעינת השמלות מה-API ושימוש ב-LocalStorage למועדפים
   useEffect(() => {
-    const initSupabase = async () => {
+    async function loadInitialData() {
       try {
-        const supabaseJS = await import('@supabase/supabase-js');
-        const url = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-        const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-        if (url && key) {
-          const client = supabaseJS.createClient(url, key);
-          setSupabase(client);
-        } else {
-          console.warn("Supabase credentials missing in Environment Variables.");
-          setLoading(false);
+        const res = await fetch('/api/dresses');
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          setDressesList(data);
         }
-      } catch (e) {
-        console.error("Failed to load Supabase SDK dynamically", e);
-        setLoading(false);
+      } catch (err) {
+        console.error("Failed to fetch dresses from API:", err);
+      } finally {
+        setIsLoading(false);
       }
-    };
-    initSupabase();
+    }
+
+    loadInitialData();
 
     const savedFavs = localStorage.getItem('luxe_favs');
     if (savedFavs) setFavorites(JSON.parse(savedFavs));
     const savedCart = localStorage.getItem('luxe_cart');
     if (savedCart) setCart(JSON.parse(savedCart));
   }, []);
-
-  // משיכת נתונים מהמסד ברגע שחיבור ה-Supabase מוכן
-  useEffect(() => {
-    if (supabase) {
-      fetchDressesAndBookings();
-    }
-  }, [supabase]);
-
-  const fetchDressesAndBookings = async () => {
-    try {
-      setLoading(true);
-      // שליפת שמלות
-      const { data: dresses, error: dressesError } = await supabase
-        .from('dresses')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (dressesError) throw dressesError;
-
-      // שליפת תאריכים תפוסים מהמסד
-      const { data: bookings, error: bookingsError } = await supabase
-        .from('bookings')
-        .select('dress_id, date');
-
-      if (bookingsError) throw bookingsError;
-
-      const booked: { [dressId: number]: string[] } = {};
-      bookings?.forEach((b: any) => {
-        if (!booked[b.dress_id]) booked[b.dress_id] = [];
-        booked[b.dress_id].push(b.date);
-      });
-
-      setDressesList(dresses || []);
-      setBookedDates(booked);
-
-      // איפוס אינדקסים לגלריות
-      const indexes: { [key: number]: number } = {};
-      dresses?.forEach((d: any) => { indexes[d.id] = 0; });
-      setCurrentImageIndexes(indexes);
-    } catch (error) {
-      console.error('Error loading data from Supabase:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const toggleFavorite = (id: number, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -155,43 +106,13 @@ export default function Home() {
     setCurrentImageIndexes(prev => ({ ...prev, [dressId]: ((prev[dressId] || 0) - 1 + maxImages) % maxImages }));
   };
 
-  const checkDateAvailability = (date: string, dressId: number) => {
-    if (bookedDates[dressId]?.includes(date)) {
-      return false;
-    }
-    return true;
-  };
-
-  const handleDateChange = (date: string) => {
-    setOrderDate(date);
-    if (selectedDress && !checkDateAvailability(date, selectedDress.id)) {
-      setDateError('אופס! השמלה כבר תפוסה בתאריך זה. אנא בחרי תאריך אחר או דגם חלופי.');
-    } else {
-      setDateError('');
-    }
-  };
-
+  // שליחת טופס הזמנה ורישום ה-SMS
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!supabase || !orderName || !orderPhone || !orderEmail || !orderDate || !selectedDress) return;
-    if (!checkDateAvailability(orderDate, selectedDress.id)) return;
+    if (!orderName || !orderPhone || !orderEmail || !orderDate || !selectedDress) return;
 
     try {
-      // שמירת ההזמנה במסד הנתונים בטבלת bookings
-      const { error: dbError } = await supabase.from('bookings').insert([
-        { 
-          dress_id: selectedDress.id, 
-          date: orderDate, 
-          customer_name: orderName, 
-          customer_phone: orderPhone, 
-          customer_email: orderEmail 
-        }
-      ]);
-
-      if (dbError) throw dbError;
-
-      // שליחת ה-SMS
-      await fetch('/api/send-sms', {
+      const response = await fetch('/api/send-sms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -203,40 +124,34 @@ export default function Home() {
         }),
       });
 
-      setBookedDates(prev => ({
-        ...prev,
-        [selectedDress.id]: [...(prev[selectedDress.id] || []), orderDate]
-      }));
-      
-      setIsOrdered(true);
-      setTimeout(() => {
-        setIsOrdered(false);
-        setSelectedDress(null);
-        setOrderName('');
-        setOrderPhone('');
-        setOrderEmail('');
-        setOrderDate('');
-      }, 4000);
+      const data = await response.json();
+      if (data.success) {
+        setBookedDates(prev => ({
+          ...prev,
+          [selectedDress.id]: [...(prev[selectedDress.id] || []), orderDate]
+        }));
+        setIsOrdered(true);
+        setTimeout(() => {
+          setIsOrdered(false);
+          setSelectedDress(null);
+          setOrderName('');
+          setOrderPhone('');
+          setOrderEmail('');
+          setOrderDate('');
+        }, 4000);
+      } else {
+        alert('הייתה בעיה ברישום ההזמנה במערכת');
+      }
     } catch (error) {
       console.error('Error placing order:', error);
-      alert('הייתה בעיה ברישום ההזמנה במערכת');
+      alert('תקלה בתקשורת עם השרת');
     }
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const filesArray = Array.from(e.target.files);
-      const urlsArray = filesArray.map(file => URL.createObjectURL(file));
-      setNewDressData(prev => ({
-        ...prev,
-        images: [...prev.images, ...urlsArray]
-      }));
-    }
-  };
-
+  // שליחת שמלה חדשה ל-API על מנת שתשמר בבסיס הנתונים
   const handleAddDressSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!supabase || !newDressData.name || !newDressData.price || !newDressData.size) {
+    if (!newDressData.name || !newDressData.price || !newDressData.size) {
       alert('אנא מלאי שדות חובה (שם, מחיר ומידה)');
       return;
     }
@@ -248,29 +163,33 @@ export default function Home() {
     const finalImages = newDressData.images.length > 0 ? newDressData.images : ["https://images.unsplash.com/photo-1566174053879-31528523f8ae?w=600&auto=format&fit=crop&q=80"];
 
     try {
-      // הוספה ישירה לטבלת dresses במסד הנתונים
-      const { data, error } = await supabase.from('dresses').insert([
-        {
+      const res = await fetch('/api/dresses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           name: newDressData.name,
           price: Number(newDressData.price),
           size: newDressData.size,
           condition: newDressData.condition,
           images: finalImages,
           description: descriptionString
-        }
-      ]).select();
+        })
+      });
 
-      if (error) throw error;
+      const result = await res.json();
 
-      if (data) {
-        setDressesList(prev => [data[0], ...prev]);
+      if (result.success) {
+        // הוספה אופטימית ישירות למסך ללא צורך בריענון הדף
+        setDressesList(prev => [result.data[0], ...prev]);
+        setIsAddDressOpen(false);
+        setNewDressData({ name: '', price: '', size: '', color: '', condition: 'new', description: '', images: [] });
+        alert('השמלה נוספה בהצלחה למסד הנתונים והתווספה לקולקציה באתר!');
+      } else {
+        alert('שגיאה בשמירה למסד הנתונים: ' + result.error);
       }
-      setIsAddDressOpen(false);
-      setNewDressData({ name: '', price: '', size: '', color: '', condition: 'new', description: '', images: [] });
-      alert('השמלה התווספה בהצלחה למסד הנתונים ולקולקציה באתר!');
-    } catch (error) {
-      console.error('Error adding dress:', error);
-      alert('שגיאה בהוספת השמלה למסד הנתונים');
+    } catch (err) {
+      console.error(err);
+      alert('תקלת שרת בעת שמירת השמלה');
     }
   };
 
@@ -408,7 +327,7 @@ export default function Home() {
 
       {/* 👗 גלריית השמלות */}
       <section className="max-w-6xl mx-auto px-4 relative z-10">
-        {loading ? (
+        {isLoading ? (
           <div className="text-center py-12 text-[#8b6508] font-bold animate-pulse">טוען קולקציה יוקרתית ממסד הנתונים...</div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
@@ -474,7 +393,6 @@ export default function Home() {
                         className={`text-xs p-1.5 rounded-lg border transition ${
                           inCart ? 'bg-[#f4ebd4] border-[#d4af37] text-[#b8860b]' : 'border-neutral-200 hover:bg-neutral-50'
                         }`}
-                        title={inCart ? "הסר מהסל" : "הוסף לסל שריונות מרוכז"}
                       >
                         {inCart ? '🛒 בסל' : '➕ לסל'}
                       </button>
@@ -489,10 +407,7 @@ export default function Home() {
                         <span className="text-neutral-900 font-black text-lg">₪{dress.price}</span>
                       </div>
                       <button 
-                        onClick={() => {
-                          setSelectedDress(dress);
-                          setModalImageIndex(currentImgIndex);
-                        }} 
+                        onClick={() => setSelectedDress(dress)} 
                         className="bg-gradient-to-r from-[#2c261a] to-[#4a3f2b] hover:from-[#d4af37] hover:to-[#b8860b] text-white text-xs font-bold px-4 py-3 rounded-xl transition-all duration-300 shadow-md hover:shadow-lg transform active:scale-98"
                       >
                         שרייני לערב הזוהר שלך
@@ -526,127 +441,32 @@ export default function Home() {
             <form onSubmit={handleAddDressSubmit} className="flex flex-col gap-4">
               <div>
                 <label className="block text-xs font-bold text-[#8b6508] mb-1">שם הדגם / השמלה *</label>
-                <input 
-                  type="text" 
-                  required 
-                  placeholder="למשל: שמלת משי פנינה"
-                  value={newDressData.name} 
-                  onChange={(e) => setNewDressData({...newDressData, name: e.target.value})} 
-                  className="w-full p-2.5 bg-neutral-50 border border-[#decfa8] rounded-xl text-xs font-medium focus:outline-none focus:border-[#d4af37]" 
-                />
+                <input type="text" required placeholder="למשל: שמלת משי פנינה" value={newDressData.name} onChange={(e) => setNewDressData({...newDressData, name: e.target.value})} className="w-full p-2.5 bg-neutral-50 border border-[#decfa8] rounded-xl text-xs font-medium focus:outline-none focus:border-[#d4af37]" />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-[#8b6508] mb-1">מחיר השכרה (₪) *</label>
-                  <input 
-                    type="number" 
-                    required 
-                    placeholder="350"
-                    value={newDressData.price} 
-                    onChange={(e) => setNewDressData({...newDressData, price: e.target.value})} 
-                    className="w-full p-2.5 bg-neutral-50 border border-[#decfa8] rounded-xl text-xs font-medium focus:outline-none focus:border-[#d4af37]" 
-                  />
+                  <input type="number" required placeholder="350" value={newDressData.price} onChange={(e) => setNewDressData({...newDressData, price: e.target.value})} className="w-full p-2.5 bg-neutral-50 border border-[#decfa8] rounded-xl text-xs font-medium focus:outline-none focus:border-[#d4af37]" />
                 </div>
-
                 <div>
                   <label className="block text-xs font-bold text-[#8b6508] mb-1">מידה *</label>
-                  <select 
-                    required
-                    value={newDressData.size}
-                    onChange={(e) => setNewDressData({...newDressData, size: e.target.value})}
-                    className="w-full p-2.5 bg-neutral-50 border border-[#decfa8] rounded-xl text-xs font-medium focus:outline-none focus:border-[#d4af37]"
-                  >
+                  <select required value={newDressData.size} onChange={(e) => setNewDressData({...newDressData, size: e.target.value})} className="w-full p-2.5 bg-neutral-50 border border-[#decfa8] rounded-xl text-xs font-medium focus:outline-none focus:border-[#d4af37]">
                     <option value="">בחרי...</option>
-                    <option value="XS">XS (34)</option>
-                    <option value="S">S (36)</option>
-                    <option value="M">M (38)</option>
-                    <option value="L">L (40)</option>
-                    <option value="XL">XL (42)</option>
+                    <option value="XS">XS</option>
+                    <option value="S">S</option>
+                    <option value="M">M</option>
+                    <option value="L">L</option>
                   </select>
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#8b6508] mb-1">צבע השמלה</label>
-                <input 
-                  type="text" 
-                  placeholder="למשל: לבן שמנת, ורוד עתיק"
-                  value={newDressData.color} 
-                  onChange={(e) => setNewDressData({...newDressData, color: e.target.value})} 
-                  className="w-full p-2.5 bg-neutral-50 border border-[#decfa8] rounded-xl text-xs font-medium focus:outline-none focus:border-[#d4af37]" 
-                />
+                <label className="block text-xs font-bold text-[#8b6508] mb-1">תיאור השמלה</label>
+                <textarea rows={3} placeholder="ספרי על השמלה..." value={newDressData.description} onChange={(e) => setNewDressData({...newDressData, description: e.target.value})} className="w-full p-2.5 bg-neutral-50 border border-[#decfa8] rounded-xl text-xs font-medium focus:outline-none focus:border-[#d4af37] resize-none" />
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-[#8b6508] mb-2">מצב השמלה</label>
-                <div className="flex gap-4 bg-neutral-50 p-2.5 rounded-xl border border-[#decfa8] justify-around">
-                  <label className="flex items-center gap-1.5 text-xs font-medium cursor-pointer">
-                    <input 
-                      type="radio" 
-                      name="condition" 
-                      value="new"
-                      checked={newDressData.condition === 'new'}
-                      onChange={(e) => setNewDressData({...newDressData, condition: e.target.value})}
-                      className="accent-[#d4af37]"
-                    />
-                    חדש עם תווית
-                  </label>
-                  <label className="flex items-center gap-1.5 text-xs font-medium cursor-pointer">
-                    <input 
-                      type="radio" 
-                      name="condition" 
-                      value="like-new"
-                      checked={newDressData.condition === 'like-new'}
-                      onChange={(e) => setNewDressData({...newDressData, condition: e.target.value})}
-                      className="accent-[#d4af37]"
-                    />
-                    כמו חדש
-                  </label>
-                  <label className="flex items-center gap-1.5 text-xs font-medium cursor-pointer">
-                    <input 
-                      type="radio" 
-                      name="condition" 
-                      value="used"
-                      checked={newDressData.condition === 'used'}
-                      onChange={(e) => setNewDressData({...newDressData, condition: e.target.value})}
-                      className="accent-[#d4af37]"
-                    />
-                    יד שנייה
-                  </label>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-[#8b6508] mb-1">תיאור השמלה וסוג הבד</label>
-                <textarea 
-                  rows={3} 
-                  placeholder="ספרי על השמלה, סוג הבד, התאמה לאירועים..." 
-                  value={newDressData.description} 
-                  onChange={(e) => setNewDressData({...newDressData, description: e.target.value})} 
-                  className="w-full p-2.5 bg-neutral-50 border border-[#decfa8] rounded-xl text-xs font-medium focus:outline-none focus:border-[#d4af37] resize-none" 
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-[#8b6508] mb-1">העלאת תמונות של השמלה</label>
-                <input 
-                  type="file" 
-                  multiple 
-                  accept="image/*" 
-                  onChange={handleImageUpload} 
-                  className="w-full p-2 bg-neutral-50 border border-dashed border-[#decfa8] rounded-xl text-xs file:ml-4 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-[#f4ebd4] file:text-[#8b6508] hover:file:bg-[#eadaaf] cursor-pointer" 
-                />
-                {newDressData.images.length > 0 && (
-                  <div className="flex gap-2 flex-wrap mt-2 bg-neutral-50 p-2 rounded-xl border border-neutral-100">
-                    {newDressData.images.map((img, index) => (
-                      <img key={index} src={img} alt="תצוגה מקדימה" className="w-12 h-12 object-cover rounded-lg border border-[#decfa8]" />
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <button type="submit" className="w-full bg-gradient-to-r from-[#d4af37] via-[#b8860b] to-[#d4af37] hover:from-[#b8860b] hover:to-[#8b6508] text-white text-xs font-black py-3.5 rounded-xl shadow-lg mt-2 transition-transform active:scale-98">
+              <button type="submit" className="w-full bg-gradient-to-r from-[#d4af37] via-[#b8860b] to-[#d4af37] text-white text-xs font-black py-3.5 rounded-xl shadow-lg transition-transform active:scale-98">
                 פרסמי שמלה בקולקציה ✨
               </button>
             </form>
@@ -654,101 +474,27 @@ export default function Home() {
         </div>
       )}
 
-      {/* 🔮 מודאל שריון תאריך ספציפי לשמלה 🔮 */}
+      {/* 🔮 מודאל שריון תאריך 🔮 */}
       {selectedDress && (
         <div className="fixed inset-0 bg-neutral-900/70 backdrop-blur-md z-50 flex items-center justify-center p-4" onClick={() => setSelectedDress(null)}>
-          <div className="bg-white rounded-3xl w-full max-w-xl overflow-hidden border border-[#ebd4a8] shadow-2xl relative grid grid-cols-1 md:grid-cols-2" onClick={e => e.stopPropagation()} style={{ direction: 'rtl' }}>
-            
-            <button 
-              onClick={() => setSelectedDress(null)}
-              className="absolute top-4 left-4 bg-white/90 hover:bg-[#d4af37] text-[#b8860b] hover:text-white w-8 h-8 rounded-full flex items-center justify-center shadow-md border border-[#eadaaf] font-bold z-30 transition-all"
-            >
-              ✕
-            </button>
+          <div className="bg-white rounded-3xl w-full max-w-md overflow-hidden border border-[#ebd4a8] p-6 shadow-2xl relative" onClick={e => e.stopPropagation()} style={{ direction: 'rtl' }}>
+            <button onClick={() => setSelectedDress(null)} className="absolute top-4 left-4 text-[#b8860b] font-bold">✕</button>
 
-            {/* צד ימין - תמונה מקדימה */}
-            <div className="h-48 md:h-full w-full bg-neutral-100 relative">
-              <img 
-                src={Array.isArray(selectedDress.images) ? selectedDress.images[modalImageIndex] : selectedDress.images} 
-                alt={selectedDress.name} 
-                className="w-full h-full object-cover" 
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
-              <div className="absolute bottom-4 right-4 text-white">
-                <span className="text-[10px] uppercase font-black tracking-widest text-[#d4af37]">שריון דגם</span>
-                <h4 className="text-base font-black">{selectedDress.name}</h4>
+            {isOrdered ? (
+              <div className="text-center py-8 space-y-3">
+                <div className="text-4xl animate-bounce">✨👑</div>
+                <h4 className="text-lg font-black text-[#8b6508]">השריון בוצע בהצלחה!</h4>
               </div>
-            </div>
-
-            {/* צד שמאל - טופס */}
-            <div className="p-6 flex flex-col justify-center bg-gradient-to-b from-white to-[#fffdf9]">
-              {isOrdered ? (
-                <div className="text-center py-8 space-y-3">
-                  <div className="text-4xl animate-bounce">✨👑✨</div>
-                  <h4 className="text-lg font-black text-[#8b6508]">השריון בוצע בהצלחה!</h4>
-                  <p className="text-xs text-neutral-600 leading-relaxed">אישור הזמנה ופרטי הסטודיו למדידות נשלחו אלייך כעת ב-SMS.</p>
-                </div>
-              ) : (
-                <form onSubmit={handlePlaceOrder} className="space-y-3">
-                  <div>
-                    <label className="block text-[10px] font-black text-[#8b6508] mb-1">שם מלא *</label>
-                    <input 
-                      type="text" 
-                      required 
-                      value={orderName}
-                      onChange={e => setOrderName(e.target.value)}
-                      placeholder="ישראל ישראלית" 
-                      className="w-full p-2 border border-[#dfc48c] rounded-xl text-xs bg-neutral-50/50" 
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-black text-[#8b6508] mb-1">מספר טלפון נייד *</label>
-                    <input 
-                      type="tel" 
-                      required 
-                      value={orderPhone}
-                      onChange={e => setOrderPhone(e.target.value)}
-                      placeholder="050-1234567" 
-                      className="w-full p-2 border border-[#dfc48c] rounded-xl text-xs bg-neutral-50/50" 
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-black text-[#8b6508] mb-1">כתובת אימייל *</label>
-                    <input 
-                      type="email" 
-                      required 
-                      value={orderEmail}
-                      onChange={e => setOrderEmail(e.target.value)}
-                      placeholder="name@example.com" 
-                      className="w-full p-2 border border-[#dfc48c] rounded-xl text-xs bg-neutral-50/50" 
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-black text-[#8b6508] mb-1">בחרי את תאריך האירוע *</label>
-                    <input 
-                      type="date" 
-                      required 
-                      value={orderDate}
-                      onChange={e => handleDateChange(e.target.value)}
-                      className="w-full p-2 border border-[#dfc48c] rounded-xl text-xs bg-neutral-50/50 font-bold accent-[#d4af37]" 
-                    />
-                    {dateError && <p className="text-[10px] text-red-500 font-bold mt-1 leading-tight">{dateError}</p>}
-                  </div>
-
-                  <button 
-                    type="submit" 
-                    disabled={!!dateError}
-                    className={`w-full text-white text-xs font-black py-3.5 rounded-xl mt-1 transition-all duration-300 shadow-lg transform active:scale-98 ${
-                      dateError 
-                        ? 'bg-neutral-300 cursor-not-allowed shadow-none' 
-                        : 'bg-gradient-to-r from-[#d4af37] via-[#b8860b] to-[#d4af37] hover:from-[#b8860b] hover:to-[#8b6508]'
-                    }`}
-                  >
-                    אשרי שריון דגם חלומותיי
-                  </button>
-                </form>
-              )}
-            </div>
+            ) : (
+              <form onSubmit={handlePlaceOrder} className="space-y-3">
+                <h3 className="text-md font-bold mb-4">שריון דגם: {selectedDress.name}</h3>
+                <input type="text" required placeholder="שם מלא" value={orderName} onChange={e => setOrderName(e.target.value)} className="w-full p-2 border border-[#dfc48c] rounded-xl text-xs" />
+                <input type="tel" required placeholder="טלפון נייד" value={orderPhone} onChange={e => setOrderPhone(e.target.value)} className="w-full p-2 border border-[#dfc48c] rounded-xl text-xs" />
+                <input type="email" required placeholder="אימייל" value={orderEmail} onChange={e => setOrderEmail(e.target.value)} className="w-full p-2 border border-[#dfc48c] rounded-xl text-xs" />
+                <input type="date" required value={orderDate} onChange={e => setOrderDate(e.target.value)} className="w-full p-2 border border-[#dfc48c] rounded-xl text-xs font-bold" />
+                <button type="submit" className="w-full text-white bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-xs font-black py-3.5 rounded-xl">אשרי שריון</button>
+              </form>
+            )}
           </div>
         </div>
       )}
@@ -756,24 +502,13 @@ export default function Home() {
       {/* 💬 סקשן חוות דעת לקוחות */}
       <section className="max-w-6xl mx-auto px-4 mt-24 relative z-10">
         <div className="text-center mb-10">
-          <span className="text-xs uppercase font-black text-[#b8860b] tracking-widest">REAL GLAMOUR STORIES</span>
           <h2 className="text-3xl font-serif italic text-neutral-900 mt-1">מה הלקוחות שלנו מספרות</h2>
-          <div className="w-12 h-[1.5px] bg-[#d4af37] mx-auto mt-3"></div>
         </div>
-
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {REVIEWS.map((rev, index) => (
-            <div key={index} className="bg-white/80 backdrop-blur-md p-6 rounded-2xl border border-[#eadaaf] shadow-sm flex flex-col justify-between">
-              <div>
-                <div className="flex text-[#d4af37] gap-0.5 mb-3">
-                  {Array.from({ length: rev.stars }).map((_, i) => <span key={i}>⭐</span>)}
-                </div>
-                <p className="text-xs text-[#554a33] italic leading-relaxed">"{rev.text}"</p>
-              </div>
-              <div className="mt-4 pt-3 border-t border-neutral-100 flex justify-between items-center">
-                <span className="text-xs font-bold text-neutral-900">{rev.name}</span>
-                <span className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full font-bold">{rev.role}</span>
-              </div>
+            <div key={index} className="bg-white/80 p-6 rounded-2xl border border-[#eadaaf] shadow-sm flex flex-col justify-between">
+              <p className="text-xs text-[#554a33] italic">"{rev.text}"</p>
+              <span className="text-xs font-bold mt-3 block">{rev.name}</span>
             </div>
           ))}
         </div>
@@ -781,84 +516,22 @@ export default function Home() {
 
       {/* 👑 אזור שאלות נפוצות */}
       <section className="max-w-3xl mx-auto px-4 mt-24 relative z-10">
-        <div className="text-center mb-10">
-          <h2 className="text-3xl font-serif italic text-neutral-900">שאלות ותשובות נפוצות</h2>
-          <div className="w-12 h-[1.5px] bg-[#d4af37] mx-auto mt-3"></div>
-        </div>
-
         <div className="flex flex-col gap-3">
           {FAQS.map((faq, idx) => {
             const isOpen = activeFaq === idx;
             return (
-              <div key={idx} className="bg-white border border-[#ebd4a8] rounded-xl overflow-hidden shadow-sm transition-all">
-                <button
-                  onClick={() => setActiveFaq(isOpen ? null : idx)}
-                  className="w-full p-4 text-right flex justify-between items-center font-bold text-xs text-neutral-900 hover:bg-neutral-50 transition"
-                >
+              <div key={idx} className="bg-white border border-[#ebd4a8] rounded-xl overflow-hidden">
+                <button onClick={() => setActiveFaq(isOpen ? null : idx)} className="w-full p-4 text-right flex justify-between items-center font-bold text-xs text-neutral-900">
                   <span>{faq.q}</span>
-                  <span className="text-[#b8860b] text-base">{isOpen ? '−' : '＋'}</span>
+                  <span>{isOpen ? '−' : '＋'}</span>
                 </button>
-                {isOpen && (
-                  <div className="p-4 bg-[#fffdf9] border-t border-[#f7eed8] text-xs text-[#5c5037] leading-relaxed">
-                    {faq.a}
-                  </div>
-                )}
+                {isOpen && <div className="p-4 bg-[#fffdf9] text-xs text-[#5c5037]">{faq.a}</div>}
               </div>
             );
           })}
         </div>
       </section>
 
-      {/* 🛒 מודאל מגירה צידית - סל השריונות */}
-      {isCartOpen && (
-        <div className="fixed inset-0 bg-neutral-900/50 backdrop-blur-sm z-50 flex justify-end">
-          <div className="bg-white w-full max-w-md h-full p-6 shadow-2xl flex flex-col justify-between border-r-2 border-[#d4af37]" style={{ direction: 'rtl' }}>
-            <div>
-              <div className="flex justify-between items-center pb-4 border-b border-neutral-200">
-                <h3 className="text-lg font-bold text-neutral-900">סל השריונות שלך 🛒</h3>
-                <button onClick={() => setIsCartOpen(false)} className="text-neutral-400 hover:text-black font-bold text-lg">✕</button>
-              </div>
-
-              {cart.length === 0 ? (
-                <p className="text-xs text-[#6e634c] text-center py-12">הסל שלך עדיין ריק. הוסיפי שמלות כדי לבצע הזמנה מרוכזת.</p>
-              ) : (
-                <div className="flex flex-col gap-4 mt-4 overflow-y-auto max-h-[60vh] p-1">
-                  {cart.map(item => {
-                    const itemImages = Array.isArray(item.images) ? item.images : [item.images];
-                    return (
-                      <div key={item.id} className="flex gap-3 items-center bg-gradient-to-r from-neutral-50 to-[#fffdf9] p-2 rounded-xl border border-[#ebd4a8]">
-                        <img src={itemImages[0]} alt={item.name} className="w-16 h-16 object-cover rounded-lg border" />
-                        <div className="flex-grow">
-                          <h4 className="text-xs font-bold text-neutral-950">{item.name}</h4>
-                          <span className="text-[10px] text-[#b8860b] block">מידה {item.size}</span>
-                          <span className="text-xs font-black text-neutral-900">₪{item.price}</span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 📱 כפתור צף קבוע לצ'אט מהיר ב-WhatsApp */}
-      <a 
-        href="https://wa.me/972500000000?text=%D7%94%D7%99%D7%95%D7%A5%20%D7%90%D7%A0%D7%99%20%D7%99%D7%A9%D7%9E%D7%97%20%D7%9C%D7%91%D7%A4%D7%A8%D7%98%D7%99%D7%9D"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="fixed bottom-6 left-6 z-50 bg-[#25D366] hover:bg-[#20ba5a] text-white p-3.5 rounded-full shadow-[0_8px_24px_rgba(37,211,102,0.3)] transition-all transform hover:scale-110 active:scale-95 flex items-center justify-center border border-white/20 group"
-      >
-        <span className="absolute left-14 bg-neutral-900 text-white text-[10px] font-bold px-2.5 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-md whitespace-nowrap">
-          דברי איתנו ב-WhatsApp 💬
-        </span>
-        <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
-          <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.731-1.456L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.825 1.451 5.436 0 9.86-4.37 9.863-9.748.002-2.607-1.013-5.059-2.859-6.91C16.63 2.094 14.177 1.07 11.579 1.07c-5.438 0-9.864 4.372-9.867 9.75-.001 1.696.452 3.35 1.309 4.826l-.41 1.496 1.542-.404zm12.512-6.52c-.29-.145-1.71-.845-1.975-.941-.266-.096-.459-.145-.653.145-.193.29-.748.941-.917 1.134-.169.192-.338.217-.628.072-.29-.145-1.223-.45-2.33-1.439-.86-.767-1.44-1.716-1.609-2.007-.169-.29-.017-.447.128-.591.13-.13.29-.338.435-.507.145-.169.193-.29.29-.483.096-.193.048-.361-.024-.507-.072-.145-.653-1.573-.895-2.155-.236-.57-.476-.492-.653-.502-.169-.008-.362-.01-.555-.01-.193 0-.507.072-.772.361-.266.29-1.013.99-1.013 2.414 0 1.423 1.037 2.798 1.182 2.992.145.193 2.04 3.115 4.939 4.368.69.298 1.229.476 1.649.609.693.22 1.324.19 1.822.115.555-.084 1.71-.699 1.952-1.374.24-.675.24-1.253.169-1.374-.073-.121-.266-.193-.555-.338z"/>
-        </svg>
-      </a>
-
     </main>
   );
 }
-
