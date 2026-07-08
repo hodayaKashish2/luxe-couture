@@ -67,7 +67,7 @@ alter table public.bookings add column if not exists platform_fee numeric;
 alter table public.bookings add column if not exists owner_payout numeric;
 alter table public.bookings add column if not exists tranzila_index text;
 alter table public.bookings add column if not exists payment_confirmed_at timestamptz;
-alter table public.bookings add column if not exists site_user_id bigint;
+alter table public.bookings add column if not exists site_user_id uuid;
 
 alter table public.bookings drop constraint if exists bookings_status_check;
 alter table public.bookings add constraint bookings_status_check

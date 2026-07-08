@@ -14,6 +14,15 @@ function isSchemaError(message: string) {
   );
 }
 
+function shouldOmitSiteUserId(message: string) {
+  const m = message.toLowerCase();
+  return (
+    m.includes('site_user_id') ||
+    m.includes('bigint') ||
+    m.includes('invalid input syntax')
+  );
+}
+
 export async function POST(request: Request) {
   if (!isSupabaseConfigured()) {
     return NextResponse.json({ error: 'Supabase לא מוגדר' }, { status: 503 });
@@ -84,7 +93,7 @@ export async function POST(request: Request) {
 
     let paymentInsert = await supabase.from('bookings').insert([paymentPayload]).select('id').single();
 
-    if (paymentInsert.error?.message?.includes('site_user_id')) {
+    if (paymentInsert.error?.message && shouldOmitSiteUserId(paymentInsert.error.message)) {
       delete paymentPayload.site_user_id;
       paymentInsert = await supabase.from('bookings').insert([paymentPayload]).select('id').single();
     }
@@ -109,7 +118,7 @@ export async function POST(request: Request) {
       if (loggedInUser?.userId) legacyPayload.site_user_id = loggedInUser.userId;
 
       let legacyInsert = await supabase.from('bookings').insert([legacyPayload]).select('id').single();
-      if (legacyInsert.error?.message?.includes('site_user_id')) {
+      if (legacyInsert.error?.message && shouldOmitSiteUserId(legacyInsert.error.message)) {
         delete legacyPayload.site_user_id;
         legacyInsert = await supabase.from('bookings').insert([legacyPayload]).select('id').single();
       }
