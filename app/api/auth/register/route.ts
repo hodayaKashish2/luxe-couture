@@ -7,6 +7,7 @@ import {
 } from '@/lib/user-auth';
 import { normalizePhone } from '@/lib/owner-auth';
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server';
+import { formatSiteUsersDbError } from '@/lib/db-errors';
 
 export async function POST(request: Request) {
   if (!isSupabaseConfigured()) {
@@ -54,18 +55,16 @@ export async function POST(request: Request) {
       .select('id, username, display_name, phone, email')
       .single();
 
-    if (error?.message?.includes('site_users')) {
-      return NextResponse.json(
-        { error: 'טבלת משתמשות לא קיימת. הריצי site_users.sql ב-Supabase.' },
-        { status: 503 }
-      );
-    }
-
     if (error?.message?.includes('duplicate') || error?.code === '23505') {
       return NextResponse.json({ error: 'שם המשתמש כבר תפוס' }, { status: 409 });
     }
 
-    if (error) throw error;
+    if (error) {
+      return NextResponse.json(
+        { error: formatSiteUsersDbError(error.message, error.code) },
+        { status: 503 }
+      );
+    }
 
     const token = createUserToken({
       userId: String(data.id),

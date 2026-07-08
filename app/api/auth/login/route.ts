@@ -6,6 +6,7 @@ import {
   verifyPassword,
 } from '@/lib/user-auth';
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server';
+import { formatSiteUsersDbError } from '@/lib/db-errors';
 
 export async function POST(request: Request) {
   if (!isSupabaseConfigured()) {
@@ -34,14 +35,12 @@ export async function POST(request: Request) {
       .eq('username', username)
       .maybeSingle();
 
-    if (error?.message?.includes('site_users')) {
+    if (error) {
       return NextResponse.json(
-        { error: 'טבלת משתמשות לא קיימת. ב-Supabase: SQL Editor → הריצי את הקובץ site_users.sql' },
+        { error: formatSiteUsersDbError(error.message, error.code) },
         { status: 503 }
       );
     }
-
-    if (error) throw error;
     if (!user || !verifyPassword(password, String(user.password_hash))) {
       return NextResponse.json({ error: 'שם משתמש או סיסמה שגויים' }, { status: 401 });
     }
