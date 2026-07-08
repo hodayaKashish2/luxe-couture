@@ -10,7 +10,13 @@ import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server';
 
 export async function POST(request: Request) {
   if (!isSupabaseConfigured()) {
-    return NextResponse.json({ error: 'Supabase לא מוגדר' }, { status: 503 });
+    return NextResponse.json(
+      {
+        error:
+          'Supabase לא מוגדר בשרת. ב-Vercel: Settings → Environment Variables → הוסיפי NEXT_PUBLIC_SUPABASE_URL ו-SUPABASE_SERVICE_ROLE_KEY → Redeploy.',
+      },
+      { status: 503 }
+    );
   }
 
   try {

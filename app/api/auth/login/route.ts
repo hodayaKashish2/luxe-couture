@@ -9,7 +9,13 @@ import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server';
 
 export async function POST(request: Request) {
   if (!isSupabaseConfigured()) {
-    return NextResponse.json({ error: 'Supabase לא מוגדר' }, { status: 503 });
+    return NextResponse.json(
+      {
+        error:
+          'Supabase לא מוגדר בשרת. ב-Vercel: Settings → Environment Variables → הוסיפי NEXT_PUBLIC_SUPABASE_URL ו-SUPABASE_SERVICE_ROLE_KEY (מ-.env.local) → Save → Redeploy.',
+      },
+      { status: 503 }
+    );
   }
 
   try {
@@ -30,7 +36,7 @@ export async function POST(request: Request) {
 
     if (error?.message?.includes('site_users')) {
       return NextResponse.json(
-        { error: 'טבלת משתמשות לא קיימת. הריצי site_users.sql ב-Supabase.' },
+        { error: 'טבלת משתמשות לא קיימת. ב-Supabase: SQL Editor → הריצי את הקובץ site_users.sql' },
         { status: 503 }
       );
     }
@@ -40,13 +46,25 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'שם משתמש או סיסמה שגויים' }, { status: 401 });
     }
 
-    const token = createUserToken({
-      userId: String(user.id),
-      username: user.username,
-      displayName: user.display_name || user.username,
-      phone: user.phone || '',
-      email: user.email || '',
-    });
+    let token: string;
+    try {
+      token = createUserToken({
+        userId: String(user.id),
+        username: user.username,
+        displayName: user.display_name || user.username,
+        phone: user.phone || '',
+        email: user.email || '',
+      });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : '';
+      if (msg.includes('ADMIN_SECRET')) {
+        return NextResponse.json(
+          { error: 'חסר ADMIN_SECRET ב-Vercel → Environment Variables → הוסיפי ADMIN_SECRET=HODAYA1212 → Redeploy' },
+          { status: 503 }
+        );
+      }
+      throw e;
+    }
 
     const response = NextResponse.json({
       success: true,
