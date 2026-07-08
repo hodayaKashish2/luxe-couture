@@ -10,6 +10,7 @@ import { useLuxeStorage } from '@/components/LuxeStorageProvider';
 import DressCalendar from '@/components/DressCalendar';
 import OwnerPlatformNotice from '@/components/OwnerPlatformNotice';
 import { BOOKING_UPDATED_EVENT } from '@/lib/booking-events';
+import { getStoredSiteUser } from '@/lib/session-user';
 
 type Section = 'hub' | 'reservations' | 'rentals' | 'cart' | 'favorites' | 'add';
 
@@ -48,7 +49,14 @@ export default function AccountPage() {
   const searchParams = useSearchParams();
   const { cart, favorites, cartCount, favCount, removeFromCart, removeFromFavorites } = useLuxeStorage();
   const [section, setSection] = useState<Section>('hub');
-  const [user, setUser] = useState<{ displayName: string; username: string } | null>(null);
+  const [user, setUser] = useState<{ displayName: string; username: string } | null>(() => {
+    const stored = getStoredSiteUser();
+    if (!stored) return null;
+    return {
+      displayName: stored.displayName || stored.display_name || '',
+      username: stored.username || '',
+    };
+  });
   const [dresses, setDresses] = useState<RentalDress[]>([]);
   const [ownerBookings, setOwnerBookings] = useState<BookingRow[]>([]);
   const [reservations, setReservations] = useState<BookingRow[]>([]);
@@ -180,7 +188,7 @@ export default function AccountPage() {
           <div>
             <p className="text-[10px] tracking-widest text-[#9a7b4f] font-bold">✦ האזור האישי ✦</p>
             <h1 className="font-[family-name:var(--font-luxury)] text-2xl sm:text-3xl text-[#3d2f24]">
-              שלום, {user?.displayName || 'אורחת'}
+              שלום, {user?.displayName || (loading ? '...' : 'אורחת')}
             </h1>
           </div>
           <button onClick={logout} className="text-xs text-red-600 font-bold hover:underline">

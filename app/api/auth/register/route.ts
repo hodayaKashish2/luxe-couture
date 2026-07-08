@@ -74,7 +74,16 @@ export async function POST(request: Request) {
       email: data.email || '',
     });
 
-    const response = NextResponse.json({ success: true, token, user: data });
+    const response = NextResponse.json({
+      success: true,
+      token,
+      user: {
+        username: data.username,
+        displayName: data.display_name,
+        phone: data.phone,
+        email: data.email,
+      },
+    });
     response.cookies.set(AUTH_COOKIE, token, authCookieOptions());
     return response;
   } catch (error) {

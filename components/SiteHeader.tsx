@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useLuxeStorage } from '@/components/LuxeStorageProvider';
 import { SITE_NAME } from '@/lib/site-config';
+import { getStoredDisplayName } from '@/lib/session-user';
 
 const links = [
   { href: '/', label: 'קטלוג', icon: '🏠' },
@@ -23,7 +24,7 @@ function isActive(pathname: string, href: string) {
 export default function SiteHeader() {
   const pathname = usePathname();
   const { cartCount, favCount } = useLuxeStorage();
-  const [userName, setUserName] = useState('');
+  const [userName, setUserName] = useState(() => getStoredDisplayName());
 
   useEffect(() => {
     const u = sessionStorage.getItem('site_user');

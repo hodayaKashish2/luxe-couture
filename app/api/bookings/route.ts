@@ -22,7 +22,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const loggedInUser = getUserFromRequest(request);
-    const dressId = body.dressId;
+    const dressId = Number(body.dressId);
     const name = String(body.name || loggedInUser?.displayName || '').trim();
     const phone = String(body.phone || loggedInUser?.phone || '').trim();
     const email = String(body.email || loggedInUser?.email || '').trim();
@@ -30,8 +30,16 @@ export async function POST(request: Request) {
     const dressName = String(body.dressName || '').trim();
     const dressPrice = Number(body.dressPrice || 0);
 
-    if (!dressId || !name || !phone || !email || !date || !dressName || !dressPrice) {
-      return NextResponse.json({ error: 'חסרים פרטים בשריון' }, { status: 400 });
+    if (!Number.isFinite(dressId) || dressId <= 0) {
+      return NextResponse.json({ error: 'מזהה שמלה לא תקין' }, { status: 400 });
+    }
+
+    if (!name || !phone || !email || !date || !dressName || !dressPrice) {
+      return NextResponse.json({ error: 'חסרים פרטים בשריון (שם, טלפון, אימייל, תאריך)' }, { status: 400 });
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return NextResponse.json({ error: 'כתובת אימייל לא תקינה' }, { status: 400 });
     }
 
     const supabase = getSupabaseAdmin();
@@ -39,10 +47,10 @@ export async function POST(request: Request) {
 
     const { data: existing, error: existingError } = await supabase
       .from('bookings')
-      .select('id')
+      .select('id, status')
       .eq('dress_id', dressId)
       .eq('event_date', date)
-      .eq('status', 'confirmed')
+      .in('status', ['confirmed', 'pending_payment'])
       .maybeSingle();
 
     if (existingError && !isSchemaError(existingError.message)) {
@@ -83,7 +91,11 @@ export async function POST(request: Request) {
 
     if (paymentInsert.error) {
       if (!isSchemaError(paymentInsert.error.message)) {
-        throw paymentInsert.error;
+        console.error('Booking insert error:', paymentInsert.error.message);
+        return NextResponse.json(
+          { error: `שגיאה בשמירת השריון: ${paymentInsert.error.message}` },
+          { status: 500 }
+        );
       }
 
       const legacyPayload: Record<string, unknown> = {
@@ -104,7 +116,14 @@ export async function POST(request: Request) {
 
       if (legacyInsert.error) {
         if (!isSchemaError(legacyInsert.error.message)) {
-          throw legacyInsert.error;
+          console.error('Legacy booking insert error:', legacyInsert.error.message);
+          return NextResponse.json(
+            {
+              error:
+                'טבלת השריונות לא מוגדרת ב-Supabase. הריצי את run-all-upgrades.sql ב-SQL Editor.',
+            },
+            { status: 503 }
+          );
         }
 
         await sendAdminEmail(

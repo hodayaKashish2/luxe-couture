@@ -11,6 +11,7 @@ import { useLuxeStorage } from '@/components/LuxeStorageProvider';
 import SavedDressList from '@/components/SavedDressList';
 import { FAQS } from '@/lib/constants';
 import { notifyBookingUpdated } from '@/lib/booking-events';
+import { getStoredSiteUser } from '@/lib/session-user';
 import { compareDresses } from '@/lib/dress-sort';
 import { dressShareUrl, ownerWhatsAppLink, WHATSAPP_LINK } from '@/lib/site-config';
 import { Dress, Review, SortOption, EVENT_TYPES, PICKUP_METHODS } from '@/lib/types';
@@ -91,6 +92,17 @@ export default function Home() {
     mockMode: boolean;
   } | null>(null);
   const [isConfirmingPayment, setIsConfirmingPayment] = useState(false);
+  const [isSubmittingBooking, setIsSubmittingBooking] = useState(false);
+  const [bookingError, setBookingError] = useState('');
+
+  useEffect(() => {
+    if (!selectedDress) return;
+    const u = getStoredSiteUser();
+    if (!u) return;
+    setOrderName((prev) => prev || u.displayName || u.display_name || '');
+    setOrderPhone((prev) => prev || u.phone || '');
+    setOrderEmail((prev) => prev || u.email || '');
+  }, [selectedDress]);
 
   // טעינת שמלות ותגובות
   useEffect(() => {
@@ -269,9 +281,17 @@ export default function Home() {
 
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!orderName || !orderPhone || !orderEmail || !orderDate || !selectedDress) return;
-    if (!checkDateAvailability(orderDate, selectedDress)) return;
+    setBookingError('');
+    if (!orderName || !orderPhone || !orderEmail || !orderDate || !selectedDress) {
+      setBookingError('יש למלא את כל השדות כולל אימייל');
+      return;
+    }
+    if (!checkDateAvailability(orderDate, selectedDress)) {
+      setBookingError('השמלה תפוסה בתאריך הזה. בחרי תאריך אחר.');
+      return;
+    }
 
+    setIsSubmittingBooking(true);
     try {
       const token = sessionStorage.getItem('site_token');
       const response = await fetch('/api/bookings', {
@@ -293,7 +313,7 @@ export default function Home() {
 
       const data = await response.json();
       if (!response.ok || !data.success) {
-        alert(data.error || 'הייתה בעיה ברישום ההזמנה');
+        setBookingError(data.error || 'הייתה בעיה ברישום ההזמנה');
         return;
       }
 
@@ -314,7 +334,9 @@ export default function Home() {
       });
     } catch (error) {
       console.error('Error:', error);
-      alert('תקלה בתקשורת עם השרת');
+      setBookingError('תקלה בתקשורת עם השרת. נסי שוב.');
+    } finally {
+      setIsSubmittingBooking(false);
     }
   };
 
@@ -1318,16 +1340,22 @@ export default function Home() {
                     )}
                   </div>
 
+                  {bookingError && (
+                    <p className="text-[11px] text-red-600 font-bold bg-red-50 p-2 rounded-lg border border-red-200">
+                      {bookingError}
+                    </p>
+                  )}
+
                   <button 
                     type="submit" 
-                    disabled={!!dateError}
+                    disabled={!!dateError || isSubmittingBooking}
                     className={`w-full text-white text-xs font-black py-3.5 rounded-xl mt-1 transition-all duration-300 shadow-lg transform active:scale-98 ${
-                      dateError 
+                      dateError || isSubmittingBooking
                         ? 'bg-neutral-300 cursor-not-allowed shadow-none' 
                         : 'bg-gradient-to-r from-[#d4af37] via-[#b8860b] to-[#d4af37] hover:from-[#b8860b] hover:to-[#8b6508]'
                     }`}
                   >
-                    המשכי לתשלום מאובטח
+                    {isSubmittingBooking ? 'שומרת שריון...' : 'המשכי לתשלום מאובטח'}
                   </button>
                 </form>
               )}
