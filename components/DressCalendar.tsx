@@ -1,52 +1,156 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 type Props = {
   bookedDates?: string[];
-  days?: number;
   compact?: boolean;
 };
 
-export default function DressCalendar({ bookedDates = [], days = 28, compact = false }: Props) {
+const WEEKDAYS = ['א׳', 'ב׳', 'ג׳', 'ד׳', 'ה׳', 'ו׳', 'ש׳'];
+
+function toIsoLocal(year: number, month: number, day: number) {
+  return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
+function todayIsoLocal() {
+  const now = new Date();
+  return toIsoLocal(now.getFullYear(), now.getMonth(), now.getDate());
+}
+
+export default function DressCalendar({ bookedDates = [], compact = false }: Props) {
+  const now = new Date();
+  const [viewYear, setViewYear] = useState(now.getFullYear());
+  const [viewMonth, setViewMonth] = useState(now.getMonth());
+
   const bookedSet = useMemo(() => new Set(bookedDates), [bookedDates]);
+  const todayIso = todayIsoLocal();
 
-  const calendarDays = useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const result: { date: string; label: string; booked: boolean }[] = [];
+  const { cells, monthLabel, isCurrentMonth } = useMemo(() => {
+    const firstDay = new Date(viewYear, viewMonth, 1);
+    const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+    const startWeekday = firstDay.getDay();
 
-    for (let i = 0; i < days; i++) {
-      const d = new Date(today);
-      d.setDate(today.getDate() + i);
-      const iso = d.toISOString().slice(0, 10);
-      result.push({
+    const monthLabel = firstDay.toLocaleDateString('he-IL', {
+      month: 'long',
+      year: 'numeric',
+    });
+
+    const cells: Array<{
+      date: string | null;
+      day: number | null;
+      booked: boolean;
+      isToday: boolean;
+    }> = [];
+
+    for (let i = 0; i < startWeekday; i++) {
+      cells.push({ date: null, day: null, booked: false, isToday: false });
+    }
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const iso = toIsoLocal(viewYear, viewMonth, d);
+      cells.push({
         date: iso,
-        label: d.toLocaleDateString('he-IL', {
-          weekday: compact ? 'narrow' : 'short',
-          day: 'numeric',
-          month: 'short',
-        }),
+        day: d,
         booked: bookedSet.has(iso),
+        isToday: iso === todayIso,
       });
     }
-    return result;
-  }, [bookedSet, days, compact]);
+
+    return {
+      cells,
+      monthLabel,
+      isCurrentMonth: viewYear === now.getFullYear() && viewMonth === now.getMonth(),
+    };
+  }, [viewYear, viewMonth, bookedSet, todayIso, now]);
+
+  function goMonth(delta: number) {
+    const d = new Date(viewYear, viewMonth + delta, 1);
+    setViewYear(d.getFullYear());
+    setViewMonth(d.getMonth());
+  }
+
+  function goToday() {
+    setViewYear(now.getFullYear());
+    setViewMonth(now.getMonth());
+  }
+
+  const cellClass = compact ? 'p-1 min-h-[2.25rem] text-[9px]' : 'p-1.5 min-h-[2.75rem] text-[10px]';
 
   return (
-    <div className={`grid gap-1.5 ${compact ? 'grid-cols-4 sm:grid-cols-7' : 'grid-cols-2 sm:grid-cols-4 md:grid-cols-7'}`}>
-      {calendarDays.map((day) => (
-        <div
-          key={day.date}
-          className={`rounded-lg border text-center ${compact ? 'p-1.5 text-[9px]' : 'p-2 text-[10px]'} ${
-            day.booked ? 'bg-red-50 border-red-200 text-red-800' : 'bg-white border-[#eadaaf] text-[#6e634c]'
-          }`}
-          title={day.date}
+    <div className="space-y-3" dir="rtl">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <button
+          type="button"
+          onClick={() => goMonth(-1)}
+          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-[#decfa8] bg-white text-[#8b6508] text-[10px] font-bold hover:border-[#d4af37] hover:bg-[#fffdf8] transition-colors"
+          aria-label="חודש קודם"
         >
-          <p className="font-bold text-[#8b6508] leading-tight">{day.label}</p>
-          <p className="mt-0.5">{day.booked ? '🔒' : '✓'}</p>
+          ‹ חודש קודם
+        </button>
+
+        <div className="text-center flex-1 min-w-[8rem]">
+          <p className="text-xs sm:text-sm font-black text-[#3d2f24] capitalize">{monthLabel}</p>
+          {!isCurrentMonth && (
+            <button
+              type="button"
+              onClick={goToday}
+              className="text-[9px] text-[#b8860b] font-bold hover:underline mt-0.5"
+            >
+              חזרה לחודש הנוכחי
+            </button>
+          )}
         </div>
-      ))}
+
+        <button
+          type="button"
+          onClick={() => goMonth(1)}
+          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-[#decfa8] bg-white text-[#8b6508] text-[10px] font-bold hover:border-[#d4af37] hover:bg-[#fffdf8] transition-colors"
+          aria-label="חודש הבא"
+        >
+          חודש הבא ›
+        </button>
+      </div>
+
+      <div className={`grid grid-cols-7 gap-1 ${compact ? 'text-[8px]' : 'text-[9px]'}`}>
+        {WEEKDAYS.map((name) => (
+          <div
+            key={name}
+            className="text-center font-black text-[#9a7b4f] py-1"
+          >
+            {name}
+          </div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-7 gap-1">
+        {cells.map((cell, idx) =>
+          cell.day === null ? (
+            <div key={`empty-${idx}`} className={cellClass} aria-hidden />
+          ) : (
+            <div
+              key={cell.date}
+              className={`rounded-lg border text-center flex flex-col items-center justify-center ${cellClass} ${
+                cell.booked
+                  ? 'bg-red-50 border-red-200 text-red-800'
+                  : 'bg-white border-[#eadaaf] text-[#6e634c]'
+              } ${cell.isToday ? 'ring-2 ring-[#d4af37] ring-offset-1' : ''}`}
+              title={cell.date || undefined}
+            >
+              <span className="font-bold text-[#8b6508] leading-none">{cell.day}</span>
+              <span className="mt-0.5 leading-none">{cell.booked ? '🔒' : '✓'}</span>
+            </div>
+          )
+        )}
+      </div>
+
+      <div className="flex flex-wrap gap-3 text-[9px] text-[#9a7b4f] justify-center">
+        <span>✓ פנוי</span>
+        <span>🔒 שרוי</span>
+        <span className="inline-flex items-center gap-1">
+          <span className="w-2 h-2 rounded-full ring-2 ring-[#d4af37]" /> היום
+        </span>
+      </div>
     </div>
   );
 }
