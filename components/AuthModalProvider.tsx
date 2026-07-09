@@ -2,6 +2,7 @@
 
 import {
   createContext,
+  Suspense,
   useCallback,
   useContext,
   useEffect,
@@ -9,17 +10,23 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import FormError from '@/components/FormError';
 import { AUTH_MODAL_COPY, type AuthModalReason } from '@/lib/auth-modal-copy';
+import {
+  buildAuthModalUrl,
+  hasAuthInUrl,
+  parseAuthFromUrl,
+  stripAuthParams,
+  type AuthModalView,
+} from '@/lib/auth-url';
 import { validateLoginForm, validateRegisterForm } from '@/lib/form-validation';
 import { notifySiteAuthChange } from '@/lib/site-auth-events';
-import { useModalHistory } from '@/hooks/use-modal-history';
 
 export type AuthModalOptions = {
   reason?: AuthModalReason;
   next?: string;
-  initialView?: 'prompt' | 'login' | 'register';
+  initialView?: AuthModalView;
 };
 
 type AuthModalContextValue = {
@@ -28,8 +35,6 @@ type AuthModalContextValue = {
 };
 
 const AuthModalContext = createContext<AuthModalContextValue | null>(null);
-
-type ModalView = 'prompt' | 'login' | 'register';
 
 const emptyRegisterForm = {
   username: '',
@@ -66,10 +71,11 @@ function ModalShell({
   );
 }
 
-export function AuthModalProvider({ children }: { children: ReactNode }) {
+function AuthModalProviderInner({ children }: { children: ReactNode }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [open, setOpen] = useState(false);
-  const [view, setView] = useState<ModalView>('prompt');
+  const [view, setView] = useState<AuthModalView>('prompt');
   const [reason, setReason] = useState<AuthModalReason>('general');
   const [nextPath, setNextPath] = useState('/');
 
@@ -94,38 +100,70 @@ export function AuthModalProvider({ children }: { children: ReactNode }) {
     resetForms();
     setView('prompt');
     setReason('general');
+    setNextPath('/');
   }, [resetForms]);
 
-  const { close: closeAuthModal } = useModalHistory({
-    key: 'auth',
-    isOpen: open,
-    onClose: resetAuthModalState,
-  });
+  const closeAuthModal = useCallback(() => {
+    if (hasAuthInUrl(searchParams)) {
+      router.back();
+      return;
+    }
+    resetAuthModalState();
+  }, [router, searchParams, resetAuthModalState]);
 
   const finishAuth = useCallback(() => {
     notifySiteAuthChange();
-    closeAuthModal();
-    if (nextPath && nextPath !== '/') {
-      router.push(nextPath);
-    }
-  }, [closeAuthModal, nextPath, router]);
+    const target = stripAuthParams(nextPath);
+    resetAuthModalState();
+    router.replace(target);
+  }, [nextPath, resetAuthModalState, router]);
 
   const openAuthModal = useCallback(
     (options?: AuthModalOptions) => {
-      const resolvedNext =
-        options?.next ||
-        (typeof window !== 'undefined'
-          ? `${window.location.pathname}${window.location.search}`
-          : '/');
+      if (typeof window === 'undefined') return;
 
-      setReason(options?.reason || 'general');
-      setNextPath(resolvedNext);
-      setView(options?.initialView || 'prompt');
-      resetForms();
-      setOpen(true);
+      const pathname = window.location.pathname;
+      const search = window.location.search;
+      const authReason = options?.reason || 'general';
+      const resolvedNext =
+        options?.next || stripAuthParams(`${pathname}${search}`);
+      const initialView = options?.initialView || 'prompt';
+      const url = buildAuthModalUrl(pathname, search, {
+        reason: authReason,
+        next: resolvedNext,
+        view: initialView,
+      });
+
+      const current = new URLSearchParams(search);
+      if (
+        current.get('auth') === authReason &&
+        current.get('authNext') === resolvedNext &&
+        (current.get('authView') || 'prompt') === initialView
+      ) {
+        setOpen(true);
+        setReason(authReason);
+        setNextPath(resolvedNext);
+        setView(initialView);
+        return;
+      }
+
+      router.push(url, { scroll: false });
     },
-    [resetForms]
+    [router]
   );
+
+  useEffect(() => {
+    const parsed = parseAuthFromUrl(searchParams);
+    if (!parsed) {
+      resetAuthModalState();
+      return;
+    }
+
+    setOpen(true);
+    setReason(parsed.reason);
+    setNextPath(parsed.next);
+    setView(parsed.view);
+  }, [searchParams, resetAuthModalState]);
 
   useEffect(() => {
     document.body.style.overflow = open ? 'hidden' : '';
@@ -412,6 +450,14 @@ export function AuthModalProvider({ children }: { children: ReactNode }) {
         </ModalShell>
       )}
     </AuthModalContext.Provider>
+  );
+}
+
+export function AuthModalProvider({ children }: { children: ReactNode }) {
+  return (
+    <Suspense fallback={null}>
+      <AuthModalProviderInner>{children}</AuthModalProviderInner>
+    </Suspense>
   );
 }
 
