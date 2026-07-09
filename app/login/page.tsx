@@ -4,6 +4,8 @@ import { Suspense, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { SITE_NAME } from '@/lib/site-config';
+import FormError from '@/components/FormError';
+import { validateLoginForm } from '@/lib/form-validation';
 
 function LoginForm() {
   const router = useRouter();
@@ -17,8 +19,15 @@ function LoginForm() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
     setError('');
+
+    const validationError = validateLoginForm(username, password);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
+    setLoading(true);
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
@@ -51,6 +60,7 @@ function LoginForm() {
 
         <form
           onSubmit={handleSubmit}
+          noValidate
           className="bg-white/95 rounded-2xl border-2 border-[#e6c687] shadow-xl p-6 sm:p-8 space-y-4"
         >
           <div>
@@ -78,9 +88,7 @@ function LoginForm() {
             />
           </div>
 
-          {error && (
-            <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl p-3">{error}</p>
-          )}
+          {error && <FormError message={error} />}
 
           <button
             type="submit"

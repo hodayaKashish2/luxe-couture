@@ -677,7 +677,11 @@ export default function Home() {
                       </>
                     )}
 
-                    <img src={dress.images[currentImgIndex]} alt={dress.name} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-700 ease-out" />
+                    <img
+                      src={dress.images[currentImgIndex]}
+                      alt={dress.name}
+                      className="absolute inset-0 w-full h-full object-contain group-hover:scale-105 transition-transform duration-700 ease-out"
+                    />
 
                     {dress.images.length > 1 && (
                       <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex gap-1.5 bg-white/95 px-2.5 py-1 rounded-full shadow-md border border-[#e0cba0]">
@@ -1221,7 +1225,7 @@ export default function Home() {
             </button>
 
             {/* גלריה מודאל */}
-            <div className="w-full md:w-1/2 h-48 md:h-auto relative bg-neutral-50 border-l border-[#f2e6cc]">
+            <div className="w-full md:w-1/2 h-48 md:h-auto relative bg-neutral-50 border-l border-[#f2e6cc] min-h-[280px] md:min-h-[420px]">
               {selectedDress.images.length > 1 && (
                 <>
                   <button 
@@ -1251,7 +1255,7 @@ export default function Home() {
                   </div>
                 </>
               )}
-              <img src={selectedDress.images[modalImageIndex]} alt={selectedDress.name} className="w-full h-full object-contain p-3" />
+              <img src={selectedDress.images[modalImageIndex]} alt={selectedDress.name} className="absolute inset-0 w-full h-full object-contain p-3" />
             </div>
 
             {/* טופס שריון בקליק */}

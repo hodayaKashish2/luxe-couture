@@ -4,6 +4,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { SITE_NAME } from '@/lib/site-config';
+import FormError from '@/components/FormError';
+import { validateRegisterForm } from '@/lib/form-validation';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -19,8 +21,15 @@ export default function RegisterPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
     setError('');
+
+    const validationError = validateRegisterForm(form);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
+    setLoading(true);
     try {
       const res = await fetch('/api/auth/register', {
         method: 'POST',
@@ -48,14 +57,14 @@ export default function RegisterPage() {
           <p className="text-xs text-[#6e634c] mt-2">הטלפון יקשר את השמלות והשריונות שלך</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-white/95 rounded-2xl border-2 border-[#e6c687] shadow-xl p-6 space-y-3">
-          <input required placeholder="שם משתמש *" value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} className="w-full p-2.5 border rounded-xl text-sm" dir="ltr" />
-          <input required type="password" placeholder="סיסמה (6+ תווים) *" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} className="w-full p-2.5 border rounded-xl text-sm" dir="ltr" />
-          <input required placeholder="שם מלא *" value={form.display_name} onChange={(e) => setForm({ ...form, display_name: e.target.value })} className="w-full p-2.5 border rounded-xl text-sm" />
-          <input required type="tel" placeholder="טלפון (053...) *" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="w-full p-2.5 border rounded-xl text-sm" dir="ltr" />
-          <input type="email" placeholder="אימייל (לשריונות)" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="w-full p-2.5 border rounded-xl text-sm" dir="ltr" />
+        <form onSubmit={handleSubmit} noValidate className="bg-white/95 rounded-2xl border-2 border-[#e6c687] shadow-xl p-6 space-y-3">
+          <input placeholder="שם משתמש *" value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} className="w-full p-2.5 border-2 border-[#decfa8] rounded-xl text-sm focus:border-[#d4af37] focus:outline-none" dir="ltr" />
+          <input type="password" placeholder="סיסמה (6+ תווים) *" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} className="w-full p-2.5 border-2 border-[#decfa8] rounded-xl text-sm focus:border-[#d4af37] focus:outline-none" dir="ltr" />
+          <input placeholder="שם מלא *" value={form.display_name} onChange={(e) => setForm({ ...form, display_name: e.target.value })} className="w-full p-2.5 border-2 border-[#decfa8] rounded-xl text-sm focus:border-[#d4af37] focus:outline-none" />
+          <input type="tel" placeholder="טלפון (053...) *" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="w-full p-2.5 border-2 border-[#decfa8] rounded-xl text-sm focus:border-[#d4af37] focus:outline-none" dir="ltr" />
+          <input type="text" inputMode="email" autoComplete="email" placeholder="אימייל (לשריונות, אופציונלי)" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="w-full p-2.5 border-2 border-[#decfa8] rounded-xl text-sm focus:border-[#d4af37] focus:outline-none" dir="ltr" />
 
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && <FormError message={error} />}
 
           <button type="submit" disabled={loading} className="w-full py-3 bg-[#2c261a] text-white rounded-xl font-bold text-sm">
             {loading ? 'נרשמת...' : 'יצירת חשבון'}

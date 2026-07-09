@@ -51,68 +51,72 @@ export default function DressDetailsModal({
           ✕
         </button>
 
-        {/* גלריה גדולה */}
-        <div className="relative w-full md:w-3/5 min-h-[45vh] sm:min-h-[50vh] md:min-h-[70vh] bg-[#faf8f3] border-b md:border-b-0 md:border-l border-[#f0e2c3] flex items-center justify-center">
-          {images.length > 0 ? (
-            <>
-              <img
-                src={images[imageIndex]}
-                alt={dress.name}
-                className="w-full h-full max-h-[55vh] md:max-h-[68vh] object-contain p-4 sm:p-6"
-              />
+        {/* גלריה גדולה — גודל אחיד עם או בלי סליידר */}
+        <div className="relative w-full md:w-3/5 flex flex-col bg-[#faf8f3] border-b md:border-b-0 md:border-l border-[#f0e2c3] min-h-[50vh] md:min-h-[70vh]">
+          <div className="relative flex-1 min-h-[42vh] sm:min-h-[48vh] md:min-h-0">
+            {images.length > 0 ? (
+              <>
+                <img
+                  src={images[imageIndex]}
+                  alt={dress.name}
+                  className="absolute inset-0 w-full h-full object-contain p-3 sm:p-4"
+                />
 
-              {images.length > 1 && (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => setImageIndex((prev) => (prev - 1 + images.length) % images.length)}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 z-20 bg-white/95 text-[#b8860b] w-10 h-10 rounded-full flex items-center justify-center shadow-lg border border-[#e8cc92] font-black text-xl hover:bg-[#d4af37] hover:text-white transition-all"
-                    aria-label="תמונה קודמת"
-                  >
-                    ‹
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setImageIndex((prev) => (prev + 1) % images.length)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 z-20 bg-white/95 text-[#b8860b] w-10 h-10 rounded-full flex items-center justify-center shadow-lg border border-[#e8cc92] font-black text-xl hover:bg-[#d4af37] hover:text-white transition-all"
-                    aria-label="תמונה הבאה"
-                  >
-                    ›
-                  </button>
+                {images.length > 1 && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setImageIndex((prev) => (prev - 1 + images.length) % images.length)}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 z-20 bg-white/95 text-[#b8860b] w-10 h-10 rounded-full flex items-center justify-center shadow-lg border border-[#e8cc92] font-black text-xl hover:bg-[#d4af37] hover:text-white transition-all"
+                      aria-label="תמונה קודמת"
+                    >
+                      ‹
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setImageIndex((prev) => (prev + 1) % images.length)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 z-20 bg-white/95 text-[#b8860b] w-10 h-10 rounded-full flex items-center justify-center shadow-lg border border-[#e8cc92] font-black text-xl hover:bg-[#d4af37] hover:text-white transition-all"
+                      aria-label="תמונה הבאה"
+                    >
+                      ›
+                    </button>
 
-                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex gap-2 bg-white/95 px-3 py-1.5 rounded-full shadow-md border border-[#e0cba0]">
-                    {images.map((img, idx) => (
-                      <button
-                        key={`${img}-${idx}`}
-                        type="button"
-                        onClick={() => setImageIndex(idx)}
-                        className={`rounded-full transition-all ${
-                          idx === imageIndex ? 'bg-[#d4af37] w-3 h-3' : 'bg-[#e5d9bd] w-2 h-2 hover:bg-[#d4af37]/60'
-                        }`}
-                        aria-label={`תמונה ${idx + 1}`}
-                      />
-                    ))}
-                  </div>
+                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex gap-2 bg-white/95 px-3 py-1.5 rounded-full shadow-md border border-[#e0cba0]">
+                      {images.map((img, idx) => (
+                        <button
+                          key={`${img}-${idx}`}
+                          type="button"
+                          onClick={() => setImageIndex(idx)}
+                          className={`rounded-full transition-all ${
+                            idx === imageIndex ? 'bg-[#d4af37] w-3 h-3' : 'bg-[#e5d9bd] w-2 h-2 hover:bg-[#d4af37]/60'
+                          }`}
+                          aria-label={`תמונה ${idx + 1}`}
+                        />
+                      ))}
+                    </div>
+                  </>
+                )}
+              </>
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center text-6xl text-[#decfa8]">👗</div>
+            )}
+          </div>
 
-                  <div className="absolute top-4 right-4 flex gap-2 overflow-x-auto max-w-[calc(100%-4rem)] pb-1">
-                    {images.map((img, idx) => (
-                      <button
-                        key={`thumb-${img}-${idx}`}
-                        type="button"
-                        onClick={() => setImageIndex(idx)}
-                        className={`shrink-0 w-14 h-14 rounded-lg border-2 overflow-hidden bg-white ${
-                          idx === imageIndex ? 'border-[#d4af37] ring-2 ring-[#d4af37]/40' : 'border-[#eadaaf]'
-                        }`}
-                      >
-                        <img src={img} alt="" className="w-full h-full object-contain" />
-                      </button>
-                    ))}
-                  </div>
-                </>
-              )}
-            </>
-          ) : (
-            <div className="text-6xl text-[#decfa8]">👗</div>
+          {images.length > 1 && (
+            <div className="shrink-0 flex gap-2 p-3 justify-center overflow-x-auto border-t border-[#f0e2c3] bg-white/70">
+              {images.map((img, idx) => (
+                <button
+                  key={`thumb-${img}-${idx}`}
+                  type="button"
+                  onClick={() => setImageIndex(idx)}
+                  className={`shrink-0 w-16 h-16 rounded-lg border-2 overflow-hidden bg-[#faf8f3] ${
+                    idx === imageIndex ? 'border-[#d4af37] ring-2 ring-[#d4af37]/40' : 'border-[#eadaaf]'
+                  }`}
+                >
+                  <img src={img} alt="" className="w-full h-full object-contain" />
+                </button>
+              ))}
+            </div>
           )}
         </div>
 
