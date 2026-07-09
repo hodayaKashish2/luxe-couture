@@ -2,8 +2,8 @@
 -- איפוס מלא לפני פרסום האתר
 -- Supabase → SQL Editor → הדביקי הכל → Run
 -- ============================================================
--- מוחק: חשבונות, שמלות, שריונות, דירוגים, תגובות, תמונות
--- אחרי ההרצה: נקי דפדפן (ראי הוראות למטה)
+-- מוחק: חשבונות, שמלות, שריונות, דירוגים, תגובות
+-- תמונות: לא ניתן למחוק ב-SQL — ראי שלב 2 למטה
 -- ============================================================
 
 do $reset$
@@ -24,8 +24,6 @@ begin
     delete from public.site_users;
   end if;
 end $reset$;
-
-delete from storage.objects where bucket_id = 'dress-images';
 
 drop index if exists site_users_email_unique;
 create unique index site_users_email_unique
