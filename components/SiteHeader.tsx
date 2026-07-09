@@ -6,6 +6,8 @@ import { useEffect, useState } from 'react';
 import { useLuxeStorage } from '@/components/LuxeStorageProvider';
 import { SITE_NAME } from '@/lib/site-config';
 import { getStoredDisplayName } from '@/lib/session-user';
+import { SITE_AUTH_EVENT } from '@/lib/site-auth-events';
+import { isLoggedIn, loginUrl } from '@/lib/require-login';
 
 const links = [
   { href: '/', label: 'קטלוג', icon: '🏠' },
@@ -88,17 +90,33 @@ export default function SiteHeader() {
   const pathname = usePathname();
   const { cartCount, favCount } = useLuxeStorage();
   const [userName, setUserName] = useState(() => getStoredDisplayName());
+  const [loggedIn, setLoggedIn] = useState(() => isLoggedIn());
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  const accountHref = loggedIn ? '/account' : loginUrl('/account');
+  const cartHref = loggedIn ? '/account?section=cart' : loginUrl('/account?section=cart');
+  const favHref = loggedIn ? '/account?section=favorites' : loginUrl('/account?section=favorites');
+  const navLinks = links.map((link) =>
+    link.href === '/account' ? { ...link, href: accountHref } : link
+  );
+
   useEffect(() => {
-    const u = sessionStorage.getItem('site_user');
-    if (u) {
-      try {
-        setUserName(JSON.parse(u).displayName || '');
-      } catch {
-        /* ignore */
+    const syncAuth = () => {
+      setLoggedIn(isLoggedIn());
+      const u = sessionStorage.getItem('site_user');
+      if (u) {
+        try {
+          setUserName(JSON.parse(u).displayName || '');
+        } catch {
+          setUserName('');
+        }
+      } else {
+        setUserName('');
       }
-    }
+    };
+    syncAuth();
+    window.addEventListener(SITE_AUTH_EVENT, syncAuth);
+    return () => window.removeEventListener(SITE_AUTH_EVENT, syncAuth);
   }, [pathname]);
 
   useEffect(() => {
@@ -135,25 +153,25 @@ export default function SiteHeader() {
 
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <Link
-              href="/account?section=cart"
+              href={cartHref}
               className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl text-[10px] sm:text-[11px] font-bold border-2 border-[#decfa8] bg-[#fffdf8] text-[#8b6508] hover:border-[#d4af37] transition-colors"
             >
               🛍️
               <span className="hidden sm:inline">סל קניות</span>
               <span className="sm:hidden">סל</span>
-              {cartCount > 0 && (
+              {loggedIn && cartCount > 0 && (
                 <span className="min-w-[1.1rem] px-1 py-0.5 rounded-full bg-[#d4af37] text-white text-[9px] sm:text-[10px] text-center leading-none">
                   {cartCount}
                 </span>
               )}
             </Link>
             <Link
-              href="/account?section=favorites"
+              href={favHref}
               className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl text-[10px] sm:text-[11px] font-bold border-2 border-[#decfa8] bg-[#fffdf8] text-[#8b6508] hover:border-[#d4af37] transition-colors"
             >
               ❤️
               <span className="hidden sm:inline">מועדפים</span>
-              {favCount > 0 && (
+              {loggedIn && favCount > 0 && (
                 <span className="min-w-[1.1rem] px-1 py-0.5 rounded-full bg-[#d4af37] text-white text-[9px] sm:text-[10px] text-center leading-none">
                   {favCount}
                 </span>
@@ -184,7 +202,7 @@ export default function SiteHeader() {
               className="md:hidden relative z-50 mt-3 grid grid-cols-1 gap-2 pb-1"
               aria-label="ניווט נייד"
             >
-              {links.map((link) => (
+              {navLinks.map((link) => (
                 <NavLink
                   key={link.href}
                   link={link}
@@ -202,7 +220,7 @@ export default function SiteHeader() {
           className="hidden md:flex mt-3 gap-1 overflow-x-auto scrollbar-hide bg-[#f7f0de]/80 rounded-t-2xl px-1 lg:px-2 pt-1 border border-b-0 border-[#eadaaf] snap-x snap-mandatory"
           aria-label="ניווט ראשי"
         >
-          {links.map((link) => (
+          {navLinks.map((link) => (
             <NavLink key={link.href} link={link} active={isActive(pathname, link.href)} variant="tab" />
           ))}
         </nav>

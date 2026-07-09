@@ -57,7 +57,7 @@ function LoginForm() {
           <h1 className="font-[family-name:var(--font-luxury)] text-3xl text-[#3d2f24]">
             {SITE_NAME}
           </h1>
-          <p className="text-sm text-[#6e634c] mt-2">התחברי כדי להיכנס לאתר</p>
+          <p className="text-sm text-[#6e634c] mt-2">התחברי כדי לשמור מועדפים, לפרסם שמלה ולגשת לאזור האישי</p>
         </div>
 
         <form
@@ -97,12 +97,12 @@ function LoginForm() {
             disabled={loading}
             className="w-full py-3.5 bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white rounded-xl font-black text-sm shadow-lg disabled:opacity-60"
           >
-            {loading ? 'מתחברת...' : 'כניסה לאתר →'}
+            {loading ? 'מתחברת...' : 'התחברות →'}
           </button>
 
           <p className="text-center text-xs text-[#6e634c]">
             אין לך חשבון?{' '}
-            <Link href="/register" className="text-[#b8860b] font-bold underline">
+            <Link href={`/register?next=${encodeURIComponent(next)}`} className="text-[#b8860b] font-bold underline">
               הרשמה
             </Link>
           </p>

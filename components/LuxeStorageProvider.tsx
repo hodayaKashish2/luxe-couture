@@ -22,6 +22,8 @@ import { LUXE_STORAGE_EVENT,
   type SavedDress,
 } from '@/lib/luxe-storage';
 import { SITE_AUTH_EVENT } from '@/lib/site-auth-events';
+import { isLoggedIn, redirectToLogin } from '@/lib/require-login';
+import { useRouter } from 'next/navigation';
 
 type LuxeStorageContextValue = {
   cart: SavedDress[];
@@ -40,6 +42,7 @@ type LuxeStorageContextValue = {
 const LuxeStorageContext = createContext<LuxeStorageContextValue | null>(null);
 
 export function LuxeStorageProvider({ children }: { children: ReactNode }) {
+  const router = useRouter();
   const [cart, setCart] = useState<SavedDress[]>([]);
   const [favorites, setFavorites] = useState<SavedDress[]>([]);
 
@@ -88,6 +91,10 @@ export function LuxeStorageProvider({ children }: { children: ReactNode }) {
 
   const toggleCart = useCallback((dress: Dress, e?: React.MouseEvent) => {
     e?.stopPropagation();
+    if (!isLoggedIn()) {
+      redirectToLogin(router);
+      return;
+    }
     setCart((prev) => {
       const saved = toSavedDress(dress);
       const next = isInCart(prev, saved.id)
@@ -96,10 +103,14 @@ export function LuxeStorageProvider({ children }: { children: ReactNode }) {
       saveCart(next);
       return next;
     });
-  }, []);
+  }, [router]);
 
   const toggleFavorite = useCallback((dress: Dress, e?: React.MouseEvent) => {
     e?.stopPropagation();
+    if (!isLoggedIn()) {
+      redirectToLogin(router);
+      return;
+    }
     setFavorites((prev) => {
       const saved = toSavedDress(dress);
       const next = isFavorite(prev, saved.id)
@@ -108,7 +119,7 @@ export function LuxeStorageProvider({ children }: { children: ReactNode }) {
       saveFavorites(next);
       return next;
     });
-  }, []);
+  }, [router]);
 
   const removeFromCart = useCallback((id: string) => {
     setCart((prev) => {

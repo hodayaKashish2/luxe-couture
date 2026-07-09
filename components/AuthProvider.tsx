@@ -2,28 +2,30 @@
 
 import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
+import { loginUrl } from '@/lib/require-login';
 
-const PUBLIC = ['/login', '/register'];
+const PROTECTED_PREFIXES = ['/account'];
+
+function needsAuth(pathname: string): boolean {
+  return PROTECTED_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
+  );
+}
 
 export default function AuthProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [ready, setReady] = useState(false);
+  const [ready, setReady] = useState(() => !needsAuth(pathname));
 
   useEffect(() => {
-    const isPublic =
-      PUBLIC.includes(pathname) ||
-      pathname.startsWith('/admin') ||
-      pathname.startsWith('/api/');
-
-    if (isPublic) {
+    if (!needsAuth(pathname)) {
       setReady(true);
       return;
     }
 
     const token = sessionStorage.getItem('site_token');
     if (!token) {
-      router.replace(`/login?next=${encodeURIComponent(pathname)}`);
+      router.replace(loginUrl(pathname));
       return;
     }
 
@@ -32,8 +34,8 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
 
   if (!ready) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[#fbf8f0] to-[#e8dcbd]">
-        <p className="text-sm text-[#8b6508] font-bold animate-pulse">טוען...</p>
+      <div className="min-h-screen flex items-center justify-center bg-[#faf8f5]">
+        <p className="text-[#8b6508] text-sm">טוען...</p>
       </div>
     );
   }

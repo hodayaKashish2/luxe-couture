@@ -1,15 +1,18 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { SITE_NAME } from '@/lib/site-config';
 import FormError from '@/components/FormError';
 import { validateRegisterForm } from '@/lib/form-validation';
 import { notifySiteAuthChange } from '@/lib/site-auth-events';
 
-export default function RegisterPage() {
+function RegisterForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const next = searchParams.get('next') || '/account';
+
   const [form, setForm] = useState({
     username: '',
     password: '',
@@ -43,7 +46,7 @@ export default function RegisterPage() {
       sessionStorage.setItem('site_token', data.token);
       sessionStorage.setItem('site_user', JSON.stringify(data.user));
       notifySiteAuthChange();
-      router.replace('/account');
+      router.replace(next);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'שגיאה');
     } finally {
@@ -75,10 +78,18 @@ export default function RegisterPage() {
             {loading ? 'נרשמת...' : 'יצירת חשבון'}
           </button>
           <p className="text-center text-xs">
-            <Link href="/login" className="text-[#b8860b] underline">יש לי חשבון — התחברות</Link>
+            <Link href={`/login?next=${encodeURIComponent(next)}`} className="text-[#b8860b] underline">יש לי חשבון — התחברות</Link>
           </p>
         </form>
       </div>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-[#8b6508]">טוען...</div>}>
+      <RegisterForm />
+    </Suspense>
   );
 }

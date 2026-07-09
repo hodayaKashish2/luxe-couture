@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import SiteFooter from '@/components/SiteFooter';
 import SiteHeader from '@/components/SiteHeader';
 import OwnerPlatformNotice from '@/components/OwnerPlatformNotice';
@@ -12,11 +13,13 @@ import SavedDressList from '@/components/SavedDressList';
 import { FAQS, DRESS_SIZES } from '@/lib/constants';
 import { notifyBookingUpdated } from '@/lib/booking-events';
 import { getStoredSiteUser } from '@/lib/session-user';
+import { isLoggedIn, redirectToLogin } from '@/lib/require-login';
 import { compareDresses } from '@/lib/dress-sort';
 import { dressShareUrl, ownerWhatsAppLink, WHATSAPP_LINK } from '@/lib/site-config';
 import { Dress, Review, SortOption, EVENT_TYPES, PICKUP_METHODS } from '@/lib/types';
 
 export default function Home() {
+  const router = useRouter();
   const [dressesList, setDressesList] = useState<Dress[]>([]);
   const [isLoadingDresses, setIsLoadingDresses] = useState(true);
   const [reviewsList, setReviewsList] = useState<Review[]>([]);
@@ -103,6 +106,16 @@ export default function Home() {
     setOrderPhone((prev) => prev || u.phone || '');
     setOrderEmail((prev) => prev || u.email || '');
   }, [selectedDress]);
+
+  useEffect(() => {
+    if (!isLoggedIn()) return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('publish') !== '1') return;
+    setIsAddDressOpen(true);
+    params.delete('publish');
+    const next = params.toString() ? `/?${params}` : '/';
+    window.history.replaceState(null, '', next);
+  }, []);
 
   // טעינת שמלות ותגובות
   useEffect(() => {
@@ -414,8 +427,20 @@ export default function Home() {
     }
   };
 
+  const openAddDressForm = () => {
+    if (!isLoggedIn()) {
+      redirectToLogin(router, '/?publish=1');
+      return;
+    }
+    setIsAddDressOpen(true);
+  };
+
   const handleAddDressSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isLoggedIn()) {
+      redirectToLogin(router, '/?publish=1');
+      return;
+    }
     if (!newDressData.name || !newDressData.price || !newDressData.size) {
       alert('אנא מלאי שדות חובה (שם, מחיר ומידה)');
       return;
@@ -535,7 +560,7 @@ export default function Home() {
           יש לך שמלה בארון? פרסמי אותה — ככל שיותר בנות שוכרות דרכך, השמלה שלך תופיע ראשונה ותקבל יותר חשיפה.
         </p>
         <div className="flex flex-wrap justify-center gap-3 mt-6">
-          <button onClick={() => setIsAddDressOpen(true)} className="px-6 py-3 bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white rounded-xl text-sm font-bold shadow-lg">
+          <button onClick={openAddDressForm} className="px-6 py-3 bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white rounded-xl text-sm font-bold shadow-lg">
             👗 יש לי שמלה — פרסמי
           </button>
           <a href="#catalog" className="px-6 py-3 bg-white/90 border border-[#decfa8] text-[#8b6508] rounded-xl text-sm font-bold">
