@@ -14,6 +14,7 @@ import { BOOKING_UPDATED_EVENT } from '@/lib/booking-events';
 import { getStoredSiteUser } from '@/lib/session-user';
 import { clearAllLuxeStorage } from '@/lib/luxe-storage';
 import { notifySiteAuthChange } from '@/lib/site-auth-events';
+import { accountSectionUrl, parseAccountSection } from '@/lib/account-section-url';
 
 type Section = 'hub' | 'reservations' | 'rentals' | 'cart' | 'favorites' | 'add' | 'edit';
 
@@ -81,6 +82,19 @@ function AccountPageContent() {
   const [editNewFiles, setEditNewFiles] = useState<File[]>([]);
   const [editNewPreviews, setEditNewPreviews] = useState<string[]>([]);
 
+  const navigateToSection = useCallback(
+    (next: Section, opts?: { dressId?: string; replace?: boolean }) => {
+      const url = accountSectionUrl(next, opts?.dressId);
+      if (opts?.replace) router.replace(url, { scroll: false });
+      else router.push(url, { scroll: false });
+    },
+    [router]
+  );
+
+  const goBackInAccount = useCallback(() => {
+    router.back();
+  }, [router]);
+
   const load = useCallback(async (opts?: { silent?: boolean }) => {
     const token = sessionStorage.getItem('site_token');
     if (!token) return;
@@ -129,11 +143,27 @@ function AccountPageContent() {
   }, [section, load]);
 
   useEffect(() => {
-    const tab = searchParams.get('section');
-    if (tab === 'cart' || tab === 'favorites' || tab === 'reservations' || tab === 'rentals' || tab === 'add') {
-      setSection(tab);
+    const { section: urlSection, dressId } = parseAccountSection(searchParams);
+    setSection(urlSection);
+
+    if (urlSection === 'edit' && dressId) {
+      const dress = dresses.find((d) => d.id === dressId);
+      if (dress) {
+        setEditingDress(dress);
+        setEditForm({
+          name: dress.name,
+          price: String(dress.price),
+          size: dress.size,
+          city: dress.city,
+          color: '',
+          description: '',
+        });
+        setEditImages(Array.isArray(dress.images) ? [...dress.images] : []);
+      }
+    } else if (urlSection !== 'edit') {
+      setEditingDress(null);
     }
-  }, [searchParams]);
+  }, [searchParams, dresses]);
 
   async function logout() {
     await fetch('/api/auth/logout', { method: 'POST' });
@@ -166,7 +196,7 @@ function AccountPageContent() {
       addImagePreviews.forEach((url) => URL.revokeObjectURL(url));
       setAddImagePreviews([]);
       if (addFileInputRef.current) addFileInputRef.current.value = '';
-      setSection('rentals');
+      navigateToSection('rentals', { replace: true });
       load();
     } else alert(data.error || 'שגיאה');
   }
@@ -201,7 +231,7 @@ function AccountPageContent() {
     editNewPreviews.forEach((url) => URL.revokeObjectURL(url));
     setEditNewPreviews([]);
     if (editFileInputRef.current) editFileInputRef.current.value = '';
-    setSection('edit');
+    navigateToSection('edit', { dressId: dress.id });
   }
 
   function handleEditImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -255,7 +285,7 @@ function AccountPageContent() {
       setEditNewFiles([]);
       setEditNewPreviews([]);
       setEditingDress(null);
-      setSection('rentals');
+      navigateToSection('rentals', { replace: true });
       load();
     } else {
       alert(data.error || 'שגיאה בעדכון');
@@ -289,7 +319,7 @@ function AccountPageContent() {
           <div className="space-y-6">
             <div className="grid sm:grid-cols-2 gap-4">
               <button
-                onClick={() => setSection('reservations')}
+                onClick={() => navigateToSection('reservations')}
                 className="text-right p-6 rounded-2xl border-2 border-[#decfa8] bg-white hover:border-[#d4af37] hover:shadow-lg transition-all group"
               >
                 <span className="text-3xl">📅</span>
@@ -310,7 +340,7 @@ function AccountPageContent() {
               </button>
 
               <button
-                onClick={() => setSection('rentals')}
+                onClick={() => navigateToSection('rentals')}
                 className="text-right p-6 rounded-2xl border-2 border-[#decfa8] bg-white hover:border-[#d4af37] hover:shadow-lg transition-all group"
               >
                 <span className="text-3xl">👗</span>
@@ -339,7 +369,7 @@ function AccountPageContent() {
               ].map((item) => (
                 <button
                   key={item.id}
-                  onClick={() => setSection(item.id)}
+                  onClick={() => navigateToSection(item.id)}
                   className="p-4 rounded-xl border border-[#eadaaf] bg-white/90 hover:bg-[#fffdf8] text-center"
                 >
                   <span className="text-xl">{item.icon}</span>
@@ -362,7 +392,7 @@ function AccountPageContent() {
 
         {section !== 'hub' && (
           <button
-            onClick={() => setSection('hub')}
+            onClick={goBackInAccount}
             className="mb-4 text-xs text-[#8b6508] font-bold hover:underline"
           >
             ← חזרה לאזור האישי
@@ -407,7 +437,7 @@ function AccountPageContent() {
           <div className="space-y-6">
             <div className="flex justify-between items-center flex-wrap gap-2">
               <h2 className="font-black text-xl">👗 ההשכרות שלי</h2>
-              <button onClick={() => setSection('add')} className="px-4 py-2 bg-[#b8860b] text-white rounded-xl text-xs font-bold">
+              <button onClick={() => navigateToSection('add')} className="px-4 py-2 bg-[#b8860b] text-white rounded-xl text-xs font-bold">
                 ➕ הוספת שמלה
               </button>
             </div>
@@ -525,7 +555,10 @@ function AccountPageContent() {
           <form onSubmit={submitEditDress} className="bg-white rounded-2xl border border-[#eadaaf] p-4 sm:p-6 space-y-4">
             <button
               type="button"
-              onClick={() => { setEditingDress(null); setSection('rentals'); }}
+              onClick={() => {
+                setEditingDress(null);
+                goBackInAccount();
+              }}
               className="text-xs text-[#8b6508] font-bold hover:underline"
             >
               ← חזרה להשכרות שלי
