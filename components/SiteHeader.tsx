@@ -4,10 +4,11 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useLuxeStorage } from '@/components/LuxeStorageProvider';
+import { useAuthModal } from '@/components/AuthModalProvider';
 import { SITE_NAME } from '@/lib/site-config';
 import { getStoredDisplayName } from '@/lib/session-user';
 import { SITE_AUTH_EVENT } from '@/lib/site-auth-events';
-import { isLoggedIn, loginUrl } from '@/lib/require-login';
+import { isLoggedIn } from '@/lib/require-login';
 
 const links = [
   { href: '/', label: 'קטלוג', icon: '🏠' },
@@ -29,23 +30,40 @@ function NavLink({
   active,
   onClick,
   variant = 'tab',
+  guestOnClick,
 }: {
   link: (typeof links)[number];
   active: boolean;
   onClick?: () => void;
   variant?: 'tab' | 'menu';
+  guestOnClick?: () => void;
 }) {
+  const classNameMenu = `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-colors ${
+    active
+      ? 'bg-[#fffdf8] text-[#8b6508] border-2 border-[#d4af37]'
+      : 'bg-white text-[#5c5037] border border-[#eadaaf] hover:border-[#d4af37]'
+  }`;
+  const classNameTab = `group relative inline-flex items-center gap-1.5 px-3 lg:px-5 py-2.5 lg:py-3 text-[11px] lg:text-xs font-bold whitespace-nowrap shrink-0 rounded-t-xl transition-all duration-200 border border-b-0 ${
+    active
+      ? 'bg-white text-[#8b6508] border-[#d4af37] shadow-[0_-4px_16px_rgba(212,175,55,0.18)] z-10 -mb-px'
+      : 'bg-transparent text-[#7a6f58] border-transparent hover:bg-white/90 hover:text-[#b8860b] hover:border-[#decfa8] hover:shadow-[0_-2px_10px_rgba(212,175,55,0.12)] hover:-translate-y-0.5'
+  }`;
+
+  if (guestOnClick) {
+    const cls = variant === 'menu' ? classNameMenu : classNameTab;
+    return (
+      <button type="button" onClick={() => { guestOnClick(); onClick?.(); }} className={cls}>
+        <span aria-hidden className={`text-sm ${variant === 'tab' ? 'transition-transform duration-200 group-hover:scale-125' : 'text-lg'}`}>
+          {link.icon}
+        </span>
+        {link.label}
+      </button>
+    );
+  }
+
   if (variant === 'menu') {
     return (
-      <Link
-        href={link.href}
-        onClick={onClick}
-        className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-colors ${
-          active
-            ? 'bg-[#fffdf8] text-[#8b6508] border-2 border-[#d4af37]'
-            : 'bg-white text-[#5c5037] border border-[#eadaaf] hover:border-[#d4af37]'
-        }`}
-      >
+      <Link href={link.href} onClick={onClick} className={classNameMenu}>
         <span className="text-lg">{link.icon}</span>
         {link.label}
       </Link>
@@ -53,15 +71,7 @@ function NavLink({
   }
 
   return (
-    <Link
-      href={link.href}
-      onClick={onClick}
-      className={`group relative inline-flex items-center gap-1.5 px-3 lg:px-5 py-2.5 lg:py-3 text-[11px] lg:text-xs font-bold whitespace-nowrap shrink-0 rounded-t-xl transition-all duration-200 border border-b-0 ${
-        active
-          ? 'bg-white text-[#8b6508] border-[#d4af37] shadow-[0_-4px_16px_rgba(212,175,55,0.18)] z-10 -mb-px'
-          : 'bg-transparent text-[#7a6f58] border-transparent hover:bg-white/90 hover:text-[#b8860b] hover:border-[#decfa8] hover:shadow-[0_-2px_10px_rgba(212,175,55,0.12)] hover:-translate-y-0.5'
-      }`}
-    >
+    <Link href={link.href} onClick={onClick} className={classNameTab}>
       <span
         aria-hidden
         className={`text-sm transition-transform duration-200 ${
@@ -89,16 +99,20 @@ function NavLink({
 export default function SiteHeader() {
   const pathname = usePathname();
   const { cartCount, favCount } = useLuxeStorage();
+  const { openAuthModal } = useAuthModal();
   const [userName, setUserName] = useState(() => getStoredDisplayName());
   const [loggedIn, setLoggedIn] = useState(() => isLoggedIn());
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const accountHref = loggedIn ? '/account' : loginUrl('/account');
-  const cartHref = loggedIn ? '/account?section=cart' : loginUrl('/account?section=cart');
-  const favHref = loggedIn ? '/account?section=favorites' : loginUrl('/account?section=favorites');
-  const navLinks = links.map((link) =>
-    link.href === '/account' ? { ...link, href: accountHref } : link
-  );
+  const openAccountAuth = () =>
+    openAuthModal({ reason: 'account', next: '/account' });
+  const openCartAuth = () =>
+    openAuthModal({ reason: 'cart', next: '/account?section=cart' });
+  const openFavAuth = () =>
+    openAuthModal({ reason: 'favorites', next: '/account?section=favorites' });
+
+  const actionBtnClass =
+    'inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl text-[10px] sm:text-[11px] font-bold border-2 border-[#decfa8] bg-[#fffdf8] text-[#8b6508] hover:border-[#d4af37] transition-colors';
 
   useEffect(() => {
     const syncAuth = () => {
@@ -152,31 +166,58 @@ export default function SiteHeader() {
           </Link>
 
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            <Link
-              href={cartHref}
-              className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl text-[10px] sm:text-[11px] font-bold border-2 border-[#decfa8] bg-[#fffdf8] text-[#8b6508] hover:border-[#d4af37] transition-colors"
-            >
-              🛍️
-              <span className="hidden sm:inline">סל קניות</span>
-              <span className="sm:hidden">סל</span>
-              {loggedIn && cartCount > 0 && (
-                <span className="min-w-[1.1rem] px-1 py-0.5 rounded-full bg-[#d4af37] text-white text-[9px] sm:text-[10px] text-center leading-none">
-                  {cartCount}
-                </span>
-              )}
-            </Link>
-            <Link
-              href={favHref}
-              className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl text-[10px] sm:text-[11px] font-bold border-2 border-[#decfa8] bg-[#fffdf8] text-[#8b6508] hover:border-[#d4af37] transition-colors"
-            >
-              ❤️
-              <span className="hidden sm:inline">מועדפים</span>
-              {loggedIn && favCount > 0 && (
-                <span className="min-w-[1.1rem] px-1 py-0.5 rounded-full bg-[#d4af37] text-white text-[9px] sm:text-[10px] text-center leading-none">
-                  {favCount}
-                </span>
-              )}
-            </Link>
+            {!loggedIn && (
+              <div className="hidden sm:flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => openAuthModal({ reason: 'general', initialView: 'login' })}
+                  className="px-3 py-2 rounded-xl text-[10px] font-bold border-2 border-[#decfa8] bg-white text-[#8b6508] hover:border-[#d4af37] transition-colors"
+                >
+                  התחברות
+                </button>
+                <button
+                  type="button"
+                  onClick={() => openAuthModal({ reason: 'general', initialView: 'register' })}
+                  className="px-3 py-2 rounded-xl text-[10px] font-bold bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white shadow-sm hover:shadow-md transition-shadow"
+                >
+                  הרשמה חינם
+                </button>
+              </div>
+            )}
+            {loggedIn ? (
+              <Link href="/account?section=cart" className={actionBtnClass}>
+                🛍️
+                <span className="hidden sm:inline">סל קניות</span>
+                <span className="sm:hidden">סל</span>
+                {cartCount > 0 && (
+                  <span className="min-w-[1.1rem] px-1 py-0.5 rounded-full bg-[#d4af37] text-white text-[9px] sm:text-[10px] text-center leading-none">
+                    {cartCount}
+                  </span>
+                )}
+              </Link>
+            ) : (
+              <button type="button" onClick={openCartAuth} className={actionBtnClass}>
+                🛍️
+                <span className="hidden sm:inline">סל קניות</span>
+                <span className="sm:hidden">סל</span>
+              </button>
+            )}
+            {loggedIn ? (
+              <Link href="/account?section=favorites" className={actionBtnClass}>
+                ❤️
+                <span className="hidden sm:inline">מועדפים</span>
+                {favCount > 0 && (
+                  <span className="min-w-[1.1rem] px-1 py-0.5 rounded-full bg-[#d4af37] text-white text-[9px] sm:text-[10px] text-center leading-none">
+                    {favCount}
+                  </span>
+                )}
+              </Link>
+            ) : (
+              <button type="button" onClick={openFavAuth} className={actionBtnClass}>
+                ❤️
+                <span className="hidden sm:inline">מועדפים</span>
+              </button>
+            )}
             <button
               type="button"
               onClick={() => setMobileOpen((open) => !open)}
@@ -202,15 +243,40 @@ export default function SiteHeader() {
               className="md:hidden relative z-50 mt-3 grid grid-cols-1 gap-2 pb-1"
               aria-label="ניווט נייד"
             >
-              {navLinks.map((link) => (
+              {links.map((link) => (
                 <NavLink
                   key={link.href}
                   link={link}
                   active={isActive(pathname, link.href)}
                   onClick={() => setMobileOpen(false)}
                   variant="menu"
+                  guestOnClick={!loggedIn && link.href === '/account' ? openAccountAuth : undefined}
                 />
               ))}
+              {!loggedIn && (
+                <div className="grid grid-cols-2 gap-2 pt-1 sm:hidden">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMobileOpen(false);
+                      openAuthModal({ reason: 'general', initialView: 'login' });
+                    }}
+                    className="px-4 py-3 rounded-xl text-sm font-bold border-2 border-[#decfa8] bg-white text-[#8b6508]"
+                  >
+                    התחברות
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMobileOpen(false);
+                      openAuthModal({ reason: 'general', initialView: 'register' });
+                    }}
+                    className="px-4 py-3 rounded-xl text-sm font-bold bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white"
+                  >
+                    הרשמה חינם
+                  </button>
+                </div>
+              )}
             </nav>
           </>
         )}
@@ -220,8 +286,14 @@ export default function SiteHeader() {
           className="hidden md:flex mt-3 gap-1 overflow-x-auto scrollbar-hide bg-[#f7f0de]/80 rounded-t-2xl px-1 lg:px-2 pt-1 border border-b-0 border-[#eadaaf] snap-x snap-mandatory"
           aria-label="ניווט ראשי"
         >
-          {navLinks.map((link) => (
-            <NavLink key={link.href} link={link} active={isActive(pathname, link.href)} variant="tab" />
+          {links.map((link) => (
+            <NavLink
+              key={link.href}
+              link={link}
+              active={isActive(pathname, link.href)}
+              variant="tab"
+              guestOnClick={!loggedIn && link.href === '/account' ? openAccountAuth : undefined}
+            />
           ))}
         </nav>
         <div className="hidden md:block h-px bg-gradient-to-l from-transparent via-[#d4af37]/60 to-transparent -mt-px" />

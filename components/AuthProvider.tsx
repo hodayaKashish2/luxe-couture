@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
-import { loginUrl } from '@/lib/require-login';
+import { useEffect, useRef } from 'react';
+import { usePathname } from 'next/navigation';
+import { useAuthModal } from '@/components/AuthModalProvider';
 
 const PROTECTED_PREFIXES = ['/account'];
 
@@ -14,31 +14,28 @@ function needsAuth(pathname: string): boolean {
 
 export default function AuthProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const router = useRouter();
-  const [ready, setReady] = useState(() => !needsAuth(pathname));
+  const { openAuthModal } = useAuthModal();
+  const promptedRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!needsAuth(pathname)) {
-      setReady(true);
-      return;
-    }
+    if (!needsAuth(pathname)) return;
 
     const token = sessionStorage.getItem('site_token');
-    if (!token) {
-      router.replace(loginUrl(pathname));
+    if (token) {
+      promptedRef.current = null;
       return;
     }
 
-    setReady(true);
-  }, [pathname, router]);
+    if (promptedRef.current === pathname) return;
+    promptedRef.current = pathname;
 
-  if (!ready) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#faf8f5]">
-        <p className="text-[#8b6508] text-sm">טוען...</p>
-      </div>
-    );
-  }
+    const next =
+      typeof window !== 'undefined'
+        ? `${window.location.pathname}${window.location.search}`
+        : pathname;
+
+    openAuthModal({ reason: 'account', next });
+  }, [pathname, openAuthModal]);
 
   return <>{children}</>;
 }

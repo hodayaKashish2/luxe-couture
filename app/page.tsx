@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
 import SiteFooter from '@/components/SiteFooter';
 import SiteHeader from '@/components/SiteHeader';
 import OwnerPlatformNotice from '@/components/OwnerPlatformNotice';
@@ -9,17 +8,18 @@ import DressCardSummary from '@/components/DressCardSummary';
 import DressDetailsModal from '@/components/DressDetailsModal';
 import DressRateModal from '@/components/DressRateModal';
 import { useLuxeStorage } from '@/components/LuxeStorageProvider';
+import { useAuthModal } from '@/components/AuthModalProvider';
 import SavedDressList from '@/components/SavedDressList';
 import { FAQS, DRESS_SIZES } from '@/lib/constants';
 import { notifyBookingUpdated } from '@/lib/booking-events';
 import { getStoredSiteUser } from '@/lib/session-user';
-import { isLoggedIn, redirectToLogin } from '@/lib/require-login';
+import { isLoggedIn } from '@/lib/require-login';
 import { compareDresses } from '@/lib/dress-sort';
 import { dressShareUrl, ownerWhatsAppLink, WHATSAPP_LINK } from '@/lib/site-config';
 import { Dress, Review, SortOption, EVENT_TYPES, PICKUP_METHODS } from '@/lib/types';
 
 export default function Home() {
-  const router = useRouter();
+  const { openAuthModal } = useAuthModal();
   const [dressesList, setDressesList] = useState<Dress[]>([]);
   const [isLoadingDresses, setIsLoadingDresses] = useState(true);
   const [reviewsList, setReviewsList] = useState<Review[]>([]);
@@ -429,7 +429,7 @@ export default function Home() {
 
   const openAddDressForm = () => {
     if (!isLoggedIn()) {
-      redirectToLogin(router, '/?publish=1');
+      openAuthModal({ reason: 'publish', next: '/?publish=1' });
       return;
     }
     setIsAddDressOpen(true);
@@ -438,7 +438,7 @@ export default function Home() {
   const handleAddDressSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isLoggedIn()) {
-      redirectToLogin(router, '/?publish=1');
+      openAuthModal({ reason: 'publish', next: '/?publish=1' });
       return;
     }
     if (!newDressData.name || !newDressData.price || !newDressData.size) {

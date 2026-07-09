@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Frank_Ruhl_Libre, Geist, Geist_Mono } from "next/font/google";
 import AuthProvider from "@/components/AuthProvider";
+import { AuthModalProvider } from "@/components/AuthModalProvider";
 import { LuxeStorageProvider } from "@/components/LuxeStorageProvider";
 import "./globals.css";
 
@@ -48,9 +49,11 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} ${frankRuhlLibre.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <AuthProvider>
-          <LuxeStorageProvider>{children}</LuxeStorageProvider>
-        </AuthProvider>
+        <AuthModalProvider>
+          <AuthProvider>
+            <LuxeStorageProvider>{children}</LuxeStorageProvider>
+          </AuthProvider>
+        </AuthModalProvider>
       </body>
     </html>
   );
