@@ -67,6 +67,7 @@ export default function AccountPage() {
   const [addFiles, setAddFiles] = useState<File[]>([]);
   const [addImagePreviews, setAddImagePreviews] = useState<string[]>([]);
   const addFileInputRef = useRef<HTMLInputElement>(null);
+  const editFileInputRef = useRef<HTMLInputElement>(null);
   const [addForm, setAddForm] = useState({
     name: '', price: '', size: '', city: 'ירושלים', color: '', event_type: '',
     deposit: '', pickup_method: 'pickup', includes_dry_cleaning: 'no', condition: 'new', description: '',
@@ -75,6 +76,9 @@ export default function AccountPage() {
   const [editForm, setEditForm] = useState({
     name: '', price: '', size: '', city: '', color: '', description: '',
   });
+  const [editImages, setEditImages] = useState<string[]>([]);
+  const [editNewFiles, setEditNewFiles] = useState<File[]>([]);
+  const [editNewPreviews, setEditNewPreviews] = useState<string[]>([]);
 
   const load = useCallback(async (opts?: { silent?: boolean }) => {
     const token = sessionStorage.getItem('site_token');
@@ -190,31 +194,64 @@ export default function AccountPage() {
       color: '',
       description: '',
     });
+    setEditImages(Array.isArray(dress.images) ? [...dress.images] : []);
+    setEditNewFiles([]);
+    editNewPreviews.forEach((url) => URL.revokeObjectURL(url));
+    setEditNewPreviews([]);
+    if (editFileInputRef.current) editFileInputRef.current.value = '';
     setSection('edit');
+  }
+
+  function handleEditImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    if (!e.target.files) return;
+    const files = Array.from(e.target.files);
+    const previews = files.map((file) => URL.createObjectURL(file));
+    setEditNewFiles((prev) => [...prev, ...files]);
+    setEditNewPreviews((prev) => [...prev, ...previews]);
+  }
+
+  function removeEditExistingImage(url: string) {
+    setEditImages((prev) => prev.filter((img) => img !== url));
+  }
+
+  function removeEditNewImage(index: number) {
+    URL.revokeObjectURL(editNewPreviews[index]);
+    setEditNewFiles((prev) => prev.filter((_, i) => i !== index));
+    setEditNewPreviews((prev) => prev.filter((_, i) => i !== index));
+    if (editFileInputRef.current) editFileInputRef.current.value = '';
   }
 
   async function submitEditDress(e: React.FormEvent) {
     e.preventDefault();
     if (!editingDress) return;
+
+    if (editImages.length + editNewFiles.length === 0) {
+      alert('חייבת להישאר לפחות תמונה אחת');
+      return;
+    }
+
     const token = sessionStorage.getItem('site_token');
+    const formData = new FormData();
+    formData.append('name', editForm.name);
+    formData.append('price', editForm.price);
+    formData.append('size', editForm.size);
+    formData.append('city', editForm.city);
+    formData.append('color', editForm.color);
+    formData.append('description', editForm.description);
+    formData.append('kept_images', JSON.stringify(editImages));
+    editNewFiles.forEach((file) => formData.append('images', file));
+
     const res = await fetch(`/api/user/dresses/${editingDress.id}`, {
       method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-user-token': token || '',
-      },
-      body: JSON.stringify({
-        name: editForm.name,
-        price: Number(editForm.price),
-        size: editForm.size,
-        city: editForm.city,
-        color: editForm.color,
-        description: editForm.description,
-      }),
+      headers: { 'x-user-token': token || '' },
+      body: formData,
     });
     const data = await res.json();
     if (res.ok) {
       alert(data.message || 'השמלה עודכנה');
+      editNewPreviews.forEach((url) => URL.revokeObjectURL(url));
+      setEditNewFiles([]);
+      setEditNewPreviews([]);
       setEditingDress(null);
       setSection('rentals');
       load();
@@ -510,6 +547,60 @@ export default function AccountPage() {
                 className="p-2.5 border border-[#decfa8] rounded-xl text-xs col-span-1 sm:col-span-2 resize-none"
               />
             </div>
+
+            <div>
+              <label className="block text-xs font-bold text-[#8b6508] mb-2">תמונות השמלה</label>
+              <p className="text-[10px] text-[#9a7b4f] mb-2">ניתן למחוק תמונות קיימות או להוסיף חדשות (עד 6 סה״כ)</p>
+
+              {(editImages.length > 0 || editNewPreviews.length > 0) && (
+                <div className="flex gap-2 flex-wrap mb-3 bg-neutral-50 p-3 rounded-xl border border-[#eadaaf]">
+                  {editImages.map((img) => (
+                    <div key={img} className="relative">
+                      <img src={img} alt="" className="w-20 h-20 sm:w-24 sm:h-24 object-contain rounded-xl border-2 border-[#decfa8] bg-[#faf8f3]" />
+                      <button
+                        type="button"
+                        onClick={() => removeEditExistingImage(img)}
+                        className="absolute -top-1.5 -left-1.5 w-5 h-5 rounded-full bg-[#2c261a] text-white text-[10px] font-bold flex items-center justify-center shadow-md hover:bg-red-700"
+                        aria-label="מחקי תמונה"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                  {editNewPreviews.map((img, index) => (
+                    <div key={`${img}-${index}`} className="relative">
+                      <img src={img} alt="" className="w-20 h-20 sm:w-24 sm:h-24 object-contain rounded-xl border-2 border-[#d4af37] bg-[#faf8f3]" />
+                      <span className="absolute bottom-1 right-1 text-[8px] bg-[#d4af37] text-white px-1 rounded">חדש</span>
+                      <button
+                        type="button"
+                        onClick={() => removeEditNewImage(index)}
+                        className="absolute -top-1.5 -left-1.5 w-5 h-5 rounded-full bg-[#2c261a] text-white text-[10px] font-bold flex items-center justify-center shadow-md hover:bg-red-700"
+                        aria-label="מחקי תמונה חדשה"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <button
+                type="button"
+                onClick={() => editFileInputRef.current?.click()}
+                className="w-full p-4 border-2 border-dashed border-[#d4af37] rounded-xl bg-[#fffdf8] hover:bg-[#f4ebd4] transition-colors text-center"
+              >
+                <span className="text-xs font-bold text-[#8b6508]">➕ הוספת תמונות</span>
+              </button>
+              <input
+                ref={editFileInputRef}
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={handleEditImageUpload}
+                className="hidden"
+              />
+            </div>
+
             <button type="submit" className="w-full py-3 bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white rounded-xl text-xs font-black shadow-md">
               שמרי שינויים
             </button>

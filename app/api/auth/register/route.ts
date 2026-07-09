@@ -39,7 +39,28 @@ export async function POST(request: Request) {
     }
 
     const supabase = getSupabaseAdmin();
+
+    const { data: existingUser } = await supabase
+      .from('site_users')
+      .select('id')
+      .eq('username', username)
+      .maybeSingle();
+
+    if (existingUser) {
+      return NextResponse.json({ error: 'שם המשתמש כבר תפוס — בחרי שם משתמש אחר' }, { status: 409 });
+    }
+
     const phoneStored = phone.startsWith('0') ? phone : `0${normalizePhone(phone).slice(3)}`;
+
+    const { data: existingPhone } = await supabase
+      .from('site_users')
+      .select('id')
+      .eq('phone', phoneStored)
+      .maybeSingle();
+
+    if (existingPhone) {
+      return NextResponse.json({ error: 'מספר הטלפון כבר רשום — התחברי או השתמשי במספר אחר' }, { status: 409 });
+    }
 
     const { data, error } = await supabase
       .from('site_users')
@@ -56,7 +77,10 @@ export async function POST(request: Request) {
       .single();
 
     if (error?.message?.includes('duplicate') || error?.code === '23505') {
-      return NextResponse.json({ error: 'שם המשתמש כבר תפוס' }, { status: 409 });
+      if (error.message?.includes('phone')) {
+        return NextResponse.json({ error: 'מספר הטלפון כבר רשום — התחברי או השתמשי במספר אחר' }, { status: 409 });
+      }
+      return NextResponse.json({ error: 'שם המשתמש כבר תפוס — בחרי שם משתמש אחר' }, { status: 409 });
     }
 
     if (error) {

@@ -373,10 +373,10 @@ export default function Home() {
     );
   };
 
-  const setDressImageIndex = (dressId: string, index: number, maxImages: number) => {
-    setCurrentImageIndexes(prev => ({
+  const setDressImageIndex = (dressId: string, index: number) => {
+    setCurrentImageIndexes((prev) => ({
       ...prev,
-      [dressId]: (index + maxImages) % maxImages,
+      [dressId]: index,
     }));
   };
 
@@ -629,83 +629,75 @@ export default function Home() {
               >
                 {/* 📸 גלריית התמונות */}
                 <div className="h-[240px] sm:h-[360px] lg:h-[430px] w-full relative overflow-hidden bg-[#faf8f3] p-2 sm:p-2.5">
-                  <div
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => setDetailsDress(dress)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        setDetailsDress(dress);
-                      }
-                    }}
-                    className="w-full h-full rounded-xl overflow-hidden relative border border-[#f0e2c3] cursor-pointer"
-                    aria-label={`פרטים על ${dress.name}`}
-                  >
-                    
+                  <div className="w-full h-full rounded-xl overflow-hidden relative border border-[#f0e2c3]">
+                    <img
+                      src={dress.images[currentImgIndex]}
+                      alt={dress.name}
+                      className="absolute inset-0 w-full h-full object-contain pointer-events-none z-0 group-hover:scale-105 transition-transform duration-700 ease-out"
+                    />
+
                     <button
                       type="button"
+                      onClick={() => setDetailsDress(dress)}
+                      className="absolute inset-0 z-[5] cursor-pointer bg-transparent"
+                      aria-label={`פרטים על ${dress.name}`}
+                    />
+
+                    <button
+                      type="button"
+                      onPointerDown={(e) => e.stopPropagation()}
                       onClick={(e) => handleToggleFavorite(dress, e)}
-                      className="absolute top-3 left-3 z-30 bg-white/90 hover:bg-white w-8 h-8 rounded-full flex items-center justify-center shadow-md border border-[#eadaaf] text-sm transition transform active:scale-90"
+                      className="absolute top-3 left-3 z-40 bg-white/90 hover:bg-white w-8 h-8 rounded-full flex items-center justify-center shadow-md border border-[#eadaaf] text-sm transition transform active:scale-90"
                     >
                       {isFav ? '❤️' : '🤍'}
                     </button>
 
-                    <span className="absolute top-3 right-3 z-10 bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white text-[10px] font-black px-3 py-1 rounded shadow-md">
+                    <span className="absolute top-3 right-3 z-40 pointer-events-none bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white text-[10px] font-black px-3 py-1 rounded shadow-md">
                       מידה {dress.size}
                     </span>
                     {isTop && (
-                      <span className="absolute top-12 right-3 z-10 bg-[#2c261a] text-[#f4ebd4] text-[9px] font-black px-2 py-0.5 rounded shadow-md">
+                      <span className="absolute top-12 right-3 z-40 pointer-events-none bg-[#2c261a] text-[#f4ebd4] text-[9px] font-black px-2 py-0.5 rounded shadow-md">
                         🏆 TOP {index + 1}
                       </span>
                     )}
 
-                    {/* חצים */}
                     {dress.images.length > 1 && (
                       <>
                         <button
                           type="button"
+                          onPointerDown={(e) => e.stopPropagation()}
                           onClick={(e) => prevImage(dress.id, dress.images.length, e)}
-                          className="absolute left-2.5 top-1/2 -translate-y-1/2 z-30 bg-white/95 text-[#b8860b] w-9 h-9 rounded-full flex items-center justify-center shadow-lg border border-[#e8cc92] font-black text-lg hover:bg-gradient-to-r hover:from-[#d4af37] hover:to-[#b8860b] hover:text-white transition-all"
+                          className="absolute left-2.5 top-1/2 -translate-y-1/2 z-40 bg-white/95 text-[#b8860b] w-9 h-9 rounded-full flex items-center justify-center shadow-lg border border-[#e8cc92] font-black text-lg hover:bg-gradient-to-r hover:from-[#d4af37] hover:to-[#b8860b] hover:text-white transition-all"
                           aria-label="תמונה קודמת"
                         >
                           ‹
                         </button>
                         <button
                           type="button"
+                          onPointerDown={(e) => e.stopPropagation()}
                           onClick={(e) => nextImage(dress.id, dress.images.length, e)}
-                          className="absolute right-2.5 top-1/2 -translate-y-1/2 z-30 bg-white/95 text-[#b8860b] w-9 h-9 rounded-full flex items-center justify-center shadow-lg border border-[#e8cc92] font-black text-lg hover:bg-gradient-to-r hover:from-[#d4af37] hover:to-[#b8860b] hover:text-white transition-all"
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 z-40 bg-white/95 text-[#b8860b] w-9 h-9 rounded-full flex items-center justify-center shadow-lg border border-[#e8cc92] font-black text-lg hover:bg-gradient-to-r hover:from-[#d4af37] hover:to-[#b8860b] hover:text-white transition-all"
                           aria-label="תמונה הבאה"
                         >
                           ›
                         </button>
+
+                        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-40 flex gap-1.5 bg-white/95 px-2.5 py-1 rounded-full shadow-md border border-[#e0cba0]">
+                          {dress.images.map((_, idx) => (
+                            <button
+                              key={idx}
+                              type="button"
+                              onPointerDown={(e) => e.stopPropagation()}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDressImageIndex(dress.id, idx);
+                              }}
+                              className={`h-1.5 rounded-full transition-all duration-300 ${idx === currentImgIndex ? 'bg-[#d4af37] w-3.5' : 'bg-[#e5d9bd] w-1.5 hover:bg-[#d4af37]/60'}`}
+                              aria-label={`תמונה ${idx + 1}`}
+                            />
+                          ))}
+                        </div>
                       </>
-                    )}
-
-                    <img
-                      src={dress.images[currentImgIndex]}
-                      alt={dress.name}
-                      className="absolute inset-0 w-full h-full object-contain pointer-events-none z-[1] group-hover:scale-105 transition-transform duration-700 ease-out"
-                    />
-
-                    {dress.images.length > 1 && (
-                      <div
-                        className="absolute bottom-3 left-1/2 -translate-x-1/2 z-30 flex gap-1.5 bg-white/95 px-2.5 py-1 rounded-full shadow-md border border-[#e0cba0]"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {dress.images.map((_, idx) => (
-                          <button
-                            key={idx}
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setDressImageIndex(dress.id, idx, dress.images.length);
-                            }}
-                            className={`h-1.5 rounded-full transition-all duration-300 ${idx === currentImgIndex ? 'bg-[#d4af37] w-3.5' : 'bg-[#e5d9bd] w-1.5 hover:bg-[#d4af37]/60'}`}
-                            aria-label={`תמונה ${idx + 1}`}
-                          />
-                        ))}
-                      </div>
                     )}
                   </div>
                 </div>

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getUserFromRequest } from '@/lib/user-auth';
 import { phonesMatch } from '@/lib/owner-auth';
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server';
+import { MAX_DRESS_IMAGES, uploadDressImages } from '@/lib/dress-images';
 
 function emailsMatch(a: string, b: string) {
   return a.trim().toLowerCase() === b.trim().toLowerCase();
@@ -24,6 +25,24 @@ function conditionLabel(condition: string) {
   return 'יד שנייה';
 }
 
+function parseJsonArray(raw: string | null) {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.map(String) : [];
+  } catch {
+    return [];
+  }
+}
+
+async function getOwnedDress(id: string, user: { phone?: string; email?: string }) {
+  const supabase = getSupabaseAdmin();
+  const { data: dress, error } = await supabase.from('dresses').select('*').eq('id', id).maybeSingle();
+  if (error) throw error;
+  if (!dress || !userOwnsDress(dress, user)) return null;
+  return dress;
+}
+
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const user = getUserFromRequest(request);
   if (!user) return NextResponse.json({ error: 'יש להתחבר' }, { status: 401 });
@@ -31,15 +50,35 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
   try {
     const { id } = await params;
-    const supabase = getSupabaseAdmin();
-    const { data: dress, error: fetchError } = await supabase.from('dresses').select('*').eq('id', id).maybeSingle();
+    const dress = await getOwnedDress(id, user);
+    if (!dress) return NextResponse.json({ error: 'שמלה לא נמצאה' }, { status: 404 });
 
-    if (fetchError) throw fetchError;
-    if (!dress || !userOwnsDress(dress, user)) {
-      return NextResponse.json({ error: 'שמלה לא נמצאה' }, { status: 404 });
+    const contentType = request.headers.get('content-type') || '';
+    const isMultipart = contentType.includes('multipart/form-data');
+
+    let body: Record<string, unknown> = {};
+    let keptImages: string[] | null = null;
+    let newFiles: File[] = [];
+
+    if (isMultipart) {
+      const formData = await request.formData();
+      body = {
+        name: formData.get('name'),
+        price: formData.get('price'),
+        size: formData.get('size'),
+        city: formData.get('city'),
+        color: formData.get('color'),
+        description: formData.get('description'),
+      };
+      keptImages = parseJsonArray(String(formData.get('kept_images') || '[]'));
+      newFiles = formData.getAll('images').filter((item): item is File => item instanceof File && item.size > 0);
+    } else {
+      body = await request.json();
+      if (Array.isArray(body.images)) {
+        keptImages = body.images.map(String);
+      }
     }
 
-    const body = await request.json();
     const updates: Record<string, unknown> = {};
 
     if (body.name !== undefined) updates.name = String(body.name).trim();
@@ -74,10 +113,26 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         .join(' | ');
     }
 
+    if (keptImages !== null || newFiles.length > 0) {
+      const existing = keptImages ?? (Array.isArray(dress.images) ? dress.images.map(String) : []);
+      const uploaded = newFiles.length > 0 ? await uploadDressImages(newFiles) : [];
+      const merged = [...existing, ...uploaded];
+
+      if (merged.length === 0) {
+        return NextResponse.json({ error: 'חייבת להישאר לפחות תמונה אחת' }, { status: 400 });
+      }
+      if (merged.length > MAX_DRESS_IMAGES) {
+        return NextResponse.json({ error: `ניתן לשמור עד ${MAX_DRESS_IMAGES} תמונות` }, { status: 400 });
+      }
+
+      updates.images = merged;
+    }
+
     if (Object.keys(updates).length === 0) {
       return NextResponse.json({ error: 'אין שדות לעדכון' }, { status: 400 });
     }
 
+    const supabase = getSupabaseAdmin();
     const { error } = await supabase.from('dresses').update(updates).eq('id', id);
     if (error) throw error;
 
