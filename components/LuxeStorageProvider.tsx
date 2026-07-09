@@ -10,8 +10,7 @@ import {
   type ReactNode,
 } from 'react';
 import type { Dress } from '@/lib/types';
-import {
-  LUXE_STORAGE_EVENT,
+import { LUXE_STORAGE_EVENT,
   isFavorite,
   isInCart,
   loadCart,
@@ -22,6 +21,7 @@ import {
   toSavedDress,
   type SavedDress,
 } from '@/lib/luxe-storage';
+import { SITE_AUTH_EVENT } from '@/lib/site-auth-events';
 
 type LuxeStorageContextValue = {
   cart: SavedDress[];
@@ -58,9 +58,11 @@ export function LuxeStorageProvider({ children }: { children: ReactNode }) {
 
     window.addEventListener('storage', onStorage);
     window.addEventListener(LUXE_STORAGE_EVENT, onCustom);
+    window.addEventListener(SITE_AUTH_EVENT, onCustom);
     return () => {
       window.removeEventListener('storage', onStorage);
       window.removeEventListener(LUXE_STORAGE_EVENT, onCustom);
+      window.removeEventListener(SITE_AUTH_EVENT, onCustom);
     };
   }, [refresh]);
 

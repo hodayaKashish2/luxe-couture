@@ -11,6 +11,9 @@ export type SavedDress = {
 
 export const LUXE_STORAGE_EVENT = 'luxe-storage-change';
 
+const CART_BASE = 'luxe_cart';
+const FAVS_BASE = 'luxe_favs';
+
 export function toSavedDress(dress: Dress): SavedDress {
   return {
     id: String(dress.id),
@@ -20,6 +23,23 @@ export function toSavedDress(dress: Dress): SavedDress {
     city: dress.city || '',
     images: Array.isArray(dress.images) ? dress.images : [],
   };
+}
+
+function getStorageUserId(): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = sessionStorage.getItem('site_user');
+    if (!raw) return null;
+    const user = JSON.parse(raw) as { userId?: string };
+    return user.userId ? String(user.userId) : null;
+  } catch {
+    return null;
+  }
+}
+
+function storageKey(base: string) {
+  const userId = getStorageUserId();
+  return userId ? `${base}_u_${userId}` : `${base}_guest`;
 }
 
 function readJson<T>(key: string, fallback: T): T {
@@ -38,10 +58,8 @@ function writeJson(key: string, value: unknown) {
   window.dispatchEvent(new CustomEvent(LUXE_STORAGE_EVENT));
 }
 
-export function loadCart(): SavedDress[] {
-  const raw = readJson<unknown[]>('luxe_cart', []);
-  if (!Array.isArray(raw)) return [];
-  return raw
+function normalizeSaved(items: unknown[]): SavedDress[] {
+  return items
     .filter((item): item is SavedDress => !!item && typeof item === 'object' && 'id' in item)
     .map((item) => ({
       id: String(item.id),
@@ -53,8 +71,14 @@ export function loadCart(): SavedDress[] {
     }));
 }
 
+export function loadCart(): SavedDress[] {
+  const raw = readJson<unknown[]>(storageKey(CART_BASE), []);
+  if (!Array.isArray(raw)) return [];
+  return normalizeSaved(raw);
+}
+
 export function loadFavorites(): SavedDress[] {
-  const raw = readJson<unknown[]>('luxe_favs', []);
+  const raw = readJson<unknown[]>(storageKey(FAVS_BASE), []);
   if (!Array.isArray(raw) || raw.length === 0) return [];
 
   if (typeof raw[0] === 'string') {
@@ -68,24 +92,15 @@ export function loadFavorites(): SavedDress[] {
     }));
   }
 
-  return raw
-    .filter((item): item is SavedDress => !!item && typeof item === 'object' && 'id' in item)
-    .map((item) => ({
-      id: String(item.id),
-      name: item.name || 'שמלה',
-      price: Number(item.price) || 0,
-      size: item.size || '',
-      city: item.city || '',
-      images: Array.isArray(item.images) ? item.images : [],
-    }));
+  return normalizeSaved(raw);
 }
 
 export function saveCart(items: SavedDress[]) {
-  writeJson('luxe_cart', items);
+  writeJson(storageKey(CART_BASE), items);
 }
 
 export function saveFavorites(items: SavedDress[]) {
-  writeJson('luxe_favs', items);
+  writeJson(storageKey(FAVS_BASE), items);
 }
 
 export function favoriteIds(favorites: SavedDress[]): string[] {

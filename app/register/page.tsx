@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { SITE_NAME } from '@/lib/site-config';
 import FormError from '@/components/FormError';
 import { validateRegisterForm } from '@/lib/form-validation';
+import { notifySiteAuthChange } from '@/lib/site-auth-events';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -41,6 +42,7 @@ export default function RegisterPage() {
 
       sessionStorage.setItem('site_token', data.token);
       sessionStorage.setItem('site_user', JSON.stringify(data.user));
+      notifySiteAuthChange();
       router.replace('/account');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'שגיאה');

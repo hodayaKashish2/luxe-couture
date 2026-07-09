@@ -1,4 +1,5 @@
 export type StoredSiteUser = {
+  userId?: string;
   username?: string;
   displayName?: string;
   display_name?: string;

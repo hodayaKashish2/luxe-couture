@@ -29,8 +29,10 @@ export async function GET(request: Request) {
     if (dressesError) throw dressesError;
 
     const myDresses = (allDresses ?? []).filter((d) => {
-      const phoneOk = user.phone && phonesMatch(String(d.owner_phone || ''), user.phone);
-      const emailOk = user.email && d.owner_email && emailsMatch(String(d.owner_email), user.email);
+      const ownerPhone = String(d.owner_phone || '').trim();
+      const ownerEmail = String(d.owner_email || '').trim();
+      const phoneOk = Boolean(user.phone?.trim() && ownerPhone && phonesMatch(ownerPhone, user.phone));
+      const emailOk = Boolean(user.email?.trim() && ownerEmail && emailsMatch(ownerEmail, user.email));
       return phoneOk || emailOk;
     });
 
@@ -108,12 +110,20 @@ export async function GET(request: Request) {
       }
 
       myReservations = allBookings
-        .filter(
-          (b) =>
-            (user.userId && b.site_user_id && String(b.site_user_id) === String(user.userId)) ||
-            (user.email && emailsMatch(String(b.customer_email || ''), user.email)) ||
-            (user.phone && phonesMatch(String(b.customer_phone || ''), user.phone))
-        )
+        .filter((b) => {
+          if (user.userId && b.site_user_id && String(b.site_user_id) === String(user.userId)) {
+            return true;
+          }
+          const bookingEmail = String(b.customer_email || '').trim();
+          const bookingPhone = String(b.customer_phone || '').trim();
+          if (user.email?.trim() && bookingEmail && emailsMatch(bookingEmail, user.email)) {
+            return true;
+          }
+          if (user.phone?.trim() && bookingPhone && phonesMatch(bookingPhone, user.phone)) {
+            return true;
+          }
+          return false;
+        })
         .map((b) => ({
           ...b,
           dress_name: dressMap[String(b.dress_id)] || 'שמלה',

@@ -69,6 +69,7 @@ export async function POST(request: Request) {
       success: true,
       token,
       user: {
+        userId: String(user.id),
         username: user.username,
         displayName: user.display_name,
         phone: user.phone,

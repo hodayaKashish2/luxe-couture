@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { SITE_NAME } from '@/lib/site-config';
 import FormError from '@/components/FormError';
 import { validateLoginForm } from '@/lib/form-validation';
+import { notifySiteAuthChange } from '@/lib/site-auth-events';
 
 function LoginForm() {
   const router = useRouter();
@@ -39,6 +40,7 @@ function LoginForm() {
 
       sessionStorage.setItem('site_token', data.token);
       sessionStorage.setItem('site_user', JSON.stringify(data.user));
+      notifySiteAuthChange();
       router.replace(next);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'שגיאה');

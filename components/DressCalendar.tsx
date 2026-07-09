@@ -9,6 +9,14 @@ type Props = {
 
 const WEEKDAYS = ['א׳', 'ב׳', 'ג׳', 'ד׳', 'ה׳', 'ו׳', 'ש׳'];
 
+type CalendarCell = {
+  date: string;
+  day: number;
+  booked: boolean;
+  isToday: boolean;
+  outside: boolean;
+};
+
 function toIsoLocal(year: number, month: number, day: number) {
   return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 }
@@ -36,15 +44,23 @@ export default function DressCalendar({ bookedDates = [], compact = false }: Pro
       year: 'numeric',
     });
 
-    const cells: Array<{
-      date: string | null;
-      day: number | null;
-      booked: boolean;
-      isToday: boolean;
-    }> = [];
+    const cells: CalendarCell[] = [];
 
-    for (let i = 0; i < startWeekday; i++) {
-      cells.push({ date: null, day: null, booked: false, isToday: false });
+    const prevMonthDate = new Date(viewYear, viewMonth, 0);
+    const prevMonthDays = prevMonthDate.getDate();
+    const prevMonth = prevMonthDate.getMonth();
+    const prevYear = prevMonthDate.getFullYear();
+
+    for (let i = startWeekday - 1; i >= 0; i--) {
+      const day = prevMonthDays - i;
+      const iso = toIsoLocal(prevYear, prevMonth, day);
+      cells.push({
+        date: iso,
+        day,
+        booked: bookedSet.has(iso),
+        isToday: iso === todayIso,
+        outside: true,
+      });
     }
 
     for (let d = 1; d <= daysInMonth; d++) {
@@ -54,7 +70,24 @@ export default function DressCalendar({ bookedDates = [], compact = false }: Pro
         day: d,
         booked: bookedSet.has(iso),
         isToday: iso === todayIso,
+        outside: false,
       });
+    }
+
+    const nextMonthDate = new Date(viewYear, viewMonth + 1, 1);
+    const nextMonth = nextMonthDate.getMonth();
+    const nextYear = nextMonthDate.getFullYear();
+    let nextDay = 1;
+    while (cells.length % 7 !== 0) {
+      const iso = toIsoLocal(nextYear, nextMonth, nextDay);
+      cells.push({
+        date: iso,
+        day: nextDay,
+        booked: bookedSet.has(iso),
+        isToday: iso === todayIso,
+        outside: true,
+      });
+      nextDay += 1;
     }
 
     return {
@@ -114,34 +147,33 @@ export default function DressCalendar({ bookedDates = [], compact = false }: Pro
 
       <div className={`grid grid-cols-7 gap-1 ${compact ? 'text-[8px]' : 'text-[9px]'}`}>
         {WEEKDAYS.map((name) => (
-          <div
-            key={name}
-            className="text-center font-black text-[#9a7b4f] py-1"
-          >
+          <div key={name} className="text-center font-black text-[#9a7b4f] py-1">
             {name}
           </div>
         ))}
       </div>
 
       <div className="grid grid-cols-7 gap-1">
-        {cells.map((cell, idx) =>
-          cell.day === null ? (
-            <div key={`empty-${idx}`} className={cellClass} aria-hidden />
-          ) : (
-            <div
-              key={cell.date}
-              className={`rounded-lg border text-center flex flex-col items-center justify-center ${cellClass} ${
-                cell.booked
+        {cells.map((cell) => (
+          <div
+            key={cell.date}
+            className={`rounded-lg border text-center flex flex-col items-center justify-center ${cellClass} ${
+              cell.outside
+                ? cell.booked
+                  ? 'bg-red-50/50 border-red-100 text-red-400/80 opacity-70'
+                  : 'bg-[#faf8f3] border-[#efe6cf] text-[#b5a88a] opacity-80'
+                : cell.booked
                   ? 'bg-red-50 border-red-200 text-red-800'
                   : 'bg-white border-[#eadaaf] text-[#6e634c]'
-              } ${cell.isToday ? 'ring-2 ring-[#d4af37] ring-offset-1' : ''}`}
-              title={cell.date || undefined}
-            >
-              <span className="font-bold text-[#8b6508] leading-none">{cell.day}</span>
-              <span className="mt-0.5 leading-none">{cell.booked ? '🔒' : '✓'}</span>
-            </div>
-          )
-        )}
+            } ${cell.isToday ? 'ring-2 ring-[#d4af37] ring-offset-1' : ''}`}
+            title={cell.date}
+          >
+            <span className={`font-bold leading-none ${cell.outside ? 'text-[#b5a88a]' : 'text-[#8b6508]'}`}>
+              {cell.day}
+            </span>
+            <span className="mt-0.5 leading-none">{cell.booked ? '🔒' : cell.outside ? '·' : '✓'}</span>
+          </div>
+        ))}
       </div>
 
       <div className="flex flex-wrap gap-3 text-[9px] text-[#9a7b4f] justify-center">

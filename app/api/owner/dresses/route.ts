@@ -87,7 +87,7 @@ export async function POST(request: Request) {
       event_type: eventType,
       owner_name: owner.displayName,
       owner_phone: owner.phone.replace(/^972/, '0') || owner.phone,
-      owner_email: ownerEmail,
+      owner_email: ownerEmail || owner.email || '',
       deposit: Number.isNaN(deposit) ? 0 : deposit,
       pickup_method: pickupMethod,
       includes_dry_cleaning: includesDryCleaning,

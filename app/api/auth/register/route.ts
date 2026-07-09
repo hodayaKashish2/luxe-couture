@@ -78,6 +78,7 @@ export async function POST(request: Request) {
       success: true,
       token,
       user: {
+        userId: String(data.id),
         username: data.username,
         displayName: data.display_name,
         phone: data.phone,

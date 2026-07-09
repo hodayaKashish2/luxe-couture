@@ -12,8 +12,9 @@ import OwnerPlatformNotice from '@/components/OwnerPlatformNotice';
 import { DRESS_SIZES } from '@/lib/constants';
 import { BOOKING_UPDATED_EVENT } from '@/lib/booking-events';
 import { getStoredSiteUser } from '@/lib/session-user';
+import { notifySiteAuthChange } from '@/lib/site-auth-events';
 
-type Section = 'hub' | 'reservations' | 'rentals' | 'cart' | 'favorites' | 'add';
+type Section = 'hub' | 'reservations' | 'rentals' | 'cart' | 'favorites' | 'add' | 'edit';
 
 type RentalDress = {
   id: string;
@@ -69,6 +70,10 @@ export default function AccountPage() {
   const [addForm, setAddForm] = useState({
     name: '', price: '', size: '', city: 'ירושלים', color: '', event_type: '',
     deposit: '', pickup_method: 'pickup', includes_dry_cleaning: 'no', condition: 'new', description: '',
+  });
+  const [editingDress, setEditingDress] = useState<RentalDress | null>(null);
+  const [editForm, setEditForm] = useState({
+    name: '', price: '', size: '', city: '', color: '', description: '',
   });
 
   const load = useCallback(async (opts?: { silent?: boolean }) => {
@@ -128,6 +133,7 @@ export default function AccountPage() {
   async function logout() {
     await fetch('/api/auth/logout', { method: 'POST' });
     sessionStorage.clear();
+    notifySiteAuthChange();
     router.replace('/login');
   }
 
@@ -172,6 +178,49 @@ export default function AccountPage() {
     setAddFiles((prev) => prev.filter((_, i) => i !== index));
     setAddImagePreviews((prev) => prev.filter((_, i) => i !== index));
     if (addFileInputRef.current) addFileInputRef.current.value = '';
+  }
+
+  function startEditDress(dress: RentalDress) {
+    setEditingDress(dress);
+    setEditForm({
+      name: dress.name,
+      price: String(dress.price),
+      size: dress.size,
+      city: dress.city,
+      color: '',
+      description: '',
+    });
+    setSection('edit');
+  }
+
+  async function submitEditDress(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editingDress) return;
+    const token = sessionStorage.getItem('site_token');
+    const res = await fetch(`/api/user/dresses/${editingDress.id}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-user-token': token || '',
+      },
+      body: JSON.stringify({
+        name: editForm.name,
+        price: Number(editForm.price),
+        size: editForm.size,
+        city: editForm.city,
+        color: editForm.color,
+        description: editForm.description,
+      }),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      alert(data.message || 'השמלה עודכנה');
+      setEditingDress(null);
+      setSection('rentals');
+      load();
+    } else {
+      alert(data.error || 'שגיאה בעדכון');
+    }
   }
 
   const reservationDates = reservations
@@ -342,11 +391,20 @@ export default function AccountPage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex flex-wrap items-start justify-between gap-2">
                           <h3 className="font-bold text-base">{dress.name}</h3>
-                          {dressBookings.length > 0 && (
-                            <span className="text-[10px] font-black bg-[#2c261a] text-[#f4ebd4] px-2.5 py-1 rounded-full shrink-0">
-                              {dressBookings.length} שריונות
-                            </span>
-                          )}
+                          <div className="flex flex-wrap gap-2 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => startEditDress(dress)}
+                              className="text-[10px] font-bold px-2.5 py-1 rounded-full border border-[#decfa8] text-[#8b6508] hover:bg-[#fffdf8]"
+                            >
+                              ✏️ עדכון
+                            </button>
+                            {dressBookings.length > 0 && (
+                              <span className="text-[10px] font-black bg-[#2c261a] text-[#f4ebd4] px-2.5 py-1 rounded-full">
+                                {dressBookings.length} שריונות
+                              </span>
+                            )}
+                          </div>
                         </div>
                         <p className="text-xs text-[#6e634c] mt-1">₪{dress.price} · מידה {dress.size} · {dress.city}</p>
                         <span className="inline-block mt-2 text-[10px] bg-[#f4ebd4] px-2 py-0.5 rounded-full">{STATUS[dress.status]}</span>
@@ -422,6 +480,40 @@ export default function AccountPage() {
               onRemove={removeFromFavorites}
             />
           </div>
+        )}
+
+        {section === 'edit' && editingDress && (
+          <form onSubmit={submitEditDress} className="bg-white rounded-2xl border border-[#eadaaf] p-4 sm:p-6 space-y-4">
+            <button
+              type="button"
+              onClick={() => { setEditingDress(null); setSection('rentals'); }}
+              className="text-xs text-[#8b6508] font-bold hover:underline"
+            >
+              ← חזרה להשכרות שלי
+            </button>
+            <h2 className="font-black text-xl">✏️ עדכון שמלה</h2>
+            <p className="text-xs text-[#6e634c]">עורכת: <strong>{editingDress.name}</strong></p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <input required placeholder="שם השמלה *" value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} className="p-2.5 border border-[#decfa8] rounded-xl text-xs col-span-1 sm:col-span-2" />
+              <input required type="number" placeholder="מחיר *" value={editForm.price} onChange={(e) => setEditForm({ ...editForm, price: e.target.value })} className="p-2.5 border border-[#decfa8] rounded-xl text-xs" />
+              <select required value={editForm.size} onChange={(e) => setEditForm({ ...editForm, size: e.target.value })} className="p-2.5 border border-[#decfa8] rounded-xl text-xs">
+                <option value="">מידה *</option>
+                {DRESS_SIZES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+              </select>
+              <input required placeholder="עיר *" value={editForm.city} onChange={(e) => setEditForm({ ...editForm, city: e.target.value })} className="p-2.5 border border-[#decfa8] rounded-xl text-xs" />
+              <input placeholder="צבע" value={editForm.color} onChange={(e) => setEditForm({ ...editForm, color: e.target.value })} className="p-2.5 border border-[#decfa8] rounded-xl text-xs" />
+              <textarea
+                placeholder="תיאור השמלה (אופציונלי)"
+                value={editForm.description}
+                onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                rows={3}
+                className="p-2.5 border border-[#decfa8] rounded-xl text-xs col-span-1 sm:col-span-2 resize-none"
+              />
+            </div>
+            <button type="submit" className="w-full py-3 bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white rounded-xl text-xs font-black shadow-md">
+              שמרי שינויים
+            </button>
+          </form>
         )}
 
         {section === 'add' && (

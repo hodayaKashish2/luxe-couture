@@ -231,11 +231,13 @@ export default function Home() {
   };
 
   const nextImage = (dressId: string, maxImages: number, e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
     setCurrentImageIndexes(prev => ({ ...prev, [dressId]: (prev[dressId] + 1) % maxImages }));
   };
 
   const prevImage = (dressId: string, maxImages: number, e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
     setCurrentImageIndexes(prev => ({ ...prev, [dressId]: (prev[dressId] - 1 + maxImages) % maxImages }));
   };
@@ -641,9 +643,10 @@ export default function Home() {
                     aria-label={`פרטים על ${dress.name}`}
                   >
                     
-                    <button 
+                    <button
+                      type="button"
                       onClick={(e) => handleToggleFavorite(dress, e)}
-                      className="absolute top-3 left-3 z-10 bg-white/90 hover:bg-white w-8 h-8 rounded-full flex items-center justify-center shadow-md border border-[#eadaaf] text-sm transition transform active:scale-90"
+                      className="absolute top-3 left-3 z-30 bg-white/90 hover:bg-white w-8 h-8 rounded-full flex items-center justify-center shadow-md border border-[#eadaaf] text-sm transition transform active:scale-90"
                     >
                       {isFav ? '❤️' : '🤍'}
                     </button>
@@ -660,16 +663,18 @@ export default function Home() {
                     {/* חצים */}
                     {dress.images.length > 1 && (
                       <>
-                        <button 
+                        <button
+                          type="button"
                           onClick={(e) => prevImage(dress.id, dress.images.length, e)}
-                          className="absolute left-2.5 top-1/2 -translate-y-1/2 z-20 bg-white/95 text-[#b8860b] w-9 h-9 rounded-full flex items-center justify-center shadow-lg border border-[#e8cc92] font-black text-lg hover:bg-gradient-to-r hover:from-[#d4af37] hover:to-[#b8860b] hover:text-white transition-all"
+                          className="absolute left-2.5 top-1/2 -translate-y-1/2 z-30 bg-white/95 text-[#b8860b] w-9 h-9 rounded-full flex items-center justify-center shadow-lg border border-[#e8cc92] font-black text-lg hover:bg-gradient-to-r hover:from-[#d4af37] hover:to-[#b8860b] hover:text-white transition-all"
                           aria-label="תמונה קודמת"
                         >
                           ‹
                         </button>
-                        <button 
+                        <button
+                          type="button"
                           onClick={(e) => nextImage(dress.id, dress.images.length, e)}
-                          className="absolute right-2.5 top-1/2 -translate-y-1/2 z-20 bg-white/95 text-[#b8860b] w-9 h-9 rounded-full flex items-center justify-center shadow-lg border border-[#e8cc92] font-black text-lg hover:bg-gradient-to-r hover:from-[#d4af37] hover:to-[#b8860b] hover:text-white transition-all"
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 z-30 bg-white/95 text-[#b8860b] w-9 h-9 rounded-full flex items-center justify-center shadow-lg border border-[#e8cc92] font-black text-lg hover:bg-gradient-to-r hover:from-[#d4af37] hover:to-[#b8860b] hover:text-white transition-all"
                           aria-label="תמונה הבאה"
                         >
                           ›
@@ -680,11 +685,14 @@ export default function Home() {
                     <img
                       src={dress.images[currentImgIndex]}
                       alt={dress.name}
-                      className="absolute inset-0 w-full h-full object-contain group-hover:scale-105 transition-transform duration-700 ease-out"
+                      className="absolute inset-0 w-full h-full object-contain pointer-events-none z-[1] group-hover:scale-105 transition-transform duration-700 ease-out"
                     />
 
                     {dress.images.length > 1 && (
-                      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex gap-1.5 bg-white/95 px-2.5 py-1 rounded-full shadow-md border border-[#e0cba0]">
+                      <div
+                        className="absolute bottom-3 left-1/2 -translate-x-1/2 z-30 flex gap-1.5 bg-white/95 px-2.5 py-1 rounded-full shadow-md border border-[#e0cba0]"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         {dress.images.map((_, idx) => (
                           <button
                             key={idx}
