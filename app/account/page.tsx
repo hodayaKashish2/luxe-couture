@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import SiteFooter from '@/components/SiteFooter';
 import SiteHeader from '@/components/SiteHeader';
 import SavedDressList from '@/components/SavedDressList';
+import DressDetailsModal from '@/components/DressDetailsModal';
 import { useLuxeStorage } from '@/components/LuxeStorageProvider';
 import DressCalendar from '@/components/DressCalendar';
 import OwnerPlatformNotice from '@/components/OwnerPlatformNotice';
@@ -15,6 +16,9 @@ import { getStoredSiteUser } from '@/lib/session-user';
 import { clearAllLuxeStorage } from '@/lib/luxe-storage';
 import { notifySiteAuthChange } from '@/lib/site-auth-events';
 import { accountSectionUrl, parseAccountSection } from '@/lib/account-section-url';
+import { fetchDressById } from '@/lib/dress-api';
+import type { Dress } from '@/lib/types';
+import type { SavedDress } from '@/lib/luxe-storage';
 
 type Section = 'hub' | 'reservations' | 'rentals' | 'cart' | 'favorites' | 'add' | 'edit';
 
@@ -51,8 +55,9 @@ const STATUS: Record<string, string> = {
 function AccountPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { cart, favorites, cartCount, favCount, removeFromCart, removeFromFavorites } = useLuxeStorage();
+  const { cart, favorites, cartCount, favCount, removeFromCart, removeFromFavorites, toggleCart, toggleFavorite, isDressInCart, isDressFavorite } = useLuxeStorage();
   const [section, setSection] = useState<Section>('hub');
+  const [detailsDress, setDetailsDress] = useState<Dress | null>(null);
   const [user, setUser] = useState<{ displayName: string; username: string } | null>(() => {
     const stored = getStoredSiteUser();
     if (!stored) return null;
@@ -94,6 +99,15 @@ function AccountPageContent() {
   const goBackInAccount = useCallback(() => {
     router.back();
   }, [router]);
+
+  const openSavedDressDetails = useCallback(async (item: SavedDress) => {
+    const dress = await fetchDressById(item.id);
+    if (dress) {
+      setDetailsDress(dress);
+      return;
+    }
+    alert('לא מצאנו את השמלה באתר — אולי הוסרה');
+  }, []);
 
   const load = useCallback(async (opts?: { silent?: boolean }) => {
     const token = sessionStorage.getItem('site_token');
@@ -535,6 +549,7 @@ function AccountPageContent() {
               items={cart}
               emptyMessage="הסל ריק — הוסיפי שמלות מהקטלוג"
               onRemove={removeFromCart}
+              onViewDetails={openSavedDressDetails}
               showTotal
             />
           </div>
@@ -547,6 +562,7 @@ function AccountPageContent() {
               items={favorites}
               emptyMessage="אין מועדפים עדיין — לחצי ❤️ על שמלה בקטלוג"
               onRemove={removeFromFavorites}
+              onViewDetails={openSavedDressDetails}
             />
           </div>
         )}
@@ -713,6 +729,22 @@ function AccountPageContent() {
           </form>
         )}
       </main>
+
+      {detailsDress && (
+        <DressDetailsModal
+          dress={detailsDress}
+          onClose={() => setDetailsDress(null)}
+          isInCart={isDressInCart(detailsDress.id)}
+          isFavorite={isDressFavorite(detailsDress.id)}
+          onToggleCart={() => toggleCart(detailsDress)}
+          onToggleFavorite={() => toggleFavorite(detailsDress)}
+          onReserve={() => {
+            const dressId = detailsDress.id;
+            setDetailsDress(null);
+            router.push(`/?reserve=${encodeURIComponent(dressId)}`);
+          }}
+        />
+      )}
 
       <SiteFooter />
     </div>

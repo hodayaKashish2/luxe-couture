@@ -16,8 +16,10 @@ import { getStoredSiteUser } from '@/lib/session-user';
 import { isLoggedIn } from '@/lib/require-login';
 import { useModalHistory } from '@/hooks/use-modal-history';
 import { compareDresses } from '@/lib/dress-sort';
+import { fetchDressById, findDressInList } from '@/lib/dress-api';
 import { dressShareUrl, ownerWhatsAppLink, WHATSAPP_LINK } from '@/lib/site-config';
 import { Dress, Review, SortOption, EVENT_TYPES, PICKUP_METHODS } from '@/lib/types';
+import type { SavedDress } from '@/lib/luxe-storage';
 
 export default function Home() {
   const { openAuthModal } = useAuthModal();
@@ -118,6 +120,20 @@ export default function Home() {
     window.history.replaceState(null, '', next);
   }, []);
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const reserveId = params.get('reserve');
+    if (!reserveId || dressesList.length === 0) return;
+
+    const dress = findDressInList(dressesList, reserveId);
+    if (!dress) return;
+
+    setSelectedDress(dress);
+    params.delete('reserve');
+    const next = params.toString() ? `/?${params}` : '/';
+    window.history.replaceState(null, '', next);
+  }, [dressesList]);
+
   // טעינת שמלות ותגובות
   useEffect(() => {
     async function loadDresses() {
@@ -196,6 +212,20 @@ export default function Home() {
       window.history.replaceState({}, '', '/');
     }
   }, []);
+
+  const openSavedDressDetails = useCallback(
+    async (item: SavedDress) => {
+      const fromList = findDressInList(dressesList, item.id);
+      if (fromList) {
+        setDetailsDress(fromList);
+        return;
+      }
+      const dress = await fetchDressById(item.id);
+      if (dress) setDetailsDress(dress);
+      else alert('לא מצאנו את השמלה — אולי הוסרה מהאתר');
+    },
+    [dressesList]
+  );
 
   const resetAddDressForm = () => {
     newDressData.images.forEach((url) => URL.revokeObjectURL(url));
@@ -1296,6 +1326,7 @@ export default function Home() {
                 items={cart}
                 emptyMessage="הסל שלך עדיין ריק. הוסיפי שמלות כדי לבצע הזמנה מרוכזת."
                 onRemove={removeFromCart}
+                onViewDetails={openSavedDressDetails}
                 showTotal={cart.length > 0}
               />
             </div>

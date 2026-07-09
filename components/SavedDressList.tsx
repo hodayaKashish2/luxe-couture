@@ -10,6 +10,7 @@ type Props = {
   showTotal?: boolean;
   actionLabel?: string;
   onAction?: (item: SavedDress) => void;
+  onViewDetails?: (item: SavedDress) => void;
 };
 
 export default function SavedDressList({
@@ -21,6 +22,7 @@ export default function SavedDressList({
   showTotal = false,
   actionLabel,
   onAction,
+  onViewDetails,
 }: Props) {
   if (items.length === 0) {
     return (
@@ -49,30 +51,44 @@ export default function SavedDressList({
               key={item.id}
               className="group flex gap-3 sm:gap-4 bg-white rounded-2xl border-2 border-[#ebd3a4]/70 p-3 sm:p-4 shadow-[0_8px_24px_rgba(212,175,55,0.08)] hover:border-[#d4af37] hover:shadow-[0_12px_32px_rgba(212,175,55,0.15)] transition-all"
             >
-              <div className="relative shrink-0 w-20 h-24 sm:w-24 sm:h-28 rounded-xl overflow-hidden border border-[#f0e2c3] bg-[#faf8f3]">
-                {image ? (
-                  <img src={image} alt={item.name} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-2xl text-[#decfa8]">👗</div>
-                )}
-                <span className="absolute bottom-1 right-1 bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white text-[8px] font-black px-1.5 py-0.5 rounded-md shadow">
-                  {item.size || '—'}
-                </span>
-              </div>
+              <button
+                type="button"
+                onClick={() => onViewDetails?.(item)}
+                disabled={!onViewDetails}
+                className={`flex gap-3 sm:gap-4 flex-1 min-w-0 text-right items-stretch ${
+                  onViewDetails ? 'cursor-pointer' : 'cursor-default'
+                }`}
+              >
+                <div className="relative shrink-0 w-20 h-24 sm:w-24 sm:h-28 rounded-xl overflow-hidden border border-[#f0e2c3] bg-[#faf8f3]">
+                  {image ? (
+                    <img src={image} alt={item.name} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-2xl text-[#decfa8]">👗</div>
+                  )}
+                  <span className="absolute bottom-1 right-1 bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white text-[8px] font-black px-1.5 py-0.5 rounded-md shadow">
+                    {item.size || '—'}
+                  </span>
+                </div>
 
-              <div className="flex-1 min-w-0 flex flex-col">
-                <h3 className="font-bold text-sm sm:text-base text-[#3d2f24] truncate group-hover:text-[#b8860b] transition-colors">
-                  {item.name}
-                </h3>
-                {item.city && (
-                  <p className="text-[10px] sm:text-xs text-[#9a7b4f] mt-0.5">📍 {item.city}</p>
-                )}
-                <p className="text-base sm:text-lg font-black text-[#2c261a] mt-auto pt-1">
-                  ₪{item.price}
-                  <span className="text-[10px] font-bold text-[#9a7b4f] mr-1">להשכרה</span>
-                </p>
+                <div className="flex-1 min-w-0 flex flex-col">
+                  <h3 className="font-bold text-sm sm:text-base text-[#3d2f24] truncate group-hover:text-[#b8860b] transition-colors">
+                    {item.name}
+                  </h3>
+                  {item.city && (
+                    <p className="text-[10px] sm:text-xs text-[#9a7b4f] mt-0.5">📍 {item.city}</p>
+                  )}
+                  {onViewDetails && (
+                    <p className="text-[10px] text-[#b8860b] font-bold mt-1">לחצי לפרטים מלאים →</p>
+                  )}
+                  <p className="text-base sm:text-lg font-black text-[#2c261a] mt-auto pt-1">
+                    ₪{item.price}
+                    <span className="text-[10px] font-bold text-[#9a7b4f] mr-1">להשכרה</span>
+                  </p>
+                </div>
+              </button>
 
-                <div className="flex flex-wrap gap-2 mt-2">
+              <div className="flex flex-col justify-end shrink-0">
+                <div className="flex flex-col gap-2">
                   {actionLabel && onAction && (
                     <button
                       type="button"
@@ -91,7 +107,7 @@ export default function SavedDressList({
                   <button
                     type="button"
                     onClick={() => onRemove(item.id)}
-                    className="px-3 py-1.5 rounded-lg text-red-600 border border-red-100 bg-red-50 text-[10px] font-bold hover:bg-red-100 mr-auto"
+                    className="px-3 py-1.5 rounded-lg text-red-600 border border-red-100 bg-red-50 text-[10px] font-bold hover:bg-red-100"
                   >
                     הסר
                   </button>
