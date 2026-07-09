@@ -135,6 +135,9 @@ export async function POST(request: Request) {
     }
 
     if (error) throw error;
+    if (!data) {
+      return NextResponse.json({ error: 'שגיאה בשמירת השמלה' }, { status: 500 });
+    }
 
     const mail = await sendDressPendingAdminEmail({
       dressId: data.id,

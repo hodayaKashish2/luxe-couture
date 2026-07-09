@@ -2,7 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { parseContactEmailFromDescription } from '@/lib/dress-contact';
 import { getAdminEmail, sendAdminEmail, sendDressApprovedOwnerEmail } from '@/lib/email';
 import { phonesMatch } from '@/lib/owner-auth';
-import { dressApprovedWhatsAppMessage, sendWhatsAppText } from '@/lib/whatsapp-notify';
+import { dressApprovedWhatsAppMessage, sendWhatsAppText, type WhatsAppSendResult } from '@/lib/whatsapp-notify';
 
 export type DressForNotify = {
   id?: string | number;
@@ -116,7 +116,7 @@ export async function notifyDressApproved(supabase: SupabaseClient, dress: Dress
     }
   }
 
-  let whatsappResult = { success: false, error: 'אין טלפון', waLink: '' as string | undefined };
+  let whatsappResult: WhatsAppSendResult = { success: false, error: 'אין טלפון' };
   if (ownerPhone) {
     whatsappResult = await sendWhatsAppText(
       ownerPhone,
