@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import SiteFooter from '@/components/SiteFooter';
@@ -47,7 +47,7 @@ const STATUS: Record<string, string> = {
   pending_payment: 'ממתין לתשלום',
 };
 
-export default function AccountPage() {
+function AccountPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { cart, favorites, cartCount, favCount, removeFromCart, removeFromFavorites } = useLuxeStorage();
@@ -683,5 +683,17 @@ export default function AccountPage() {
 
       <SiteFooter />
     </div>
+  );
+}
+
+export default function AccountPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-[#faf8f5]">
+        <p className="text-[#8b6508] text-sm">טוען...</p>
+      </div>
+    }>
+      <AccountPageContent />
+    </Suspense>
   );
 }
