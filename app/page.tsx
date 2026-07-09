@@ -9,7 +9,7 @@ import DressDetailsModal from '@/components/DressDetailsModal';
 import DressRateModal from '@/components/DressRateModal';
 import { useLuxeStorage } from '@/components/LuxeStorageProvider';
 import SavedDressList from '@/components/SavedDressList';
-import { FAQS } from '@/lib/constants';
+import { FAQS, DRESS_SIZES } from '@/lib/constants';
 import { notifyBookingUpdated } from '@/lib/booking-events';
 import { getStoredSiteUser } from '@/lib/session-user';
 import { compareDresses } from '@/lib/dress-sort';
@@ -558,13 +558,16 @@ export default function Home() {
           </div>
           <div className="flex flex-col">
             <label className="block text-xs font-black text-[#8b6508] mb-2">מידה</label>
-            <div className="flex gap-1 bg-[#f5ebd2] p-1 rounded-xl border border-[#dec085] min-h-[42px] items-center">
-              {['All', 'S', 'M', 'L'].map((size) => (
-                <button key={size} onClick={() => setSelectedSize(size)} className={`flex-1 py-1.5 rounded-lg text-xs font-bold ${selectedSize === size ? 'bg-[#d4af37] text-white' : 'text-[#6d5b3a]'}`}>
-                  {size === 'All' ? 'הכל' : size}
-                </button>
+            <select
+              value={selectedSize}
+              onChange={(e) => setSelectedSize(e.target.value)}
+              className="w-full p-3 bg-neutral-50 border border-[#dfc48c] rounded-xl text-xs"
+            >
+              <option value="All">הכל</option>
+              {DRESS_SIZES.map((size) => (
+                <option key={size.value} value={size.value}>{size.label}</option>
               ))}
-            </div>
+            </select>
           </div>
           <div className="flex flex-col">
             <label className="block text-xs font-black text-[#8b6508] mb-2">סוג אירוע</label>
@@ -624,7 +627,19 @@ export default function Home() {
               >
                 {/* 📸 גלריית התמונות */}
                 <div className="h-[240px] sm:h-[360px] lg:h-[430px] w-full relative overflow-hidden bg-[#faf8f3] p-2 sm:p-2.5">
-                  <div className="w-full h-full rounded-xl overflow-hidden relative border border-[#f0e2c3]">
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setDetailsDress(dress)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setDetailsDress(dress);
+                      }
+                    }}
+                    className="w-full h-full rounded-xl overflow-hidden relative border border-[#f0e2c3] cursor-pointer"
+                    aria-label={`פרטים על ${dress.name}`}
+                  >
                     
                     <button 
                       onClick={(e) => handleToggleFavorite(dress, e)}
@@ -662,7 +677,7 @@ export default function Home() {
                       </>
                     )}
 
-                    <img src={dress.images[currentImgIndex]} alt={dress.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" />
+                    <img src={dress.images[currentImgIndex]} alt={dress.name} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-700 ease-out" />
 
                     {dress.images.length > 1 && (
                       <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex gap-1.5 bg-white/95 px-2.5 py-1 rounded-full shadow-md border border-[#e0cba0]">
@@ -686,7 +701,13 @@ export default function Home() {
                 {/* פרטי השמלה והמחיר */}
                 <div className="p-4 sm:p-5 flex flex-col flex-grow bg-gradient-to-b from-white to-[#fdfbf7]">
                   <div className="flex justify-between items-start gap-2">
-                    <h3 className="text-lg font-bold text-neutral-900 tracking-wide group-hover:text-[#b8860b] transition-colors">{dress.name}</h3>
+                    <button
+                      type="button"
+                      onClick={() => setDetailsDress(dress)}
+                      className="text-lg font-bold text-neutral-900 tracking-wide group-hover:text-[#b8860b] transition-colors text-right"
+                    >
+                      {dress.name}
+                    </button>
                     <button 
                       onClick={(e) => handleToggleCart(dress, e)}
                       className={`text-xs p-1.5 rounded-lg border transition ${
@@ -812,11 +833,9 @@ export default function Home() {
                     className="w-full p-2.5 bg-neutral-50 border border-[#decfa8] rounded-xl text-xs font-medium focus:outline-none focus:border-[#d4af37]"
                   >
                     <option value="">בחרי...</option>
-                    <option value="XS">XS (34)</option>
-                    <option value="S">S (36)</option>
-                    <option value="M">M (38)</option>
-                    <option value="L">L (40)</option>
-                    <option value="XL">XL (42)</option>
+                    {DRESS_SIZES.map((size) => (
+                      <option key={size.value} value={size.value}>{size.label}</option>
+                    ))}
                   </select>
                 </div>
               </div>
@@ -968,7 +987,7 @@ export default function Home() {
                   <div className="flex gap-2 flex-wrap mt-2 bg-neutral-50 p-2 rounded-xl border border-neutral-100">
                     {newDressData.images.map((img, index) => (
                       <div key={`${img}-${index}`} className="relative">
-                        <img src={img} alt={`תצוגה ${index + 1}`} className="w-16 h-16 object-cover rounded-lg border border-[#decfa8]" />
+                        <img src={img} alt={`תצוגה ${index + 1}`} className="w-16 h-16 object-contain rounded-lg border border-[#decfa8] bg-[#faf8f3]" />
                         <button
                           type="button"
                           onClick={() => removeNewDressImage(index)}
@@ -1232,7 +1251,7 @@ export default function Home() {
                   </div>
                 </>
               )}
-              <img src={selectedDress.images[modalImageIndex]} alt={selectedDress.name} className="w-full h-full object-cover" />
+              <img src={selectedDress.images[modalImageIndex]} alt={selectedDress.name} className="w-full h-full object-contain p-3" />
             </div>
 
             {/* טופס שריון בקליק */}
@@ -1365,7 +1384,25 @@ export default function Home() {
       )}
 
       {detailsDress && (
-        <DressDetailsModal dress={detailsDress} onClose={() => setDetailsDress(null)} />
+        <DressDetailsModal
+          dress={detailsDress}
+          initialImageIndex={currentImageIndexes[detailsDress.id] || 0}
+          onClose={() => setDetailsDress(null)}
+          isInCart={isDressInCart(detailsDress.id)}
+          isFavorite={isDressFavorite(detailsDress.id)}
+          onReserve={() => {
+            const idx = currentImageIndexes[detailsDress.id] || 0;
+            setModalImageIndex(idx);
+            setSelectedDress(detailsDress);
+            setDetailsDress(null);
+          }}
+          onToggleCart={() => toggleCart(detailsDress)}
+          onToggleFavorite={() => toggleFavorite(detailsDress)}
+          onCoordinate={() => {
+            openCoordinate(detailsDress);
+            setDetailsDress(null);
+          }}
+        />
       )}
 
       {rateDress && (

@@ -9,6 +9,7 @@ import SavedDressList from '@/components/SavedDressList';
 import { useLuxeStorage } from '@/components/LuxeStorageProvider';
 import DressCalendar from '@/components/DressCalendar';
 import OwnerPlatformNotice from '@/components/OwnerPlatformNotice';
+import { DRESS_SIZES } from '@/lib/constants';
 import { BOOKING_UPDATED_EVENT } from '@/lib/booking-events';
 import { getStoredSiteUser } from '@/lib/session-user';
 
@@ -334,7 +335,7 @@ export default function AccountPage() {
                   <div key={dress.id} className="bg-white rounded-2xl border border-[#eadaaf] p-4 sm:p-5 space-y-4">
                     <div className="flex gap-4">
                       {dress.images?.[0] ? (
-                        <img src={dress.images[0]} alt="" className="w-20 h-24 sm:w-24 sm:h-28 object-cover rounded-xl border border-[#f0e2c3] shrink-0" />
+                        <img src={dress.images[0]} alt="" className="w-20 h-24 sm:w-24 sm:h-28 object-contain rounded-xl border border-[#f0e2c3] shrink-0 bg-[#faf8f3]" />
                       ) : (
                         <div className="w-20 h-24 sm:w-24 sm:h-28 rounded-xl border border-dashed border-[#decfa8] bg-[#faf8f3] flex items-center justify-center text-2xl shrink-0">👗</div>
                       )}
@@ -432,7 +433,7 @@ export default function AccountPage() {
               <input required type="number" placeholder="מחיר *" value={addForm.price} onChange={(e) => setAddForm({ ...addForm, price: e.target.value })} className="p-2.5 border border-[#decfa8] rounded-xl text-xs" />
               <select required value={addForm.size} onChange={(e) => setAddForm({ ...addForm, size: e.target.value })} className="p-2.5 border border-[#decfa8] rounded-xl text-xs">
                 <option value="">מידה *</option>
-                {['XS', 'S', 'M', 'L', 'XL'].map((s) => <option key={s} value={s}>{s}</option>)}
+                {DRESS_SIZES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
               </select>
               <input required placeholder="עיר *" value={addForm.city} onChange={(e) => setAddForm({ ...addForm, city: e.target.value })} className="p-2.5 border border-[#decfa8] rounded-xl text-xs" />
               <input placeholder="צבע" value={addForm.color} onChange={(e) => setAddForm({ ...addForm, color: e.target.value })} className="p-2.5 border border-[#decfa8] rounded-xl text-xs" />
@@ -472,7 +473,7 @@ export default function AccountPage() {
                 <div className="flex gap-2 flex-wrap mt-3 bg-neutral-50 p-3 rounded-xl border border-[#eadaaf]">
                   {addImagePreviews.map((img, index) => (
                     <div key={`${img}-${index}`} className="relative">
-                      <img src={img} alt={`תצוגה ${index + 1}`} className="w-20 h-20 sm:w-24 sm:h-24 object-cover rounded-xl border-2 border-[#decfa8]" />
+                      <img src={img} alt={`תצוגה ${index + 1}`} className="w-20 h-20 sm:w-24 sm:h-24 object-contain rounded-xl border-2 border-[#decfa8] bg-[#faf8f3]" />
                       <button
                         type="button"
                         onClick={() => removeAddImage(index)}

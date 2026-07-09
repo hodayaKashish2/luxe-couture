@@ -75,7 +75,7 @@ export default function AdminPage() {
     action: 'approve' | 'reject' | 'delete'
   ) {
     if (!savedToken) return;
-    if (action === 'delete' && !confirm('להסיר את השמלה מהאתר? היא לא תופיע יותר בקטalog.')) return;
+    if (action === 'delete' && !confirm('להסיר את השמלה מהאתר? היא לא תופיע יותר בקטלוג.')) return;
 
     setActionMsg('');
     const response = await fetch('/api/admin', {
@@ -140,7 +140,7 @@ export default function AdminPage() {
             {/* מחיקה — ראשון וברור */}
             <section className="bg-red-50/50 border-2 border-red-200 rounded-2xl p-5">
               <h2 className="font-black text-lg mb-1 text-red-900">🗑️ מחיקת שמלה מהאתר ({publishedDresses.length})</h2>
-              <p className="text-xs text-red-800/80 mb-4">כל השמלות המפורסמות כרגע — לחצי «הסר מהאתר» כדי להסיר מהקטalog</p>
+              <p className="text-xs text-red-800/80 mb-4">כל השמלות המפורסמות כרגע — לחצי «הסר מהאתר» כדי להסיר מהקטלוג</p>
               {publishedDresses.length === 0 ? (
                 <p className="text-xs text-[#6e634c]">אין שמלות מפורסמות כרגע</p>
               ) : (
@@ -148,7 +148,7 @@ export default function AdminPage() {
                   {publishedDresses.map((dress) => (
                     <div key={dress.id} className="bg-white rounded-xl border border-red-100 p-4 flex gap-4 items-center">
                       {dress.images?.[0] && (
-                        <img src={dress.images[0]} alt="" className="w-16 h-20 object-cover rounded-lg" />
+                        <img src={dress.images[0]} alt="" className="w-16 h-20 object-contain rounded-lg bg-[#faf8f3]" />
                       )}
                       <div className="flex-grow min-w-0">
                         <h3 className="font-bold text-sm">{dress.name}</h3>
@@ -177,7 +177,7 @@ export default function AdminPage() {
                   {pendingDresses.map((dress) => (
                     <div key={dress.id} className="bg-white rounded-xl border border-[#eadaaf] p-4 flex gap-4">
                       {dress.images?.[0] && (
-                        <img src={dress.images[0]} alt="" className="w-20 h-24 object-cover rounded-lg" />
+                        <img src={dress.images[0]} alt="" className="w-20 h-24 object-contain rounded-lg bg-[#faf8f3]" />
                       )}
                       <div className="flex-grow">
                         <h3 className="font-bold">{dress.name}</h3>

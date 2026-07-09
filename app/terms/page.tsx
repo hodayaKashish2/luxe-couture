@@ -58,10 +58,13 @@ export default function TermsPage() {
       </section>
 
       <section>
-        <h2 className="font-bold text-[#3d2f24] mb-2">5. חשיפה בקטalog</h2>
+        <h2 className="font-bold text-[#3d2f24] mb-2">5. חשיפה בקטלוג</h2>
         <p className="text-xs leading-relaxed">
-          שמלות עם מספר השכרות גבוה יותר מוצגות בתחילת האתר ומקבלות חשיפה רחבה יותר — כך יותר
+          שמלות עם מספר השכרות גבוה יותר מוצגות בתחילת הקטלוג ומקבלות חשיפה רחבה יותר — כך יותר
           שוכרות רואות אותן.
+        </p>
+        <p className="text-xs leading-relaxed mt-2">
+          בקטלוג ניתן לסנן שמלות לפי מידה (מ-XS ועד XXL), עיר, צבע, סוג אירוע ומחיר.
         </p>
       </section>
 
