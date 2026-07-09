@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { sendDressApprovedOwnerEmail } from '@/lib/email';
+import { notifyDressApproved } from '@/lib/dress-approval-notify';
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server';
 
 function renderPage(title: string, message: string, success: boolean) {
@@ -47,17 +47,41 @@ export async function GET(request: Request) {
 
   try {
     const supabase = getSupabaseAdmin();
-    const { data: dress, error: fetchError } = await supabase
+    let dress: {
+      id: string | number;
+      name: string;
+      status: string;
+      owner_name?: string | null;
+      owner_email?: string | null;
+      owner_phone?: string | null;
+    } | null = null;
+
+    const fullSelect = await supabase
       .from('dresses')
-      .select('id, name, status, owner_name, owner_email')
+      .select('id, name, status, owner_name, owner_email, owner_phone')
       .eq('id', id)
       .single();
 
-    if (fetchError || !dress) {
+    if (fullSelect.error?.message?.includes('owner_email') || fullSelect.error?.message?.includes('owner_phone')) {
+      const fallback = await supabase
+        .from('dresses')
+        .select('id, name, status, owner_name, owner_phone')
+        .eq('id', id)
+        .single();
+      if (fallback.error || !fallback.data) {
+        return new NextResponse(
+          renderPage('שמלה לא נמצאה', 'לא נמצאה שמלה עם המזהה שבקישור.', false),
+          { status: 404, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
+        );
+      }
+      dress = { ...fallback.data, owner_email: '' };
+    } else if (fullSelect.error || !fullSelect.data) {
       return new NextResponse(
         renderPage('שמלה לא נמצאה', 'לא נמצאה שמלה עם המזהה שבקישור.', false),
         { status: 404, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
       );
+    } else {
+      dress = fullSelect.data;
     }
 
     if (dress.status === 'approved') {
@@ -74,15 +98,9 @@ export async function GET(request: Request) {
 
     if (updateError) throw updateError;
 
-    if (dress.owner_email) {
-      const ownerMail = await sendDressApprovedOwnerEmail({
-        to: dress.owner_email,
-        ownerName: dress.owner_name || 'משכירה',
-        dressName: dress.name,
-      });
-      if (!ownerMail.success) {
-        console.error('Dress approved owner email failed:', ownerMail.error);
-      }
+    const mail = await notifyDressApproved(supabase, dress);
+    if (!mail.success) {
+      console.error('Dress approved owner email failed:', mail.error);
     }
 
     return new NextResponse(
