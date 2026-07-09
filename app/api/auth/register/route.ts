@@ -5,7 +5,7 @@ import {
   createUserToken,
   hashPassword,
 } from '@/lib/user-auth';
-import { normalizePhone } from '@/lib/owner-auth';
+import { normalizePhone, phonesMatch } from '@/lib/owner-auth';
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server';
 import { formatSiteUsersDbError } from '@/lib/db-errors';
 
@@ -65,11 +65,11 @@ export async function POST(request: Request) {
 
     const phoneStored = phone.startsWith('0') ? phone : `0${normalizePhone(phone).slice(3)}`;
 
-    const { data: existingPhone } = await supabase
-      .from('site_users')
-      .select('id')
-      .eq('phone', phoneStored)
-      .maybeSingle();
+    const { data: phoneRows } = await supabase.from('site_users').select('id, phone');
+
+    const existingPhone = (phoneRows ?? []).find((row) =>
+      phonesMatch(String(row.phone || ''), phoneStored)
+    );
 
     if (existingPhone) {
       return NextResponse.json({ error: 'מספר הטלפון כבר רשום — התחברי או השתמשי במספר אחר' }, { status: 409 });
