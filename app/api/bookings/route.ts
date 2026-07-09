@@ -148,13 +148,16 @@ export async function POST(request: Request) {
           `
         );
 
-        await sendBookingConfirmationEmail({
+        const customerMail = await sendBookingConfirmationEmail({
           to: email,
           customerName: name,
           dressName,
           eventDate: date,
           amount: total,
         });
+        if (!customerMail.success) {
+          console.error('Customer confirmation email failed:', customerMail.error);
+        }
 
         return NextResponse.json({
           success: true,
@@ -203,13 +206,16 @@ export async function POST(request: Request) {
     );
 
     if (legacyMode) {
-      await sendBookingConfirmationEmail({
+      const customerMail = await sendBookingConfirmationEmail({
         to: email,
         customerName: name,
         dressName,
         eventDate: date,
         amount: total,
       });
+      if (!customerMail.success) {
+        console.error('Customer confirmation email failed:', customerMail.error);
+      }
     }
 
     return NextResponse.json({

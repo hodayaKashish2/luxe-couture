@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin, isSupabaseConfigured, supabaseEnvStatus } from '@/lib/supabase/server';
 import { formatSiteUsersDbError } from '@/lib/db-errors';
+import { getEmailConfigStatus } from '@/lib/email';
 
 const SITE_USERS_COLUMNS =
   'id, username, display_name, phone, email, password_hash';
@@ -39,12 +40,15 @@ export async function GET() {
             ? 'הריצי fix-site-users.sql ב-Supabase SQL Editor'
             : 'הכל מוגדר — נסי התחברות או הרשמה';
 
+  const email = getEmailConfigStatus();
+
   return NextResponse.json({
     ok: supabase.configured && adminSecret && siteUsersOk,
     supabase,
     adminSecret,
     siteUsersTable: siteUsersOk,
     siteUsersError,
+    email,
     hint,
   });
 }
