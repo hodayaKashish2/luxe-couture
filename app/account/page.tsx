@@ -140,7 +140,7 @@ function AccountPageContent() {
     clearAllLuxeStorage();
     sessionStorage.clear();
     notifySiteAuthChange();
-    router.replace('/login');
+    router.replace('/');
   }
 
   async function submitDress(e: React.FormEvent) {
