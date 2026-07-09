@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { sendDressApprovedOwnerEmail } from '@/lib/email';
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server';
 
 function verifyToken(request: Request) {
@@ -101,6 +102,30 @@ export async function POST(request: Request) {
 
     const table = type === 'dress' ? 'dresses' : 'reviews';
     const status = action === 'approve' ? 'approved' : 'rejected';
+
+    if (type === 'dress' && action === 'approve') {
+      const { data: dress } = await supabase
+        .from('dresses')
+        .select('id, name, owner_name, owner_email, status')
+        .eq('id', id)
+        .maybeSingle();
+
+      const { error } = await supabase.from(table).update({ status }).eq('id', id);
+      if (error) throw error;
+
+      if (dress?.owner_email && dress.status !== 'approved') {
+        const ownerMail = await sendDressApprovedOwnerEmail({
+          to: dress.owner_email,
+          ownerName: dress.owner_name || 'משכירה',
+          dressName: dress.name,
+        });
+        if (!ownerMail.success) {
+          console.error('Dress approved owner email failed:', ownerMail.error);
+        }
+      }
+
+      return NextResponse.json({ success: true, status });
+    }
 
     const { error } = await supabase.from(table).update({ status }).eq('id', id);
     if (error) throw error;

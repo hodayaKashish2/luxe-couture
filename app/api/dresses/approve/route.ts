@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { sendDressApprovedOwnerEmail } from '@/lib/email';
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server';
 
 function renderPage(title: string, message: string, success: boolean) {
@@ -72,6 +73,17 @@ export async function GET(request: Request) {
       .eq('id', id);
 
     if (updateError) throw updateError;
+
+    if (dress.owner_email) {
+      const ownerMail = await sendDressApprovedOwnerEmail({
+        to: dress.owner_email,
+        ownerName: dress.owner_name || 'משכירה',
+        dressName: dress.name,
+      });
+      if (!ownerMail.success) {
+        console.error('Dress approved owner email failed:', ownerMail.error);
+      }
+    }
 
     return new NextResponse(
       renderPage('אושר בהצלחה!', `השמלה "${dress.name}" אושרה ותופיע עכשיו באתר.`, true),

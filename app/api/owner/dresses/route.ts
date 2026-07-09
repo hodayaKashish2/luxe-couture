@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { sendDressPendingAdminEmail } from '@/lib/email';
 import { getUserFromRequest } from '@/lib/user-auth';
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server';
 
@@ -111,6 +112,21 @@ export async function POST(request: Request) {
     }
 
     if (error) throw error;
+
+    const mail = await sendDressPendingAdminEmail({
+      dressId: data!.id,
+      name,
+      price,
+      size,
+      city,
+      ownerName: owner.displayName,
+      ownerPhone: owner.phone,
+      ownerEmail: ownerEmail || owner.email || '',
+      images: imageUrls,
+    });
+    if (!mail.success) {
+      console.error('Dress pending admin email failed:', mail.error);
+    }
 
     return NextResponse.json({
       success: true,
