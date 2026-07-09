@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import SiteFooter from '@/components/SiteFooter';
 import SiteHeader from '@/components/SiteHeader';
 import OwnerPlatformNotice from '@/components/OwnerPlatformNotice';
@@ -14,6 +14,7 @@ import { FAQS, DRESS_SIZES } from '@/lib/constants';
 import { notifyBookingUpdated } from '@/lib/booking-events';
 import { getStoredSiteUser } from '@/lib/session-user';
 import { isLoggedIn } from '@/lib/require-login';
+import { useModalHistory } from '@/hooks/use-modal-history';
 import { compareDresses } from '@/lib/dress-sort';
 import { dressShareUrl, ownerWhatsAppLink, WHATSAPP_LINK } from '@/lib/site-config';
 import { Dress, Review, SortOption, EVENT_TYPES, PICKUP_METHODS } from '@/lib/types';
@@ -196,6 +197,105 @@ export default function Home() {
     }
   }, []);
 
+  const resetAddDressForm = () => {
+    newDressData.images.forEach((url) => URL.revokeObjectURL(url));
+    setNewDressData({
+      name: '', price: '', size: '', color: '', city: '', event_type: '',
+      owner_name: '', owner_phone: '', owner_email: '', deposit: '', pickup_method: 'pickup',
+      includes_dry_cleaning: 'no',
+      condition: 'new', description: '', images: [],
+    });
+    setNewDressFiles([]);
+    if (newDressFileInputRef.current) newDressFileInputRef.current.value = '';
+  };
+
+  const findDressById = useCallback(
+    (dressId?: string) => {
+      if (!dressId) return null;
+      return dressesList.find((dress) => dress.id === dressId) ?? null;
+    },
+    [dressesList]
+  );
+
+  const closeBookingModal = useCallback(() => {
+    setSelectedDress(null);
+    setDateError('');
+    setPaymentStep(null);
+    setIsOrdered(false);
+    setBookingError('');
+  }, []);
+
+  const closeCoordinateModal = useCallback(() => {
+    setCoordinateDress(null);
+    setCoordinateDate('');
+    setCoordinateChecked(false);
+  }, []);
+
+  const { close: closeAddDressModal } = useModalHistory({
+    key: 'add-dress',
+    isOpen: isAddDressOpen,
+    onClose: () => {
+      resetAddDressForm();
+      setIsAddDressOpen(false);
+    },
+  });
+
+  const { close: closeAddReviewModal } = useModalHistory({
+    key: 'add-review',
+    isOpen: isAddReviewOpen,
+    onClose: () => setIsAddReviewOpen(false),
+  });
+
+  const { close: closeCartModal } = useModalHistory({
+    key: 'cart',
+    isOpen: isCartOpen,
+    onClose: () => setIsCartOpen(false),
+  });
+
+  const { close: closeBookingModalWithHistory } = useModalHistory({
+    key: 'booking',
+    isOpen: !!selectedDress,
+    data: selectedDress ? { dressId: selectedDress.id } : undefined,
+    onOpen: (modalData) => {
+      const dress = findDressById(modalData?.dressId);
+      if (dress) setSelectedDress(dress);
+    },
+    onClose: closeBookingModal,
+  });
+
+  const { close: closeDetailsModal } = useModalHistory({
+    key: 'details',
+    isOpen: !!detailsDress,
+    data: detailsDress ? { dressId: detailsDress.id } : undefined,
+    onOpen: (modalData) => {
+      const dress = findDressById(modalData?.dressId);
+      if (dress) setDetailsDress(dress);
+    },
+    onClose: () => setDetailsDress(null),
+  });
+
+  const { close: closeRateModal } = useModalHistory({
+    key: 'rate',
+    isOpen: !!rateDress,
+    data: rateDress ? { dressId: rateDress.id } : undefined,
+    onOpen: (modalData) => {
+      const dress = findDressById(modalData?.dressId);
+      if (dress) setRateDress(dress);
+    },
+    onClose: () => setRateDress(null),
+  });
+
+  const { close: closeCoordinateModalWithHistory } = useModalHistory({
+    key: 'coordinate',
+    isOpen: !!coordinateDress,
+    data: coordinateDress ? { dressId: coordinateDress.id } : undefined,
+    onOpen: (modalData) => {
+      const dress = findDressById(modalData?.dressId);
+      if (dress) setCoordinateDress(dress);
+    },
+    onClose: closeCoordinateModal,
+  });
+
   const handleReviewSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newReview.name.trim() || !newReview.text.trim()) {
@@ -224,7 +324,7 @@ export default function Home() {
         return;
       }
 
-      setIsAddReviewOpen(false);
+      closeAddReviewModal();
       setNewReview({ name: '', role: '', text: '', stars: 5 });
       alert(data.message || 'תודה! התגובה נשלחה.');
     } catch (error) {
@@ -393,18 +493,6 @@ export default function Home() {
     }));
   };
 
-  const resetAddDressForm = () => {
-    newDressData.images.forEach((url) => URL.revokeObjectURL(url));
-    setNewDressData({
-      name: '', price: '', size: '', color: '', city: '', event_type: '',
-      owner_name: '', owner_phone: '', owner_email: '', deposit: '', pickup_method: 'pickup',
-      includes_dry_cleaning: 'no',
-      condition: 'new', description: '', images: [],
-    });
-    setNewDressFiles([]);
-    if (newDressFileInputRef.current) newDressFileInputRef.current.value = '';
-  };
-
   const removeNewDressImage = (index: number) => {
     URL.revokeObjectURL(newDressData.images[index]);
     setNewDressFiles((prev) => prev.filter((_, i) => i !== index));
@@ -483,8 +571,7 @@ export default function Home() {
         return;
       }
 
-      setIsAddDressOpen(false);
-      resetAddDressForm();
+      closeAddDressModal();
       alert(data.message || 'השמלה נשלחה לאישור! היא תופיע באתר לאחר אישור בדף הניהול.');
     } catch (error) {
       console.error('Error submitting dress:', error);
@@ -808,10 +895,7 @@ export default function Home() {
         <div className="fixed inset-0 bg-neutral-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4 overflow-y-auto">
           <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl relative border-2 border-[#d4af37] max-h-[90vh] overflow-y-auto" style={{ direction: 'rtl' }}>
             <button 
-              onClick={() => {
-                resetAddDressForm();
-                setIsAddDressOpen(false);
-              }} 
+              onClick={closeAddDressModal} 
               className="absolute top-4 left-4 bg-neutral-100 hover:bg-[#d4af37] text-[#b8860b] hover:text-white w-8 h-8 rounded-full flex items-center justify-center border shadow-sm font-bold transition-all"
             >
               ✕
@@ -1092,7 +1176,7 @@ export default function Home() {
         <div className="fixed inset-0 bg-neutral-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4 overflow-y-auto">
           <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl relative border-2 border-[#d4af37] max-h-[90vh] overflow-y-auto" style={{ direction: 'rtl' }}>
             <button
-              onClick={() => setIsAddReviewOpen(false)}
+              onClick={closeAddReviewModal}
               className="absolute top-4 left-4 bg-neutral-100 hover:bg-[#d4af37] text-[#b8860b] hover:text-white w-8 h-8 rounded-full flex items-center justify-center border shadow-sm font-bold transition-all"
             >
               ✕
@@ -1204,7 +1288,7 @@ export default function Home() {
           <div className="bg-white w-full max-w-md h-full sm:h-auto sm:max-h-[92vh] sm:rounded-l-2xl p-4 sm:p-6 shadow-2xl flex flex-col border-r-2 border-[#d4af37] overflow-hidden">
             <div className="flex justify-between items-center pb-4 border-b border-neutral-200 shrink-0">
               <h3 className="text-base sm:text-lg font-bold text-neutral-900">סל השריונות שלך 🛒</h3>
-              <button onClick={() => setIsCartOpen(false)} className="text-neutral-400 hover:text-black font-bold text-lg p-2">✕</button>
+              <button onClick={closeCartModal} className="text-neutral-400 hover:text-black font-bold text-lg p-2">✕</button>
             </div>
 
             <div className="flex-1 overflow-y-auto py-4 min-h-0">
@@ -1220,7 +1304,7 @@ export default function Home() {
               <div className="border-t border-neutral-200 pt-4 shrink-0">
                 <button
                   onClick={() => {
-                    setIsCartOpen(false);
+                    closeCartModal();
                     const fullDress = dressesList.find((d) => d.id === cart[0].id) || null;
                     if (fullDress) setSelectedDress(fullDress);
                   }}
@@ -1239,11 +1323,7 @@ export default function Home() {
         <div className="fixed inset-0 bg-neutral-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[92vh] sm:max-h-[85vh] overflow-hidden shadow-2xl relative flex flex-col md:flex-row border-2 border-[#d4af37]">
             <button 
-              onClick={() => {
-                setSelectedDress(null);
-                setDateError('');
-                setPaymentStep(null);
-              }} 
+              onClick={closeBookingModalWithHistory} 
               className="absolute top-4 left-4 z-30 bg-white hover:bg-[#d4af37] text-[#b8860b] hover:text-white w-8 h-8 rounded-full flex items-center justify-center border-2 border-[#ebd4a8] shadow-md font-bold transition-all"
             >
               ✕
@@ -1416,7 +1496,7 @@ export default function Home() {
         <DressDetailsModal
           dress={detailsDress}
           initialImageIndex={currentImageIndexes[detailsDress.id] || 0}
-          onClose={() => setDetailsDress(null)}
+          onClose={closeDetailsModal}
           isInCart={isDressInCart(detailsDress.id)}
           isFavorite={isDressFavorite(detailsDress.id)}
           onReserve={() => {
@@ -1437,7 +1517,7 @@ export default function Home() {
       {rateDress && (
         <DressRateModal
           dress={rateDress}
-          onClose={() => setRateDress(null)}
+          onClose={closeRateModal}
           onRated={handleDressRated}
         />
       )}
@@ -1446,11 +1526,7 @@ export default function Home() {
         <div className="fixed inset-0 bg-neutral-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border-2 border-[#d4af37] relative">
             <button
-              onClick={() => {
-                setCoordinateDress(null);
-                setCoordinateDate('');
-                setCoordinateChecked(false);
-              }}
+              onClick={closeCoordinateModalWithHistory}
               className="absolute top-4 left-4 bg-neutral-100 hover:bg-[#d4af37] text-[#b8860b] w-8 h-8 rounded-full flex items-center justify-center border font-bold"
             >
               ✕

@@ -9,6 +9,7 @@ import { SITE_NAME } from '@/lib/site-config';
 import { getStoredDisplayName } from '@/lib/session-user';
 import { SITE_AUTH_EVENT } from '@/lib/site-auth-events';
 import { isLoggedIn } from '@/lib/require-login';
+import { useModalHistory } from '@/hooks/use-modal-history';
 
 const links = [
   { href: '/', label: 'קטלוג', icon: '🏠' },
@@ -104,6 +105,12 @@ export default function SiteHeader() {
   const [loggedIn, setLoggedIn] = useState(() => isLoggedIn());
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  const { close: closeMobileMenu } = useModalHistory({
+    key: 'mobile-menu',
+    isOpen: mobileOpen,
+    onClose: () => setMobileOpen(false),
+  });
+
   const openAccountAuth = () =>
     openAuthModal({ reason: 'account', next: '/account' });
   const openCartAuth = () =>
@@ -134,8 +141,8 @@ export default function SiteHeader() {
   }, [pathname]);
 
   useEffect(() => {
-    setMobileOpen(false);
-  }, [pathname]);
+    closeMobileMenu();
+  }, [pathname, closeMobileMenu]);
 
   useEffect(() => {
     document.body.style.overflow = mobileOpen ? 'hidden' : '';
@@ -237,7 +244,7 @@ export default function SiteHeader() {
               type="button"
               className="md:hidden fixed inset-0 bg-black/30 z-40"
               aria-label="סגירת תפריט"
-              onClick={() => setMobileOpen(false)}
+              onClick={closeMobileMenu}
             />
             <nav
               className="md:hidden relative z-50 mt-3 grid grid-cols-1 gap-2 pb-1"

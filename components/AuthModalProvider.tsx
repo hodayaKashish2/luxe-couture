@@ -14,6 +14,7 @@ import FormError from '@/components/FormError';
 import { AUTH_MODAL_COPY, type AuthModalReason } from '@/lib/auth-modal-copy';
 import { validateLoginForm, validateRegisterForm } from '@/lib/form-validation';
 import { notifySiteAuthChange } from '@/lib/site-auth-events';
+import { useModalHistory } from '@/hooks/use-modal-history';
 
 export type AuthModalOptions = {
   reason?: AuthModalReason;
@@ -88,12 +89,18 @@ export function AuthModalProvider({ children }: { children: ReactNode }) {
     setLoading(false);
   }, []);
 
-  const closeAuthModal = useCallback(() => {
+  const resetAuthModalState = useCallback(() => {
     setOpen(false);
     resetForms();
     setView('prompt');
     setReason('general');
   }, [resetForms]);
+
+  const { close: closeAuthModal } = useModalHistory({
+    key: 'auth',
+    isOpen: open,
+    onClose: resetAuthModalState,
+  });
 
   const finishAuth = useCallback(() => {
     notifySiteAuthChange();
