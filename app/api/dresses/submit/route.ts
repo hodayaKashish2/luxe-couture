@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { sendDressPendingAdminEmail } from '@/lib/email';
+import { appendContactEmailToDescription } from '@/lib/dress-contact';
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server';
-
 const MAX_IMAGES = 6;
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
@@ -87,7 +87,7 @@ export async function POST(request: Request) {
       `מצב: ${conditionLabel(condition)}`,
     ].filter(Boolean);
 
-    const description = descriptionParts.join(' | ');
+    const description = appendContactEmailToDescription(descriptionParts.join(' | '), ownerEmail);
     const supabase = getSupabaseAdmin();
     const imageUrls = await uploadImages(files);
 

@@ -22,6 +22,14 @@ create table public.site_users (
 
 create index site_users_username_idx on public.site_users (username);
 
+create unique index site_users_email_unique
+  on public.site_users (lower(trim(email)))
+  where email <> '';
+
+create unique index site_users_phone_unique
+  on public.site_users (regexp_replace(phone, '\D', '', 'g'))
+  where phone <> '';
+
 alter table public.site_users disable row level security;
 
 grant usage on schema public to postgres, service_role, anon, authenticated;

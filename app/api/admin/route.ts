@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { notifyDressApproved } from '@/lib/dress-approval-notify';
+import { fetchDressForNotify, notifyDressApproved } from '@/lib/dress-approval-notify';
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server';
 
 function verifyToken(request: Request) {
@@ -104,40 +104,13 @@ export async function POST(request: Request) {
     const status = action === 'approve' ? 'approved' : 'rejected';
 
     if (type === 'dress' && action === 'approve') {
-      let dress: {
-        id: string | number;
-        name: string;
-        status: string;
-        owner_name?: string | null;
-        owner_email?: string | null;
-        owner_phone?: string | null;
-      } | null = null;
-
-      const fullSelect = await supabase
-        .from('dresses')
-        .select('id, name, owner_name, owner_email, owner_phone, status')
-        .eq('id', id)
-        .maybeSingle();
-
-      if (fullSelect.error?.message?.includes('owner_email') || fullSelect.error?.message?.includes('owner_phone')) {
-        const fallback = await supabase
-          .from('dresses')
-          .select('id, name, owner_name, owner_phone, status')
-          .eq('id', id)
-          .maybeSingle();
-        dress = fallback.data ? { ...fallback.data, owner_email: '' } : null;
-      } else {
-        dress = fullSelect.data;
-      }
+      const dress = await fetchDressForNotify(supabase, id);
 
       const { error } = await supabase.from(table).update({ status }).eq('id', id);
       if (error) throw error;
 
       if (dress && dress.status !== 'approved') {
-        const mail = await notifyDressApproved(supabase, dress);
-        if (!mail.success) {
-          console.error('Dress approved owner email failed:', mail.error);
-        }
+        await notifyDressApproved(supabase, dress);
       }
 
       return NextResponse.json({ success: true, status });

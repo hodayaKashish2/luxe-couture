@@ -18,6 +18,7 @@ export function getCleanDescription(description: string) {
         part !== 'אין תיאור זמין.' &&
         !part.startsWith('צבע:') &&
         !part.startsWith('מצב:') &&
+        !part.toLowerCase().startsWith('contact_email:') &&
         !part.includes('ניקוי יבש')
     )
     .join(' · ');

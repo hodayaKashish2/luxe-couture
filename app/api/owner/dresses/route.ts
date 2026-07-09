@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { sendDressPendingAdminEmail } from '@/lib/email';
+import { appendContactEmailToDescription } from '@/lib/dress-contact';
 import { getUserFromRequest } from '@/lib/user-auth';
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server';
 
@@ -67,6 +68,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'יש להעלות לפחות תמונה אחת' }, { status: 400 });
     }
 
+    const contactEmail = (ownerEmail || owner.email || '').trim().toLowerCase();
     const descriptionParts = [
       descriptionInput || 'אין תיאור זמין.',
       color ? `צבע: ${color}` : '',
@@ -81,18 +83,19 @@ export async function POST(request: Request) {
       price,
       size,
       condition,
-      description: descriptionParts.join(' | '),
+      description: appendContactEmailToDescription(descriptionParts.join(' | '), contactEmail),
       images: imageUrls,
       color,
       city,
       event_type: eventType,
       owner_name: owner.displayName,
       owner_phone: owner.phone.replace(/^972/, '0') || owner.phone,
-      owner_email: ownerEmail || owner.email || '',
+      owner_email: contactEmail,
       deposit: Number.isNaN(deposit) ? 0 : deposit,
       pickup_method: pickupMethod,
       includes_dry_cleaning: includesDryCleaning,
       status: 'pending',
+      submitter_user_id: owner.userId,
     };
 
     let { data, error } = await supabase
@@ -111,6 +114,11 @@ export async function POST(request: Request) {
       ({ data, error } = await supabase.from('dresses').insert([insertPayload]).select('id, name').single());
     }
 
+    if (error?.message?.includes('submitter_user_id')) {
+      delete insertPayload.submitter_user_id;
+      ({ data, error } = await supabase.from('dresses').insert([insertPayload]).select('id, name').single());
+    }
+
     if (error) throw error;
 
     const mail = await sendDressPendingAdminEmail({
@@ -121,7 +129,7 @@ export async function POST(request: Request) {
       city,
       ownerName: owner.displayName,
       ownerPhone: owner.phone,
-      ownerEmail: ownerEmail || owner.email || '',
+      ownerEmail: contactEmail,
       images: imageUrls,
     });
     if (!mail.success) {
