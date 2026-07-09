@@ -30,10 +30,7 @@ export async function GET(request: Request) {
 
     const myDresses = (allDresses ?? []).filter((d) => {
       const ownerPhone = String(d.owner_phone || '').trim();
-      const ownerEmail = String(d.owner_email || '').trim();
-      const phoneOk = Boolean(user.phone?.trim() && ownerPhone && phonesMatch(ownerPhone, user.phone));
-      const emailOk = Boolean(user.email?.trim() && ownerEmail && emailsMatch(ownerEmail, user.email));
-      return phoneOk || emailOk;
+      return Boolean(user.phone?.trim() && ownerPhone && phonesMatch(ownerPhone, user.phone));
     });
 
     const dressIds = myDresses.map((d) => d.id);
@@ -111,8 +108,8 @@ export async function GET(request: Request) {
 
       myReservations = allBookings
         .filter((b) => {
-          if (user.userId && b.site_user_id && String(b.site_user_id) === String(user.userId)) {
-            return true;
+          if (b.site_user_id) {
+            return user.userId ? String(b.site_user_id) === String(user.userId) : false;
           }
           const bookingEmail = String(b.customer_email || '').trim();
           const bookingPhone = String(b.customer_phone || '').trim();

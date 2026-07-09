@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 
 import { calculateCommission } from '@/lib/commission';
 
-import { sendAdminEmail, sendBookingConfirmationEmail } from '@/lib/email';
+import { sendAdminEmail, sendPaymentConfirmationEmail } from '@/lib/email';
 
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server';
 
@@ -257,13 +257,16 @@ export async function PUT(request: Request) {
     );
 
     if (booking.customer_email) {
-      await sendBookingConfirmationEmail({
+      const customerMail = await sendPaymentConfirmationEmail({
         to: booking.customer_email,
         customerName: booking.customer_name,
         dressName: dress?.name || 'שמלה',
         eventDate: booking.event_date,
         amount: Number(booking.amount_total),
       });
+      if (!customerMail.success) {
+        console.error('Customer payment confirmation email failed:', customerMail.error);
+      }
     }
 
 

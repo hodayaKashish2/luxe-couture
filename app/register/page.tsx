@@ -67,7 +67,7 @@ export default function RegisterPage() {
           <input type="password" placeholder="סיסמה (6+ תווים) *" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} className="w-full p-2.5 border-2 border-[#decfa8] rounded-xl text-sm focus:border-[#d4af37] focus:outline-none" dir="ltr" />
           <input placeholder="שם מלא *" value={form.display_name} onChange={(e) => setForm({ ...form, display_name: e.target.value })} className="w-full p-2.5 border-2 border-[#decfa8] rounded-xl text-sm focus:border-[#d4af37] focus:outline-none" />
           <input type="tel" placeholder="טלפון (053...) *" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="w-full p-2.5 border-2 border-[#decfa8] rounded-xl text-sm focus:border-[#d4af37] focus:outline-none" dir="ltr" />
-          <input type="text" inputMode="email" autoComplete="email" placeholder="אימייל (לשריונות, אופציונלי)" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="w-full p-2.5 border-2 border-[#decfa8] rounded-xl text-sm focus:border-[#d4af37] focus:outline-none" dir="ltr" />
+          <input type="text" inputMode="email" autoComplete="email" placeholder="אימייל (חובה)" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="w-full p-2.5 border-2 border-[#decfa8] rounded-xl text-sm focus:border-[#d4af37] focus:outline-none" dir="ltr" required />
 
           {error && <FormError message={error} />}
 

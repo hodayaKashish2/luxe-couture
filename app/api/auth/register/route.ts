@@ -37,6 +37,9 @@ export async function POST(request: Request) {
     if (!displayName || !phone) {
       return NextResponse.json({ error: 'יש למלא שם וטלפון' }, { status: 400 });
     }
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return NextResponse.json({ error: 'יש להזין כתובת אימייל תקינה' }, { status: 400 });
+    }
 
     const supabase = getSupabaseAdmin();
 
@@ -48,6 +51,16 @@ export async function POST(request: Request) {
 
     if (existingUser) {
       return NextResponse.json({ error: 'שם המשתמש כבר תפוס — בחרי שם משתמש אחר' }, { status: 409 });
+    }
+
+    const { data: existingEmail } = await supabase
+      .from('site_users')
+      .select('id')
+      .ilike('email', email)
+      .maybeSingle();
+
+    if (existingEmail) {
+      return NextResponse.json({ error: 'האימייל כבר רשום — התחברי או השתמשי באימייל אחר' }, { status: 409 });
     }
 
     const phoneStored = phone.startsWith('0') ? phone : `0${normalizePhone(phone).slice(3)}`;
@@ -79,6 +92,9 @@ export async function POST(request: Request) {
     if (error?.message?.includes('duplicate') || error?.code === '23505') {
       if (error.message?.includes('phone')) {
         return NextResponse.json({ error: 'מספר הטלפון כבר רשום — התחברי או השתמשי במספר אחר' }, { status: 409 });
+      }
+      if (error.message?.includes('email')) {
+        return NextResponse.json({ error: 'האימייל כבר רשום — התחברי או השתמשי באימייל אחר' }, { status: 409 });
       }
       return NextResponse.json({ error: 'שם המשתמש כבר תפוס — בחרי שם משתמש אחר' }, { status: 409 });
     }

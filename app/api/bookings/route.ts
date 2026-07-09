@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { calculateCommission, COMMISSION_PERCENT } from '@/lib/commission';
-import { sendAdminEmail, sendBookingConfirmationEmail } from '@/lib/email';
+import { sendAdminEmail, sendBookingConfirmationEmail, sendBookingPendingEmail } from '@/lib/email';
 import { getUserFromRequest } from '@/lib/user-auth';
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server';
 import { buildTranzilaPaymentUrl, isTranzilaConfigured } from '@/lib/tranzila';
@@ -215,6 +215,18 @@ export async function POST(request: Request) {
       });
       if (!customerMail.success) {
         console.error('Customer confirmation email failed:', customerMail.error);
+      }
+    } else {
+      const customerMail = await sendBookingPendingEmail({
+        to: email,
+        customerName: name,
+        dressName,
+        eventDate: date,
+        amount: total,
+        paymentUrl,
+      });
+      if (!customerMail.success) {
+        console.error('Customer pending booking email failed:', customerMail.error);
       }
     }
 

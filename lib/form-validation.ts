@@ -23,8 +23,9 @@ export function validateRegisterForm(form: {
   if (password.length < 6) return 'סיסמה — לפחות 6 תווים';
   if (!displayName) return 'יש להזין שם מלא';
   if (!phone) return 'יש להזין מספר טלפון';
+  if (!email) return 'יש להזין כתובת אימייל';
 
-  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return 'כתובת האימייל לא תקינה — חסר @ או סיומת (לדוגמה: name@mail.com)';
   }
 
