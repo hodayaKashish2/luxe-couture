@@ -12,6 +12,7 @@ import OwnerPlatformNotice from '@/components/OwnerPlatformNotice';
 import { DRESS_SIZES } from '@/lib/constants';
 import { BOOKING_UPDATED_EVENT } from '@/lib/booking-events';
 import { getStoredSiteUser } from '@/lib/session-user';
+import { clearAllLuxeStorage } from '@/lib/luxe-storage';
 import { notifySiteAuthChange } from '@/lib/site-auth-events';
 
 type Section = 'hub' | 'reservations' | 'rentals' | 'cart' | 'favorites' | 'add' | 'edit';
@@ -136,6 +137,7 @@ export default function AccountPage() {
 
   async function logout() {
     await fetch('/api/auth/logout', { method: 'POST' });
+    clearAllLuxeStorage();
     sessionStorage.clear();
     notifySiteAuthChange();
     router.replace('/login');

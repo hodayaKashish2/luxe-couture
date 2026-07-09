@@ -103,6 +103,20 @@ export function saveFavorites(items: SavedDress[]) {
   writeJson(storageKey(FAVS_BASE), items);
 }
 
+/** מוחק סל ומועדפים — כל המשתמשות (לאחר איפוס אתר או התנתקות מלאה) */
+export function clearAllLuxeStorage() {
+  if (typeof window === 'undefined') return;
+  const keysToRemove: string[] = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && (key.startsWith(CART_BASE) || key.startsWith(FAVS_BASE))) {
+      keysToRemove.push(key);
+    }
+  }
+  keysToRemove.forEach((key) => localStorage.removeItem(key));
+  window.dispatchEvent(new CustomEvent(LUXE_STORAGE_EVENT));
+}
+
 export function favoriteIds(favorites: SavedDress[]): string[] {
   return favorites.map((f) => f.id);
 }
