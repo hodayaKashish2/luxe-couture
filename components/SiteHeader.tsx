@@ -9,7 +9,6 @@ import { SITE_NAME } from '@/lib/site-config';
 import { getStoredDisplayName } from '@/lib/session-user';
 import { SITE_AUTH_EVENT } from '@/lib/site-auth-events';
 import { isLoggedIn } from '@/lib/require-login';
-import { useModalHistory } from '@/hooks/use-modal-history';
 
 const links = [
   { href: '/', label: 'קטלוג', icon: '🏠' },
@@ -39,7 +38,7 @@ function NavLink({
   variant?: 'tab' | 'menu';
   guestOnClick?: () => void;
 }) {
-  const classNameMenu = `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-colors ${
+  const classNameMenu = `flex items-center gap-3 px-4 py-3.5 min-h-[3rem] rounded-xl text-sm font-bold transition-colors ${
     active
       ? 'bg-[#fffdf8] text-[#8b6508] border-2 border-[#d4af37]'
       : 'bg-white text-[#5c5037] border border-[#eadaaf] hover:border-[#d4af37]'
@@ -105,11 +104,7 @@ export default function SiteHeader() {
   const [loggedIn, setLoggedIn] = useState(() => isLoggedIn());
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const { close: closeMobileMenu } = useModalHistory({
-    key: 'mobile-menu',
-    isOpen: mobileOpen,
-    onClose: () => setMobileOpen(false),
-  });
+  const closeMobileMenu = () => setMobileOpen(false);
 
   const openAccountAuth = () =>
     openAuthModal({ reason: 'account', next: '/account' });
@@ -142,7 +137,7 @@ export default function SiteHeader() {
 
   useEffect(() => {
     closeMobileMenu();
-  }, [pathname, closeMobileMenu]);
+  }, [pathname]);
 
   useEffect(() => {
     document.body.style.overflow = mobileOpen ? 'hidden' : '';
@@ -242,30 +237,34 @@ export default function SiteHeader() {
           <>
             <button
               type="button"
-              className="md:hidden fixed inset-0 bg-black/30 z-40"
+              className="md:hidden fixed inset-x-0 bottom-0 top-[4.5rem] z-[90] bg-black/30"
               aria-label="סגירת תפריט"
               onClick={closeMobileMenu}
             />
             <nav
-              className="md:hidden relative z-50 mt-3 grid grid-cols-1 gap-2 pb-1"
+              className="md:hidden fixed inset-x-0 top-[4.5rem] z-[100] bg-white/98 backdrop-blur-md border-b-2 border-[#e6c687] shadow-xl px-3 py-3 pb-5 max-h-[calc(100dvh-4.5rem)] overflow-y-auto"
               aria-label="ניווט נייד"
+              role="dialog"
+              aria-modal="true"
             >
-              {links.map((link) => (
-                <NavLink
-                  key={link.href}
-                  link={link}
-                  active={isActive(pathname, link.href)}
-                  onClick={() => setMobileOpen(false)}
-                  variant="menu"
-                  guestOnClick={!loggedIn && link.href === '/account' ? openAccountAuth : undefined}
-                />
-              ))}
+              <div className="grid grid-cols-1 gap-2">
+                {links.map((link) => (
+                  <NavLink
+                    key={link.href}
+                    link={link}
+                    active={isActive(pathname, link.href)}
+                    onClick={closeMobileMenu}
+                    variant="menu"
+                    guestOnClick={!loggedIn && link.href === '/account' ? openAccountAuth : undefined}
+                  />
+                ))}
+              </div>
               {!loggedIn && (
-                <div className="grid grid-cols-2 gap-2 pt-1 sm:hidden">
+                <div className="grid grid-cols-2 gap-2 pt-3">
                   <button
                     type="button"
                     onClick={() => {
-                      setMobileOpen(false);
+                      closeMobileMenu();
                       openAuthModal({ reason: 'general', initialView: 'login' });
                     }}
                     className="px-4 py-3 rounded-xl text-sm font-bold border-2 border-[#decfa8] bg-white text-[#8b6508]"
@@ -275,7 +274,7 @@ export default function SiteHeader() {
                   <button
                     type="button"
                     onClick={() => {
-                      setMobileOpen(false);
+                      closeMobileMenu();
                       openAuthModal({ reason: 'general', initialView: 'register' });
                     }}
                     className="px-4 py-3 rounded-xl text-sm font-bold bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white"
