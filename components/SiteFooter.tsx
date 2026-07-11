@@ -1,6 +1,9 @@
 import Link from 'next/link';
 import { CONTACT_EMAIL, CONTACT_PHONE, SITE_NAME, WHATSAPP_LINK } from '@/lib/site-config';
 
+const footerLinkClass =
+  'inline-flex items-center justify-between gap-2 w-full px-3 py-2.5 rounded-xl border border-[#eadaaf] bg-white/90 text-[#5c5037] font-bold hover:border-[#d4af37] hover:bg-[#fffdf8] hover:text-[#b8860b] hover:shadow-sm transition-all cursor-pointer';
+
 export default function SiteFooter() {
   return (
     <footer className="relative z-10 mt-24 border-t border-[#eadaaf] bg-white/70 backdrop-blur-sm">
@@ -15,20 +18,50 @@ export default function SiteFooter() {
         <div>
           <h4 className="font-bold text-[#8b6508] mb-3 text-xs">קישורים</h4>
           <ul className="space-y-2 text-xs">
-            <li><Link href="/how-it-works" className="hover:text-[#b8860b]">איך זה עובד</Link></li>
-            <li><Link href="/terms" className="hover:text-[#b8860b]">תקנון האתר</Link></li>
-            <li><Link href="/privacy" className="hover:text-[#b8860b]">מדיניות פרטיות</Link></li>
-            <li><Link href="/contact" className="hover:text-[#b8860b]">צור קשר</Link></li>
+            <li>
+              <Link href="/how-it-works" className={footerLinkClass}>
+                איך זה עובד
+                <span className="text-[#d4af37] text-sm" aria-hidden>←</span>
+              </Link>
+            </li>
+            <li>
+              <Link href="/terms" className={footerLinkClass}>
+                תקנון האתר
+                <span className="text-[#d4af37] text-sm" aria-hidden>←</span>
+              </Link>
+            </li>
+            <li>
+              <Link href="/privacy" className={footerLinkClass}>
+                מדיניות פרטיות
+                <span className="text-[#d4af37] text-sm" aria-hidden>←</span>
+              </Link>
+            </li>
+            <li>
+              <Link href="/contact" className={footerLinkClass}>
+                צור קשר
+                <span className="text-[#d4af37] text-sm" aria-hidden>←</span>
+              </Link>
+            </li>
           </ul>
         </div>
 
         <div>
           <h4 className="font-bold text-[#8b6508] mb-3 text-xs">יצירת קשר</h4>
           <p className="text-xs mb-2">
-            <a href={`mailto:${CONTACT_EMAIL}`} className="hover:text-[#b8860b]">{CONTACT_EMAIL}</a>
+            <a
+              href={`mailto:${CONTACT_EMAIL}`}
+              className="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-transparent hover:border-[#eadaaf] hover:bg-white/80 hover:text-[#b8860b] transition-all"
+            >
+              {CONTACT_EMAIL}
+            </a>
           </p>
           <p className="text-xs mb-2">
-            <a href={WHATSAPP_LINK} target="_blank" rel="noopener noreferrer" className="text-[#25D366] hover:underline font-bold">
+            <a
+              href={WHATSAPP_LINK}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-transparent text-[#25D366] hover:border-[#25D366]/30 hover:bg-white/80 font-bold transition-all"
+            >
               WhatsApp: {CONTACT_PHONE}
             </a>
           </p>
@@ -36,7 +69,7 @@ export default function SiteFooter() {
             href={WHATSAPP_LINK}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 text-xs font-bold text-[#25D366] hover:underline"
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-[#25D366]/40 bg-white/90 text-xs font-bold text-[#25D366] hover:bg-[#f0fff4] hover:shadow-sm transition-all"
           >
             💬 WhatsApp
           </a>

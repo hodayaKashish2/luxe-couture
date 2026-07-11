@@ -59,7 +59,7 @@ function RegisterForm() {
       <div className="w-full max-w-md">
         <div className="text-center mb-6">
           <h1 className="font-[family-name:var(--font-luxury)] text-2xl text-[#3d2f24]">הרשמה ל-{SITE_NAME}</h1>
-          <p className="text-xs text-[#6e634c] mt-2">הטלפון יקשר את השמלות והשריונות שלך</p>
+          <p className="text-xs text-[#6e634c] mt-2">הטלפון יקשר את השמלות וההזמנות שלך</p>
         </div>
 
         <form onSubmit={handleSubmit} noValidate className="bg-white/95 rounded-2xl border-2 border-[#e6c687] shadow-xl p-6 space-y-3">

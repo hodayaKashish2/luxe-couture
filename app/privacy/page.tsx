@@ -13,7 +13,7 @@ export default function PrivacyPage() {
       <section>
         <h2 className="font-bold text-[#3d2f24] mb-2">איזה מידע נאסף?</h2>
         <p className="text-xs">
-          שם, טלפון, אימייל, פרטי שמלה, תמונות, תגובות ותאריכי שריון — לצורך תפעול האתר, אישור תוכן ויצירת קשר.
+          שם, טלפון, אימייל, פרטי שמלה, תמונות, תגובות ותאריכי הזמנה — לצורך תפעול האתר, אישור תוכן ויצירת קשר.
         </p>
       </section>
 
@@ -21,7 +21,7 @@ export default function PrivacyPage() {
         <h2 className="font-bold text-[#3d2f24] mb-2">למה משתמשים במידע?</h2>
         <ul className="text-xs list-disc pr-5 space-y-1">
           <li>פרסום שמלות ותגובות מאושרות</li>
-          <li>ניהול שריונות ומניעת כפל הזמנות</li>
+          <li>ניהול הזמנות ומניעת כפל הזמנות</li>
           <li>שליחת התראות למנהלת האתר</li>
           <li>שיפור חוויית המשתמש</li>
         </ul>
@@ -30,7 +30,7 @@ export default function PrivacyPage() {
       <section>
         <h2 className="font-bold text-[#3d2f24] mb-2">שיתוף מידע</h2>
         <p className="text-xs">
-          פרטי קשר של משכירה (שם, טלפון, עיר) מוצגים לשוכרות לאחר שריון/פרסום. לא נמכור מידע לצדדים שלישיים. מידע נשמר ב-Supabase (ענן מאובטח).
+          פרטי קשר של משכירה (שם, טלפון, עיר) מוצגים לשוכרות לאחר הזמנה/פרסום. לא נמכור מידע לצדדים שלישיים. מידע נשמר ב-Supabase (ענן מאובטח).
         </p>
       </section>
 

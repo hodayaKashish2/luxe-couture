@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function ContactPage() {
   return (
-    <ContentPage title="צור קשר" subtitle="נשמח לעזור בפרסום, שריון או כל שאלה">
+    <ContentPage title="צור קשר" subtitle="נשמח לעזור בפרסום, הזמנה או כל שאלה">
       <p className="text-xs">
         האתר מופעל כפלטפורמת תיווך בין משכירות לשוכרות. לכל שאלה — פנו אלינו:
       </p>

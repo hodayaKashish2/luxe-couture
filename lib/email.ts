@@ -272,11 +272,11 @@ export async function sendBookingConfirmationEmail(params: {
 }) {
   return sendEmailTo(
     params.to,
-    `✨ אישור שריון: ${params.dressName}`,
+    `✨ אישור הזמנה: ${params.dressName}`,
     `
       <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #eadaaf;border-radius:16px;background:#fffdf8;">
         <h2 style="color:#3d2f24;margin-top:0;">שלום ${params.customerName}!</h2>
-        <p style="line-height:1.7;color:#554a33;">השריון שלך נקלט בהצלחה.</p>
+        <p style="line-height:1.7;color:#554a33;">ההזמנה שלך נקלטה בהצלחה.</p>
         <p style="line-height:1.7;color:#554a33;"><strong>שמלה:</strong> ${params.dressName}</p>
         <p style="line-height:1.7;color:#554a33;"><strong>תאריך אירוע:</strong> ${params.eventDate}</p>
         <p style="line-height:1.7;color:#554a33;"><strong>סכום:</strong> ₪${params.amount}</p>
@@ -309,11 +309,11 @@ export async function sendBookingPendingEmail(params: {
 
   return sendEmailTo(
     params.to,
-    `📅 שריון התקבל: ${params.dressName}`,
+    `📅 הזמנה התקבלה: ${params.dressName}`,
     `
       <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #eadaaf;border-radius:16px;background:#fffdf8;">
         <h2 style="color:#3d2f24;margin-top:0;">שלום ${params.customerName}!</h2>
-        <p style="line-height:1.7;color:#554a33;">השריון שלך נקלט בהצלחה וממתין לתשלום.</p>
+        <p style="line-height:1.7;color:#554a33;">ההזמנה שלך נקלטה בהצלחה וממתין לתשלום.</p>
         <p style="line-height:1.7;color:#554a33;"><strong>שמלה:</strong> ${params.dressName}</p>
         <p style="line-height:1.7;color:#554a33;"><strong>תאריך אירוע:</strong> ${params.eventDate}</p>
         <p style="line-height:1.7;color:#554a33;"><strong>סכום לתשלום:</strong> ₪${params.amount}</p>
@@ -339,7 +339,7 @@ export async function sendPaymentConfirmationEmail(params: {
     `
       <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #eadaaf;border-radius:16px;background:#fffdf8;">
         <h2 style="color:#3d2f24;margin-top:0;">שלום ${params.customerName}!</h2>
-        <p style="line-height:1.7;color:#554a33;">התשלום שלך אושר והשריון מאושר!</p>
+        <p style="line-height:1.7;color:#554a33;">התשלום שלך אושר וההזמנה מאושרת!</p>
         <p style="line-height:1.7;color:#554a33;"><strong>שמלה:</strong> ${params.dressName}</p>
         <p style="line-height:1.7;color:#554a33;"><strong>תאריך אירוע:</strong> ${params.eventDate}</p>
         <p style="line-height:1.7;color:#554a33;"><strong>סכום ששולם:</strong> ₪${params.amount}</p>

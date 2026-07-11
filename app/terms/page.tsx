@@ -14,7 +14,7 @@ export default function TermsPage() {
       <section>
         <h2 className="font-bold text-[#3d2f24] mb-2">1. מהות השירות</h2>
         <p className="text-xs leading-relaxed">
-          {SITE_NAME} הוא פלטפורמת תיווך להשכרת שמלות בין משכירות לשוכרות. האתר מספק חשיפה, שריון,
+          {SITE_NAME} הוא פלטפורמת תיווך להשכרת שמלות בין משכירות לשוכרות. האתר מספק חשיפה, הזמנה,
           תשלום מאובטח וליווי — ואינו מחזיק בשמלות.
         </p>
       </section>

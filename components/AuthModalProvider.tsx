@@ -365,7 +365,7 @@ function AuthModalProviderInner({ children }: { children: ReactNode }) {
             </span>
             <h3 className="text-xl font-black text-neutral-950">יצירת חשבון חדש</h3>
             <div className="w-12 h-px bg-[#d4af37] mx-auto mt-2" />
-            <p className="text-[11px] text-[#6e634c] mt-2">הטלפון יקשר את השמלות והשריונות שלך</p>
+            <p className="text-[11px] text-[#6e634c] mt-2">הטלפון יקשר את השמלות וההזמנות שלך</p>
           </div>
 
           <form onSubmit={handleRegister} noValidate className="flex flex-col gap-2.5">

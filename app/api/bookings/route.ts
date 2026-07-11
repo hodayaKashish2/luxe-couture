@@ -44,7 +44,7 @@ export async function POST(request: Request) {
     }
 
     if (!name || !phone || !email || !date || !dressName || !dressPrice) {
-      return NextResponse.json({ error: 'חסרים פרטים בשריון (שם, טלפון, אימייל, תאריך)' }, { status: 400 });
+      return NextResponse.json({ error: 'חסרים פרטים בהזמנה (שם, טלפון, אימייל, תאריך)' }, { status: 400 });
     }
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -102,7 +102,7 @@ export async function POST(request: Request) {
       if (!isSchemaError(paymentInsert.error.message)) {
         console.error('Booking insert error:', paymentInsert.error.message);
         return NextResponse.json(
-          { error: `שגיאה בשמירת השריון: ${paymentInsert.error.message}` },
+          { error: `שגיאה בשמירת ההזמנה: ${paymentInsert.error.message}` },
           { status: 500 }
         );
       }
@@ -170,7 +170,7 @@ export async function POST(request: Request) {
           commissionPercent: COMMISSION_PERCENT,
           paymentUrl: null,
           mockMode: true,
-          message: 'השריון נקלט! (הריצי upgrade-v2.sql ב-Supabase ללוח שנה אוטומטי)',
+          message: 'ההזמנה נקלטה! (הריצי upgrade-v2.sql ב-Supabase ללוח שנה אוטומטי)',
         });
       }
 
@@ -243,7 +243,7 @@ export async function POST(request: Request) {
       mockMode: legacyMode || !isTranzilaConfigured(),
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'שגיאה בשריון';
+    const message = error instanceof Error ? error.message : 'שגיאה בהזמנה';
     console.error('Booking error:', message);
     return NextResponse.json({ error: message }, { status: 500 });
   }

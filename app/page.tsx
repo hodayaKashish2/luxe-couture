@@ -205,7 +205,7 @@ export default function Home() {
     const params = new URLSearchParams(window.location.search);
     const payment = params.get('payment');
     if (payment === 'success') {
-      alert('התשלום אושר! השריון שלך מאושר. ניצור קשר בהקדם.');
+      alert('התשלום אושר! ההזמנה שלך מאושרת. ניצור קשר בהקדם.');
       window.history.replaceState({}, '', '/');
     } else if (payment === 'fail') {
       alert('התשלום לא הושלם. נסי שוב או צרי קשר.');
@@ -564,6 +564,11 @@ export default function Home() {
       return;
     }
 
+    if (!newDressData.owner_phone.trim()) {
+      alert('יש להזין מספר טלפון ליצירת קשר');
+      return;
+    }
+
     if (newDressFiles.length === 0) {
       alert('יש להעלות לפחות תמונה אחת של השמלה');
       return;
@@ -859,7 +864,7 @@ export default function Home() {
                       className={`text-xs p-1.5 rounded-lg border transition ${
                         inCart ? 'bg-[#f4ebd4] border-[#d4af37] text-[#b8860b]' : 'border-neutral-200 hover:bg-neutral-50'
                       }`}
-                      title={inCart ? "הסר מהסל" : "הוסף לסל שריונות מרוכז"}
+                      title={inCart ? "הסר מהסל" : "הוסף לסל הזמנות מרוכז"}
                     >
                       {inCart ? '🛒 בסל' : '➕ לסל'}
                     </button>
@@ -1037,8 +1042,8 @@ export default function Home() {
                   <input type="text" required value={newDressData.owner_name} onChange={(e) => setNewDressData({...newDressData, owner_name: e.target.value})} className="w-full p-2.5 bg-neutral-50 border border-[#decfa8] rounded-xl text-xs" />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-[#8b6508] mb-1">טלפון</label>
-                  <input type="tel" placeholder="050-0000000" value={newDressData.owner_phone} onChange={(e) => setNewDressData({...newDressData, owner_phone: e.target.value})} className="w-full p-2.5 bg-neutral-50 border border-[#decfa8] rounded-xl text-xs" dir="ltr" />
+                  <label className="block text-xs font-bold text-[#8b6508] mb-1">טלפון *</label>
+                  <input type="tel" required placeholder="050-0000000" value={newDressData.owner_phone} onChange={(e) => setNewDressData({...newDressData, owner_phone: e.target.value})} className="w-full p-2.5 bg-neutral-50 border border-[#decfa8] rounded-xl text-xs" dir="ltr" />
                 </div>
               </div>
 
@@ -1312,12 +1317,12 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 🛒 מודאל מגירה צידית - סל השריונות */}
+      {/* 🛒 מודאל מגירה צידית - סל ההזמנות */}
       {isCartOpen && (
         <div className="fixed inset-0 bg-neutral-900/50 backdrop-blur-sm z-50 flex justify-end p-0 sm:p-2">
           <div className="bg-white w-full max-w-md h-full sm:h-auto sm:max-h-[92vh] sm:rounded-l-2xl p-4 sm:p-6 shadow-2xl flex flex-col border-r-2 border-[#d4af37] overflow-hidden">
             <div className="flex justify-between items-center pb-4 border-b border-neutral-200 shrink-0">
-              <h3 className="text-base sm:text-lg font-bold text-neutral-900">סל השריונות שלך 🛒</h3>
+              <h3 className="text-base sm:text-lg font-bold text-neutral-900">סל ההזמנות שלך 🛒</h3>
               <button onClick={closeCartModal} className="text-neutral-400 hover:text-black font-bold text-lg p-2">✕</button>
             </div>
 
@@ -1341,7 +1346,7 @@ export default function Home() {
                   }}
                   className="w-full bg-[#2c261a] hover:bg-[#b8860b] text-white text-xs font-bold py-3 rounded-xl transition shadow-md"
                 >
-                  המשכי לשריון
+                  המשכי להזמנה
                 </button>
               </div>
             )}
@@ -1349,7 +1354,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* 🔒 מודאל שריון קריסטלי חכם */}
+      {/* 🔒 מודאל הזמנה קריסטלי חכם */}
       {selectedDress && (
         <div className="fixed inset-0 bg-neutral-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[92vh] sm:max-h-[85vh] overflow-hidden shadow-2xl relative flex flex-col md:flex-row border-2 border-[#d4af37]">
@@ -1394,12 +1399,12 @@ export default function Home() {
               <img src={selectedDress.images[modalImageIndex]} alt={selectedDress.name} className="absolute inset-0 w-full h-full object-contain p-3" />
             </div>
 
-            {/* טופס שריון בקליק */}
+            {/* טופס הזמנה בקליק */}
             <div className="w-full md:w-1/2 p-6 flex flex-col justify-between overflow-y-auto bg-gradient-to-b from-[#fffdf9] to-[#faf6eb]">
               {isOrdered ? (
                 <div className="text-center my-auto py-10">
                   <span className="text-3xl block mb-2">✨ ✨ ✨</span>
-                  <h3 className="text-xl font-black text-neutral-900">השריון והתשלום אושרו!</h3>
+                  <h3 className="text-xl font-black text-neutral-900">ההזמנה והתשלום אושרו!</h3>
                   <p className="mt-2 text-[#5c5037] text-xs font-medium leading-relaxed">
                     אישור נשלח ל-<strong>{orderEmail}</strong>. ניצור קשר בהקדם לתיאום עם המשכירה.
                   </p>
@@ -1407,7 +1412,7 @@ export default function Home() {
               ) : paymentStep ? (
                 <div className="flex flex-col gap-4 my-auto">
                   <h3 className="text-lg font-black text-neutral-900">💳 תשלום מאובטח</h3>
-                  <p className="text-xs text-[#5c5037]">השריון נשמר. השלימי תשלום דרך Tranzila כדי לאשר.</p>
+                  <p className="text-xs text-[#5c5037]">ההזמנה נשמרה. השלימי תשלום דרך Tranzila כדי לאשר.</p>
                   <div className="bg-white border border-[#decfa8] rounded-xl p-4 text-xs">
                     <div className="flex justify-between font-black text-neutral-900">
                       <span>סה״כ לתשלום</span>
@@ -1453,7 +1458,7 @@ export default function Home() {
                 <form onSubmit={handlePlaceOrder} className="flex flex-col gap-3">
                   <div>
                     <span className="text-[9px] tracking-widest bg-gradient-to-r from-[#b8860b] to-[#d4af37] bg-clip-text text-transparent font-black block mb-1">
-                      ✦ שריון שמלה ✦
+                      ✦ הזמנת שמלה ✦
                     </span>
                     <h3 className="text-xl font-bold text-neutral-950 tracking-wide">{selectedDress.name}</h3>
                     <div className="mt-2 flex flex-wrap gap-2 text-[10px]">
@@ -1477,7 +1482,7 @@ export default function Home() {
 
                   <div className="w-full h-[1px] bg-[#ebdcb6] my-0.5"></div>
 
-                  <h4 className="text-xs font-black text-[#8b6508] tracking-wide">פרטי קשר לשריון מידי</h4>
+                  <h4 className="text-xs font-black text-[#8b6508] tracking-wide">פרטי קשר להזמנה מידית</h4>
                   
                   <input type="text" placeholder="שם מלא" required value={orderName} onChange={(e) => setOrderName(e.target.value)} className="p-3 bg-white border border-[#decfa8] rounded-xl text-xs font-medium focus:outline-none focus:border-[#d4af37]" />
                   <input type="tel" placeholder="מספר טלפון זמין" required value={orderPhone} onChange={(e) => setOrderPhone(e.target.value)} className="p-3 bg-white border border-[#decfa8] rounded-xl text-xs font-medium focus:outline-none focus:border-[#d4af37]" />
@@ -1514,7 +1519,7 @@ export default function Home() {
                         : 'bg-gradient-to-r from-[#d4af37] via-[#b8860b] to-[#d4af37] hover:from-[#b8860b] hover:to-[#8b6508]'
                     }`}
                   >
-                    {isSubmittingBooking ? 'שומרת שריון...' : 'המשכי לתשלום מאובטח'}
+                    {isSubmittingBooking ? 'שומרת הזמנה...' : 'המשכי לתשלום מאובטח'}
                   </button>
                 </form>
               )}

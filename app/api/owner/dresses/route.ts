@@ -60,8 +60,15 @@ export async function POST(request: Request) {
     const ownerEmail = String(formData.get('owner_email') || '').trim();
     const files = formData.getAll('images').filter((item): item is File => item instanceof File && item.size > 0);
 
+    const ownerPhoneInput = String(formData.get('owner_phone') || '').trim();
+    const ownerPhone = ownerPhoneInput || owner.phone.replace(/^972/, '0') || owner.phone;
+
     if (!name || !size || Number.isNaN(price) || !city) {
       return NextResponse.json({ error: 'חסרים שדות חובה' }, { status: 400 });
+    }
+
+    if (!ownerPhone) {
+      return NextResponse.json({ error: 'יש להזין מספר טלפון' }, { status: 400 });
     }
 
     if (files.length === 0) {
@@ -89,7 +96,7 @@ export async function POST(request: Request) {
       city,
       event_type: eventType,
       owner_name: owner.displayName,
-      owner_phone: owner.phone.replace(/^972/, '0') || owner.phone,
+      owner_phone: ownerPhone.replace(/^972/, '0') || ownerPhone,
       owner_email: contactEmail,
       deposit: Number.isNaN(deposit) ? 0 : deposit,
       pickup_method: pickupMethod,

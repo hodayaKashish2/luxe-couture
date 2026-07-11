@@ -22,15 +22,35 @@ export function normalizeDress(dress: Dress): Dress {
   };
 }
 
+let catalogCache: Dress[] | null = null;
+let catalogPromise: Promise<Dress[]> | null = null;
+
+export async function preloadDressesCatalog(): Promise<Dress[]> {
+  if (catalogCache) return catalogCache;
+  if (!catalogPromise) {
+    catalogPromise = fetch('/api/dresses')
+      .then(async (res) => {
+        if (!res.ok) return [];
+        const data: Dress[] = await res.json();
+        return Array.isArray(data) ? data.map(normalizeDress) : [];
+      })
+      .then((list) => {
+        catalogCache = list;
+        return list;
+      })
+      .catch(() => []);
+  }
+  return catalogPromise;
+}
+
+export function invalidateDressesCatalog() {
+  catalogCache = null;
+  catalogPromise = null;
+}
+
 export async function fetchDressById(id: string): Promise<Dress | null> {
-  const res = await fetch('/api/dresses');
-  if (!res.ok) return null;
-
-  const data: Dress[] = await res.json();
-  if (!Array.isArray(data)) return null;
-
-  const dress = data.find((item) => String(item.id) === String(id));
-  return dress ? normalizeDress(dress) : null;
+  const list = await preloadDressesCatalog();
+  return findDressInList(list, id);
 }
 
 export function findDressInList(list: Dress[], id: string): Dress | null {

@@ -73,6 +73,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'חסרים שם משכירה ועיר' }, { status: 400 });
     }
 
+    if (!ownerPhone) {
+      return NextResponse.json({ error: 'יש להזין מספר טלפון' }, { status: 400 });
+    }
+
     if (files.length === 0) {
       return NextResponse.json({ error: 'יש להעלות לפחות תמונה אחת של השמלה' }, { status: 400 });
     }

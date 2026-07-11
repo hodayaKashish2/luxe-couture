@@ -30,7 +30,7 @@ export async function POST(request: Request) {
 
     if (!bookingId) {
 
-      return NextResponse.json({ error: 'חסר מזהה שריון' }, { status: 400 });
+      return NextResponse.json({ error: 'חסר מזהה הזמנה' }, { status: 400 });
 
     }
 
@@ -54,7 +54,7 @@ export async function POST(request: Request) {
 
     if (!booking) {
 
-      return NextResponse.json({ error: 'שריון לא נמצא' }, { status: 404 });
+      return NextResponse.json({ error: 'הזמנה לא נמצאה' }, { status: 404 });
 
     }
 
@@ -146,7 +146,7 @@ export async function PUT(request: Request) {
 
     if (!bookingId) {
 
-      return NextResponse.json({ error: 'חסר מזהה שריון' }, { status: 400 });
+      return NextResponse.json({ error: 'חסר מזהה הזמנה' }, { status: 400 });
 
     }
 
@@ -172,7 +172,7 @@ export async function PUT(request: Request) {
 
     if (!booking) {
 
-      return NextResponse.json({ error: 'שריון לא נמצא' }, { status: 404 });
+      return NextResponse.json({ error: 'הזמנה לא נמצאה' }, { status: 404 });
 
     }
 

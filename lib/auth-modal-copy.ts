@@ -20,7 +20,7 @@ export const AUTH_MODAL_COPY: Record<AuthModalReason, AuthModalCopy> = {
   account: {
     eyebrow: '✦ האזור שלי ✦',
     title: 'האזור האישי שלך מחכה',
-    body: 'כאן תמצאי שריונות, שמלות שפרסמת, עגלה ומועדפים. כדי להיכנס — התחברי או צרי חשבון חדש.',
+    body: 'כאן תמצאי הזמנות, שמלות שפרסמת, עגלה ומועדפים. כדי להיכנס — התחברי או צרי חשבון חדש.',
   },
   publish: {
     eyebrow: '✦ פרסום שמלה ✦',

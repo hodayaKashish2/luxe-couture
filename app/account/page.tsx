@@ -16,7 +16,7 @@ import { getStoredSiteUser } from '@/lib/session-user';
 import { clearAllLuxeStorage } from '@/lib/luxe-storage';
 import { notifySiteAuthChange } from '@/lib/site-auth-events';
 import { accountSectionUrl, parseAccountSection } from '@/lib/account-section-url';
-import { fetchDressById } from '@/lib/dress-api';
+import { fetchDressById, findDressInList, preloadDressesCatalog } from '@/lib/dress-api';
 import type { Dress } from '@/lib/types';
 import type { SavedDress } from '@/lib/luxe-storage';
 
@@ -48,9 +48,29 @@ const STATUS: Record<string, string> = {
   approved: 'מפורסמת ✓',
   pending: 'ממתינה לאישור',
   removed: 'הוסרה',
-  confirmed: 'שריון מאושר ✓',
+  confirmed: 'הזמנה מאושרת ✓',
   pending_payment: 'ממתין לתשלום',
 };
+
+function getDressRentalSummary(bookings: BookingRow[]) {
+  const confirmed = bookings.filter((b) => b.status === 'confirmed');
+  const pending = bookings.filter((b) => b.status === 'pending_payment');
+  if (confirmed.length === 0 && pending.length === 0) {
+    return { badge: '🟢 פנויה להשכרה', detail: 'עדיין אין הזמנות על השמלה' };
+  }
+  if (confirmed.length > 0) {
+    const sorted = [...confirmed].sort((a, b) => a.event_date.localeCompare(b.event_date));
+    const next = sorted[0];
+    return {
+      badge: `📅 ${confirmed.length} הזמנ${confirmed.length === 1 ? 'ה' : 'ות'} פעילות`,
+      detail: next ? `השכרה הבאה: ${next.event_date}` : '',
+    };
+  }
+  return {
+    badge: `⏳ ${pending.length} ממתינות לתשלום`,
+    detail: 'ממתין לאישור תשלום',
+  };
+}
 
 function AccountPageContent() {
   const router = useRouter();
@@ -75,9 +95,11 @@ function AccountPageContent() {
   const [addImagePreviews, setAddImagePreviews] = useState<string[]>([]);
   const addFileInputRef = useRef<HTMLInputElement>(null);
   const editFileInputRef = useRef<HTMLInputElement>(null);
+  const pendingViewDressRef = useRef<string | null>(null);
   const [addForm, setAddForm] = useState({
     name: '', price: '', size: '', city: 'ירושלים', color: '', event_type: '',
     deposit: '', pickup_method: 'pickup', includes_dry_cleaning: 'no', condition: 'new', description: '',
+    owner_phone: '',
   });
   const [editingDress, setEditingDress] = useState<RentalDress | null>(null);
   const [editForm, setEditForm] = useState({
@@ -88,26 +110,44 @@ function AccountPageContent() {
   const [editNewPreviews, setEditNewPreviews] = useState<string[]>([]);
 
   const navigateToSection = useCallback(
-    (next: Section, opts?: { dressId?: string; replace?: boolean }) => {
-      const url = accountSectionUrl(next, opts?.dressId);
+    (next: Section, opts?: { dressId?: string; viewDress?: string; replace?: boolean }) => {
+      const url = accountSectionUrl(next, {
+        dressId: opts?.dressId,
+        viewDress: opts?.viewDress,
+      });
       if (opts?.replace) router.replace(url, { scroll: false });
       else router.push(url, { scroll: false });
     },
     [router]
   );
 
-  const goBackInAccount = useCallback(() => {
-    router.back();
-  }, [router]);
+  const goToAccountHub = useCallback(() => {
+    setDetailsDress(null);
+    pendingViewDressRef.current = null;
+    navigateToSection('hub', { replace: true });
+  }, [navigateToSection]);
+
+  const closeDetailsDress = useCallback(() => {
+    setDetailsDress(null);
+    pendingViewDressRef.current = null;
+    if (searchParams.get('viewDress')) {
+      router.back();
+    }
+  }, [searchParams, router]);
 
   const openSavedDressDetails = useCallback(async (item: SavedDress) => {
-    const dress = await fetchDressById(item.id);
-    if (dress) {
-      setDetailsDress(dress);
+    pendingViewDressRef.current = item.id;
+    const list = await preloadDressesCatalog();
+    let dress = findDressInList(list, item.id);
+    if (!dress) dress = await fetchDressById(item.id);
+    if (!dress) {
+      pendingViewDressRef.current = null;
+      alert('לא מצאנו את השמלה באתר — אולי הוסרה');
       return;
     }
-    alert('לא מצאנו את השמלה באתר — אולי הוסרה');
-  }, []);
+    setDetailsDress(dress);
+    navigateToSection(section, { viewDress: item.id });
+  }, [section, navigateToSection]);
 
   const load = useCallback(async (opts?: { silent?: boolean }) => {
     const token = sessionStorage.getItem('site_token');
@@ -134,6 +174,22 @@ function AccountPageContent() {
   }, []);
 
   useEffect(() => {
+    preloadDressesCatalog();
+  }, []);
+
+  useEffect(() => {
+    if (section === 'add') {
+      const stored = getStoredSiteUser();
+      if (stored?.phone) {
+        setAddForm((prev) => ({
+          ...prev,
+          owner_phone: prev.owner_phone || stored.phone || '',
+        }));
+      }
+    }
+  }, [section]);
+
+  useEffect(() => {
     load();
     const onBookingUpdate = () => load({ silent: true });
     const onFocus = () => load({ silent: true });
@@ -157,7 +213,7 @@ function AccountPageContent() {
   }, [section, load]);
 
   useEffect(() => {
-    const { section: urlSection, dressId } = parseAccountSection(searchParams);
+    const { section: urlSection, dressId, viewDress } = parseAccountSection(searchParams);
     setSection(urlSection);
 
     if (urlSection === 'edit' && dressId) {
@@ -177,6 +233,25 @@ function AccountPageContent() {
     } else if (urlSection !== 'edit') {
       setEditingDress(null);
     }
+
+    if (viewDress && (urlSection === 'cart' || urlSection === 'favorites')) {
+      pendingViewDressRef.current = null;
+      preloadDressesCatalog().then((list) => {
+        const cached = findDressInList(list, viewDress);
+        if (cached) {
+          setDetailsDress(cached);
+          return;
+        }
+        fetchDressById(viewDress).then((dress) => {
+          if (dress) setDetailsDress(dress);
+        });
+      });
+    } else if (urlSection !== 'cart' && urlSection !== 'favorites') {
+      setDetailsDress(null);
+      pendingViewDressRef.current = null;
+    } else if (!viewDress && !pendingViewDressRef.current) {
+      setDetailsDress(null);
+    }
   }, [searchParams, dresses]);
 
   async function logout() {
@@ -189,6 +264,10 @@ function AccountPageContent() {
 
   async function submitDress(e: React.FormEvent) {
     e.preventDefault();
+    if (!addForm.owner_phone.trim()) {
+      alert('יש להזין מספר טלפון ליצירת קשר');
+      return;
+    }
     if (addFiles.length === 0) {
       alert('יש להעלות לפחות תמונה אחת של השמלה');
       return;
@@ -311,6 +390,10 @@ function AccountPageContent() {
     .map((r) => r.event_date);
 
   const pendingReservations = reservations.filter((r) => r.status === 'pending_payment').length;
+  const viewDressId = searchParams.get('viewDress');
+  const dressesWithBookings = dresses.filter((d) =>
+    ownerBookings.some((b) => String(b.dress_id) === String(d.id))
+  ).length;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#fbf8f0] to-[#e8dcbd] text-[#332c1e]" dir="rtl">
@@ -337,17 +420,17 @@ function AccountPageContent() {
                 className="text-right p-6 rounded-2xl border-2 border-[#decfa8] bg-white hover:border-[#d4af37] hover:shadow-lg transition-all group"
               >
                 <span className="text-3xl">📅</span>
-                <h2 className="font-black text-lg mt-3 text-[#3d2f24] group-hover:text-[#b8860b]">השריונות שלי</h2>
+                <h2 className="font-black text-lg mt-3 text-[#3d2f24] group-hover:text-[#b8860b]">ההזמנות שלי</h2>
                 <p className="text-xs text-[#6e634c] mt-1 leading-relaxed">
-                  שמלות ששריינת — לוח שנה ופרטי האירועים שלך
+                  שמלות שהזמנת — לוח שנה ופרטי האירועים שלך
                 </p>
                 <p className="text-[10px] text-[#b8860b] font-bold mt-3">
                   {!dataReady ? (
                     <span className="text-[#9a7b4f] animate-pulse">טוען...</span>
                   ) : (
                     <>
-                      {reservations.length} שריונות
-                      {pendingReservations > 0 && ` · ${pendingReservations} ממתינים`}
+                      {reservations.length} הזמנות
+                      {pendingReservations > 0 && ` · ${pendingReservations} ממתינות`}
                     </>
                   )}
                 </p>
@@ -358,9 +441,9 @@ function AccountPageContent() {
                 className="text-right p-6 rounded-2xl border-2 border-[#decfa8] bg-white hover:border-[#d4af37] hover:shadow-lg transition-all group"
               >
                 <span className="text-3xl">👗</span>
-                <h2 className="font-black text-lg mt-3 text-[#3d2f24] group-hover:text-[#b8860b]">ההשכרות שלי</h2>
+                <h2 className="font-black text-lg mt-3 text-[#3d2f24] group-hover:text-[#b8860b]">השמלות שלי</h2>
                 <p className="text-xs text-[#6e634c] mt-1 leading-relaxed">
-                  השמלות שפרסמת — עריכה, לוח שריונות והוספת שמלה
+                  השמלות שפרסמת — רואות מה מושכר, מי השכירה ומתי
                 </p>
                 <p className="text-[10px] text-[#b8860b] font-bold mt-3">
                   {!dataReady ? (
@@ -368,7 +451,7 @@ function AccountPageContent() {
                   ) : (
                     <>
                       {dresses.length} שמלות
-                      {ownerBookings.length > 0 && ` · ${ownerBookings.length} שריונות נכנסו`}
+                      {dressesWithBookings > 0 && ` · ${dressesWithBookings} עם הזמנות`}
                     </>
                   )}
                 </p>
@@ -406,21 +489,30 @@ function AccountPageContent() {
 
         {section !== 'hub' && (
           <button
-            onClick={goBackInAccount}
+            onClick={() => {
+              if (section === 'edit') {
+                setEditingDress(null);
+                navigateToSection('rentals', { replace: true });
+              } else if (viewDressId) {
+                closeDetailsDress();
+              } else {
+                goToAccountHub();
+              }
+            }}
             className="mb-4 text-xs text-[#8b6508] font-bold hover:underline"
           >
-            ← חזרה לאזור האישי
+            ← {section === 'edit' ? 'חזרה לשמלות שלי' : viewDressId ? 'חזרה לרשימה' : 'חזרה לאזור האישי'}
           </button>
         )}
 
         {section === 'reservations' && (
           <div className="space-y-6">
-            <h2 className="font-black text-xl">📅 השריונות שלי</h2>
+            <h2 className="font-black text-xl">📅 ההזמנות שלי</h2>
             {loading ? (
               <p className="text-sm">טוען...</p>
             ) : reservations.length === 0 ? (
               <div className="bg-white rounded-2xl border border-[#eadaaf] p-8 text-center">
-                <p className="text-sm text-[#6e634c]">עדיין אין שריונות. מצאי שמלה בקטלוג!</p>
+                <p className="text-sm text-[#6e634c]">עדיין אין הזמנות. מצאי שמלה בקטלוג!</p>
                 <Link href="/" className="inline-block mt-4 px-4 py-2 bg-[#b8860b] text-white rounded-xl text-xs font-bold">
                   לקטלוג →
                 </Link>
@@ -449,12 +541,35 @@ function AccountPageContent() {
 
         {section === 'rentals' && (
           <div className="space-y-6">
-            <div className="flex justify-between items-center flex-wrap gap-2">
-              <h2 className="font-black text-xl">👗 ההשכרות שלי</h2>
-              <button onClick={() => navigateToSection('add')} className="px-4 py-2 bg-[#b8860b] text-white rounded-xl text-xs font-bold">
+            <div className="flex justify-between items-start flex-wrap gap-3">
+              <div>
+                <h2 className="font-black text-xl">👗 השמלות שלי</h2>
+                <p className="text-xs text-[#6e634c] mt-1 leading-relaxed max-w-md">
+                  רשימת כל השמלות שפרסמת. לכל שמלה תראי אם היא מושכרת, מי השכירה ומתי.
+                </p>
+              </div>
+              <button onClick={() => navigateToSection('add')} className="px-4 py-2 bg-[#b8860b] text-white rounded-xl text-xs font-bold shrink-0">
                 ➕ הוספת שמלה
               </button>
             </div>
+
+            {dresses.length > 0 && (
+              <div className="grid grid-cols-3 gap-2 text-center">
+                <div className="bg-white rounded-xl border border-[#eadaaf] p-3">
+                  <p className="text-lg font-black text-[#3d2f24]">{dresses.length}</p>
+                  <p className="text-[10px] text-[#6e634c]">שמלות</p>
+                </div>
+                <div className="bg-white rounded-xl border border-[#eadaaf] p-3">
+                  <p className="text-lg font-black text-green-700">{dresses.length - dressesWithBookings}</p>
+                  <p className="text-[10px] text-[#6e634c]">פנויות</p>
+                </div>
+                <div className="bg-white rounded-xl border border-[#eadaaf] p-3">
+                  <p className="text-lg font-black text-[#b8860b]">{dressesWithBookings}</p>
+                  <p className="text-[10px] text-[#6e634c]">עם הזמנות</p>
+                </div>
+              </div>
+            )}
+
             {dresses.length === 0 ? (
               <p className="text-sm text-[#6e634c]">אין שמלות. הוסיפי שמלה חדשה!</p>
             ) : (
@@ -463,6 +578,7 @@ function AccountPageContent() {
                   (b) => String(b.dress_id) === String(dress.id)
                 );
                 const confirmedBookings = dressBookings.filter((b) => b.status === 'confirmed');
+                const rentalSummary = getDressRentalSummary(dressBookings);
                 return (
                   <div key={dress.id} className="bg-white rounded-2xl border border-[#eadaaf] p-4 sm:p-5 space-y-4">
                     <div className="flex gap-4">
@@ -482,28 +598,31 @@ function AccountPageContent() {
                             >
                               ✏️ עדכון
                             </button>
-                            {dressBookings.length > 0 && (
-                              <span className="text-[10px] font-black bg-[#2c261a] text-[#f4ebd4] px-2.5 py-1 rounded-full">
-                                {dressBookings.length} שריונות
-                              </span>
-                            )}
                           </div>
                         </div>
                         <p className="text-xs text-[#6e634c] mt-1">₪{dress.price} · מידה {dress.size} · {dress.city}</p>
-                        <span className="inline-block mt-2 text-[10px] bg-[#f4ebd4] px-2 py-0.5 rounded-full">{STATUS[dress.status]}</span>
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          <span className="inline-block text-[10px] bg-[#f4ebd4] px-2 py-0.5 rounded-full">{STATUS[dress.status]}</span>
+                          <span className="inline-block text-[10px] font-bold bg-[#fffdf8] border border-[#decfa8] px-2 py-0.5 rounded-full text-[#8b6508]">
+                            {rentalSummary.badge}
+                          </span>
+                        </div>
+                        {rentalSummary.detail && (
+                          <p className="text-[10px] text-[#9a7b4f] mt-1">{rentalSummary.detail}</p>
+                        )}
                       </div>
                     </div>
 
                     <div>
-                      <h4 className="text-xs font-black text-[#8b6508] mb-2">לוח שריונות</h4>
+                      <h4 className="text-xs font-black text-[#8b6508] mb-2">תאריכים מושכרים</h4>
                       <DressCalendar bookedDates={confirmedBookings.map((b) => b.event_date)} />
                     </div>
 
                     <div>
-                      <h4 className="text-xs font-black text-[#8b6508] mb-3">מי שריינה את השמלה</h4>
+                      <h4 className="text-xs font-black text-[#8b6508] mb-3">מי הזמינה את השמלה</h4>
                       {dressBookings.length === 0 ? (
                         <p className="text-xs text-[#9a7b4f] bg-[#faf8f3] rounded-xl border border-dashed border-[#decfa8] px-4 py-3 text-center">
-                          עדיין אין שריונות על השמלה הזו
+                          עדיין אין הזמנות על השמלה הזו — השמלה פנויה להשכרה
                         </p>
                       ) : (
                         <ul className="space-y-2">
@@ -573,11 +692,11 @@ function AccountPageContent() {
               type="button"
               onClick={() => {
                 setEditingDress(null);
-                goBackInAccount();
+                navigateToSection('rentals', { replace: true });
               }}
               className="text-xs text-[#8b6508] font-bold hover:underline"
             >
-              ← חזרה להשכרות שלי
+              ← חזרה לשמלות שלי
             </button>
             <h2 className="font-black text-xl">✏️ עדכון שמלה</h2>
             <p className="text-xs text-[#6e634c]">עורכת: <strong>{editingDress.name}</strong></p>
@@ -670,6 +789,7 @@ function AccountPageContent() {
                 {DRESS_SIZES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
               </select>
               <input required placeholder="עיר *" value={addForm.city} onChange={(e) => setAddForm({ ...addForm, city: e.target.value })} className="p-2.5 border border-[#decfa8] rounded-xl text-xs" />
+              <input required type="tel" placeholder="טלפון ליצירת קשר *" value={addForm.owner_phone} onChange={(e) => setAddForm({ ...addForm, owner_phone: e.target.value })} className="p-2.5 border border-[#decfa8] rounded-xl text-xs col-span-1 sm:col-span-2" dir="ltr" />
               <input placeholder="צבע" value={addForm.color} onChange={(e) => setAddForm({ ...addForm, color: e.target.value })} className="p-2.5 border border-[#decfa8] rounded-xl text-xs" />
               <textarea
                 placeholder="תיאור השמלה (אופציונלי)"
@@ -733,14 +853,14 @@ function AccountPageContent() {
       {detailsDress && (
         <DressDetailsModal
           dress={detailsDress}
-          onClose={() => setDetailsDress(null)}
+          onClose={closeDetailsDress}
           isInCart={isDressInCart(detailsDress.id)}
           isFavorite={isDressFavorite(detailsDress.id)}
           onToggleCart={() => toggleCart(detailsDress)}
           onToggleFavorite={() => toggleFavorite(detailsDress)}
           onReserve={() => {
             const dressId = detailsDress.id;
-            setDetailsDress(null);
+            closeDetailsDress();
             router.push(`/?reserve=${encodeURIComponent(dressId)}`);
           }}
         />
