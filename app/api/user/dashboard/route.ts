@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getUserFromRequest } from '@/lib/user-auth';
 import { phonesMatch } from '@/lib/owner-auth';
+import { userOwnsDress } from '@/lib/dress-ownership';
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server';
 
 function emailsMatch(a: string, b: string) {
@@ -28,10 +29,7 @@ export async function GET(request: Request) {
 
     if (dressesError) throw dressesError;
 
-    const myDresses = (allDresses ?? []).filter((d) => {
-      const ownerPhone = String(d.owner_phone || '').trim();
-      return Boolean(user.phone?.trim() && ownerPhone && phonesMatch(ownerPhone, user.phone));
-    });
+    const myDresses = (allDresses ?? []).filter((d) => userOwnsDress(d, user));
 
     const dressIds = myDresses.map((d) => d.id);
     let ownerBookings: Array<Record<string, unknown>> = [];

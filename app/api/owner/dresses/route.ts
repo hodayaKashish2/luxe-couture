@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { sendDressPendingAdminEmail } from '@/lib/email';
 import { appendContactEmailToDescription } from '@/lib/dress-contact';
 import { getUserFromRequest } from '@/lib/user-auth';
+import { formatAccountPhone } from '@/lib/dress-ownership';
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server';
 
 const MAX_IMAGES = 6;
@@ -60,8 +61,7 @@ export async function POST(request: Request) {
     const ownerEmail = String(formData.get('owner_email') || '').trim();
     const files = formData.getAll('images').filter((item): item is File => item instanceof File && item.size > 0);
 
-    const ownerPhoneInput = String(formData.get('owner_phone') || '').trim();
-    const ownerPhone = ownerPhoneInput || owner.phone.replace(/^972/, '0') || owner.phone;
+    const ownerPhone = formatAccountPhone(owner.phone);
 
     if (!name || !size || Number.isNaN(price) || !city) {
       return NextResponse.json({ error: 'חסרים שדות חובה' }, { status: 400 });
@@ -73,6 +73,18 @@ export async function POST(request: Request) {
 
     if (files.length === 0) {
       return NextResponse.json({ error: 'יש להעלות לפחות תמונה אחת' }, { status: 400 });
+    }
+
+    for (const file of files) {
+      if (!file.type.startsWith('image/')) {
+        return NextResponse.json({ error: `הקובץ ${file.name} אינו תמונה` }, { status: 400 });
+      }
+      if (file.size > MAX_FILE_SIZE) {
+        return NextResponse.json(
+          { error: `הקובץ ${file.name} כבד מדי — מקסימום 5MB לתמונה` },
+          { status: 400 }
+        );
+      }
     }
 
     const contactEmail = (ownerEmail || owner.email || '').trim().toLowerCase();
@@ -96,7 +108,7 @@ export async function POST(request: Request) {
       city,
       event_type: eventType,
       owner_name: owner.displayName,
-      owner_phone: ownerPhone.replace(/^972/, '0') || ownerPhone,
+      owner_phone: ownerPhone,
       owner_email: contactEmail,
       deposit: Number.isNaN(deposit) ? 0 : deposit,
       pickup_method: pickupMethod,

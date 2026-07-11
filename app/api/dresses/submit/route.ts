@@ -85,6 +85,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: `ניתן להעלות עד ${MAX_IMAGES} תמונות` }, { status: 400 });
     }
 
+    for (const file of files) {
+      if (!file.type.startsWith('image/')) {
+        return NextResponse.json({ error: `הקובץ ${file.name} אינו תמונה` }, { status: 400 });
+      }
+      if (file.size > MAX_FILE_SIZE) {
+        return NextResponse.json(
+          { error: `הקובץ ${file.name} כבד מדי — מקסימום 5MB לתמונה` },
+          { status: 400 }
+        );
+      }
+    }
+
     const descriptionParts = [
       descriptionInput || 'אין תיאור זמין.',
       color ? `צבע: ${color}` : '',

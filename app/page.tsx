@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import SiteFooter from '@/components/SiteFooter';
 import SiteHeader from '@/components/SiteHeader';
 import OwnerPlatformNotice from '@/components/OwnerPlatformNotice';
+import FormError from '@/components/FormError';
 import DressCardSummary from '@/components/DressCardSummary';
 import DressDetailsModal from '@/components/DressDetailsModal';
 import DressRateModal from '@/components/DressRateModal';
@@ -11,6 +12,7 @@ import { useLuxeStorage } from '@/components/LuxeStorageProvider';
 import { useAuthModal } from '@/components/AuthModalProvider';
 import SavedDressList from '@/components/SavedDressList';
 import { FAQS, DRESS_SIZES } from '@/lib/constants';
+import { validateAddDressForm, validateDressImageFiles } from '@/lib/form-validation';
 import { notifyBookingUpdated } from '@/lib/booking-events';
 import { getStoredSiteUser } from '@/lib/session-user';
 import { isLoggedIn } from '@/lib/require-login';
@@ -48,6 +50,7 @@ export default function Home() {
   // מודאל הוספת שמלה חדשה
   const [isAddDressOpen, setIsAddDressOpen] = useState(false);
   const [isSubmittingDress, setIsSubmittingDress] = useState(false);
+  const [addDressError, setAddDressError] = useState('');
   const [newDressFiles, setNewDressFiles] = useState<File[]>([]);
   const newDressFileInputRef = useRef<HTMLInputElement>(null);
   const [newDressData, setNewDressData] = useState({
@@ -237,6 +240,7 @@ export default function Home() {
     });
     setNewDressFiles([]);
     if (newDressFileInputRef.current) newDressFileInputRef.current.value = '';
+    setAddDressError('');
   };
 
   const findDressById = useCallback(
@@ -534,15 +538,21 @@ export default function Home() {
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const filesArray = Array.from(e.target.files);
-      const urlsArray = filesArray.map(file => URL.createObjectURL(file));
-      setNewDressFiles(prev => [...prev, ...filesArray]);
-      setNewDressData(prev => ({
-        ...prev,
-        images: [...prev.images, ...urlsArray]
-      }));
+    if (!e.target.files) return;
+    const filesArray = Array.from(e.target.files);
+    const imageError = validateDressImageFiles(filesArray);
+    if (imageError) {
+      setAddDressError(imageError);
+      if (newDressFileInputRef.current) newDressFileInputRef.current.value = '';
+      return;
     }
+    setAddDressError('');
+    const urlsArray = filesArray.map((file) => URL.createObjectURL(file));
+    setNewDressFiles((prev) => [...prev, ...filesArray]);
+    setNewDressData((prev) => ({
+      ...prev,
+      images: [...prev.images, ...urlsArray],
+    }));
   };
 
   const openAddDressForm = () => {
@@ -555,22 +565,35 @@ export default function Home() {
 
   const handleAddDressSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setAddDressError('');
     if (!isLoggedIn()) {
       openAuthModal({ reason: 'publish', next: '/?publish=1' });
       return;
     }
-    if (!newDressData.name || !newDressData.price || !newDressData.size) {
-      alert('אנא מלאי שדות חובה (שם, מחיר ומידה)');
+
+    const validationError = validateAddDressForm(
+      {
+        name: newDressData.name,
+        price: newDressData.price,
+        size: newDressData.size,
+        city: newDressData.city,
+        owner_phone: newDressData.owner_phone,
+      },
+      newDressFiles.length
+    );
+    if (validationError) {
+      setAddDressError(validationError);
       return;
     }
 
-    if (!newDressData.owner_phone.trim()) {
-      alert('יש להזין מספר טלפון ליצירת קשר');
+    if (!newDressData.owner_name.trim()) {
+      setAddDressError('יש להזין שם משכירה');
       return;
     }
 
-    if (newDressFiles.length === 0) {
-      alert('יש להעלות לפחות תמונה אחת של השמלה');
+    const imageError = validateDressImageFiles(newDressFiles);
+    if (imageError) {
+      setAddDressError(imageError);
       return;
     }
 
@@ -602,15 +625,16 @@ export default function Home() {
       const data = await response.json();
 
       if (!response.ok) {
-        alert(data.error || 'לא הצלחנו לשלוח את השמלה לאישור');
+        setAddDressError(data.error || 'לא הצלחנו לשלוח את השמלה לאישור');
         return;
       }
 
       closeAddDressModal();
+      setAddDressError('');
       alert(data.message || 'השמלה נשלחה לאישור! היא תופיע באתר לאחר אישור בדף הניהול.');
     } catch (error) {
       console.error('Error submitting dress:', error);
-      alert('תקלה בשליחת השמלה. נסי שוב.');
+      setAddDressError('תקלה בשליחת השמלה. נסי שוב.');
     } finally {
       setIsSubmittingDress(false);
     }
@@ -944,6 +968,7 @@ export default function Home() {
 
             <form onSubmit={handleAddDressSubmit} className="flex flex-col gap-4">
               <OwnerPlatformNotice />
+              {addDressError && <FormError message={addDressError} />}
               {/* שם השמלה */}
               <div>
                 <label className="block text-xs font-bold text-[#8b6508] mb-1">שם הדגם / השמלה *</label>
@@ -953,7 +978,7 @@ export default function Home() {
                   placeholder="למשל: שמלת משי פנינה"
                   value={newDressData.name} 
                   onChange={(e) => setNewDressData({...newDressData, name: e.target.value})} 
-                  className="w-full p-2.5 bg-neutral-50 border border-[#decfa8] rounded-xl text-xs font-medium focus:outline-none focus:border-[#d4af37]" 
+                  className="w-full p-2.5 bg-white border border-[#decfa8] rounded-xl text-xs text-[#2c261a] placeholder:text-[#9a7b4f] font-medium focus:outline-none focus:border-[#d4af37]" 
                 />
               </div>
 
@@ -967,7 +992,7 @@ export default function Home() {
                     placeholder="350"
                     value={newDressData.price} 
                     onChange={(e) => setNewDressData({...newDressData, price: e.target.value})} 
-                    className="w-full p-2.5 bg-neutral-50 border border-[#decfa8] rounded-xl text-xs font-medium focus:outline-none focus:border-[#d4af37]" 
+                    className="w-full p-2.5 bg-white border border-[#decfa8] rounded-xl text-xs text-[#2c261a] placeholder:text-[#9a7b4f] font-medium focus:outline-none focus:border-[#d4af37]" 
                   />
                 </div>
 
@@ -978,7 +1003,7 @@ export default function Home() {
                     required
                     value={newDressData.size}
                     onChange={(e) => setNewDressData({...newDressData, size: e.target.value})}
-                    className="w-full p-2.5 bg-neutral-50 border border-[#decfa8] rounded-xl text-xs font-medium focus:outline-none focus:border-[#d4af37]"
+                    className="w-full p-2.5 bg-white border border-[#decfa8] rounded-xl text-xs text-[#2c261a] placeholder:text-[#9a7b4f] font-medium focus:outline-none focus:border-[#d4af37]"
                   >
                     <option value="">בחרי...</option>
                     {DRESS_SIZES.map((size) => (
@@ -1019,17 +1044,17 @@ export default function Home() {
 
               <div>
                 <label className="block text-xs font-bold text-[#8b6508] mb-1">צבע השמלה</label>
-                <input type="text" placeholder="למשל: לבן שמנת, ורוד עתיק" value={newDressData.color} onChange={(e) => setNewDressData({...newDressData, color: e.target.value})} className="w-full p-2.5 bg-neutral-50 border border-[#decfa8] rounded-xl text-xs" />
+                <input type="text" placeholder="למשל: לבן שמנת, ורוד עתיק" value={newDressData.color} onChange={(e) => setNewDressData({...newDressData, color: e.target.value})} className="w-full p-2.5 bg-white border border-[#decfa8] rounded-xl text-xs text-[#2c261a] placeholder:text-[#9a7b4f]" />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-[#8b6508] mb-1">עיר *</label>
-                  <input type="text" required placeholder="ירושלים" value={newDressData.city} onChange={(e) => setNewDressData({...newDressData, city: e.target.value})} className="w-full p-2.5 bg-neutral-50 border border-[#decfa8] rounded-xl text-xs" />
+                  <input type="text" required placeholder="ירושלים" value={newDressData.city} onChange={(e) => setNewDressData({...newDressData, city: e.target.value})} className="w-full p-2.5 bg-white border border-[#decfa8] rounded-xl text-xs text-[#2c261a] placeholder:text-[#9a7b4f]" />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-[#8b6508] mb-1">סוג אירוע</label>
-                  <select value={newDressData.event_type} onChange={(e) => setNewDressData({...newDressData, event_type: e.target.value})} className="w-full p-2.5 bg-neutral-50 border border-[#decfa8] rounded-xl text-xs">
+                  <select value={newDressData.event_type} onChange={(e) => setNewDressData({...newDressData, event_type: e.target.value})} className="w-full p-2.5 bg-white border border-[#decfa8] rounded-xl text-xs text-[#2c261a] placeholder:text-[#9a7b4f]">
                     <option value="">בחרי...</option>
                     {EVENT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
                   </select>
@@ -1039,27 +1064,27 @@ export default function Home() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-[#8b6508] mb-1">שם המשכירה *</label>
-                  <input type="text" required value={newDressData.owner_name} onChange={(e) => setNewDressData({...newDressData, owner_name: e.target.value})} className="w-full p-2.5 bg-neutral-50 border border-[#decfa8] rounded-xl text-xs" />
+                  <input type="text" required value={newDressData.owner_name} onChange={(e) => setNewDressData({...newDressData, owner_name: e.target.value})} className="w-full p-2.5 bg-white border border-[#decfa8] rounded-xl text-xs text-[#2c261a] placeholder:text-[#9a7b4f]" />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-[#8b6508] mb-1">טלפון *</label>
-                  <input type="tel" required placeholder="050-0000000" value={newDressData.owner_phone} onChange={(e) => setNewDressData({...newDressData, owner_phone: e.target.value})} className="w-full p-2.5 bg-neutral-50 border border-[#decfa8] rounded-xl text-xs" dir="ltr" />
+                  <input type="tel" required placeholder="050-0000000" value={newDressData.owner_phone} onChange={(e) => setNewDressData({...newDressData, owner_phone: e.target.value})} className="w-full p-2.5 bg-white border border-[#decfa8] rounded-xl text-xs text-[#2c261a] placeholder:text-[#9a7b4f]" dir="ltr" />
                 </div>
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-[#8b6508] mb-1">אימייל (אופציונלי)</label>
-                <input type="email" placeholder="your@email.com" value={newDressData.owner_email} onChange={(e) => setNewDressData({...newDressData, owner_email: e.target.value})} className="w-full p-2.5 bg-neutral-50 border border-[#decfa8] rounded-xl text-xs" dir="ltr" />
+                <input type="email" placeholder="your@email.com" value={newDressData.owner_email} onChange={(e) => setNewDressData({...newDressData, owner_email: e.target.value})} className="w-full p-2.5 bg-white border border-[#decfa8] rounded-xl text-xs text-[#2c261a] placeholder:text-[#9a7b4f]" dir="ltr" />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-[#8b6508] mb-1">פיקדון (₪)</label>
-                  <input type="number" min="0" placeholder="0" value={newDressData.deposit} onChange={(e) => setNewDressData({...newDressData, deposit: e.target.value})} className="w-full p-2.5 bg-neutral-50 border border-[#decfa8] rounded-xl text-xs" />
+                  <input type="number" min="0" placeholder="0" value={newDressData.deposit} onChange={(e) => setNewDressData({...newDressData, deposit: e.target.value})} className="w-full p-2.5 bg-white border border-[#decfa8] rounded-xl text-xs text-[#2c261a] placeholder:text-[#9a7b4f]" />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-[#8b6508] mb-1">קבלת השמלה</label>
-                  <select value={newDressData.pickup_method} onChange={(e) => setNewDressData({...newDressData, pickup_method: e.target.value})} className="w-full p-2.5 bg-neutral-50 border border-[#decfa8] rounded-xl text-xs">
+                  <select value={newDressData.pickup_method} onChange={(e) => setNewDressData({...newDressData, pickup_method: e.target.value})} className="w-full p-2.5 bg-white border border-[#decfa8] rounded-xl text-xs text-[#2c261a] placeholder:text-[#9a7b4f]">
                     {PICKUP_METHODS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
                   </select>
                 </div>
@@ -1113,7 +1138,7 @@ export default function Home() {
                   placeholder="ספרי על השמלה, סוג הבד, התאמה לאירועים..."
                   value={newDressData.description} 
                   onChange={(e) => setNewDressData({...newDressData, description: e.target.value})} 
-                  className="w-full p-2.5 bg-neutral-50 border border-[#decfa8] rounded-xl text-xs font-medium focus:outline-none focus:border-[#d4af37] resize-none" 
+                  className="w-full p-2.5 bg-white border border-[#decfa8] rounded-xl text-xs text-[#2c261a] placeholder:text-[#9a7b4f] font-medium focus:outline-none focus:border-[#d4af37] resize-none" 
                 />
               </div>
 
@@ -1232,7 +1257,7 @@ export default function Home() {
                   placeholder="למשל: מיכל אהרוני"
                   value={newReview.name}
                   onChange={(e) => setNewReview({ ...newReview, name: e.target.value })}
-                  className="w-full p-2.5 bg-neutral-50 border border-[#decfa8] rounded-xl text-xs font-medium focus:outline-none focus:border-[#d4af37]"
+                  className="w-full p-2.5 bg-white border border-[#decfa8] rounded-xl text-xs text-[#2c261a] placeholder:text-[#9a7b4f] font-medium focus:outline-none focus:border-[#d4af37]"
                 />
               </div>
 
@@ -1243,7 +1268,7 @@ export default function Home() {
                   placeholder="למשל: כלה, מלווה, אירוע חברה"
                   value={newReview.role}
                   onChange={(e) => setNewReview({ ...newReview, role: e.target.value })}
-                  className="w-full p-2.5 bg-neutral-50 border border-[#decfa8] rounded-xl text-xs font-medium focus:outline-none focus:border-[#d4af37]"
+                  className="w-full p-2.5 bg-white border border-[#decfa8] rounded-xl text-xs text-[#2c261a] placeholder:text-[#9a7b4f] font-medium focus:outline-none focus:border-[#d4af37]"
                 />
               </div>
 
@@ -1272,7 +1297,7 @@ export default function Home() {
                   placeholder="ספרי על החוויה שלך..."
                   value={newReview.text}
                   onChange={(e) => setNewReview({ ...newReview, text: e.target.value })}
-                  className="w-full p-2.5 bg-neutral-50 border border-[#decfa8] rounded-xl text-xs font-medium focus:outline-none focus:border-[#d4af37] resize-none"
+                  className="w-full p-2.5 bg-white border border-[#decfa8] rounded-xl text-xs text-[#2c261a] placeholder:text-[#9a7b4f] font-medium focus:outline-none focus:border-[#d4af37] resize-none"
                 />
               </div>
 

@@ -1,23 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getUserFromRequest } from '@/lib/user-auth';
-import { phonesMatch } from '@/lib/owner-auth';
+import { userOwnsDress } from '@/lib/dress-ownership';
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server';
 import { MAX_DRESS_IMAGES, uploadDressImages } from '@/lib/dress-images';
-
-function emailsMatch(a: string, b: string) {
-  return a.trim().toLowerCase() === b.trim().toLowerCase();
-}
-
-function userOwnsDress(
-  dress: { owner_phone?: string | null; owner_email?: string | null },
-  user: { phone?: string; email?: string }
-) {
-  const ownerPhone = String(dress.owner_phone || '').trim();
-  const ownerEmail = String(dress.owner_email || '').trim();
-  const phoneOk = Boolean(user.phone?.trim() && ownerPhone && phonesMatch(ownerPhone, user.phone));
-  const emailOk = Boolean(user.email?.trim() && ownerEmail && emailsMatch(ownerEmail, user.email));
-  return phoneOk || emailOk;
-}
 
 function conditionLabel(condition: string) {
   if (condition === 'new') return 'חדש עם תווית';

@@ -10,7 +10,9 @@ import DressDetailsModal from '@/components/DressDetailsModal';
 import { useLuxeStorage } from '@/components/LuxeStorageProvider';
 import DressCalendar from '@/components/DressCalendar';
 import OwnerPlatformNotice from '@/components/OwnerPlatformNotice';
+import FormError from '@/components/FormError';
 import { DRESS_SIZES } from '@/lib/constants';
+import { validateAddDressForm, validateDressImageFiles } from '@/lib/form-validation';
 import { BOOKING_UPDATED_EVENT } from '@/lib/booking-events';
 import { getStoredSiteUser } from '@/lib/session-user';
 import { clearAllLuxeStorage } from '@/lib/luxe-storage';
@@ -108,6 +110,7 @@ function AccountPageContent() {
   const [editImages, setEditImages] = useState<string[]>([]);
   const [editNewFiles, setEditNewFiles] = useState<File[]>([]);
   const [editNewPreviews, setEditNewPreviews] = useState<string[]>([]);
+  const [addFormError, setAddFormError] = useState('');
 
   const navigateToSection = useCallback(
     (next: Section, opts?: { dressId?: string; viewDress?: string; replace?: boolean }) => {
@@ -264,14 +267,20 @@ function AccountPageContent() {
 
   async function submitDress(e: React.FormEvent) {
     e.preventDefault();
-    if (!addForm.owner_phone.trim()) {
-      alert('יש להזין מספר טלפון ליצירת קשר');
+    setAddFormError('');
+
+    const validationError = validateAddDressForm(addForm, addFiles.length);
+    if (validationError) {
+      setAddFormError(validationError);
       return;
     }
-    if (addFiles.length === 0) {
-      alert('יש להעלות לפחות תמונה אחת של השמלה');
+
+    const imageError = validateDressImageFiles(addFiles);
+    if (imageError) {
+      setAddFormError(imageError);
       return;
     }
+
     const token = sessionStorage.getItem('site_token');
     const formData = new FormData();
     Object.entries(addForm).forEach(([k, v]) => formData.append(k, v));
@@ -291,11 +300,21 @@ function AccountPageContent() {
       if (addFileInputRef.current) addFileInputRef.current.value = '';
       navigateToSection('rentals', { replace: true });
       load();
-    } else alert(data.error || 'שגיאה');
+    } else {
+      setAddFormError(data.error || 'שגיאה בשליחת השמלה');
+    }
   }
 
   function handleAddImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     if (!e.target.files) return;
+    const files = Array.from(e.target.files);
+    const imageError = validateDressImageFiles(files);
+    if (imageError) {
+      setAddFormError(imageError);
+      if (addFileInputRef.current) addFileInputRef.current.value = '';
+      return;
+    }
+    setAddFormError('');
     const files = Array.from(e.target.files);
     const previews = files.map((file) => URL.createObjectURL(file));
     setAddFiles((prev) => [...prev, ...files]);
@@ -509,7 +528,7 @@ function AccountPageContent() {
           <div className="space-y-6">
             <h2 className="font-black text-xl">📅 ההזמנות שלי</h2>
             {loading ? (
-              <p className="text-sm">טוען...</p>
+              <p className="text-sm text-[#6e634c] animate-pulse">טוען שמלות...</p>
             ) : reservations.length === 0 ? (
               <div className="bg-white rounded-2xl border border-[#eadaaf] p-8 text-center">
                 <p className="text-sm text-[#6e634c]">עדיין אין הזמנות. מצאי שמלה בקטלוג!</p>
@@ -570,7 +589,9 @@ function AccountPageContent() {
               </div>
             )}
 
-            {dresses.length === 0 ? (
+            {loading ? (
+              <p className="text-sm text-[#6e634c] animate-pulse">טוען שמלות...</p>
+            ) : dresses.length === 0 ? (
               <p className="text-sm text-[#6e634c]">אין שמלות. הוסיפי שמלה חדשה!</p>
             ) : (
               dresses.map((dress) => {
@@ -781,16 +802,28 @@ function AccountPageContent() {
           <form onSubmit={submitDress} className="bg-white rounded-2xl border border-[#eadaaf] p-4 sm:p-6 space-y-4">
             <h2 className="font-black text-xl">➕ הוספת שמלה</h2>
             <OwnerPlatformNotice />
+            {addFormError && <FormError message={addFormError} />}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <input required placeholder="שם השמלה *" value={addForm.name} onChange={(e) => setAddForm({ ...addForm, name: e.target.value })} className="p-2.5 border border-[#decfa8] rounded-xl text-xs col-span-1 sm:col-span-2" />
-              <input required type="number" placeholder="מחיר *" value={addForm.price} onChange={(e) => setAddForm({ ...addForm, price: e.target.value })} className="p-2.5 border border-[#decfa8] rounded-xl text-xs" />
-              <select required value={addForm.size} onChange={(e) => setAddForm({ ...addForm, size: e.target.value })} className="p-2.5 border border-[#decfa8] rounded-xl text-xs">
+              <input required placeholder="שם השמלה *" value={addForm.name} onChange={(e) => setAddForm({ ...addForm, name: e.target.value })} className="p-2.5 border border-[#decfa8] rounded-xl text-xs text-[#2c261a] placeholder:text-[#9a7b4f] bg-white col-span-1 sm:col-span-2" />
+              <input required type="number" placeholder="מחיר *" value={addForm.price} onChange={(e) => setAddForm({ ...addForm, price: e.target.value })} className="p-2.5 border border-[#decfa8] rounded-xl text-xs text-[#2c261a] placeholder:text-[#9a7b4f] bg-white" />
+              <select required value={addForm.size} onChange={(e) => setAddForm({ ...addForm, size: e.target.value })} className="p-2.5 border border-[#decfa8] rounded-xl text-xs text-[#2c261a] bg-white">
                 <option value="">מידה *</option>
                 {DRESS_SIZES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
               </select>
-              <input required placeholder="עיר *" value={addForm.city} onChange={(e) => setAddForm({ ...addForm, city: e.target.value })} className="p-2.5 border border-[#decfa8] rounded-xl text-xs" />
-              <input required type="tel" placeholder="טלפון ליצירת קשר *" value={addForm.owner_phone} onChange={(e) => setAddForm({ ...addForm, owner_phone: e.target.value })} className="p-2.5 border border-[#decfa8] rounded-xl text-xs col-span-1 sm:col-span-2" dir="ltr" />
-              <input placeholder="צבע" value={addForm.color} onChange={(e) => setAddForm({ ...addForm, color: e.target.value })} className="p-2.5 border border-[#decfa8] rounded-xl text-xs" />
+              <input required placeholder="עיר *" value={addForm.city} onChange={(e) => setAddForm({ ...addForm, city: e.target.value })} className="p-2.5 border border-[#decfa8] rounded-xl text-xs text-[#2c261a] placeholder:text-[#9a7b4f] bg-white" />
+              <div className="col-span-1 sm:col-span-2">
+                <input
+                  required
+                  readOnly
+                  type="tel"
+                  placeholder="טלפון ליצירת קשר *"
+                  value={addForm.owner_phone}
+                  className="p-2.5 border border-[#decfa8] rounded-xl text-xs text-[#2c261a] bg-[#faf8f3] w-full"
+                  dir="ltr"
+                />
+                <p className="text-[10px] text-[#9a7b4f] mt-1">טלפון החשבון שלך — לפיו מוצגות השמלות באזור האישי</p>
+              </div>
+              <input placeholder="צבע" value={addForm.color} onChange={(e) => setAddForm({ ...addForm, color: e.target.value })} className="p-2.5 border border-[#decfa8] rounded-xl text-xs text-[#2c261a] placeholder:text-[#9a7b4f] bg-white" />
               <textarea
                 placeholder="תיאור השמלה (אופציונלי)"
                 value={addForm.description}

@@ -23,6 +23,9 @@ import {
 import { validateLoginForm, validateRegisterForm } from '@/lib/form-validation';
 import { notifySiteAuthChange } from '@/lib/site-auth-events';
 
+const AUTH_INPUT_CLASS =
+  'w-full p-2.5 bg-white border border-[#decfa8] rounded-xl text-sm text-[#2c261a] placeholder:text-[#9a7b4f] caret-[#8b6508] focus:outline-none focus:border-[#d4af37]';
+
 export type AuthModalOptions = {
   reason?: AuthModalReason;
   next?: string;
@@ -303,7 +306,7 @@ function AuthModalProviderInner({ children }: { children: ReactNode }) {
                 autoComplete="username"
                 value={loginUsername}
                 onChange={(e) => setLoginUsername(e.target.value)}
-                className="w-full p-2.5 bg-neutral-50 border border-[#decfa8] rounded-xl text-sm focus:outline-none focus:border-[#d4af37]"
+                className={AUTH_INPUT_CLASS}
                 dir="ltr"
               />
             </div>
@@ -315,7 +318,7 @@ function AuthModalProviderInner({ children }: { children: ReactNode }) {
                 autoComplete="current-password"
                 value={loginPassword}
                 onChange={(e) => setLoginPassword(e.target.value)}
-                className="w-full p-2.5 bg-neutral-50 border border-[#decfa8] rounded-xl text-sm focus:outline-none focus:border-[#d4af37]"
+                className={AUTH_INPUT_CLASS}
                 dir="ltr"
               />
             </div>
@@ -374,7 +377,7 @@ function AuthModalProviderInner({ children }: { children: ReactNode }) {
                 placeholder="שם משתמש *"
                 value={registerForm.username}
                 onChange={(e) => setRegisterForm({ ...registerForm, username: e.target.value })}
-                className="w-full p-2.5 bg-neutral-50 border border-[#decfa8] rounded-xl text-sm focus:outline-none focus:border-[#d4af37]"
+                className={AUTH_INPUT_CLASS}
                 dir="ltr"
               />
               <p className="text-[10px] text-[#9a7b4f] mt-1">שם משתמש ייחודי</p>
@@ -384,21 +387,21 @@ function AuthModalProviderInner({ children }: { children: ReactNode }) {
               placeholder="סיסמה (6+ תווים) *"
               value={registerForm.password}
               onChange={(e) => setRegisterForm({ ...registerForm, password: e.target.value })}
-              className="w-full p-2.5 bg-neutral-50 border border-[#decfa8] rounded-xl text-sm focus:outline-none focus:border-[#d4af37]"
+              className={AUTH_INPUT_CLASS}
               dir="ltr"
             />
             <input
               placeholder="שם מלא *"
               value={registerForm.display_name}
               onChange={(e) => setRegisterForm({ ...registerForm, display_name: e.target.value })}
-              className="w-full p-2.5 bg-neutral-50 border border-[#decfa8] rounded-xl text-sm focus:outline-none focus:border-[#d4af37]"
+              className={AUTH_INPUT_CLASS}
             />
             <input
               type="tel"
               placeholder="טלפון (053...) *"
               value={registerForm.phone}
               onChange={(e) => setRegisterForm({ ...registerForm, phone: e.target.value })}
-              className="w-full p-2.5 bg-neutral-50 border border-[#decfa8] rounded-xl text-sm focus:outline-none focus:border-[#d4af37]"
+              className={AUTH_INPUT_CLASS}
               dir="ltr"
             />
             <input
@@ -408,7 +411,7 @@ function AuthModalProviderInner({ children }: { children: ReactNode }) {
               placeholder="אימייל *"
               value={registerForm.email}
               onChange={(e) => setRegisterForm({ ...registerForm, email: e.target.value })}
-              className="w-full p-2.5 bg-neutral-50 border border-[#decfa8] rounded-xl text-sm focus:outline-none focus:border-[#d4af37]"
+              className={AUTH_INPUT_CLASS}
               dir="ltr"
               required
             />

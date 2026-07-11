@@ -73,7 +73,7 @@ function LoginForm() {
               autoComplete="username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="w-full p-3 border-2 border-[#decfa8] rounded-xl text-sm focus:border-[#d4af37] focus:outline-none"
+              className="w-full p-3 border-2 border-[#decfa8] rounded-xl text-sm text-[#2c261a] placeholder:text-[#9a7b4f] caret-[#8b6508] focus:border-[#d4af37] focus:outline-none bg-white"
               dir="ltr"
             />
           </div>
@@ -85,7 +85,7 @@ function LoginForm() {
               autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full p-3 border-2 border-[#decfa8] rounded-xl text-sm focus:border-[#d4af37] focus:outline-none"
+              className="w-full p-3 border-2 border-[#decfa8] rounded-xl text-sm text-[#2c261a] placeholder:text-[#9a7b4f] caret-[#8b6508] focus:border-[#d4af37] focus:outline-none bg-white"
               dir="ltr"
             />
           </div>
