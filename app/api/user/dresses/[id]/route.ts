@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getUserFromRequest } from '@/lib/user-auth';
+import { getUserFromRequest, type SiteUser } from '@/lib/user-auth';
 import { userOwnsDress } from '@/lib/dress-ownership';
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server';
 import { MAX_DRESS_IMAGES, uploadDressImages } from '@/lib/dress-images';
@@ -20,7 +20,7 @@ function parseJsonArray(raw: string | null) {
   }
 }
 
-async function getOwnedDress(id: string, user: { phone?: string; email?: string }) {
+async function getOwnedDress(id: string, user: Pick<SiteUser, 'userId' | 'phone' | 'email'>) {
   const supabase = getSupabaseAdmin();
   const { data: dress, error } = await supabase.from('dresses').select('*').eq('id', id).maybeSingle();
   if (error) throw error;

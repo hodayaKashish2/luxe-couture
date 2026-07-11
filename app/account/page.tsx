@@ -315,7 +315,6 @@ function AccountPageContent() {
       return;
     }
     setAddFormError('');
-    const files = Array.from(e.target.files);
     const previews = files.map((file) => URL.createObjectURL(file));
     setAddFiles((prev) => [...prev, ...files]);
     setAddImagePreviews((prev) => [...prev, ...previews]);
