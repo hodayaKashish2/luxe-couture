@@ -1,9 +1,11 @@
 'use client';
 
+import { useState } from 'react';
+import FilterSection from '@/components/FilterSection';
 import { DRESS_SIZES } from '@/lib/constants';
 import { EVENT_TYPES, type SortOption } from '@/lib/types';
 
-type CatalogFilterPanelProps = {
+export type CatalogFilterPanelProps = {
   searchTerm: string;
   setSearchTerm: (value: string) => void;
   selectedCity: string;
@@ -20,12 +22,14 @@ type CatalogFilterPanelProps = {
   setMaxPrice: (value: number) => void;
   uniqueCities: string[];
   uniqueColors: string[];
-  onApply?: () => void;
-  showApplyButton?: boolean;
+  showSort?: boolean;
+  compact?: boolean;
 };
 
 const fieldClass =
-  'w-full p-2.5 bg-neutral-50 border border-[#dfc48c] rounded-xl text-xs text-[#2c261a] focus:outline-none focus:border-[#d4af37]';
+  'w-full p-2 bg-neutral-50 border border-[#dfc48c] rounded-lg text-xs text-[#2c261a] focus:outline-none focus:border-[#d4af37]';
+
+const CITY_PREVIEW = 6;
 
 export default function CatalogFilterPanel({
   searchTerm,
@@ -44,13 +48,15 @@ export default function CatalogFilterPanel({
   setMaxPrice,
   uniqueCities,
   uniqueColors,
-  onApply,
-  showApplyButton,
+  showSort = true,
+  compact = false,
 }: CatalogFilterPanelProps) {
+  const [showAllCities, setShowAllCities] = useState(false);
+  const visibleCities = showAllCities ? uniqueCities : uniqueCities.slice(0, CITY_PREVIEW);
+
   return (
-    <div className="space-y-4">
-      <div>
-        <label className="block text-xs font-black text-[#8b6508] mb-1.5">חיפוש</label>
+    <div className={compact ? 'px-1' : ''}>
+      <FilterSection title="חיפוש" defaultOpen>
         <input
           type="text"
           placeholder="שם שמלה..."
@@ -58,34 +64,88 @@ export default function CatalogFilterPanel({
           onChange={(e) => setSearchTerm(e.target.value)}
           className={fieldClass}
         />
-      </div>
+      </FilterSection>
 
-      <div>
-        <label className="block text-xs font-black text-[#8b6508] mb-1.5">עיר</label>
-        <select value={selectedCity} onChange={(e) => setSelectedCity(e.target.value)} className={fieldClass}>
-          <option value="">כל הערים</option>
-          {uniqueCities.map((city) => (
-            <option key={city} value={city}>
+      <FilterSection title="עיר" defaultOpen={!!selectedCity}>
+        <div className="space-y-1.5 max-h-40 overflow-y-auto pr-0.5">
+          <label className="flex items-center gap-2 text-xs text-[#5c5037] cursor-pointer py-0.5">
+            <input
+              type="radio"
+              name="filter-city"
+              checked={!selectedCity}
+              onChange={() => setSelectedCity('')}
+              className="accent-[#d4af37]"
+            />
+            כל הערים
+          </label>
+          {visibleCities.map((city) => (
+            <label key={city} className="flex items-center gap-2 text-xs text-[#5c5037] cursor-pointer py-0.5">
+              <input
+                type="radio"
+                name="filter-city"
+                checked={selectedCity === city}
+                onChange={() => setSelectedCity(city)}
+                className="accent-[#d4af37]"
+              />
               {city}
-            </option>
+            </label>
           ))}
-        </select>
-      </div>
+        </div>
+        {uniqueCities.length > CITY_PREVIEW && (
+          <button
+            type="button"
+            onClick={() => setShowAllCities((v) => !v)}
+            className="mt-2 text-[11px] font-bold text-[#b8860b] hover:underline"
+          >
+            {showAllCities ? 'הצג פחות' : `+ הצג עוד (${uniqueCities.length - CITY_PREVIEW})`}
+          </button>
+        )}
+      </FilterSection>
 
-      <div>
-        <label className="block text-xs font-black text-[#8b6508] mb-1.5">מידה</label>
-        <select value={selectedSize} onChange={(e) => setSelectedSize(e.target.value)} className={fieldClass}>
-          <option value="All">הכל</option>
-          {DRESS_SIZES.map((size) => (
-            <option key={size.value} value={size.value}>
-              {size.label}
-            </option>
-          ))}
-        </select>
-      </div>
+      <FilterSection title="מידה" defaultOpen={selectedSize !== 'All'}>
+        <div className="grid grid-cols-2 gap-1.5">
+          {DRESS_SIZES.map((size) => {
+            const checked = selectedSize === size.value;
+            return (
+              <label
+                key={size.value}
+                className={`flex items-center gap-1.5 text-[11px] px-2 py-1.5 rounded-lg border cursor-pointer transition-colors ${
+                  checked
+                    ? 'border-[#d4af37] bg-[#fffdf8] text-[#8b6508] font-bold'
+                    : 'border-[#f0e6cc] text-[#5c5037] hover:border-[#decfa8]'
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="filter-size"
+                  checked={checked}
+                  onChange={() => setSelectedSize(size.value)}
+                  className="accent-[#d4af37] shrink-0"
+                />
+                <span className="truncate">{size.label}</span>
+              </label>
+            );
+          })}
+          <label
+            className={`flex items-center gap-1.5 text-[11px] px-2 py-1.5 rounded-lg border cursor-pointer transition-colors ${
+              selectedSize === 'All'
+                ? 'border-[#d4af37] bg-[#fffdf8] text-[#8b6508] font-bold'
+                : 'border-[#f0e6cc] text-[#5c5037] hover:border-[#decfa8]'
+            }`}
+          >
+            <input
+              type="radio"
+              name="filter-size"
+              checked={selectedSize === 'All'}
+              onChange={() => setSelectedSize('All')}
+              className="accent-[#d4af37] shrink-0"
+            />
+            הכל
+          </label>
+        </div>
+      </FilterSection>
 
-      <div>
-        <label className="block text-xs font-black text-[#8b6508] mb-1.5">סוג אירוע</label>
+      <FilterSection title="סוג אירוע" defaultOpen={!!selectedEventType}>
         <select
           value={selectedEventType}
           onChange={(e) => setSelectedEventType(e.target.value)}
@@ -98,10 +158,9 @@ export default function CatalogFilterPanel({
             </option>
           ))}
         </select>
-      </div>
+      </FilterSection>
 
-      <div>
-        <label className="block text-xs font-black text-[#8b6508] mb-1.5">צבע</label>
+      <FilterSection title="צבע" defaultOpen={!!selectedColor}>
         <select value={selectedColor} onChange={(e) => setSelectedColor(e.target.value)} className={fieldClass}>
           <option value="">הכל</option>
           {uniqueColors.map((c) => (
@@ -110,24 +169,25 @@ export default function CatalogFilterPanel({
             </option>
           ))}
         </select>
-      </div>
+      </FilterSection>
 
-      <div>
-        <label className="block text-xs font-black text-[#8b6508] mb-1.5">מיון</label>
-        <select
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value as SortOption)}
-          className={fieldClass}
-        >
-          <option value="newest">חדש ביותר</option>
-          <option value="price-asc">מחיר: נמוך לגבוה</option>
-          <option value="price-desc">מחיר: גבוה לנמוך</option>
-        </select>
-      </div>
+      {showSort && (
+        <FilterSection title="מיון" defaultOpen={false}>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as SortOption)}
+            className={fieldClass}
+          >
+            <option value="newest">חדש ביותר</option>
+            <option value="price-asc">מחיר: נמוך לגבוה</option>
+            <option value="price-desc">מחיר: גבוה לנמוך</option>
+          </select>
+        </FilterSection>
+      )}
 
-      <div>
-        <div className="flex justify-between text-xs font-black text-[#8b6508] mb-1.5">
-          <span>מחיר מקסימלי</span>
+      <FilterSection title="מחיר" defaultOpen={maxPrice < 2000}>
+        <div className="flex justify-between text-[11px] font-bold text-[#8b6508] mb-2">
+          <span>מקסימום</span>
           <span>₪{maxPrice}</span>
         </div>
         <input
@@ -139,19 +199,9 @@ export default function CatalogFilterPanel({
           onChange={(e) => setMaxPrice(Number(e.target.value))}
           className="w-full accent-[#d4af37]"
         />
-      </div>
+      </FilterSection>
 
-      <p className="text-[10px] text-[#9a7b4f] leading-relaxed">תמיד מוצג קודם לפי הכי מושכרות</p>
-
-      {showApplyButton && onApply && (
-        <button
-          type="button"
-          onClick={onApply}
-          className="w-full py-2.5 bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white rounded-xl text-xs font-black"
-        >
-          הצג תוצאות
-        </button>
-      )}
+      <p className="text-[10px] text-[#9a7b4f] leading-relaxed py-3">תמיד מוצג קודם לפי הכי מושכרות</p>
     </div>
   );
 }

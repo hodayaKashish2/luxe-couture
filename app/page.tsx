@@ -6,6 +6,7 @@ import SiteHeader from '@/components/SiteHeader';
 import OwnerPlatformNotice from '@/components/OwnerPlatformNotice';
 import FormError from '@/components/FormError';
 import CatalogFilterDrawer from '@/components/CatalogFilterDrawer';
+import CatalogFilterSidebar from '@/components/CatalogFilterSidebar';
 import DressCardSummary from '@/components/DressCardSummary';
 import DressDetailsModal from '@/components/DressDetailsModal';
 import DressRateModal from '@/components/DressRateModal';
@@ -45,6 +46,7 @@ export default function Home() {
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [filtersSidebarCollapsed, setFiltersSidebarCollapsed] = useState(false);
 
   const { cart, toggleCart, toggleFavorite, removeFromCart, isDressInCart, isDressFavorite } =
     useLuxeStorage();
@@ -739,91 +741,78 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 👗 קטלוג + סינון */}
+      {/* 👗 קטלוג + סינון בצד (SHEIN-style) */}
       <section id="catalog" className="max-w-7xl mx-auto px-3 sm:px-4 mb-14 relative z-10">
-        <div className="mb-4 sm:mb-6 rounded-2xl border-2 border-[#e6c687] bg-white/90 backdrop-blur-xl shadow-[0_12px_40px_rgba(212,175,55,0.12)]">
-          <div className="flex items-center gap-3 sm:gap-4 px-4 py-3.5 sm:px-5 sm:py-4">
-            <button
-              type="button"
-              onClick={() => setFiltersOpen(true)}
-              className="shrink-0 inline-flex items-center gap-2 px-4 sm:px-5 py-2.5 bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white rounded-xl text-xs sm:text-sm font-black shadow-[0_4px_14px_rgba(212,175,55,0.35)] hover:shadow-[0_6px_18px_rgba(212,175,55,0.45)] transition-shadow"
-            >
-              <span aria-hidden>🔍</span>
-              סינון
-              {activeFilterCount > 0 && (
-                <span className="bg-white/25 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full min-w-[1.25rem]">
-                  {activeFilterCount}
-                </span>
-              )}
-            </button>
-            <div className="flex-1 min-w-0">
-              <p className="text-[10px] tracking-[0.18em] text-[#b8860b] font-black">✦ הקולקציה ✦</p>
-              <p className="text-sm sm:text-base font-bold text-[#3d2f24] truncate">
-                {isLoadingDresses ? 'טוענת שמלות...' : `${filteredDresses.length} שמלות`}
-              </p>
-              <p className="text-[10px] sm:text-xs text-[#9a7b4f] mt-0.5 hidden sm:block">
-                מוצג קודם לפי הכי מושכרות
-              </p>
-            </div>
-          </div>
-          {activeFilterCount > 0 && (
-            <div className="px-4 sm:px-5 pb-3.5 flex flex-wrap items-center gap-2 border-t border-[#f0e6cc]/80 pt-3">
-              <span className="text-[10px] text-[#9a7b4f] font-bold">סינון פעיל:</span>
-              {searchTerm && (
-                <span className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">חיפוש: {searchTerm}</span>
-              )}
-              {selectedCity && (
-                <span className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">{selectedCity}</span>
-              )}
-              {selectedSize !== 'All' && (
-                <span className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">מידה {selectedSize}</span>
-              )}
-              {selectedEventType && (
-                <span className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">{selectedEventType}</span>
-              )}
-              {selectedColor && (
-                <span className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">{selectedColor}</span>
-              )}
-              {maxPrice < 2000 && (
-                <span className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">עד ₪{maxPrice}</span>
-              )}
-              <button
-                type="button"
-                onClick={clearFilters}
-                className="text-[10px] font-bold text-[#b8860b] underline underline-offset-2 mr-auto"
-              >
-                נקה הכל
-              </button>
-            </div>
-          )}
-        </div>
+        <div className="flex gap-3 lg:gap-4 items-start">
+          <CatalogFilterSidebar
+            collapsed={filtersSidebarCollapsed}
+            onToggleCollapse={() => setFiltersSidebarCollapsed((v) => !v)}
+            activeFilterCount={activeFilterCount}
+            onClear={clearFilters}
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            selectedCity={selectedCity}
+            setSelectedCity={setSelectedCity}
+            selectedSize={selectedSize}
+            setSelectedSize={setSelectedSize}
+            selectedEventType={selectedEventType}
+            setSelectedEventType={setSelectedEventType}
+            sortBy={sortBy}
+            setSortBy={setSortBy}
+            selectedColor={selectedColor}
+            setSelectedColor={setSelectedColor}
+            maxPrice={maxPrice}
+            setMaxPrice={setMaxPrice}
+            uniqueCities={uniqueCities}
+            uniqueColors={uniqueColors}
+          />
 
-        <CatalogFilterDrawer
-          open={filtersOpen}
-          onClose={() => setFiltersOpen(false)}
-          onClear={clearFilters}
-          activeFilterCount={activeFilterCount}
-          resultCount={filteredDresses.length}
-          isLoading={isLoadingDresses}
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          selectedCity={selectedCity}
-          setSelectedCity={setSelectedCity}
-          selectedSize={selectedSize}
-          setSelectedSize={setSelectedSize}
-          selectedEventType={selectedEventType}
-          setSelectedEventType={setSelectedEventType}
-          sortBy={sortBy}
-          setSortBy={setSortBy}
-          selectedColor={selectedColor}
-          setSelectedColor={setSelectedColor}
-          maxPrice={maxPrice}
-          setMaxPrice={setMaxPrice}
-          uniqueCities={uniqueCities}
-          uniqueColors={uniqueColors}
-        />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between gap-2 mb-3">
+              <p className="text-[11px] sm:text-xs text-[#9a7b4f]">
+                {isLoadingDresses ? 'טוענת...' : `${filteredDresses.length} שמלות`}
+                <span className="hidden sm:inline"> · הכי מושכרות קודם</span>
+              </p>
+              <div className="flex items-center gap-2 shrink-0">
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as SortOption)}
+                  className="text-[10px] sm:text-[11px] p-1.5 sm:px-2.5 sm:py-2 bg-white border border-[#decfa8] rounded-lg text-[#8b6508] font-bold max-w-[9rem] sm:max-w-none"
+                  aria-label="מיון שמלות"
+                >
+                  <option value="newest">חדש ביותר</option>
+                  <option value="price-asc">מחיר ↑</option>
+                  <option value="price-desc">מחיר ↓</option>
+                </select>
+                <button
+                  type="button"
+                  onClick={() => setFiltersOpen(true)}
+                  className="lg:hidden inline-flex items-center gap-1 px-2.5 py-1.5 bg-white border border-[#decfa8] text-[#8b6508] rounded-lg text-[10px] font-black"
+                >
+                  🔍 סינון
+                  {activeFilterCount > 0 && (
+                    <span className="bg-[#d4af37] text-white text-[9px] px-1 rounded-full min-w-[1rem]">
+                      {activeFilterCount}
+                    </span>
+                  )}
+                </button>
+              </div>
+            </div>
 
-        <div className="w-full">
+            {activeFilterCount > 0 && (
+              <div className="mb-3 flex flex-wrap items-center gap-1.5">
+                {searchTerm && <span className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">"{searchTerm}"</span>}
+                {selectedCity && <span className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">{selectedCity}</span>}
+                {selectedSize !== 'All' && <span className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">מידה {selectedSize}</span>}
+                {selectedEventType && <span className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">{selectedEventType}</span>}
+                {selectedColor && <span className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">{selectedColor}</span>}
+                {maxPrice < 2000 && <span className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">עד ₪{maxPrice}</span>}
+                <button type="button" onClick={clearFilters} className="text-[10px] font-bold text-[#b8860b] underline">
+                  נקה
+                </button>
+              </div>
+            )}
+
             {isLoadingDresses ? (
               <div className="text-center py-16 text-[#8b6508] text-sm font-medium">טוענת קולקציה...</div>
             ) : filteredDresses.length === 0 ? (
@@ -834,7 +823,7 @@ export default function Home() {
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-4 lg:gap-6">
+              <div className="grid grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-2.5 sm:gap-4 lg:gap-5">
           {filteredDresses.map((dress, index) => {
             const currentImgIndex = currentImageIndexes[dress.id] || 0;
             const isFav = isDressFavorite(dress.id);
@@ -997,7 +986,33 @@ export default function Home() {
           })}
         </div>
             )}
+          </div>
         </div>
+
+        <CatalogFilterDrawer
+          open={filtersOpen}
+          onClose={() => setFiltersOpen(false)}
+          onClear={clearFilters}
+          activeFilterCount={activeFilterCount}
+          resultCount={filteredDresses.length}
+          isLoading={isLoadingDresses}
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          selectedCity={selectedCity}
+          setSelectedCity={setSelectedCity}
+          selectedSize={selectedSize}
+          setSelectedSize={setSelectedSize}
+          selectedEventType={selectedEventType}
+          setSelectedEventType={setSelectedEventType}
+          sortBy={sortBy}
+          setSortBy={setSortBy}
+          selectedColor={selectedColor}
+          setSelectedColor={setSelectedColor}
+          maxPrice={maxPrice}
+          setMaxPrice={setMaxPrice}
+          uniqueCities={uniqueCities}
+          uniqueColors={uniqueColors}
+        />
       </section>
 
       {/* ✨ ממודאל חדש: שאלון הוספת שמלה לאתר ✨ */}
