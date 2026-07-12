@@ -5,7 +5,7 @@ import SiteFooter from '@/components/SiteFooter';
 import SiteHeader from '@/components/SiteHeader';
 import OwnerPlatformNotice from '@/components/OwnerPlatformNotice';
 import FormError from '@/components/FormError';
-import CatalogFilterPanel from '@/components/CatalogFilterPanel';
+import CatalogFilterDrawer from '@/components/CatalogFilterDrawer';
 import DressCardSummary from '@/components/DressCardSummary';
 import DressDetailsModal from '@/components/DressDetailsModal';
 import DressRateModal from '@/components/DressRateModal';
@@ -672,6 +672,16 @@ export default function Home() {
     maxPrice < 2000 ? 'price' : '',
   ].filter(Boolean).length;
 
+  const clearFilters = () => {
+    setSearchTerm('');
+    setSelectedCity('');
+    setSelectedSize('All');
+    setSelectedEventType('');
+    setSelectedColor('');
+    setSortBy('newest');
+    setMaxPrice(1000);
+  };
+
   const coordinateAvailable =
     coordinateDress && coordinateDate
       ? checkDateAvailability(coordinateDate, coordinateDress)
@@ -729,73 +739,89 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 👗 קטלוג + סינון בצד */}
+      {/* 👗 קטלוג + סינון */}
       <section id="catalog" className="max-w-7xl mx-auto px-3 sm:px-4 mb-14 relative z-10">
-        <div className="flex items-center justify-between gap-3 mb-3">
-          <p className="text-xs font-bold text-[#8b6508]">
-            {isLoadingDresses ? 'טוענת...' : `${filteredDresses.length} שמלות`}
-            <span className="hidden sm:inline font-normal text-[#9a7b4f]"> · מוצג קודם לפי הכי מושכרות</span>
-          </p>
-          <button
-            type="button"
-            onClick={() => setFiltersOpen(true)}
-            className="flex items-center gap-1.5 px-4 py-2 bg-white border border-[#decfa8] text-[#8b6508] rounded-xl text-xs font-black shadow-sm shrink-0"
-          >
-            🔍 סינון
-            {activeFilterCount > 0 && (
-              <span className="bg-[#d4af37] text-white text-[10px] font-black px-1.5 py-0.5 rounded-full min-w-[1.25rem]">
-                {activeFilterCount}
-              </span>
-            )}
-          </button>
-        </div>
-
-        {filtersOpen && (
-          <button
-            type="button"
-            className="fixed inset-0 bg-black/40 z-40"
-            onClick={() => setFiltersOpen(false)}
-            aria-label="סגור סינון"
-          />
-        )}
-
-        <aside
-          className={`fixed top-0 right-0 z-50 h-full max-h-screen overflow-y-auto w-[min(300px,90vw)] sm:w-80 shrink-0 bg-white border-l border-[#eadaaf] p-4 sm:p-5 shadow-2xl transition-transform duration-300 ease-out ${
-            filtersOpen ? 'translate-x-0' : 'translate-x-full pointer-events-none'
-          }`}
-        >
-          <div className="flex justify-between items-center mb-4 pb-3 border-b border-[#f0e6cc]">
-            <h3 className="font-black text-sm text-[#8b6508]">סינון</h3>
+        <div className="mb-4 sm:mb-6 rounded-2xl border-2 border-[#e6c687] bg-white/90 backdrop-blur-xl shadow-[0_12px_40px_rgba(212,175,55,0.12)]">
+          <div className="flex items-center gap-3 sm:gap-4 px-4 py-3.5 sm:px-5 sm:py-4">
             <button
               type="button"
-              onClick={() => setFiltersOpen(false)}
-              className="w-8 h-8 rounded-full bg-neutral-100 text-[#8b6508] font-bold flex items-center justify-center hover:bg-[#f4ebd4] transition-colors"
-              aria-label="סגור"
+              onClick={() => setFiltersOpen(true)}
+              className="shrink-0 inline-flex items-center gap-2 px-4 sm:px-5 py-2.5 bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white rounded-xl text-xs sm:text-sm font-black shadow-[0_4px_14px_rgba(212,175,55,0.35)] hover:shadow-[0_6px_18px_rgba(212,175,55,0.45)] transition-shadow"
             >
-              ✕
+              <span aria-hidden>🔍</span>
+              סינון
+              {activeFilterCount > 0 && (
+                <span className="bg-white/25 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full min-w-[1.25rem]">
+                  {activeFilterCount}
+                </span>
+              )}
             </button>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] tracking-[0.18em] text-[#b8860b] font-black">✦ הקולקציה ✦</p>
+              <p className="text-sm sm:text-base font-bold text-[#3d2f24] truncate">
+                {isLoadingDresses ? 'טוענת שמלות...' : `${filteredDresses.length} שמלות`}
+              </p>
+              <p className="text-[10px] sm:text-xs text-[#9a7b4f] mt-0.5 hidden sm:block">
+                מוצג קודם לפי הכי מושכרות
+              </p>
+            </div>
           </div>
-          <CatalogFilterPanel
-            searchTerm={searchTerm}
-            setSearchTerm={setSearchTerm}
-            selectedCity={selectedCity}
-            setSelectedCity={setSelectedCity}
-            selectedSize={selectedSize}
-            setSelectedSize={setSelectedSize}
-            selectedEventType={selectedEventType}
-            setSelectedEventType={setSelectedEventType}
-            sortBy={sortBy}
-            setSortBy={setSortBy}
-            selectedColor={selectedColor}
-            setSelectedColor={setSelectedColor}
-            maxPrice={maxPrice}
-            setMaxPrice={setMaxPrice}
-            uniqueCities={uniqueCities}
-            uniqueColors={uniqueColors}
-            showApplyButton
-            onApply={() => setFiltersOpen(false)}
-          />
-        </aside>
+          {activeFilterCount > 0 && (
+            <div className="px-4 sm:px-5 pb-3.5 flex flex-wrap items-center gap-2 border-t border-[#f0e6cc]/80 pt-3">
+              <span className="text-[10px] text-[#9a7b4f] font-bold">סינון פעיל:</span>
+              {searchTerm && (
+                <span className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">חיפוש: {searchTerm}</span>
+              )}
+              {selectedCity && (
+                <span className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">{selectedCity}</span>
+              )}
+              {selectedSize !== 'All' && (
+                <span className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">מידה {selectedSize}</span>
+              )}
+              {selectedEventType && (
+                <span className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">{selectedEventType}</span>
+              )}
+              {selectedColor && (
+                <span className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">{selectedColor}</span>
+              )}
+              {maxPrice < 2000 && (
+                <span className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">עד ₪{maxPrice}</span>
+              )}
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="text-[10px] font-bold text-[#b8860b] underline underline-offset-2 mr-auto"
+              >
+                נקה הכל
+              </button>
+            </div>
+          )}
+        </div>
+
+        <CatalogFilterDrawer
+          open={filtersOpen}
+          onClose={() => setFiltersOpen(false)}
+          onClear={clearFilters}
+          activeFilterCount={activeFilterCount}
+          resultCount={filteredDresses.length}
+          isLoading={isLoadingDresses}
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          selectedCity={selectedCity}
+          setSelectedCity={setSelectedCity}
+          selectedSize={selectedSize}
+          setSelectedSize={setSelectedSize}
+          selectedEventType={selectedEventType}
+          setSelectedEventType={setSelectedEventType}
+          sortBy={sortBy}
+          setSortBy={setSortBy}
+          selectedColor={selectedColor}
+          setSelectedColor={setSelectedColor}
+          maxPrice={maxPrice}
+          setMaxPrice={setMaxPrice}
+          uniqueCities={uniqueCities}
+          uniqueColors={uniqueColors}
+        />
 
         <div className="w-full">
             {isLoadingDresses ? (
