@@ -59,6 +59,7 @@ export default function Home() {
   const addDressErrorRef = useRef<HTMLDivElement>(null);
   const [newDressFiles, setNewDressFiles] = useState<File[]>([]);
   const newDressFileInputRef = useRef<HTMLInputElement>(null);
+  const catalogRef = useRef<HTMLElement>(null);
   useScrollToError(addDressErrorRef, addDressError);
   const [newDressData, setNewDressData] = useState({
     name: '',
@@ -742,9 +743,10 @@ export default function Home() {
       </section>
 
       {/* 👗 קטלוג + סינון בצד (SHEIN-style) */}
-      <section id="catalog" className="max-w-7xl mx-auto px-3 sm:px-4 mb-14 relative z-10">
-        <div className="lg:grid lg:grid-cols-[auto_minmax(0,1fr)] lg:gap-4 lg:items-start">
+      <section id="catalog" ref={catalogRef} className="max-w-7xl mx-auto px-3 sm:px-4 mb-14 relative z-10">
+        <div className="lg:grid lg:grid-cols-[auto_minmax(0,1fr)] lg:gap-4 lg:items-stretch">
           <CatalogFilterSidebar
+            catalogRef={catalogRef}
             collapsed={filtersSidebarCollapsed}
             onToggleCollapse={() => setFiltersSidebarCollapsed((v) => !v)}
             activeFilterCount={activeFilterCount}
