@@ -85,7 +85,9 @@ export default function CatalogFilterDrawer({
           {activeFilterCount > 0 && (
             <button
               type="button"
-              onClick={onClear}
+              onClick={() => {
+                onClear();
+              }}
               className="w-full py-2 text-[11px] font-bold text-[#b8860b]"
             >
               נקה סינון ({activeFilterCount})

@@ -38,7 +38,7 @@ export default function Home() {
 
   // פילטרים
   const [searchTerm, setSearchTerm] = useState('');
-  const [maxPrice, setMaxPrice] = useState(1000);
+  const [maxPrice, setMaxPrice] = useState(2000);
   const [selectedSize, setSelectedSize] = useState('All');
   const [selectedColor, setSelectedColor] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
@@ -681,7 +681,7 @@ export default function Home() {
     setSelectedEventType('');
     setSelectedColor('');
     setSortBy('newest');
-    setMaxPrice(1000);
+    setMaxPrice(2000);
   };
 
   const coordinateAvailable =
@@ -696,7 +696,7 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-[#fbf8f0] via-[#f3ebd6] to-[#e8dcbd] text-[#332c1e] pb-24 relative overflow-x-clip w-full max-w-[100vw]" dir="rtl">
+    <main className="min-h-screen bg-gradient-to-b from-[#fbf8f0] via-[#f3ebd6] to-[#e8dcbd] text-[#332c1e] pb-24 relative w-full max-w-[100vw]" dir="rtl">
       
       {/* 🌟 מפל נצנצים וחלקיקי זהב זוהרים */}
       <div 
@@ -743,7 +743,7 @@ export default function Home() {
 
       {/* 👗 קטלוג + סינון בצד (SHEIN-style) */}
       <section id="catalog" className="max-w-7xl mx-auto px-3 sm:px-4 mb-14 relative z-10">
-        <div className="flex gap-3 lg:gap-4 items-start">
+        <div className="lg:grid lg:grid-cols-[auto_minmax(0,1fr)] lg:gap-4 lg:items-start">
           <CatalogFilterSidebar
             collapsed={filtersSidebarCollapsed}
             onToggleCollapse={() => setFiltersSidebarCollapsed((v) => !v)}

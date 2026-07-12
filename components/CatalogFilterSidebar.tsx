@@ -18,7 +18,7 @@ export default function CatalogFilterSidebar({
 }: CatalogFilterSidebarProps) {
   if (collapsed) {
     return (
-      <aside className="hidden lg:flex shrink-0 w-11 sticky top-20 self-start">
+      <aside className="hidden lg:block shrink-0 w-11 sticky top-24 z-20">
         <button
           type="button"
           onClick={onToggleCollapse}
@@ -46,7 +46,7 @@ export default function CatalogFilterSidebar({
   }
 
   return (
-    <aside className="hidden lg:flex shrink-0 w-56 xl:w-60 sticky top-20 self-start flex-col bg-white border border-[#eadaaf] rounded-xl shadow-sm overflow-hidden max-h-[calc(100dvh-6rem)]">
+    <aside className="hidden lg:flex shrink-0 w-56 xl:w-60 sticky top-24 z-20 self-start flex-col bg-white border border-[#eadaaf] rounded-xl shadow-sm overflow-hidden max-h-[calc(100dvh-7rem)]">
       <div className="shrink-0 flex items-center justify-between gap-2 px-3 py-2.5 border-b border-[#f0e6cc] bg-[#fffdf8]">
         <div className="min-w-0">
           <h2 className="text-sm font-black text-[#3d2f24]">סינון</h2>
@@ -73,8 +73,12 @@ export default function CatalogFilterSidebar({
         <div className="shrink-0 px-3 py-2.5 border-t border-[#f0e6cc] bg-[#fffdf8]">
           <button
             type="button"
-            onClick={onClear}
-            className="w-full py-2 text-[11px] font-bold text-[#b8860b] hover:underline"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onClear();
+            }}
+            className="w-full py-2 text-[11px] font-bold text-[#b8860b] hover:bg-[#faf8f3] rounded-lg transition-colors"
           >
             נקה סינון
           </button>
