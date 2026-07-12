@@ -3,8 +3,8 @@ import type { Dress } from '@/lib/types';
 const TOP_TIERS = 3;
 
 /** דירוג TOP לפי מספר השכרות — TOP 1 = הכי הרבה השכרות */
-export function getTopRentalRanks(dresses: Dress[]): Map<number, number> {
-  const ranks = new Map<number, number>();
+export function getTopRentalRanks(dresses: Dress[]): Map<string, number> {
+  const ranks = new Map<string, number>();
   const withRentals = dresses
     .filter((d) => (d.rental_count || 0) > 0)
     .sort((a, b) => (b.rental_count || 0) - (a.rental_count || 0));
