@@ -8,10 +8,10 @@ import { EVENT_TYPES, type SortOption } from '@/lib/types';
 export type CatalogFilterPanelProps = {
   searchTerm: string;
   setSearchTerm: (value: string) => void;
-  selectedCity: string;
-  setSelectedCity: (value: string) => void;
-  selectedSize: string;
-  setSelectedSize: (value: string) => void;
+  selectedCities: string[];
+  onToggleCity: (city: string) => void;
+  selectedSizes: string[];
+  onToggleSize: (size: string) => void;
   selectedEventType: string;
   setSelectedEventType: (value: string) => void;
   sortBy: SortOption;
@@ -29,15 +29,32 @@ export type CatalogFilterPanelProps = {
 const fieldClass =
   'w-full p-2 bg-neutral-50 border border-[#dfc48c] rounded-lg text-xs text-[#2c261a] focus:outline-none focus:border-[#d4af37]';
 
+const chipClass = (checked: boolean) =>
+  `flex items-center gap-1.5 text-[11px] px-2 py-1.5 rounded-lg border cursor-pointer transition-colors ${
+    checked
+      ? 'border-[#d4af37] bg-[#fffdf8] text-[#8b6508] font-bold'
+      : 'border-[#f0e6cc] text-[#5c5037] hover:border-[#decfa8]'
+  }`;
+
 const CITY_PREVIEW = 6;
+
+function sortHint(sortBy: SortOption) {
+  if (sortBy === 'price-asc' || sortBy === 'price-desc') {
+    return 'מיון לפי מחיר, ואז לפי הכי מושכרות';
+  }
+  if (sortBy === 'newest') {
+    return 'מיון לפי חדש ביותר, ואז לפי הכי מושכרות';
+  }
+  return 'מוצג לפי הכי מושכרות';
+}
 
 export default function CatalogFilterPanel({
   searchTerm,
   setSearchTerm,
-  selectedCity,
-  setSelectedCity,
-  selectedSize,
-  setSelectedSize,
+  selectedCities,
+  onToggleCity,
+  selectedSizes,
+  onToggleSize,
   selectedEventType,
   setSelectedEventType,
   sortBy,
@@ -66,25 +83,15 @@ export default function CatalogFilterPanel({
         />
       </FilterSection>
 
-      <FilterSection title="עיר" defaultOpen={!!selectedCity}>
+      <FilterSection title="עיר" defaultOpen={selectedCities.length > 0}>
+        <p className="text-[10px] text-[#9a7b4f] mb-2">ניתן לבחור כמה ערים</p>
         <div className="space-y-1.5 max-h-40 overflow-y-auto pr-0.5">
-          <label className="flex items-center gap-2 text-xs text-[#5c5037] cursor-pointer py-0.5">
-            <input
-              type="radio"
-              name="filter-city"
-              checked={!selectedCity}
-              onChange={() => setSelectedCity('')}
-              className="accent-[#d4af37]"
-            />
-            כל הערים
-          </label>
           {visibleCities.map((city) => (
             <label key={city} className="flex items-center gap-2 text-xs text-[#5c5037] cursor-pointer py-0.5">
               <input
-                type="radio"
-                name="filter-city"
-                checked={selectedCity === city}
-                onChange={() => setSelectedCity(city)}
+                type="checkbox"
+                checked={selectedCities.includes(city)}
+                onChange={() => onToggleCity(city)}
                 className="accent-[#d4af37]"
               />
               {city}
@@ -102,46 +109,20 @@ export default function CatalogFilterPanel({
         )}
       </FilterSection>
 
-      <FilterSection title="מידה" defaultOpen={selectedSize !== 'All'}>
+      <FilterSection title="מידה" defaultOpen={selectedSizes.length > 0}>
+        <p className="text-[10px] text-[#9a7b4f] mb-2">ניתן לבחור כמה מידות</p>
         <div className="grid grid-cols-2 gap-1.5">
-          {DRESS_SIZES.map((size) => {
-            const checked = selectedSize === size.value;
-            return (
-              <label
-                key={size.value}
-                className={`flex items-center gap-1.5 text-[11px] px-2 py-1.5 rounded-lg border cursor-pointer transition-colors ${
-                  checked
-                    ? 'border-[#d4af37] bg-[#fffdf8] text-[#8b6508] font-bold'
-                    : 'border-[#f0e6cc] text-[#5c5037] hover:border-[#decfa8]'
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="filter-size"
-                  checked={checked}
-                  onChange={() => setSelectedSize(size.value)}
-                  className="accent-[#d4af37] shrink-0"
-                />
-                <span className="truncate">{size.label}</span>
-              </label>
-            );
-          })}
-          <label
-            className={`flex items-center gap-1.5 text-[11px] px-2 py-1.5 rounded-lg border cursor-pointer transition-colors ${
-              selectedSize === 'All'
-                ? 'border-[#d4af37] bg-[#fffdf8] text-[#8b6508] font-bold'
-                : 'border-[#f0e6cc] text-[#5c5037] hover:border-[#decfa8]'
-            }`}
-          >
-            <input
-              type="radio"
-              name="filter-size"
-              checked={selectedSize === 'All'}
-              onChange={() => setSelectedSize('All')}
-              className="accent-[#d4af37] shrink-0"
-            />
-            הכל
-          </label>
+          {DRESS_SIZES.map((size) => (
+            <label key={size.value} className={chipClass(selectedSizes.includes(size.value))}>
+              <input
+                type="checkbox"
+                checked={selectedSizes.includes(size.value)}
+                onChange={() => onToggleSize(size.value)}
+                className="accent-[#d4af37] shrink-0"
+              />
+              <span className="truncate">{size.label}</span>
+            </label>
+          ))}
         </div>
       </FilterSection>
 
@@ -201,7 +182,7 @@ export default function CatalogFilterPanel({
         />
       </FilterSection>
 
-      <p className="text-[10px] text-[#9a7b4f] leading-relaxed py-3">תמיד מוצג קודם לפי הכי מושכרות</p>
+      <p className="text-[10px] text-[#9a7b4f] leading-relaxed py-3">{sortHint(sortBy)}</p>
     </div>
   );
 }

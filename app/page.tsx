@@ -20,7 +20,7 @@ import { getStoredSiteUser } from '@/lib/session-user';
 import { isLoggedIn } from '@/lib/require-login';
 import { useModalHistory } from '@/hooks/use-modal-history';
 import { useScrollToError } from '@/hooks/use-scroll-to-error';
-import { compareDresses } from '@/lib/dress-sort';
+import { compareDresses, toggleFilterValue } from '@/lib/dress-sort';
 import { fetchDressById, findDressInList } from '@/lib/dress-api';
 import { dressShareUrl, ownerWhatsAppLink, WHATSAPP_LINK } from '@/lib/site-config';
 import { Dress, Review, SortOption, EVENT_TYPES, PICKUP_METHODS } from '@/lib/types';
@@ -39,9 +39,9 @@ export default function Home() {
   // פילטרים
   const [searchTerm, setSearchTerm] = useState('');
   const [maxPrice, setMaxPrice] = useState(2000);
-  const [selectedSize, setSelectedSize] = useState('All');
+  const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
   const [selectedColor, setSelectedColor] = useState('');
-  const [selectedCity, setSelectedCity] = useState('');
+  const [selectedCities, setSelectedCities] = useState<string[]>([]);
   const [selectedEventType, setSelectedEventType] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
@@ -651,9 +651,9 @@ export default function Home() {
   const filteredDresses = dressesList
     .filter((dress) => {
       const matchesSearch = dress.name.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesCity = !selectedCity || dress.city === selectedCity;
+      const matchesCity = selectedCities.length === 0 || selectedCities.includes(dress.city);
       const matchesPrice = dress.price <= maxPrice;
-      const matchesSize = selectedSize === 'All' || dress.size === selectedSize;
+      const matchesSize = selectedSizes.length === 0 || selectedSizes.includes(dress.size);
       const matchesColor = !selectedColor || dress.color.toLowerCase().includes(selectedColor.toLowerCase());
       const matchesEvent = !selectedEventType || dress.event_type === selectedEventType;
       const matchesFav = !showOnlyFavorites || isDressFavorite(dress.id);
@@ -668,8 +668,8 @@ export default function Home() {
 
   const activeFilterCount = [
     searchTerm,
-    selectedCity,
-    selectedSize !== 'All' ? selectedSize : '',
+    ...selectedCities,
+    ...selectedSizes,
     selectedEventType,
     selectedColor,
     maxPrice < 2000 ? 'price' : '',
@@ -677,12 +677,20 @@ export default function Home() {
 
   const clearFilters = () => {
     setSearchTerm('');
-    setSelectedCity('');
-    setSelectedSize('All');
+    setSelectedCities([]);
+    setSelectedSizes([]);
     setSelectedEventType('');
     setSelectedColor('');
     setSortBy('newest');
     setMaxPrice(2000);
+  };
+
+  const toggleCity = (city: string) => {
+    setSelectedCities((prev) => toggleFilterValue(prev, city));
+  };
+
+  const toggleSize = (size: string) => {
+    setSelectedSizes((prev) => toggleFilterValue(prev, size));
   };
 
   const coordinateAvailable =
@@ -778,8 +786,12 @@ export default function Home() {
         {activeFilterCount > 0 && (
           <div className="mb-3 flex flex-wrap items-center gap-1.5">
             {searchTerm && <span className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">"{searchTerm}"</span>}
-            {selectedCity && <span className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">{selectedCity}</span>}
-            {selectedSize !== 'All' && <span className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">מידה {selectedSize}</span>}
+            {selectedCities.map((city) => (
+              <span key={city} className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">{city}</span>
+            ))}
+            {selectedSizes.map((size) => (
+              <span key={size} className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">מידה {size}</span>
+            ))}
             {selectedEventType && <span className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">{selectedEventType}</span>}
             {selectedColor && <span className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">{selectedColor}</span>}
             {maxPrice < 2000 && <span className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">עד ₪{maxPrice}</span>}
@@ -797,10 +809,10 @@ export default function Home() {
             onClear={clearFilters}
             searchTerm={searchTerm}
             setSearchTerm={setSearchTerm}
-            selectedCity={selectedCity}
-            setSelectedCity={setSelectedCity}
-            selectedSize={selectedSize}
-            setSelectedSize={setSelectedSize}
+            selectedCities={selectedCities}
+            onToggleCity={toggleCity}
+            selectedSizes={selectedSizes}
+            onToggleSize={toggleSize}
             selectedEventType={selectedEventType}
             setSelectedEventType={setSelectedEventType}
             sortBy={sortBy}
@@ -999,10 +1011,10 @@ export default function Home() {
           isLoading={isLoadingDresses}
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
-          selectedCity={selectedCity}
-          setSelectedCity={setSelectedCity}
-          selectedSize={selectedSize}
-          setSelectedSize={setSelectedSize}
+          selectedCities={selectedCities}
+          onToggleCity={toggleCity}
+          selectedSizes={selectedSizes}
+          onToggleSize={toggleSize}
           selectedEventType={selectedEventType}
           setSelectedEventType={setSelectedEventType}
           sortBy={sortBy}
