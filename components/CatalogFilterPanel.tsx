@@ -45,7 +45,7 @@ function sortHint(sortBy: SortOption) {
   if (sortBy === 'newest') {
     return 'מיון לפי חדש ביותר, ואז לפי הכי מושכרות';
   }
-  return 'ברירת מחדל: הכי מושכרות קודם';
+  return 'ברירת מחדל: המושכרות ביותר';
 }
 
 export default function CatalogFilterPanel({
@@ -159,7 +159,7 @@ export default function CatalogFilterPanel({
             onChange={(e) => setSortBy(e.target.value as SortOption)}
             className={fieldClass}
           >
-            <option value="popular">מיון</option>
+            <option value="popular">המושכרות ביותר</option>
             <option value="newest">חדש ביותר</option>
             <option value="price-asc">מחיר: נמוך לגבוה</option>
             <option value="price-desc">מחיר: גבוה לנמוך</option>

@@ -732,7 +732,7 @@ export default function Home() {
       <SiteHeader />
 
       {/* Hero */}
-      <section className="relative z-10 max-w-4xl mx-auto px-4 pt-10 pb-6 text-center">
+      <section className="relative z-10 max-w-4xl mx-auto px-4 pt-10 pb-0 text-center">
         <p className="mb-3 text-[11px] tracking-[0.28em] text-[#9a7b4f] font-[family-name:var(--font-luxury)]">
           ✦ תיווך השכרת שמלות בין בנות ✦
         </p>
@@ -743,7 +743,7 @@ export default function Home() {
         <p className="mt-4 text-sm text-[#554a33] max-w-xl mx-auto leading-relaxed">
           יש לך שמלה בארון? פרסמי אותה — ככל שיותר בנות שוכרות דרכך, השמלה שלך תופיע ראשונה ותקבל יותר חשיפה.
         </p>
-        <div className="flex flex-wrap justify-center gap-3 mt-6">
+        <div className="flex flex-wrap justify-center gap-3 mt-5 mb-1">
           <button onClick={openAddDressForm} className="px-6 py-3 bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white rounded-xl text-sm font-bold shadow-lg">
             👗 יש לי שמלה — פרסמי
           </button>
@@ -754,20 +754,19 @@ export default function Home() {
       </section>
 
       {/* 👗 קטלוג + סינון בצד (SHEIN-style) */}
-      <section id="catalog" ref={catalogRef} className="max-w-7xl mx-auto px-3 sm:px-4 mb-14 relative z-10">
+      <section id="catalog" ref={catalogRef} className="max-w-7xl mx-auto px-3 sm:px-4 mb-14 relative z-10 pt-2">
         <div className="flex items-center justify-between gap-2 mb-3">
           <p className="text-[11px] sm:text-xs text-[#9a7b4f]">
             {isLoadingDresses ? 'טוענת...' : `${filteredDresses.length} שמלות`}
-            <span className="hidden sm:inline text-[#b8860b] font-bold"> · הכי מושכרות קודם</span>
           </p>
           <div className="flex items-center gap-2 shrink-0">
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as SortOption)}
-              className="text-[10px] sm:text-[11px] p-1.5 sm:px-2.5 sm:py-2 bg-white border border-[#decfa8] rounded-lg text-[#8b6508] font-bold max-w-[9rem] sm:max-w-none"
+              className="text-[10px] sm:text-[11px] p-1.5 sm:px-2.5 sm:py-2 bg-white border border-[#decfa8] rounded-lg text-[#8b6508] font-bold max-w-[10rem] sm:max-w-none"
               aria-label="מיון שמלות"
             >
-              <option value="popular">מיון</option>
+              <option value="popular">המושכרות ביותר</option>
               <option value="newest">חדש ביותר</option>
               <option value="price-asc">מחיר ↑</option>
               <option value="price-desc">מחיר ↓</option>
