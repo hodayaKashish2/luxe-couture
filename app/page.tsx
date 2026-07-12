@@ -5,6 +5,7 @@ import SiteFooter from '@/components/SiteFooter';
 import SiteHeader from '@/components/SiteHeader';
 import OwnerPlatformNotice from '@/components/OwnerPlatformNotice';
 import FormError from '@/components/FormError';
+import CatalogFilterPanel from '@/components/CatalogFilterPanel';
 import DressCardSummary from '@/components/DressCardSummary';
 import DressDetailsModal from '@/components/DressDetailsModal';
 import DressRateModal from '@/components/DressRateModal';
@@ -17,6 +18,7 @@ import { notifyBookingUpdated } from '@/lib/booking-events';
 import { getStoredSiteUser } from '@/lib/session-user';
 import { isLoggedIn } from '@/lib/require-login';
 import { useModalHistory } from '@/hooks/use-modal-history';
+import { useScrollToError } from '@/hooks/use-scroll-to-error';
 import { compareDresses } from '@/lib/dress-sort';
 import { fetchDressById, findDressInList } from '@/lib/dress-api';
 import { dressShareUrl, ownerWhatsAppLink, WHATSAPP_LINK } from '@/lib/site-config';
@@ -42,6 +44,7 @@ export default function Home() {
   const [selectedEventType, setSelectedEventType] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const { cart, toggleCart, toggleFavorite, removeFromCart, isDressInCart, isDressFavorite } =
     useLuxeStorage();
@@ -51,8 +54,10 @@ export default function Home() {
   const [isAddDressOpen, setIsAddDressOpen] = useState(false);
   const [isSubmittingDress, setIsSubmittingDress] = useState(false);
   const [addDressError, setAddDressError] = useState('');
+  const addDressErrorRef = useRef<HTMLDivElement>(null);
   const [newDressFiles, setNewDressFiles] = useState<File[]>([]);
   const newDressFileInputRef = useRef<HTMLInputElement>(null);
+  useScrollToError(addDressErrorRef, addDressError);
   const [newDressData, setNewDressData] = useState({
     name: '',
     price: '',
@@ -658,6 +663,15 @@ export default function Home() {
     a.localeCompare(b, 'he')
   );
 
+  const activeFilterCount = [
+    searchTerm,
+    selectedCity,
+    selectedSize !== 'All' ? selectedSize : '',
+    selectedEventType,
+    selectedColor,
+    maxPrice < 2000 ? 'price' : '',
+  ].filter(Boolean).length;
+
   const coordinateAvailable =
     coordinateDress && coordinateDate
       ? checkDateAvailability(coordinateDate, coordinateDress)
@@ -715,79 +729,86 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 🔍 סינונים */}
-      <section id="catalog" className="max-w-6xl mx-auto px-4 mb-14 relative z-10">
-        <div className="bg-white/90 backdrop-blur-xl p-4 sm:p-6 rounded-2xl border-2 border-[#e6c687] shadow-[0_20px_50px_rgba(212,175,55,0.18)] grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 items-end">
-          <div className="flex flex-col">
-            <label className="block text-xs font-black text-[#8b6508] mb-2">חיפוש</label>
-            <input type="text" placeholder="שם שמלה..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full p-3 bg-neutral-50/50 border border-[#dfc48c] rounded-xl text-xs focus:outline-none focus:border-[#d4af37]" />
-          </div>
-          <div className="flex flex-col">
-            <label className="block text-xs font-black text-[#8b6508] mb-2">עיר</label>
-            <select value={selectedCity} onChange={(e) => setSelectedCity(e.target.value)} className="w-full p-3 bg-neutral-50 border border-[#dfc48c] rounded-xl text-xs">
-              <option value="">כל הערים</option>
-              {uniqueCities.map((city) => <option key={city} value={city}>{city}</option>)}
-            </select>
-          </div>
-          <div className="flex flex-col">
-            <label className="block text-xs font-black text-[#8b6508] mb-2">מידה</label>
-            <select
-              value={selectedSize}
-              onChange={(e) => setSelectedSize(e.target.value)}
-              className="w-full p-3 bg-neutral-50 border border-[#dfc48c] rounded-xl text-xs"
-            >
-              <option value="All">הכל</option>
-              {DRESS_SIZES.map((size) => (
-                <option key={size.value} value={size.value}>{size.label}</option>
-              ))}
-            </select>
-          </div>
-          <div className="flex flex-col">
-            <label className="block text-xs font-black text-[#8b6508] mb-2">סוג אירוע</label>
-            <select value={selectedEventType} onChange={(e) => setSelectedEventType(e.target.value)} className="w-full p-3 bg-neutral-50 border border-[#dfc48c] rounded-xl text-xs">
-              <option value="">הכל</option>
-              {EVENT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
-            </select>
-          </div>
-          <div className="flex flex-col">
-            <label className="block text-xs font-black text-[#8b6508] mb-2">מיון</label>
-            <select value={sortBy} onChange={(e) => setSortBy(e.target.value as SortOption)} className="w-full p-3 bg-neutral-50 border border-[#dfc48c] rounded-xl text-xs">
-              <option value="newest">חדש ביותר</option>
-              <option value="price-asc">מחיר: נמוך לגבוה</option>
-              <option value="price-desc">מחיר: גבוה לנמוך</option>
-            </select>
-          </div>
-          <div className="flex flex-col">
-            <label className="block text-xs font-black text-[#8b6508] mb-2">צבע</label>
-            <select value={selectedColor} onChange={(e) => setSelectedColor(e.target.value)} className="w-full p-3 bg-neutral-50 border border-[#dfc48c] rounded-xl text-xs">
-              <option value="">הכל</option>
-              {uniqueColors.map((c) => <option key={c} value={c}>{c}</option>)}
-            </select>
-          </div>
-          <div className="sm:col-span-2 flex flex-col">
-            <div className="flex justify-between text-xs font-black text-[#8b6508] mb-2">
-              <span>מחיר מקסימלי</span>
-              <span>₪{maxPrice}</span>
-            </div>
-            <input type="range" min="100" max="2000" step="50" value={maxPrice} onChange={(e) => setMaxPrice(Number(e.target.value))} className="w-full accent-[#d4af37] mt-2" />
-          </div>
+      {/* 👗 קטלוג + סינון בצד */}
+      <section id="catalog" className="max-w-7xl mx-auto px-3 sm:px-4 mb-14 relative z-10">
+        <div className="flex items-center justify-between gap-3 mb-3">
+          <p className="text-xs font-bold text-[#8b6508]">
+            {isLoadingDresses ? 'טוענת...' : `${filteredDresses.length} שמלות`}
+            <span className="hidden sm:inline font-normal text-[#9a7b4f]"> · מוצג קודם לפי הכי מושכרות</span>
+          </p>
+          <button
+            type="button"
+            onClick={() => setFiltersOpen(true)}
+            className="flex items-center gap-1.5 px-4 py-2 bg-white border border-[#decfa8] text-[#8b6508] rounded-xl text-xs font-black shadow-sm shrink-0"
+          >
+            🔍 סינון
+            {activeFilterCount > 0 && (
+              <span className="bg-[#d4af37] text-white text-[10px] font-black px-1.5 py-0.5 rounded-full min-w-[1.25rem]">
+                {activeFilterCount}
+              </span>
+            )}
+          </button>
         </div>
-        <p className="text-[9px] text-[#9a7b4f] mt-2 text-center sm:text-right">תמיד מוצג קודם לפי הכי מושכרות</p>
-      </section>
 
-      {/* 👗 גלריית השמלות */}
-      <section className="max-w-6xl mx-auto px-4 relative z-10">
-        {isLoadingDresses ? (
-          <div className="text-center py-16 text-[#8b6508] text-sm font-medium">טוענת קולקציה...</div>
-        ) : filteredDresses.length === 0 ? (
-          <div className="text-center py-16 bg-white/70 rounded-2xl border border-[#eadaaf] shadow-sm">
-            <p className="text-lg font-[family-name:var(--font-luxury)] text-[#3d2f24] mb-2">הקולקציה ריקה כרגע</p>
-            <p className="text-sm text-[#6e634c] max-w-md mx-auto leading-relaxed">
-              שמלות יופיעו כאן רק אחרי שמשתמשות יוסיפו אותן ותאשרי אותן במייל.
-            </p>
+        {filtersOpen && (
+          <button
+            type="button"
+            className="fixed inset-0 bg-black/40 z-40"
+            onClick={() => setFiltersOpen(false)}
+            aria-label="סגור סינון"
+          />
+        )}
+
+        <aside
+          className={`fixed top-0 right-0 z-50 h-full max-h-screen overflow-y-auto w-[min(300px,90vw)] sm:w-80 shrink-0 bg-white border-l border-[#eadaaf] p-4 sm:p-5 shadow-2xl transition-transform duration-300 ease-out ${
+            filtersOpen ? 'translate-x-0' : 'translate-x-full pointer-events-none'
+          }`}
+        >
+          <div className="flex justify-between items-center mb-4 pb-3 border-b border-[#f0e6cc]">
+            <h3 className="font-black text-sm text-[#8b6508]">סינון</h3>
+            <button
+              type="button"
+              onClick={() => setFiltersOpen(false)}
+              className="w-8 h-8 rounded-full bg-neutral-100 text-[#8b6508] font-bold flex items-center justify-center hover:bg-[#f4ebd4] transition-colors"
+              aria-label="סגור"
+            >
+              ✕
+            </button>
           </div>
-        ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+          <CatalogFilterPanel
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            selectedCity={selectedCity}
+            setSelectedCity={setSelectedCity}
+            selectedSize={selectedSize}
+            setSelectedSize={setSelectedSize}
+            selectedEventType={selectedEventType}
+            setSelectedEventType={setSelectedEventType}
+            sortBy={sortBy}
+            setSortBy={setSortBy}
+            selectedColor={selectedColor}
+            setSelectedColor={setSelectedColor}
+            maxPrice={maxPrice}
+            setMaxPrice={setMaxPrice}
+            uniqueCities={uniqueCities}
+            uniqueColors={uniqueColors}
+            showApplyButton
+            onApply={() => setFiltersOpen(false)}
+          />
+        </aside>
+
+        <div className="w-full">
+            {isLoadingDresses ? (
+              <div className="text-center py-16 text-[#8b6508] text-sm font-medium">טוענת קולקציה...</div>
+            ) : filteredDresses.length === 0 ? (
+              <div className="text-center py-16 bg-white/70 rounded-2xl border border-[#eadaaf] shadow-sm">
+                <p className="text-lg font-[family-name:var(--font-luxury)] text-[#3d2f24] mb-2">הקולקציה ריקה כרגע</p>
+                <p className="text-sm text-[#6e634c] max-w-md mx-auto leading-relaxed">
+                  שמלות יופיעו כאן רק אחרי שמשתמשות יוסיפו אותן ותאשרי אותן במייל.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-4 lg:gap-6">
           {filteredDresses.map((dress, index) => {
             const currentImgIndex = currentImageIndexes[dress.id] || 0;
             const isFav = isDressFavorite(dress.id);
@@ -799,7 +820,7 @@ export default function Home() {
                 className="group flex flex-col h-full bg-white rounded-2xl overflow-hidden border-2 border-[#ebd3a4]/60 shadow-[0_10px_30px_rgba(212,175,55,0.06)] hover:shadow-[0_25px_60px_rgba(212,175,55,0.22)] hover:border-[#d4af37] transition-all duration-300 transform hover:-translate-y-1"
               >
                 {/* 📸 גלריית התמונות */}
-                <div className="h-[240px] sm:h-[360px] lg:h-[430px] w-full relative overflow-hidden bg-[#faf8f3] p-2 sm:p-2.5">
+                <div className="h-[150px] sm:h-[280px] lg:h-[430px] w-full relative overflow-hidden bg-[#faf8f3] p-1.5 sm:p-2.5">
                   <div className="w-full h-full rounded-xl overflow-hidden relative border border-[#f0e2c3]">
                     <img
                       src={dress.images[currentImgIndex]}
@@ -818,16 +839,16 @@ export default function Home() {
                       type="button"
                       onPointerDown={(e) => e.stopPropagation()}
                       onClick={(e) => handleToggleFavorite(dress, e)}
-                      className="absolute top-3 left-3 z-40 bg-white/90 hover:bg-white w-8 h-8 rounded-full flex items-center justify-center shadow-md border border-[#eadaaf] text-sm transition transform active:scale-90"
+                      className="absolute top-2 left-2 sm:top-3 sm:left-3 z-40 bg-white/90 hover:bg-white w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center shadow-md border border-[#eadaaf] text-xs sm:text-sm transition transform active:scale-90"
                     >
                       {isFav ? '❤️' : '🤍'}
                     </button>
 
-                    <span className="absolute top-3 right-3 z-40 pointer-events-none bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white text-[10px] font-black px-3 py-1 rounded shadow-md">
+                    <span className="absolute top-2 right-2 sm:top-3 sm:right-3 z-40 pointer-events-none bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white text-[8px] sm:text-[10px] font-black px-2 sm:px-3 py-0.5 sm:py-1 rounded shadow-md">
                       מידה {dress.size}
                     </span>
                     {isTop && (
-                      <span className="absolute top-12 right-3 z-40 pointer-events-none bg-[#2c261a] text-[#f4ebd4] text-[9px] font-black px-2 py-0.5 rounded shadow-md">
+                      <span className="absolute top-9 sm:top-12 right-2 sm:right-3 z-40 pointer-events-none bg-[#2c261a] text-[#f4ebd4] text-[7px] sm:text-[9px] font-black px-1.5 sm:px-2 py-0.5 rounded shadow-md">
                         🏆 TOP {index + 1}
                       </span>
                     )}
@@ -838,7 +859,7 @@ export default function Home() {
                           type="button"
                           onPointerDown={(e) => e.stopPropagation()}
                           onClick={(e) => prevImage(dress.id, dress.images.length, e)}
-                          className="absolute left-2.5 top-1/2 -translate-y-1/2 z-40 bg-white/95 text-[#b8860b] w-9 h-9 rounded-full flex items-center justify-center shadow-lg border border-[#e8cc92] font-black text-lg hover:bg-gradient-to-r hover:from-[#d4af37] hover:to-[#b8860b] hover:text-white transition-all"
+                          className="absolute left-1.5 sm:left-2.5 top-1/2 -translate-y-1/2 z-40 bg-white/95 text-[#b8860b] w-7 h-7 sm:w-9 sm:h-9 rounded-full flex items-center justify-center shadow-lg border border-[#e8cc92] font-black text-base sm:text-lg hover:bg-gradient-to-r hover:from-[#d4af37] hover:to-[#b8860b] hover:text-white transition-all"
                           aria-label="תמונה קודמת"
                         >
                           ‹
@@ -847,7 +868,7 @@ export default function Home() {
                           type="button"
                           onPointerDown={(e) => e.stopPropagation()}
                           onClick={(e) => nextImage(dress.id, dress.images.length, e)}
-                          className="absolute right-2.5 top-1/2 -translate-y-1/2 z-40 bg-white/95 text-[#b8860b] w-9 h-9 rounded-full flex items-center justify-center shadow-lg border border-[#e8cc92] font-black text-lg hover:bg-gradient-to-r hover:from-[#d4af37] hover:to-[#b8860b] hover:text-white transition-all"
+                          className="absolute right-1.5 sm:right-2.5 top-1/2 -translate-y-1/2 z-40 bg-white/95 text-[#b8860b] w-7 h-7 sm:w-9 sm:h-9 rounded-full flex items-center justify-center shadow-lg border border-[#e8cc92] font-black text-base sm:text-lg hover:bg-gradient-to-r hover:from-[#d4af37] hover:to-[#b8860b] hover:text-white transition-all"
                           aria-label="תמונה הבאה"
                         >
                           ›
@@ -874,55 +895,55 @@ export default function Home() {
                 </div>
 
                 {/* פרטי השמלה והמחיר */}
-                <div className="p-4 sm:p-5 flex flex-col flex-grow bg-gradient-to-b from-white to-[#fdfbf7]">
-                  <div className="flex justify-between items-start gap-2">
+                <div className="p-2.5 sm:p-5 flex flex-col flex-grow bg-gradient-to-b from-white to-[#fdfbf7]">
+                  <div className="flex justify-between items-start gap-1 sm:gap-2">
                     <button
                       type="button"
                       onClick={() => setDetailsDress(dress)}
-                      className="text-lg font-bold text-neutral-900 tracking-wide group-hover:text-[#b8860b] transition-colors text-right"
+                      className="text-sm sm:text-lg font-bold text-neutral-900 tracking-wide group-hover:text-[#b8860b] transition-colors text-right line-clamp-2"
                     >
                       {dress.name}
                     </button>
                     <button 
                       onClick={(e) => handleToggleCart(dress, e)}
-                      className={`text-xs p-1.5 rounded-lg border transition ${
+                      className={`text-[10px] sm:text-xs p-1 sm:p-1.5 rounded-lg border transition shrink-0 ${
                         inCart ? 'bg-[#f4ebd4] border-[#d4af37] text-[#b8860b]' : 'border-neutral-200 hover:bg-neutral-50'
                       }`}
                       title={inCart ? "הסר מהסל" : "הוסף לסל הזמנות מרוכז"}
                     >
-                      {inCart ? '🛒 בסל' : '➕ לסל'}
+                      {inCart ? '🛒' : '➕'}
                     </button>
                   </div>
-                  <div className="mt-3">
+                  <div className="mt-2 sm:mt-3 hidden sm:block">
                     <DressCardSummary dress={dress} onShowDetails={() => setDetailsDress(dress)} />
                   </div>
-                  <div className="flex flex-col gap-3 mt-auto pt-4 border-t-2 border-dotted border-[#f0e6cc]">
+                  <div className="flex flex-col gap-2 sm:gap-3 mt-auto pt-2 sm:pt-4 border-t-2 border-dotted border-[#f0e6cc]">
                     <div>
-                      <span className="text-[9px] text-[#b8860b] font-black">מחיר השכרה</span>
-                      <p className="text-neutral-900 font-black text-xl">₪{dress.price}</p>
+                      <span className="text-[8px] sm:text-[9px] text-[#b8860b] font-black">מחיר השכרה</span>
+                      <p className="text-neutral-900 font-black text-base sm:text-xl">₪{dress.price}</p>
                       {dress.rental_count > 0 && (
-                        <p className="text-[10px] text-[#9a7b4f] mt-0.5">{dress.rental_count} השכרות</p>
+                        <p className="text-[9px] sm:text-[10px] text-[#9a7b4f] mt-0.5">{dress.rental_count} השכרות</p>
                       )}
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div className="grid grid-cols-1 gap-1.5 sm:gap-2">
                       <button
                         type="button"
                         onClick={() => openCoordinate(dress)}
-                        className="w-full px-3 py-2.5 border-2 border-[#decfa8] bg-white text-[#8b6508] text-[11px] font-bold rounded-xl"
+                        className="w-full px-2 sm:px-3 py-2 sm:py-2.5 border-2 border-[#decfa8] bg-white text-[#8b6508] text-[9px] sm:text-[11px] font-bold rounded-lg sm:rounded-xl"
                       >
-                        📅 תיאום עם המשכירה
+                        📅 תיאום
                       </button>
                       <button
                         onClick={() => {
                           setSelectedDress(dress);
                           setModalImageIndex(currentImgIndex);
                         }}
-                        className="w-full bg-gradient-to-r from-[#2c261a] to-[#4a3f2b] hover:from-[#d4af37] hover:to-[#b8860b] text-white text-[11px] font-bold py-2.5 rounded-xl shadow-md"
+                        className="w-full bg-gradient-to-r from-[#2c261a] to-[#4a3f2b] hover:from-[#d4af37] hover:to-[#b8860b] text-white text-[9px] sm:text-[11px] font-bold py-2 sm:py-2.5 rounded-lg sm:rounded-xl shadow-md"
                       >
-                        שרייני עכשיו
+                        שרייני
                       </button>
                     </div>
-                    <div className="flex gap-2 justify-center">
+                    <div className="hidden sm:flex gap-2 justify-center">
                       <button
                         type="button"
                         onClick={(e) => { e.stopPropagation(); setRateDress(dress); }}
@@ -949,7 +970,8 @@ export default function Home() {
             );
           })}
         </div>
-        )}
+            )}
+        </div>
       </section>
 
       {/* ✨ ממודאל חדש: שאלון הוספת שמלה לאתר ✨ */}
@@ -971,7 +993,9 @@ export default function Home() {
 
             <form onSubmit={handleAddDressSubmit} className="flex flex-col gap-4">
               <OwnerPlatformNotice />
-              {addDressError && <FormError message={addDressError} />}
+              <div ref={addDressErrorRef}>
+                {addDressError && <FormError message={addDressError} />}
+              </div>
               {/* שם השמלה */}
               <div>
                 <label className="block text-xs font-bold text-[#8b6508] mb-1">שם הדגם / השמלה *</label>

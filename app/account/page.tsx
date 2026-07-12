@@ -19,6 +19,7 @@ import { clearAllLuxeStorage } from '@/lib/luxe-storage';
 import { notifySiteAuthChange } from '@/lib/site-auth-events';
 import { accountSectionUrl, parseAccountSection } from '@/lib/account-section-url';
 import { fetchDressById, findDressInList, preloadDressesCatalog } from '@/lib/dress-api';
+import { useScrollToError } from '@/hooks/use-scroll-to-error';
 import type { Dress } from '@/lib/types';
 import type { SavedDress } from '@/lib/luxe-storage';
 
@@ -121,6 +122,8 @@ function AccountPageContent() {
   const [editNewFiles, setEditNewFiles] = useState<File[]>([]);
   const [editNewPreviews, setEditNewPreviews] = useState<string[]>([]);
   const [addFormError, setAddFormError] = useState('');
+  const addFormErrorRef = useRef<HTMLDivElement>(null);
+  useScrollToError(addFormErrorRef, addFormError);
   const [profileForm, setProfileForm] = useState({
     display_name: '',
     phone: '',
@@ -978,7 +981,9 @@ function AccountPageContent() {
           <form onSubmit={submitDress} className="bg-white rounded-2xl border border-[#eadaaf] p-4 sm:p-6 space-y-4">
             <h2 className="font-black text-xl">➕ הוספת שמלה</h2>
             <OwnerPlatformNotice />
-            {addFormError && <FormError message={addFormError} />}
+            <div ref={addFormErrorRef}>
+              {addFormError && <FormError message={addFormError} />}
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <input required placeholder="שם השמלה *" value={addForm.name} onChange={(e) => setAddForm({ ...addForm, name: e.target.value })} className="p-2.5 border border-[#decfa8] rounded-xl text-xs text-[#2c261a] placeholder:text-[#9a7b4f] bg-white col-span-1 sm:col-span-2" />
               <input required type="number" placeholder="מחיר *" value={addForm.price} onChange={(e) => setAddForm({ ...addForm, price: e.target.value })} className="p-2.5 border border-[#decfa8] rounded-xl text-xs text-[#2c261a] placeholder:text-[#9a7b4f] bg-white" />
