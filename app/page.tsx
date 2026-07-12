@@ -20,7 +20,7 @@ import { getStoredSiteUser } from '@/lib/session-user';
 import { isLoggedIn } from '@/lib/require-login';
 import { useModalHistory } from '@/hooks/use-modal-history';
 import { useScrollToError } from '@/hooks/use-scroll-to-error';
-import { compareDresses, toggleFilterValue } from '@/lib/dress-sort';
+import { compareDresses, getTopRentalRanks, toggleFilterValue } from '@/lib/dress-sort';
 import { fetchDressById, findDressInList } from '@/lib/dress-api';
 import { dressShareUrl, ownerWhatsAppLink, WHATSAPP_LINK } from '@/lib/site-config';
 import { Dress, Review, SortOption, EVENT_TYPES, PICKUP_METHODS } from '@/lib/types';
@@ -693,6 +693,8 @@ export default function Home() {
     setSelectedSizes((prev) => toggleFilterValue(prev, size));
   };
 
+  const topRentalRanks = getTopRentalRanks(filteredDresses);
+
   const coordinateAvailable =
     coordinateDress && coordinateDate
       ? checkDateAvailability(coordinateDate, coordinateDress)
@@ -837,11 +839,11 @@ export default function Home() {
               </div>
             ) : (
               <div className="grid grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-2.5 sm:gap-4 lg:gap-5">
-          {filteredDresses.map((dress, index) => {
+          {filteredDresses.map((dress) => {
             const currentImgIndex = currentImageIndexes[dress.id] || 0;
             const isFav = isDressFavorite(dress.id);
             const inCart = isDressInCart(dress.id);
-            const isTop = index < 3 && dress.rental_count > 0;
+            const topRank = topRentalRanks.get(dress.id);
             return (
               <div 
                 key={dress.id} 
@@ -875,9 +877,9 @@ export default function Home() {
                     <span className="absolute top-2 right-2 sm:top-3 sm:right-3 z-40 pointer-events-none bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white text-[8px] sm:text-[10px] font-black px-2 sm:px-3 py-0.5 sm:py-1 rounded shadow-md">
                       מידה {dress.size}
                     </span>
-                    {isTop && (
+                    {topRank !== undefined && (
                       <span className="absolute top-9 sm:top-12 right-2 sm:right-3 z-40 pointer-events-none bg-[#2c261a] text-[#f4ebd4] text-[7px] sm:text-[9px] font-black px-1.5 sm:px-2 py-0.5 rounded shadow-md">
-                        🏆 TOP {index + 1}
+                        🏆 TOP {topRank}
                       </span>
                     )}
 
