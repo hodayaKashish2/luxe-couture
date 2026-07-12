@@ -946,9 +946,6 @@ export default function Home() {
                       {inCart ? '🛒' : '➕'}
                     </button>
                   </div>
-                  <div className="mt-2 sm:hidden">
-                    <RentalCountBadge dress={dress} compact />
-                  </div>
                   <div className="mt-2 sm:mt-3 hidden sm:block">
                     <DressCardSummary dress={dress} onShowDetails={() => setDetailsDress(dress)} />
                   </div>
@@ -956,8 +953,8 @@ export default function Home() {
                     <div>
                       <span className="text-[8px] sm:text-[9px] text-[#b8860b] font-black">מחיר השכרה</span>
                       <p className="text-neutral-900 font-black text-base sm:text-xl">₪{dress.price}</p>
-                      <div className="mt-1.5 hidden sm:block">
-                        <RentalCountBadge dress={dress} compact />
+                      <div className="mt-0.5 sm:hidden">
+                        <RentalCountBadge dress={dress} inline />
                       </div>
                     </div>
                     <div className="grid grid-cols-1 gap-1.5 sm:gap-2">
