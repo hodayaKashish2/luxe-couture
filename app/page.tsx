@@ -48,7 +48,7 @@ export default function Home() {
   const [sortBy, setSortBy] = useState<SortOption>('popular');
   const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [filtersSidebarCollapsed, setFiltersSidebarCollapsed] = useState(false);
+  const [filtersSidebarCollapsed, setFiltersSidebarCollapsed] = useState(true);
 
   const { cart, toggleCart, toggleFavorite, removeFromCart, isDressInCart, isDressFavorite } =
     useLuxeStorage();
@@ -729,18 +729,18 @@ export default function Home() {
       <SiteHeader />
 
       {/* Hero */}
-      <section className="relative z-10 max-w-4xl mx-auto px-4 pt-10 pb-0 text-center">
-        <p className="mb-3 text-[11px] tracking-[0.28em] text-[#9a7b4f] font-[family-name:var(--font-luxury)]">
+      <section className="relative z-10 max-w-4xl mx-auto px-4 pt-6 sm:pt-8 pb-0 text-center">
+        <p className="mb-2 text-[11px] tracking-[0.28em] text-[#9a7b4f] font-[family-name:var(--font-luxury)]">
           ✦ תיווך השכרת שמלות בין בנות ✦
         </p>
         <h1 className="font-[family-name:var(--font-luxury)] text-3xl sm:text-4xl md:text-5xl text-[#3d2f24] leading-tight px-2">
           <span className="font-light">שמלה</span>{' '}
           <span className="bg-gradient-to-l from-[#c9a227] via-[#e8c547] to-[#a67c00] bg-clip-text text-transparent">בקליק</span>
         </h1>
-        <p className="mt-4 text-sm text-[#554a33] max-w-xl mx-auto leading-relaxed">
+        <p className="mt-3 text-sm text-[#554a33] max-w-xl mx-auto leading-relaxed">
           יש לך שמלה בארון? פרסמי אותה — ככל שיותר בנות שוכרות דרכך, השמלה שלך תופיע ראשונה ותקבל יותר חשיפה.
         </p>
-        <div className="flex flex-wrap justify-center gap-3 mt-5 mb-1">
+        <div className="flex flex-wrap justify-center gap-3 mt-4 mb-0">
           <button onClick={openAddDressForm} className="px-6 py-3 bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white rounded-xl text-sm font-bold shadow-lg">
             👗 יש לי שמלה — פרסמי
           </button>
@@ -751,8 +751,8 @@ export default function Home() {
       </section>
 
       {/* 👗 קטלוג + סינון בצד (SHEIN-style) */}
-      <section id="catalog" ref={catalogRef} className="max-w-7xl mx-auto px-3 sm:px-4 mb-14 relative z-10 pt-2">
-        <div className="flex items-center justify-between gap-2 mb-3">
+      <section id="catalog" ref={catalogRef} className="max-w-7xl mx-auto px-3 sm:px-4 mb-14 relative z-10 pt-1 sm:pt-2">
+        <div className="flex items-center justify-between gap-2 mb-2">
           <p className="text-[11px] sm:text-xs text-[#9a7b4f]">
             {isLoadingDresses ? 'טוענת...' : `${filteredDresses.length} שמלות`}
           </p>
@@ -846,7 +846,7 @@ export default function Home() {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-2.5 sm:gap-4 lg:gap-5">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 lg:gap-4">
           {filteredDresses.map((dress) => {
             const currentImgIndex = currentImageIndexes[dress.id] || 0;
             const isFav = isDressFavorite(dress.id);
@@ -858,7 +858,7 @@ export default function Home() {
                 className="group flex flex-col h-full bg-white rounded-2xl overflow-hidden border-2 border-[#ebd3a4]/60 shadow-[0_10px_30px_rgba(212,175,55,0.06)] hover:shadow-[0_25px_60px_rgba(212,175,55,0.22)] hover:border-[#d4af37] transition-all duration-300 transform hover:-translate-y-1"
               >
                 {/* 📸 גלריית התמונות */}
-                <div className="h-[150px] sm:h-[280px] lg:h-[430px] w-full relative overflow-hidden bg-[#faf8f3] p-1.5 sm:p-2.5">
+                <div className="h-[150px] sm:h-[220px] md:h-[260px] lg:h-[300px] w-full relative overflow-hidden bg-[#faf8f3] p-1.5 sm:p-2">
                   <div className="w-full h-full rounded-xl overflow-hidden relative border border-[#f0e2c3]">
                     <img
                       src={dress.images[currentImgIndex]}
