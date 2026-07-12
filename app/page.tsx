@@ -744,9 +744,53 @@ export default function Home() {
 
       {/* 👗 קטלוג + סינון בצד (SHEIN-style) */}
       <section id="catalog" ref={catalogRef} className="max-w-7xl mx-auto px-3 sm:px-4 mb-14 relative z-10">
+        <div className="flex items-center justify-between gap-2 mb-3">
+          <p className="text-[11px] sm:text-xs text-[#9a7b4f]">
+            {isLoadingDresses ? 'טוענת...' : `${filteredDresses.length} שמלות`}
+            <span className="hidden sm:inline"> · הכי מושכרות קודם</span>
+          </p>
+          <div className="flex items-center gap-2 shrink-0">
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as SortOption)}
+              className="text-[10px] sm:text-[11px] p-1.5 sm:px-2.5 sm:py-2 bg-white border border-[#decfa8] rounded-lg text-[#8b6508] font-bold max-w-[9rem] sm:max-w-none"
+              aria-label="מיון שמלות"
+            >
+              <option value="newest">חדש ביותר</option>
+              <option value="price-asc">מחיר ↑</option>
+              <option value="price-desc">מחיר ↓</option>
+            </select>
+            <button
+              type="button"
+              onClick={() => setFiltersOpen(true)}
+              className="lg:hidden inline-flex items-center gap-1 px-2.5 py-1.5 bg-white border border-[#decfa8] text-[#8b6508] rounded-lg text-[10px] font-black"
+            >
+              🔍 סינון
+              {activeFilterCount > 0 && (
+                <span className="bg-[#d4af37] text-white text-[9px] px-1 rounded-full min-w-[1rem]">
+                  {activeFilterCount}
+                </span>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {activeFilterCount > 0 && (
+          <div className="mb-3 flex flex-wrap items-center gap-1.5">
+            {searchTerm && <span className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">"{searchTerm}"</span>}
+            {selectedCity && <span className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">{selectedCity}</span>}
+            {selectedSize !== 'All' && <span className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">מידה {selectedSize}</span>}
+            {selectedEventType && <span className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">{selectedEventType}</span>}
+            {selectedColor && <span className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">{selectedColor}</span>}
+            {maxPrice < 2000 && <span className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">עד ₪{maxPrice}</span>}
+            <button type="button" onClick={clearFilters} className="text-[10px] font-bold text-[#b8860b] underline">
+              נקה
+            </button>
+          </div>
+        )}
+
         <div className="lg:grid lg:grid-cols-[auto_minmax(0,1fr)] lg:gap-4 lg:items-stretch">
           <CatalogFilterSidebar
-            catalogRef={catalogRef}
             collapsed={filtersSidebarCollapsed}
             onToggleCollapse={() => setFiltersSidebarCollapsed((v) => !v)}
             activeFilterCount={activeFilterCount}
@@ -769,52 +813,7 @@ export default function Home() {
             uniqueColors={uniqueColors}
           />
 
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between gap-2 mb-3">
-              <p className="text-[11px] sm:text-xs text-[#9a7b4f]">
-                {isLoadingDresses ? 'טוענת...' : `${filteredDresses.length} שמלות`}
-                <span className="hidden sm:inline"> · הכי מושכרות קודם</span>
-              </p>
-              <div className="flex items-center gap-2 shrink-0">
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as SortOption)}
-                  className="text-[10px] sm:text-[11px] p-1.5 sm:px-2.5 sm:py-2 bg-white border border-[#decfa8] rounded-lg text-[#8b6508] font-bold max-w-[9rem] sm:max-w-none"
-                  aria-label="מיון שמלות"
-                >
-                  <option value="newest">חדש ביותר</option>
-                  <option value="price-asc">מחיר ↑</option>
-                  <option value="price-desc">מחיר ↓</option>
-                </select>
-                <button
-                  type="button"
-                  onClick={() => setFiltersOpen(true)}
-                  className="lg:hidden inline-flex items-center gap-1 px-2.5 py-1.5 bg-white border border-[#decfa8] text-[#8b6508] rounded-lg text-[10px] font-black"
-                >
-                  🔍 סינון
-                  {activeFilterCount > 0 && (
-                    <span className="bg-[#d4af37] text-white text-[9px] px-1 rounded-full min-w-[1rem]">
-                      {activeFilterCount}
-                    </span>
-                  )}
-                </button>
-              </div>
-            </div>
-
-            {activeFilterCount > 0 && (
-              <div className="mb-3 flex flex-wrap items-center gap-1.5">
-                {searchTerm && <span className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">"{searchTerm}"</span>}
-                {selectedCity && <span className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">{selectedCity}</span>}
-                {selectedSize !== 'All' && <span className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">מידה {selectedSize}</span>}
-                {selectedEventType && <span className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">{selectedEventType}</span>}
-                {selectedColor && <span className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">{selectedColor}</span>}
-                {maxPrice < 2000 && <span className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">עד ₪{maxPrice}</span>}
-                <button type="button" onClick={clearFilters} className="text-[10px] font-bold text-[#b8860b] underline">
-                  נקה
-                </button>
-              </div>
-            )}
-
+          <div className="min-w-0">
             {isLoadingDresses ? (
               <div className="text-center py-16 text-[#8b6508] text-sm font-medium">טוענת קולקציה...</div>
             ) : filteredDresses.length === 0 ? (

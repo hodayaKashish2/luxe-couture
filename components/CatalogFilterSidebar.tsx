@@ -1,84 +1,46 @@
 'use client';
 
-import { useRef, type RefObject } from 'react';
 import CatalogFilterPanel, { type CatalogFilterPanelProps } from '@/components/CatalogFilterPanel';
-import { useCatalogSidebarPosition, type SidebarPosition } from '@/hooks/use-catalog-sidebar-position';
 
 type CatalogFilterSidebarProps = CatalogFilterPanelProps & {
-  catalogRef: RefObject<HTMLElement | null>;
   collapsed: boolean;
   onToggleCollapse: () => void;
   activeFilterCount: number;
   onClear: () => void;
 };
 
-function panelStyle(position: SidebarPosition) {
-  if (position.mode === 'fixed') {
-    return {
-      position: 'fixed' as const,
-      top: position.top,
-      right: position.right,
-      width: position.width,
-      zIndex: 25,
-    };
-  }
-  if (position.mode === 'bottom') {
-    return {
-      position: 'absolute' as const,
-      bottom: 0,
-      left: 0,
-      right: 0,
-      zIndex: 25,
-    };
-  }
-  return {
-    position: 'relative' as const,
-    zIndex: 20,
-  };
-}
+const STICKY_PANEL =
+  'sticky top-3 z-20 w-full flex flex-col bg-white border border-[#eadaaf] rounded-xl shadow-sm overflow-hidden h-full min-h-[calc(100dvh-1.5rem)] max-h-[calc(100dvh-1.5rem)]';
 
 export default function CatalogFilterSidebar({
-  catalogRef,
   collapsed,
   onToggleCollapse,
   activeFilterCount,
   onClear,
   ...filterProps
 }: CatalogFilterSidebarProps) {
-  const anchorRef = useRef<HTMLDivElement>(null);
-  const sidebarRef = useRef<HTMLElement>(null);
-  const position = useCatalogSidebarPosition(anchorRef, catalogRef, sidebarRef, collapsed);
-
   if (collapsed) {
     return (
-      <div
-        ref={anchorRef}
-        className="hidden lg:block relative self-stretch w-11 shrink-0"
-        aria-hidden={false}
-      >
-        <aside
-          ref={sidebarRef}
-          style={panelStyle(position)}
-          className="w-11 flex flex-col"
-        >
+      <div className="hidden lg:block self-stretch w-11 shrink-0">
+        <aside className={STICKY_PANEL}>
           <button
             type="button"
             onClick={onToggleCollapse}
-            className="w-full min-h-[9rem] flex flex-col items-center justify-center gap-2 py-4 bg-white border border-[#eadaaf] rounded-xl text-[#8b6508] hover:border-[#d4af37] hover:bg-[#fffdf8] transition-colors shadow-sm"
+            className="h-full w-full flex flex-col items-center justify-center gap-3 py-6 bg-[#fffdf8] text-[#8b6508] hover:bg-[#f4ebd4] transition-colors"
             aria-label="פתח סינון"
             title="פתח סינון"
           >
-            <span className="text-base" aria-hidden>
+            <span className="text-lg" aria-hidden>
               🔍
             </span>
             <span
-              className="text-[10px] font-black tracking-wide"
+              className="text-[11px] font-black tracking-wide"
               style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}
             >
               סינון
             </span>
             {activeFilterCount > 0 && (
-              <span className="bg-[#d4af37] text-white text-[9px] font-black w-5 h-5 rounded-full flex items-center justify-center">
+              <span className="bg-[#d4af37] text-white text-[10px] font-black w-6 h-6 rounded-full flex items-center justify-center">
                 {activeFilterCount}
               </span>
             )}
@@ -89,12 +51,8 @@ export default function CatalogFilterSidebar({
   }
 
   return (
-    <div ref={anchorRef} className="hidden lg:block relative self-stretch w-56 xl:w-60 shrink-0">
-      <aside
-        ref={sidebarRef}
-        style={panelStyle(position)}
-        className="w-full flex flex-col bg-white border border-[#eadaaf] rounded-xl shadow-sm overflow-hidden max-h-[calc(100dvh-1rem)]"
-      >
+    <div className="hidden lg:block self-stretch w-56 xl:w-60 shrink-0">
+      <aside className={STICKY_PANEL}>
         <div className="shrink-0 flex items-center justify-between gap-2 px-3 py-2.5 border-b border-[#f0e6cc] bg-[#fffdf8]">
           <div className="min-w-0">
             <h2 className="text-sm font-black text-[#3d2f24]">סינון</h2>
