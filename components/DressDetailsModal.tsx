@@ -12,6 +12,7 @@ type Props = {
   onToggleCart?: () => void;
   onToggleFavorite?: () => void;
   onCoordinate?: () => void;
+  onViewRatings?: () => void;
   isInCart?: boolean;
   isFavorite?: boolean;
 };
@@ -24,6 +25,7 @@ export default function DressDetailsModal({
   onToggleCart,
   onToggleFavorite,
   onCoordinate,
+  onViewRatings,
   isInCart = false,
   isFavorite = false,
 }: Props) {
@@ -151,15 +153,34 @@ export default function DressDetailsModal({
             )}
 
             <div className="space-y-2">
-              {rows.map((row) => (
-                <div
-                  key={row.label}
-                  className="flex justify-between items-center py-2.5 px-3 rounded-xl bg-white border border-[#ede3c8]"
-                >
-                  <span className="text-xs text-[#8b6508] font-bold">{row.label}</span>
-                  <span className="text-sm font-black text-[#3d2f24]">{row.value}</span>
-                </div>
-              ))}
+              {rows.map((row) => {
+                const isRatingRow = row.label === 'דירוג' && onViewRatings;
+                if (isRatingRow) {
+                  return (
+                    <button
+                      key={row.label}
+                      type="button"
+                      onClick={onViewRatings}
+                      className="w-full flex justify-between items-center py-2.5 px-3 rounded-xl bg-white border border-[#ede3c8] hover:border-[#d4af37] hover:bg-[#fffdf8] transition-colors text-right"
+                    >
+                      <span className="text-xs text-[#8b6508] font-bold">{row.label}</span>
+                      <span className="text-sm font-black text-[#3d2f24] flex items-center gap-1">
+                        {row.value}
+                        <span className="text-[10px] text-[#b8860b] font-bold">← צפי</span>
+                      </span>
+                    </button>
+                  );
+                }
+                return (
+                  <div
+                    key={row.label}
+                    className="flex justify-between items-center py-2.5 px-3 rounded-xl bg-white border border-[#ede3c8]"
+                  >
+                    <span className="text-xs text-[#8b6508] font-bold">{row.label}</span>
+                    <span className="text-sm font-black text-[#3d2f24]">{row.value}</span>
+                  </div>
+                );
+              })}
             </div>
 
             <div className="flex justify-between items-center pt-2 border-t-2 border-dotted border-[#eadaaf]">

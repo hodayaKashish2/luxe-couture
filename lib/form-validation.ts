@@ -19,12 +19,24 @@ export function validateDressImageFiles(files: File[]): string | null {
   return null;
 }
 
+export function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+}
+
+export function isValidPhone(phone: string): boolean {
+  const digits = phone.replace(/\D/g, '');
+  return digits.length >= 9 && digits.length <= 15;
+}
+
 export type AddDressFormFields = {
   name: string;
   price: string;
   size: string;
   city: string;
+  owner_name?: string;
   owner_phone?: string;
+  owner_email?: string;
+  requireEmail?: boolean;
 };
 
 export function validateAddDressForm(form: AddDressFormFields, imageCount: number): string | null {
@@ -34,9 +46,20 @@ export function validateAddDressForm(form: AddDressFormFields, imageCount: numbe
   }
   if (!form.size.trim()) return 'יש לבחור מידה';
   if (!form.city.trim()) return 'יש להזין עיר';
-  if (form.owner_phone !== undefined && !form.owner_phone.trim()) {
-    return 'יש להזין מספר טלפון ליצירת קשר';
+
+  if (form.owner_name !== undefined && !form.owner_name.trim()) {
+    return 'יש להזין שם משכירה';
   }
+
+  if (form.owner_phone !== undefined) {
+    if (!form.owner_phone.trim()) return 'יש להזין מספר טלפון ליצירת קשר';
+    if (!isValidPhone(form.owner_phone)) return 'מספר הטלפון לא נראה תקין (לפחות 9 ספרות)';
+  }
+
+  const email = form.owner_email?.trim() || '';
+  if (form.requireEmail && !email) return 'יש להזין כתובת אימייל';
+  if (email && !isValidEmail(email)) return 'כתובת האימייל לא תקינה';
+
   if (imageCount === 0) return 'יש להעלות לפחות תמונה אחת של השמלה';
   return null;
 }
@@ -52,10 +75,9 @@ export function validateUpdateProfileForm(form: {
 
   if (!displayName) return 'יש להזין שם מלא';
   if (!phone) return 'יש להזין מספר טלפון';
+  if (!isValidPhone(phone)) return 'מספר הטלפון לא נראה תקין';
   if (!email) return 'יש להזין כתובת אימייל';
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    return 'כתובת האימייל לא תקינה';
-  }
+  if (!isValidEmail(email)) return 'כתובת האימייל לא תקינה';
   return null;
 }
 
@@ -84,11 +106,9 @@ export function validateRegisterForm(form: {
   if (password.length < 6) return 'סיסמה — לפחות 6 תווים';
   if (!displayName) return 'יש להזין שם מלא';
   if (!phone) return 'יש להזין מספר טלפון';
+  if (!isValidPhone(phone)) return 'מספר הטלפון לא נראה תקין';
   if (!email) return 'יש להזין כתובת אימייל';
-
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    return 'כתובת האימייל לא תקינה — חסר @ או סיומת (לדוגמה: name@mail.com)';
-  }
+  if (!isValidEmail(email)) return 'כתובת האימייל לא תקינה — חסר @ או סיומת (לדוגמה: name@mail.com)';
 
   return null;
 }

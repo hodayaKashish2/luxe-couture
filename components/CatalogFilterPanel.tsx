@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import FilterSection from '@/components/FilterSection';
 import { DRESS_SIZES } from '@/lib/constants';
 import { EVENT_TYPES, type SortOption } from '@/lib/types';
@@ -8,20 +7,18 @@ import { EVENT_TYPES, type SortOption } from '@/lib/types';
 export type CatalogFilterPanelProps = {
   searchTerm: string;
   setSearchTerm: (value: string) => void;
-  selectedCities: string[];
-  onToggleCity: (city: string) => void;
+  cityFilter: string;
+  setCityFilter: (value: string) => void;
   selectedSizes: string[];
   onToggleSize: (size: string) => void;
   selectedEventType: string;
   setSelectedEventType: (value: string) => void;
   sortBy: SortOption;
   setSortBy: (value: SortOption) => void;
-  selectedColor: string;
-  setSelectedColor: (value: string) => void;
+  colorFilter: string;
+  setColorFilter: (value: string) => void;
   maxPrice: number;
   setMaxPrice: (value: number) => void;
-  uniqueCities: string[];
-  uniqueColors: string[];
   showSort?: boolean;
   compact?: boolean;
 };
@@ -36,8 +33,6 @@ const chipClass = (checked: boolean) =>
       : 'border-[#f0e6cc] text-[#5c5037] hover:border-[#decfa8]'
   }`;
 
-const CITY_PREVIEW = 6;
-
 function sortHint(sortBy: SortOption) {
   if (sortBy === 'price-asc' || sortBy === 'price-desc') {
     return 'מיון לפי מחיר, ואז לפי הכי מושכרות';
@@ -51,26 +46,21 @@ function sortHint(sortBy: SortOption) {
 export default function CatalogFilterPanel({
   searchTerm,
   setSearchTerm,
-  selectedCities,
-  onToggleCity,
+  cityFilter,
+  setCityFilter,
   selectedSizes,
   onToggleSize,
   selectedEventType,
   setSelectedEventType,
   sortBy,
   setSortBy,
-  selectedColor,
-  setSelectedColor,
+  colorFilter,
+  setColorFilter,
   maxPrice,
   setMaxPrice,
-  uniqueCities,
-  uniqueColors,
   showSort = true,
   compact = false,
 }: CatalogFilterPanelProps) {
-  const [showAllCities, setShowAllCities] = useState(false);
-  const visibleCities = showAllCities ? uniqueCities : uniqueCities.slice(0, CITY_PREVIEW);
-
   return (
     <div className={compact ? 'px-1' : ''}>
       <FilterSection title="חיפוש" defaultOpen>
@@ -83,30 +73,14 @@ export default function CatalogFilterPanel({
         />
       </FilterSection>
 
-      <FilterSection title="עיר" defaultOpen={selectedCities.length > 0}>
-        <p className="text-[10px] text-[#9a7b4f] mb-2">ניתן לבחור כמה ערים</p>
-        <div className="space-y-1.5 max-h-40 overflow-y-auto pr-0.5">
-          {visibleCities.map((city) => (
-            <label key={city} className="flex items-center gap-2 text-xs text-[#5c5037] cursor-pointer py-0.5">
-              <input
-                type="checkbox"
-                checked={selectedCities.includes(city)}
-                onChange={() => onToggleCity(city)}
-                className="accent-[#d4af37]"
-              />
-              {city}
-            </label>
-          ))}
-        </div>
-        {uniqueCities.length > CITY_PREVIEW && (
-          <button
-            type="button"
-            onClick={() => setShowAllCities((v) => !v)}
-            className="mt-2 text-[11px] font-bold text-[#b8860b] hover:underline"
-          >
-            {showAllCities ? 'הצג פחות' : `+ הצג עוד (${uniqueCities.length - CITY_PREVIEW})`}
-          </button>
-        )}
+      <FilterSection title="עיר" defaultOpen={!!cityFilter}>
+        <input
+          type="text"
+          placeholder="הקלידי עיר, למשל: ירושלים"
+          value={cityFilter}
+          onChange={(e) => setCityFilter(e.target.value)}
+          className={fieldClass}
+        />
       </FilterSection>
 
       <FilterSection title="מידה" defaultOpen={selectedSizes.length > 0}>
@@ -141,15 +115,14 @@ export default function CatalogFilterPanel({
         </select>
       </FilterSection>
 
-      <FilterSection title="צבע" defaultOpen={!!selectedColor}>
-        <select value={selectedColor} onChange={(e) => setSelectedColor(e.target.value)} className={fieldClass}>
-          <option value="">הכל</option>
-          {uniqueColors.map((c) => (
-            <option key={c} value={c}>
-              {c}
-            </option>
-          ))}
-        </select>
+      <FilterSection title="צבע" defaultOpen={!!colorFilter}>
+        <input
+          type="text"
+          placeholder="הקלידי צבע, למשל: לבן"
+          value={colorFilter}
+          onChange={(e) => setColorFilter(e.target.value)}
+          className={fieldClass}
+        />
       </FilterSection>
 
       {showSort && (

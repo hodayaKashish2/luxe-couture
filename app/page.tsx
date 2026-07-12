@@ -11,6 +11,7 @@ import DressCardSummary from '@/components/DressCardSummary';
 import RentalCountBadge from '@/components/RentalCountBadge';
 import DressDetailsModal from '@/components/DressDetailsModal';
 import DressRateModal from '@/components/DressRateModal';
+import DressRatingsModal from '@/components/DressRatingsModal';
 import { useLuxeStorage } from '@/components/LuxeStorageProvider';
 import { useAuthModal } from '@/components/AuthModalProvider';
 import SavedDressList from '@/components/SavedDressList';
@@ -41,8 +42,8 @@ export default function Home() {
   const [searchTerm, setSearchTerm] = useState('');
   const [maxPrice, setMaxPrice] = useState(2000);
   const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
-  const [selectedColor, setSelectedColor] = useState('');
-  const [selectedCities, setSelectedCities] = useState<string[]>([]);
+  const [colorFilter, setColorFilter] = useState('');
+  const [cityFilter, setCityFilter] = useState('');
   const [selectedEventType, setSelectedEventType] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('popular');
   const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
@@ -101,6 +102,7 @@ export default function Home() {
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
 
   const [rateDress, setRateDress] = useState<Dress | null>(null);
+  const [ratingsDress, setRatingsDress] = useState<Dress | null>(null);
   const [paymentStep, setPaymentStep] = useState<{
     bookingId: number;
     amount: number;
@@ -586,17 +588,15 @@ export default function Home() {
         price: newDressData.price,
         size: newDressData.size,
         city: newDressData.city,
+        owner_name: newDressData.owner_name,
         owner_phone: newDressData.owner_phone,
+        owner_email: newDressData.owner_email,
+        requireEmail: true,
       },
       newDressFiles.length
     );
     if (validationError) {
       setAddDressError(validationError);
-      return;
-    }
-
-    if (!newDressData.owner_name.trim()) {
-      setAddDressError('יש להזין שם משכירה');
       return;
     }
 
@@ -652,47 +652,44 @@ export default function Home() {
   const filteredDresses = dressesList
     .filter((dress) => {
       const matchesSearch = dress.name.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesCity = selectedCities.length === 0 || selectedCities.includes(dress.city);
+      const matchesCity =
+        !cityFilter.trim() || dress.city.toLowerCase().includes(cityFilter.trim().toLowerCase());
       const matchesPrice = dress.price <= maxPrice;
       const matchesSize = selectedSizes.length === 0 || selectedSizes.includes(dress.size);
-      const matchesColor = !selectedColor || dress.color.toLowerCase().includes(selectedColor.toLowerCase());
+      const matchesColor =
+        !colorFilter.trim() || dress.color.toLowerCase().includes(colorFilter.trim().toLowerCase());
       const matchesEvent = !selectedEventType || dress.event_type === selectedEventType;
       const matchesFav = !showOnlyFavorites || isDressFavorite(dress.id);
       return matchesSearch && matchesCity && matchesPrice && matchesSize && matchesColor && matchesEvent && matchesFav;
     })
     .sort((a, b) => compareDresses(a, b, sortBy));
 
-  const uniqueColors = [...new Set(dressesList.map((d) => d.color).filter(Boolean))];
-  const uniqueCities = [...new Set(dressesList.map((d) => d.city).filter(Boolean))].sort((a, b) =>
-    a.localeCompare(b, 'he')
-  );
-
   const activeFilterCount = [
     searchTerm,
-    ...selectedCities,
+    cityFilter,
     ...selectedSizes,
     selectedEventType,
-    selectedColor,
+    colorFilter,
     maxPrice < 2000 ? 'price' : '',
   ].filter(Boolean).length;
 
   const clearFilters = () => {
     setSearchTerm('');
-    setSelectedCities([]);
+    setCityFilter('');
     setSelectedSizes([]);
     setSelectedEventType('');
-    setSelectedColor('');
+    setColorFilter('');
     setSortBy('popular');
     setMaxPrice(2000);
-  };
-
-  const toggleCity = (city: string) => {
-    setSelectedCities((prev) => toggleFilterValue(prev, city));
   };
 
   const toggleSize = (size: string) => {
     setSelectedSizes((prev) => toggleFilterValue(prev, size));
   };
+
+  const hasActiveFilters = activeFilterCount > 0;
+  const catalogIsEmpty = !isLoadingDresses && dressesList.length === 0;
+  const noFilterMatches = !isLoadingDresses && dressesList.length > 0 && filteredDresses.length === 0;
 
   const topRentalRanks = getTopRentalRanks(filteredDresses);
 
@@ -789,14 +786,12 @@ export default function Home() {
         {activeFilterCount > 0 && (
           <div className="mb-3 flex flex-wrap items-center gap-1.5">
             {searchTerm && <span className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">"{searchTerm}"</span>}
-            {selectedCities.map((city) => (
-              <span key={city} className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">{city}</span>
-            ))}
+            {cityFilter && <span className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">עיר: {cityFilter}</span>}
             {selectedSizes.map((size) => (
               <span key={size} className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">מידה {size}</span>
             ))}
             {selectedEventType && <span className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">{selectedEventType}</span>}
-            {selectedColor && <span className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">{selectedColor}</span>}
+            {colorFilter && <span className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">צבע: {colorFilter}</span>}
             {maxPrice < 2000 && <span className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">עד ₪{maxPrice}</span>}
             <button type="button" onClick={clearFilters} className="text-[10px] font-bold text-[#b8860b] underline">
               נקה
@@ -812,31 +807,43 @@ export default function Home() {
             onClear={clearFilters}
             searchTerm={searchTerm}
             setSearchTerm={setSearchTerm}
-            selectedCities={selectedCities}
-            onToggleCity={toggleCity}
+            cityFilter={cityFilter}
+            setCityFilter={setCityFilter}
             selectedSizes={selectedSizes}
             onToggleSize={toggleSize}
             selectedEventType={selectedEventType}
             setSelectedEventType={setSelectedEventType}
             sortBy={sortBy}
             setSortBy={setSortBy}
-            selectedColor={selectedColor}
-            setSelectedColor={setSelectedColor}
+            colorFilter={colorFilter}
+            setColorFilter={setColorFilter}
             maxPrice={maxPrice}
             setMaxPrice={setMaxPrice}
-            uniqueCities={uniqueCities}
-            uniqueColors={uniqueColors}
           />
 
           <div className="min-w-0">
             {isLoadingDresses ? (
               <div className="text-center py-16 text-[#8b6508] text-sm font-medium">טוענת קולקציה...</div>
-            ) : filteredDresses.length === 0 ? (
+            ) : catalogIsEmpty ? (
               <div className="text-center py-16 bg-white/70 rounded-2xl border border-[#eadaaf] shadow-sm">
                 <p className="text-lg font-[family-name:var(--font-luxury)] text-[#3d2f24] mb-2">הקולקציה ריקה כרגע</p>
                 <p className="text-sm text-[#6e634c] max-w-md mx-auto leading-relaxed">
                   שמלות יופיעו כאן רק אחרי שמשתמשות יוסיפו אותן ותאשרי אותן במייל.
                 </p>
+              </div>
+            ) : noFilterMatches ? (
+              <div className="text-center py-16 bg-white/70 rounded-2xl border border-[#eadaaf] shadow-sm">
+                <p className="text-lg font-[family-name:var(--font-luxury)] text-[#3d2f24] mb-2">אין שמלות שתואמות את הסינון</p>
+                <p className="text-sm text-[#6e634c] max-w-md mx-auto leading-relaxed mb-4">
+                  נסי לשנות את המסננים או לנקות אותם כדי לראות את כל השמלות בקטלוג.
+                </p>
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="px-5 py-2.5 bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white text-xs font-black rounded-xl shadow-md"
+                >
+                  נקי סינון
+                </button>
               </div>
             ) : (
               <div className="grid grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-2.5 sm:gap-4 lg:gap-5">
@@ -975,6 +982,18 @@ export default function Home() {
                       </button>
                     </div>
                     <div className="hidden sm:flex gap-2 justify-center">
+                      {dress.rating_count > 0 && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setRatingsDress(dress);
+                          }}
+                          className="px-3 py-2 border border-[#decfa8] rounded-xl text-xs text-[#8b6508]"
+                        >
+                          ⭐ דירוגים ({dress.rating_count})
+                        </button>
+                      )}
                       <button
                         type="button"
                         onClick={(e) => { e.stopPropagation(); setRateDress(dress); }}
@@ -1014,20 +1033,18 @@ export default function Home() {
           isLoading={isLoadingDresses}
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
-          selectedCities={selectedCities}
-          onToggleCity={toggleCity}
+          cityFilter={cityFilter}
+          setCityFilter={setCityFilter}
           selectedSizes={selectedSizes}
           onToggleSize={toggleSize}
           selectedEventType={selectedEventType}
           setSelectedEventType={setSelectedEventType}
           sortBy={sortBy}
           setSortBy={setSortBy}
-          selectedColor={selectedColor}
-          setSelectedColor={setSelectedColor}
+          colorFilter={colorFilter}
+          setColorFilter={setColorFilter}
           maxPrice={maxPrice}
           setMaxPrice={setMaxPrice}
-          uniqueCities={uniqueCities}
-          uniqueColors={uniqueColors}
         />
       </section>
 
@@ -1157,8 +1174,8 @@ export default function Home() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#8b6508] mb-1">אימייל (אופציונלי)</label>
-                <input type="email" placeholder="your@email.com" value={newDressData.owner_email} onChange={(e) => setNewDressData({...newDressData, owner_email: e.target.value})} className="w-full p-2.5 bg-white border border-[#decfa8] rounded-xl text-xs text-[#2c261a] placeholder:text-[#9a7b4f]" dir="ltr" />
+                <label className="block text-xs font-bold text-[#8b6508] mb-1">אימייל *</label>
+                <input type="email" required placeholder="your@email.com" value={newDressData.owner_email} onChange={(e) => setNewDressData({...newDressData, owner_email: e.target.value})} className="w-full p-2.5 bg-white border border-[#decfa8] rounded-xl text-xs text-[#2c261a] placeholder:text-[#9a7b4f]" dir="ltr" />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -1656,7 +1673,18 @@ export default function Home() {
             openCoordinate(detailsDress);
             setDetailsDress(null);
           }}
+          onViewRatings={
+            detailsDress.rating_count > 0
+              ? () => {
+                  setRatingsDress(detailsDress);
+                }
+              : undefined
+          }
         />
+      )}
+
+      {ratingsDress && (
+        <DressRatingsModal dress={ratingsDress} onClose={() => setRatingsDress(null)} />
       )}
 
       {rateDress && (

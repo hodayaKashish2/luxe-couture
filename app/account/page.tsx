@@ -381,7 +381,16 @@ function AccountPageContent() {
     e.preventDefault();
     setAddFormError('');
 
-    const validationError = validateAddDressForm(addForm, addFiles.length);
+    const validationError = validateAddDressForm(
+      {
+        name: addForm.name,
+        price: addForm.price,
+        size: addForm.size,
+        city: addForm.city,
+        owner_phone: addForm.owner_phone,
+      },
+      addFiles.length
+    );
     if (validationError) {
       setAddFormError(validationError);
       return;
