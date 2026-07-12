@@ -360,7 +360,7 @@ function AccountPageContent() {
         });
         notifySiteAuthChange();
       }
-      alert(data.message || 'פרטי החשבון עודכנו');
+      navigateToSection('hub', { replace: true });
     } else {
       setProfileError(data.error || 'שגיאה בעדכון');
     }
