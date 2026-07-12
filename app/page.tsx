@@ -8,6 +8,7 @@ import FormError from '@/components/FormError';
 import CatalogFilterDrawer from '@/components/CatalogFilterDrawer';
 import CatalogFilterSidebar from '@/components/CatalogFilterSidebar';
 import DressCardSummary from '@/components/DressCardSummary';
+import RentalCountBadge from '@/components/RentalCountBadge';
 import DressDetailsModal from '@/components/DressDetailsModal';
 import DressRateModal from '@/components/DressRateModal';
 import { useLuxeStorage } from '@/components/LuxeStorageProvider';
@@ -43,7 +44,7 @@ export default function Home() {
   const [selectedColor, setSelectedColor] = useState('');
   const [selectedCities, setSelectedCities] = useState<string[]>([]);
   const [selectedEventType, setSelectedEventType] = useState('');
-  const [sortBy, setSortBy] = useState<SortOption>('newest');
+  const [sortBy, setSortBy] = useState<SortOption>('popular');
   const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [filtersSidebarCollapsed, setFiltersSidebarCollapsed] = useState(false);
@@ -681,7 +682,7 @@ export default function Home() {
     setSelectedSizes([]);
     setSelectedEventType('');
     setSelectedColor('');
-    setSortBy('newest');
+    setSortBy('popular');
     setMaxPrice(2000);
   };
 
@@ -757,7 +758,7 @@ export default function Home() {
         <div className="flex items-center justify-between gap-2 mb-3">
           <p className="text-[11px] sm:text-xs text-[#9a7b4f]">
             {isLoadingDresses ? 'טוענת...' : `${filteredDresses.length} שמלות`}
-            <span className="hidden sm:inline"> · הכי מושכרות קודם</span>
+            <span className="hidden sm:inline text-[#b8860b] font-bold"> · הכי מושכרות קודם</span>
           </p>
           <div className="flex items-center gap-2 shrink-0">
             <select
@@ -766,6 +767,7 @@ export default function Home() {
               className="text-[10px] sm:text-[11px] p-1.5 sm:px-2.5 sm:py-2 bg-white border border-[#decfa8] rounded-lg text-[#8b6508] font-bold max-w-[9rem] sm:max-w-none"
               aria-label="מיון שמלות"
             >
+              <option value="popular">מיון</option>
               <option value="newest">חדש ביותר</option>
               <option value="price-asc">מחיר ↑</option>
               <option value="price-desc">מחיר ↓</option>
@@ -944,6 +946,9 @@ export default function Home() {
                       {inCart ? '🛒' : '➕'}
                     </button>
                   </div>
+                  <div className="mt-2 sm:hidden">
+                    <RentalCountBadge dress={dress} compact />
+                  </div>
                   <div className="mt-2 sm:mt-3 hidden sm:block">
                     <DressCardSummary dress={dress} onShowDetails={() => setDetailsDress(dress)} />
                   </div>
@@ -951,9 +956,9 @@ export default function Home() {
                     <div>
                       <span className="text-[8px] sm:text-[9px] text-[#b8860b] font-black">מחיר השכרה</span>
                       <p className="text-neutral-900 font-black text-base sm:text-xl">₪{dress.price}</p>
-                      {dress.rental_count > 0 && (
-                        <p className="text-[9px] sm:text-[10px] text-[#9a7b4f] mt-0.5">{dress.rental_count} השכרות</p>
-                      )}
+                      <div className="mt-1.5 hidden sm:block">
+                        <RentalCountBadge dress={dress} compact />
+                      </div>
                     </div>
                     <div className="grid grid-cols-1 gap-1.5 sm:gap-2">
                       <button

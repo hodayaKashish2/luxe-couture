@@ -38,7 +38,7 @@ export type Review = {
   stars: number;
 };
 
-export type SortOption = 'newest' | 'price-asc' | 'price-desc';
+export type SortOption = 'popular' | 'newest' | 'price-asc' | 'price-desc';
 
 export const EVENT_TYPES = [
   'חתונה',

@@ -27,7 +27,7 @@ export function getTopRentalRanks(dresses: Dress[]): Map<string, number> {
   return ranks;
 }
 
-/** מיון קטלוג — מחיר קודם כשממיינים לפי מחיר, אחרת הכי מושכרות / חדש */
+/** מיון קטלוג — popular=הכי מושכרות (ברירת מחדל), אחרת לפי בחירת המשתמש */
 export function compareDresses(a: Dress, b: Dress, sortBy: string) {
   if (sortBy === 'price-asc') {
     const priceDiff = a.price - b.price;
@@ -51,7 +51,10 @@ export function compareDresses(a: Dress, b: Dress, sortBy: string) {
 
   const rentalDiff = (b.rental_count || 0) - (a.rental_count || 0);
   if (rentalDiff !== 0) return rentalDiff;
-  return 0;
+
+  const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
+  const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
+  return bTime - aTime;
 }
 
 export function toggleFilterValue(list: string[], value: string) {
