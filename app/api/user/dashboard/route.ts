@@ -106,6 +106,7 @@ export async function GET(request: Request) {
 
       myReservations = allBookings
         .filter((b) => {
+          if (b.status === 'cancelled') return false;
           if (b.site_user_id) {
             return user.userId ? String(b.site_user_id) === String(user.userId) : false;
           }

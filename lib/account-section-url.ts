@@ -5,7 +5,8 @@ export type AccountSection =
   | 'cart'
   | 'favorites'
   | 'add'
-  | 'edit';
+  | 'edit'
+  | 'profile';
 
 const ACCOUNT_SECTIONS = new Set([
   'cart',
@@ -14,6 +15,7 @@ const ACCOUNT_SECTIONS = new Set([
   'rentals',
   'add',
   'edit',
+  'profile',
 ]);
 
 export type AccountSectionUrlOptions = {

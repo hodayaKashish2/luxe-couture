@@ -900,6 +900,9 @@ export default function Home() {
                     <div>
                       <span className="text-[9px] text-[#b8860b] font-black">מחיר השכרה</span>
                       <p className="text-neutral-900 font-black text-xl">₪{dress.price}</p>
+                      {dress.rental_count > 0 && (
+                        <p className="text-[10px] text-[#9a7b4f] mt-0.5">{dress.rental_count} השכרות</p>
+                      )}
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       <button

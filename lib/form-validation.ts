@@ -41,6 +41,24 @@ export function validateAddDressForm(form: AddDressFormFields, imageCount: numbe
   return null;
 }
 
+export function validateUpdateProfileForm(form: {
+  display_name: string;
+  phone: string;
+  email: string;
+}): string | null {
+  const displayName = form.display_name.trim();
+  const phone = form.phone.trim();
+  const email = form.email.trim();
+
+  if (!displayName) return 'יש להזין שם מלא';
+  if (!phone) return 'יש להזין מספר טלפון';
+  if (!email) return 'יש להזין כתובת אימייל';
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return 'כתובת האימייל לא תקינה';
+  }
+  return null;
+}
+
 export function validateLoginForm(username: string, password: string): string | null {
   if (!username.trim()) return 'יש להזין שם משתמש';
   if (!password) return 'יש להזין סיסמה';

@@ -12,8 +12,8 @@ import DressCalendar from '@/components/DressCalendar';
 import OwnerPlatformNotice from '@/components/OwnerPlatformNotice';
 import FormError from '@/components/FormError';
 import { DRESS_SIZES } from '@/lib/constants';
-import { validateAddDressForm, validateDressImageFiles } from '@/lib/form-validation';
-import { BOOKING_UPDATED_EVENT } from '@/lib/booking-events';
+import { validateAddDressForm, validateDressImageFiles, validateUpdateProfileForm } from '@/lib/form-validation';
+import { BOOKING_UPDATED_EVENT, notifyBookingUpdated } from '@/lib/booking-events';
 import { getStoredSiteUser } from '@/lib/session-user';
 import { clearAllLuxeStorage } from '@/lib/luxe-storage';
 import { notifySiteAuthChange } from '@/lib/site-auth-events';
@@ -22,7 +22,14 @@ import { fetchDressById, findDressInList, preloadDressesCatalog } from '@/lib/dr
 import type { Dress } from '@/lib/types';
 import type { SavedDress } from '@/lib/luxe-storage';
 
-type Section = 'hub' | 'reservations' | 'rentals' | 'cart' | 'favorites' | 'add' | 'edit';
+type Section = 'hub' | 'reservations' | 'rentals' | 'cart' | 'favorites' | 'add' | 'edit' | 'profile';
+
+type AccountUser = {
+  displayName: string;
+  username: string;
+  phone?: string;
+  email?: string;
+};
 
 type RentalDress = {
   id: string;
@@ -52,6 +59,7 @@ const STATUS: Record<string, string> = {
   removed: 'הוסרה',
   confirmed: 'הזמנה מאושרת ✓',
   pending_payment: 'ממתין לתשלום',
+  cancelled: 'בוטלה',
 };
 
 function getDressRentalSummary(bookings: BookingRow[]) {
@@ -80,12 +88,14 @@ function AccountPageContent() {
   const { cart, favorites, cartCount, favCount, removeFromCart, removeFromFavorites, toggleCart, toggleFavorite, isDressInCart, isDressFavorite } = useLuxeStorage();
   const [section, setSection] = useState<Section>('hub');
   const [detailsDress, setDetailsDress] = useState<Dress | null>(null);
-  const [user, setUser] = useState<{ displayName: string; username: string } | null>(() => {
+  const [user, setUser] = useState<AccountUser | null>(() => {
     const stored = getStoredSiteUser();
     if (!stored) return null;
     return {
       displayName: stored.displayName || stored.display_name || '',
       username: stored.username || '',
+      phone: stored.phone || '',
+      email: stored.email || '',
     };
   });
   const [dresses, setDresses] = useState<RentalDress[]>([]);
@@ -111,6 +121,15 @@ function AccountPageContent() {
   const [editNewFiles, setEditNewFiles] = useState<File[]>([]);
   const [editNewPreviews, setEditNewPreviews] = useState<string[]>([]);
   const [addFormError, setAddFormError] = useState('');
+  const [profileForm, setProfileForm] = useState({
+    display_name: '',
+    phone: '',
+    email: '',
+    username: '',
+  });
+  const [profileError, setProfileError] = useState('');
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [cancellingId, setCancellingId] = useState<number | null>(null);
 
   const navigateToSection = useCallback(
     (next: Section, opts?: { dressId?: string; viewDress?: string; replace?: boolean }) => {
@@ -169,7 +188,13 @@ function AccountPageContent() {
       setOwnerBookings(data.rentals?.bookings || []);
       setReservations(data.reservations || []);
       if (data.user) {
-        setUser({ displayName: data.user.displayName, username: data.user.username });
+        setUser({
+          displayName: data.user.displayName,
+          username: data.user.username,
+          phone: data.user.phone || '',
+          email: data.user.email || '',
+        });
+        sessionStorage.setItem('site_user', JSON.stringify(data.user));
       }
       setDataReady(true);
     }
@@ -179,6 +204,17 @@ function AccountPageContent() {
   useEffect(() => {
     preloadDressesCatalog();
   }, []);
+
+  useEffect(() => {
+    if (section === 'profile' && user) {
+      setProfileForm({
+        display_name: user.displayName || '',
+        phone: user.phone || '',
+        email: user.email || '',
+        username: user.username || '',
+      });
+    }
+  }, [section, user]);
 
   useEffect(() => {
     if (section === 'add') {
@@ -256,6 +292,79 @@ function AccountPageContent() {
       setDetailsDress(null);
     }
   }, [searchParams, dresses]);
+
+  async function cancelReservation(bookingId: number) {
+    if (!confirm('לבטל את ההזמנה? התאריך ישוחרר לשוכרות אחרות.')) return;
+
+    const token = sessionStorage.getItem('site_token');
+    setCancellingId(bookingId);
+    const res = await fetch(`/api/user/bookings/${bookingId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-user-token': token || '',
+      },
+      body: JSON.stringify({ action: 'cancel' }),
+    });
+    const data = await res.json();
+    setCancellingId(null);
+
+    if (res.ok) {
+      notifyBookingUpdated();
+      load({ silent: true });
+    } else {
+      alert(data.error || 'לא הצלחנו לבטל את ההזמנה');
+    }
+  }
+
+  async function submitProfile(e: React.FormEvent) {
+    e.preventDefault();
+    setProfileError('');
+
+    const validationError = validateUpdateProfileForm({
+      display_name: profileForm.display_name,
+      phone: profileForm.phone,
+      email: profileForm.email,
+    });
+    if (validationError) {
+      setProfileError(validationError);
+      return;
+    }
+
+    const token = sessionStorage.getItem('site_token');
+    setProfileSaving(true);
+    const res = await fetch('/api/user/profile', {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-user-token': token || '',
+      },
+      body: JSON.stringify({
+        display_name: profileForm.display_name,
+        phone: profileForm.phone,
+        email: profileForm.email,
+      }),
+    });
+    const data = await res.json();
+    setProfileSaving(false);
+
+    if (res.ok) {
+      if (data.token) sessionStorage.setItem('site_token', data.token);
+      if (data.user) {
+        sessionStorage.setItem('site_user', JSON.stringify(data.user));
+        setUser({
+          displayName: data.user.displayName,
+          username: data.user.username,
+          phone: data.user.phone || '',
+          email: data.user.email || '',
+        });
+        notifySiteAuthChange();
+      }
+      alert(data.message || 'פרטי החשבון עודכנו');
+    } else {
+      setProfileError(data.error || 'שגיאה בעדכון');
+    }
+  }
 
   async function logout() {
     await fetch('/api/auth/logout', { method: 'POST' });
@@ -481,6 +590,7 @@ function AccountPageContent() {
                 { id: 'cart' as Section, icon: '🛍️', label: 'סל קניות', count: cartCount },
                 { id: 'favorites' as Section, icon: '❤️', label: 'מועדפים', count: favCount },
                 { id: 'add' as Section, icon: '➕', label: 'הוספת שמלה', count: null },
+                { id: 'profile' as Section, icon: '👤', label: 'פרטי חשבון', count: null },
               ].map((item) => (
                 <button
                   key={item.id}
@@ -549,6 +659,16 @@ function AccountPageContent() {
                         <span className="text-[10px] bg-[#f4ebd4] px-2 py-0.5 rounded-full">{STATUS[r.status] || r.status}</span>
                       </div>
                       <p className="text-sm text-[#8b6508] font-bold mt-1">📅 {r.event_date}</p>
+                      {(r.status === 'confirmed' || r.status === 'pending_payment') && (
+                        <button
+                          type="button"
+                          onClick={() => cancelReservation(r.id)}
+                          disabled={cancellingId === r.id}
+                          className="mt-3 text-[10px] font-bold text-red-600 hover:underline disabled:opacity-50"
+                        >
+                          {cancellingId === r.id ? 'מבטלת...' : '✕ ביטול הזמנה'}
+                        </button>
+                      )}
                     </li>
                   ))}
                 </ul>
@@ -621,6 +741,11 @@ function AccountPageContent() {
                           </div>
                         </div>
                         <p className="text-xs text-[#6e634c] mt-1">₪{dress.price} · מידה {dress.size} · {dress.city}</p>
+                        {dress.rental_count > 0 && (
+                          <p className="text-[10px] text-[#9a7b4f] mt-0.5">
+                            {dress.rental_count} השכרות עד כה
+                          </p>
+                        )}
                         <div className="flex flex-wrap gap-2 mt-2">
                           <span className="inline-block text-[10px] bg-[#f4ebd4] px-2 py-0.5 rounded-full">{STATUS[dress.status]}</span>
                           <span className="inline-block text-[10px] font-bold bg-[#fffdf8] border border-[#decfa8] px-2 py-0.5 rounded-full text-[#8b6508]">
@@ -793,6 +918,58 @@ function AccountPageContent() {
 
             <button type="submit" className="w-full py-3 bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white rounded-xl text-xs font-black shadow-md">
               שמרי שינויים
+            </button>
+          </form>
+        )}
+
+        {section === 'profile' && (
+          <form onSubmit={submitProfile} className="bg-white rounded-2xl border border-[#eadaaf] p-4 sm:p-6 space-y-4">
+            <h2 className="font-black text-xl">👤 פרטי חשבון</h2>
+            <p className="text-xs text-[#6e634c]">עדכני שם, טלפון ואימייל — הפרטים ישמשו להזמנות ולשמלות שפרסמת.</p>
+            {profileError && <FormError message={profileError} />}
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-bold text-[#8b6508] mb-1">שם משתמש</label>
+                <input
+                  readOnly
+                  value={profileForm.username}
+                  className="w-full p-2.5 border border-[#decfa8] rounded-xl text-xs text-[#6e634c] bg-[#faf8f3]"
+                  dir="ltr"
+                />
+                <p className="text-[10px] text-[#9a7b4f] mt-1">לא ניתן לשנות שם משתמש</p>
+              </div>
+              <input
+                required
+                placeholder="שם מלא *"
+                value={profileForm.display_name}
+                onChange={(e) => setProfileForm({ ...profileForm, display_name: e.target.value })}
+                className="w-full p-2.5 border border-[#decfa8] rounded-xl text-xs text-[#2c261a] bg-white"
+              />
+              <input
+                required
+                type="tel"
+                placeholder="טלפון *"
+                value={profileForm.phone}
+                onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
+                className="w-full p-2.5 border border-[#decfa8] rounded-xl text-xs text-[#2c261a] bg-white"
+                dir="ltr"
+              />
+              <input
+                required
+                type="email"
+                placeholder="אימייל *"
+                value={profileForm.email}
+                onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })}
+                className="w-full p-2.5 border border-[#decfa8] rounded-xl text-xs text-[#2c261a] bg-white"
+                dir="ltr"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={profileSaving}
+              className="w-full py-3 bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white rounded-xl text-xs font-black shadow-md disabled:opacity-60"
+            >
+              {profileSaving ? 'שומרת...' : 'שמרי פרטים'}
             </button>
           </form>
         )}

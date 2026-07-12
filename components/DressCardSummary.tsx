@@ -13,6 +13,11 @@ export default function DressCardSummary({ dress, onShowDetails }: Props) {
         <span className="bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white px-2.5 py-0.5 rounded-full font-black">
           מידה {dress.size}
         </span>
+        {dress.rental_count > 0 && (
+          <span className="bg-[#fffdf8] border border-[#decfa8] text-[#8b6508] px-2.5 py-0.5 rounded-full font-bold">
+            {dress.rental_count} השכרות
+          </span>
+        )}
         {dress.city && (
           <span className="bg-[#f4ebd4] text-[#8b6508] px-2.5 py-0.5 rounded-full font-bold">
             📍 {dress.city}

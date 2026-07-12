@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { useAuthModal } from '@/components/AuthModalProvider';
+import { isAuthDismissed } from '@/lib/auth-dismiss';
 
 const PROTECTED_PREFIXES = ['/account'];
 
@@ -27,6 +28,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     }
 
     if (promptedRef.current === pathname) return;
+    if (isAuthDismissed()) return;
     promptedRef.current = pathname;
 
     const next =
@@ -34,7 +36,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         ? `${window.location.pathname}${window.location.search}`
         : pathname;
 
-    openAuthModal({ reason: 'account', next });
+    openAuthModal({ reason: 'account', next, skipUrl: true });
   }, [pathname, openAuthModal]);
 
   return <>{children}</>;

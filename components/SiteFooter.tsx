@@ -2,7 +2,10 @@ import Link from 'next/link';
 import { CONTACT_EMAIL, CONTACT_PHONE, SITE_NAME, WHATSAPP_LINK } from '@/lib/site-config';
 
 const footerLinkClass =
-  'text-[#8b6508] font-bold underline-offset-2 hover:text-[#b8860b] hover:underline transition-colors';
+  'font-[family-name:var(--font-luxury)] text-[#b8860b] text-sm font-medium underline underline-offset-4 decoration-[#d4af37]/70 hover:text-[#8b6508] hover:decoration-[#d4af37] transition-colors';
+
+const footerContactLinkClass =
+  'font-[family-name:var(--font-luxury)] text-[#b8860b] text-sm underline underline-offset-4 decoration-[#d4af37]/50 hover:text-[#8b6508] transition-colors';
 
 export default function SiteFooter() {
   return (
@@ -17,7 +20,7 @@ export default function SiteFooter() {
 
         <div>
           <h4 className="font-bold text-[#8b6508] mb-3 text-xs">קישורים</h4>
-          <ul className="space-y-2 text-xs">
+          <ul className="space-y-2.5 text-xs">
             <li>
               <Link href="/how-it-works" className={footerLinkClass}>
                 איך זה עובד
@@ -44,7 +47,7 @@ export default function SiteFooter() {
         <div>
           <h4 className="font-bold text-[#8b6508] mb-3 text-xs">יצירת קשר</h4>
           <p className="text-xs mb-2">
-            <a href={`mailto:${CONTACT_EMAIL}`} className={footerLinkClass}>
+            <a href={`mailto:${CONTACT_EMAIL}`} className={footerContactLinkClass}>
               {CONTACT_EMAIL}
             </a>
           </p>
@@ -53,7 +56,7 @@ export default function SiteFooter() {
               href={WHATSAPP_LINK}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[#25D366] font-bold hover:underline"
+              className="font-[family-name:var(--font-luxury)] text-[#25D366] text-sm font-medium underline underline-offset-4 hover:text-[#1da851] transition-colors"
             >
               WhatsApp: {CONTACT_PHONE}
             </a>
