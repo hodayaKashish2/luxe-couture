@@ -554,54 +554,81 @@ function AccountPageContent() {
         </div>
 
         {section === 'hub' && (
-          <div className="flex flex-nowrap gap-2 overflow-x-auto pb-1 -mx-1 px-1">
-            {[
-              {
-                kind: 'section' as const,
-                id: 'reservations' as Section,
-                icon: '📅',
-                label: 'הזמנות',
-                detail: !dataReady
-                  ? 'טוען...'
-                  : `${reservations.length} הזמנות${pendingReservations > 0 ? ` · ${pendingReservations} ממתינות` : ''}`,
-              },
-              {
-                kind: 'section' as const,
-                id: 'rentals' as Section,
-                icon: '👗',
-                label: 'שמלות שלי',
-                detail: !dataReady
-                  ? 'טוען...'
-                  : `${dresses.length} שמלות${dressesWithBookings > 0 ? ` · ${dressesWithBookings} מושכרות` : ''}`,
-              },
-              { kind: 'section' as const, id: 'cart' as Section, icon: '🛍️', label: 'סל קניות', detail: String(cartCount) },
-              { kind: 'section' as const, id: 'favorites' as Section, icon: '❤️', label: 'מועדפים', detail: String(favCount) },
-              { kind: 'section' as const, id: 'add' as Section, icon: '➕', label: 'הוספת שמלה', detail: '' },
-              { kind: 'section' as const, id: 'profile' as Section, icon: '👤', label: 'פרטי חשבון', detail: '' },
-              { kind: 'link' as const, href: '/', icon: '🏠', label: 'לקטלוג', detail: '' },
-            ].map((item) =>
-              item.kind === 'link' ? (
-                <Link
-                  key={item.label}
-                  href={item.href}
-                  className="shrink-0 min-w-[5.5rem] sm:min-w-[6.5rem] p-3 rounded-xl border border-[#eadaaf] bg-gradient-to-b from-[#fffdf8] to-[#f4ebd4] hover:shadow text-center"
-                >
-                  <span className="text-xl block">{item.icon}</span>
-                  <p className="text-[10px] sm:text-[11px] font-bold mt-1 text-[#8b6508] leading-tight">{item.label}</p>
-                </Link>
-              ) : (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4">
+              <button
+                type="button"
+                onClick={() => navigateToSection('reservations')}
+                className="text-right p-4 sm:p-6 rounded-2xl border-2 border-[#decfa8] bg-white hover:border-[#d4af37] hover:shadow-lg transition-all group"
+              >
+                <span className="text-2xl sm:text-3xl">📅</span>
+                <h2 className="font-black text-base sm:text-lg mt-2 sm:mt-3 text-[#3d2f24] group-hover:text-[#b8860b]">ההזמנות שלי</h2>
+                <p className="text-[10px] sm:text-xs text-[#6e634c] mt-1 leading-relaxed hidden sm:block">
+                  שמלות שהזמנת — לוח שנה ופרטי האירועים שלך
+                </p>
+                <p className="text-[10px] text-[#b8860b] font-bold mt-2 sm:mt-3">
+                  {!dataReady ? (
+                    <span className="text-[#9a7b4f] animate-pulse">טוען...</span>
+                  ) : (
+                    <>
+                      {reservations.length} הזמנות
+                      {pendingReservations > 0 && ` · ${pendingReservations} ממתינות`}
+                    </>
+                  )}
+                </p>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => navigateToSection('rentals')}
+                className="text-right p-4 sm:p-6 rounded-2xl border-2 border-[#decfa8] bg-white hover:border-[#d4af37] hover:shadow-lg transition-all group"
+              >
+                <span className="text-2xl sm:text-3xl">👗</span>
+                <h2 className="font-black text-base sm:text-lg mt-2 sm:mt-3 text-[#3d2f24] group-hover:text-[#b8860b]">השמלות שלי</h2>
+                <p className="text-[10px] sm:text-xs text-[#6e634c] mt-1 leading-relaxed hidden sm:block">
+                  השמלות שפרסמת — רואות מה מושכר, מי השכירה ומתי
+                </p>
+                <p className="text-[10px] text-[#b8860b] font-bold mt-2 sm:mt-3">
+                  {!dataReady ? (
+                    <span className="text-[#9a7b4f] animate-pulse">טוען...</span>
+                  ) : (
+                    <>
+                      {dresses.length} שמלות
+                      {dressesWithBookings > 0 && ` · ${dressesWithBookings} עם הזמנות`}
+                    </>
+                  )}
+                </p>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-5 gap-2 sm:gap-3">
+              {[
+                { id: 'cart' as Section, icon: '🛍️', label: 'סל קניות', count: cartCount },
+                { id: 'favorites' as Section, icon: '❤️', label: 'מועדפים', count: favCount },
+                { id: 'add' as Section, icon: '➕', label: 'הוספת שמלה', count: null },
+                { id: 'profile' as Section, icon: '👤', label: 'פרטי חשבון', count: null },
+              ].map((item) => (
                 <button
                   key={item.id}
                   type="button"
                   onClick={() => navigateToSection(item.id)}
-                  className="shrink-0 min-w-[5.5rem] sm:min-w-[6.5rem] p-3 rounded-xl border border-[#eadaaf] bg-white/90 hover:bg-[#fffdf8] hover:border-[#d4af37] text-center transition-colors"
+                  className="p-2.5 sm:p-4 rounded-xl border border-[#eadaaf] bg-white/90 hover:bg-[#fffdf8] hover:border-[#d4af37] text-center transition-colors"
                 >
-                  <span className="text-xl block">{item.icon}</span>
-                  <p className="text-[10px] sm:text-[11px] font-bold mt-1 text-[#8b6508] leading-tight">{item.label}</p>
-                  {item.detail && <p className="text-[9px] text-[#9a7b4f] mt-0.5 truncate">{item.detail}</p>}
+                  <span className="text-lg sm:text-xl block">{item.icon}</span>
+                  <p className="text-[9px] sm:text-[11px] font-bold mt-1 text-[#8b6508] leading-tight">{item.label}</p>
+                  {item.count !== null && (
+                    <p className="text-[9px] text-[#9a7b4f]">{item.count}</p>
+                  )}
                 </button>
-              )
-            )}
+              ))}
+              <Link
+                href="/"
+                className="p-2.5 sm:p-4 rounded-xl border border-[#eadaaf] bg-gradient-to-b from-[#fffdf8] to-[#f4ebd4] hover:shadow text-center flex flex-col items-center justify-center"
+              >
+                <span className="text-lg sm:text-xl">🏠</span>
+                <p className="text-[9px] sm:text-[11px] font-bold mt-1 text-[#8b6508] leading-tight">לקטלוג</p>
+              </Link>
+            </div>
           </div>
         )}
 
