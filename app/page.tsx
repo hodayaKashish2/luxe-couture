@@ -23,6 +23,7 @@ import { isLoggedIn } from '@/lib/require-login';
 import { useModalHistory } from '@/hooks/use-modal-history';
 import { useScrollToError } from '@/hooks/use-scroll-to-error';
 import { compareDresses, getTopRentalRanks, toggleFilterValue } from '@/lib/dress-sort';
+import { OFF_PLATFORM_COORDINATE_NOTICE } from '@/lib/commission';
 import { fetchDressById, findDressInList } from '@/lib/dress-api';
 import { dressShareUrl, ownerWhatsAppLink, WHATSAPP_LINK } from '@/lib/site-config';
 import { Dress, Review, SortOption, EVENT_TYPES, PICKUP_METHODS } from '@/lib/types';
@@ -92,6 +93,7 @@ export default function Home() {
   const [coordinateDress, setCoordinateDress] = useState<Dress | null>(null);
   const [coordinateDate, setCoordinateDate] = useState('');
   const [coordinateChecked, setCoordinateChecked] = useState(false);
+  const [coordinateDisclaimerAccepted, setCoordinateDisclaimerAccepted] = useState(false);
   const [detailsDress, setDetailsDress] = useState<Dress | null>(null);
 
   // אינדקס גלריה לכל כרטיס
@@ -274,6 +276,7 @@ export default function Home() {
     setCoordinateDress(null);
     setCoordinateDate('');
     setCoordinateChecked(false);
+    setCoordinateDisclaimerAccepted(false);
   }, []);
 
   const { close: closeAddDressModal } = useModalHistory({
@@ -702,6 +705,7 @@ export default function Home() {
     setCoordinateDress(dress);
     setCoordinateDate('');
     setCoordinateChecked(false);
+    setCoordinateDisclaimerAccepted(false);
   };
 
   return (
@@ -1714,6 +1718,7 @@ export default function Home() {
               onChange={(e) => {
                 setCoordinateDate(e.target.value);
                 setCoordinateChecked(false);
+                setCoordinateDisclaimerAccepted(false);
               }}
               className="w-full p-3 border border-[#decfa8] rounded-xl text-xs mb-3"
             />
@@ -1721,7 +1726,10 @@ export default function Home() {
             <button
               type="button"
               disabled={!coordinateDate}
-              onClick={() => setCoordinateChecked(true)}
+              onClick={() => {
+                setCoordinateChecked(true);
+                setCoordinateDisclaimerAccepted(false);
+              }}
               className="w-full py-2.5 bg-[#2c261a] text-white text-xs font-bold rounded-xl disabled:opacity-50 mb-4"
             >
               בדקי זמינות
@@ -1733,7 +1741,21 @@ export default function Home() {
               </div>
             )}
 
-            {coordinateChecked && coordinateDate && coordinateAvailable && (
+            {coordinateChecked && coordinateDate && coordinateAvailable && !coordinateDisclaimerAccepted && (
+              <div className="bg-gradient-to-l from-[#fffdf9] to-[#f4ebd4] border border-[#e6c687] rounded-xl p-4 space-y-3">
+                <p className="text-xs font-black text-[#8b6508]">{OFF_PLATFORM_COORDINATE_NOTICE.title}</p>
+                <p className="text-xs text-[#5c5037] leading-relaxed">{OFF_PLATFORM_COORDINATE_NOTICE.body}</p>
+                <button
+                  type="button"
+                  onClick={() => setCoordinateDisclaimerAccepted(true)}
+                  className="w-full py-2.5 bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white text-xs font-black rounded-xl"
+                >
+                  {OFF_PLATFORM_COORDINATE_NOTICE.cta}
+                </button>
+              </div>
+            )}
+
+            {coordinateChecked && coordinateDate && coordinateAvailable && coordinateDisclaimerAccepted && (
               <div className="bg-[#f4ebd4] border border-[#decfa8] rounded-xl p-4 space-y-2">
                 <p className="text-xs font-black text-[#3d2f24]">✓ השמלה פנויה! פרטי המשכירה:</p>
                 <p className="text-sm font-bold">{coordinateDress.owner_name || 'משכירה'}</p>

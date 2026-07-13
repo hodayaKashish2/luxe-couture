@@ -149,16 +149,18 @@ function AccountPageContent() {
   const goToAccountHub = useCallback(() => {
     setDetailsDress(null);
     pendingViewDressRef.current = null;
-    navigateToSection('hub', { replace: true });
-  }, [navigateToSection]);
+    setSection('hub');
+    router.replace('/account', { scroll: false });
+  }, [router]);
 
   const closeDetailsDress = useCallback(() => {
     setDetailsDress(null);
     pendingViewDressRef.current = null;
+    const { section: currentSection } = parseAccountSection(searchParams);
     if (searchParams.get('viewDress')) {
-      router.back();
+      navigateToSection(currentSection, { replace: true });
     }
-  }, [searchParams, router]);
+  }, [searchParams, navigateToSection]);
 
   const openSavedDressDetails = useCallback(async (item: SavedDress) => {
     pendingViewDressRef.current = item.id;
@@ -171,7 +173,7 @@ function AccountPageContent() {
       return;
     }
     setDetailsDress(dress);
-    navigateToSection(section, { viewDress: item.id });
+    navigateToSection(section, { viewDress: item.id, replace: true });
   }, [section, navigateToSection]);
 
   const load = useCallback(async (opts?: { silent?: boolean }) => {
@@ -552,88 +554,65 @@ function AccountPageContent() {
         </div>
 
         {section === 'hub' && (
-          <div className="space-y-6">
-            <div className="grid sm:grid-cols-2 gap-4">
-              <button
-                onClick={() => navigateToSection('reservations')}
-                className="text-right p-6 rounded-2xl border-2 border-[#decfa8] bg-white hover:border-[#d4af37] hover:shadow-lg transition-all group"
-              >
-                <span className="text-3xl">📅</span>
-                <h2 className="font-black text-lg mt-3 text-[#3d2f24] group-hover:text-[#b8860b]">ההזמנות שלי</h2>
-                <p className="text-xs text-[#6e634c] mt-1 leading-relaxed">
-                  שמלות שהזמנת — לוח שנה ופרטי האירועים שלך
-                </p>
-                <p className="text-[10px] text-[#b8860b] font-bold mt-3">
-                  {!dataReady ? (
-                    <span className="text-[#9a7b4f] animate-pulse">טוען...</span>
-                  ) : (
-                    <>
-                      {reservations.length} הזמנות
-                      {pendingReservations > 0 && ` · ${pendingReservations} ממתינות`}
-                    </>
-                  )}
-                </p>
-              </button>
-
-              <button
-                onClick={() => navigateToSection('rentals')}
-                className="text-right p-6 rounded-2xl border-2 border-[#decfa8] bg-white hover:border-[#d4af37] hover:shadow-lg transition-all group"
-              >
-                <span className="text-3xl">👗</span>
-                <h2 className="font-black text-lg mt-3 text-[#3d2f24] group-hover:text-[#b8860b]">השמלות שלי</h2>
-                <p className="text-xs text-[#6e634c] mt-1 leading-relaxed">
-                  השמלות שפרסמת — רואות מה מושכר, מי השכירה ומתי
-                </p>
-                <p className="text-[10px] text-[#b8860b] font-bold mt-3">
-                  {!dataReady ? (
-                    <span className="text-[#9a7b4f] animate-pulse">טוען...</span>
-                  ) : (
-                    <>
-                      {dresses.length} שמלות
-                      {dressesWithBookings > 0 && ` · ${dressesWithBookings} עם הזמנות`}
-                    </>
-                  )}
-                </p>
-              </button>
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {[
-                { id: 'cart' as Section, icon: '🛍️', label: 'סל קניות', count: cartCount },
-                { id: 'favorites' as Section, icon: '❤️', label: 'מועדפים', count: favCount },
-                { id: 'add' as Section, icon: '➕', label: 'הוספת שמלה', count: null },
-                { id: 'profile' as Section, icon: '👤', label: 'פרטי חשבון', count: null },
-              ].map((item) => (
+          <div className="flex flex-nowrap gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+            {[
+              {
+                kind: 'section' as const,
+                id: 'reservations' as Section,
+                icon: '📅',
+                label: 'הזמנות',
+                detail: !dataReady
+                  ? 'טוען...'
+                  : `${reservations.length} הזמנות${pendingReservations > 0 ? ` · ${pendingReservations} ממתינות` : ''}`,
+              },
+              {
+                kind: 'section' as const,
+                id: 'rentals' as Section,
+                icon: '👗',
+                label: 'שמלות שלי',
+                detail: !dataReady
+                  ? 'טוען...'
+                  : `${dresses.length} שמלות${dressesWithBookings > 0 ? ` · ${dressesWithBookings} מושכרות` : ''}`,
+              },
+              { kind: 'section' as const, id: 'cart' as Section, icon: '🛍️', label: 'סל קניות', detail: String(cartCount) },
+              { kind: 'section' as const, id: 'favorites' as Section, icon: '❤️', label: 'מועדפים', detail: String(favCount) },
+              { kind: 'section' as const, id: 'add' as Section, icon: '➕', label: 'הוספת שמלה', detail: '' },
+              { kind: 'section' as const, id: 'profile' as Section, icon: '👤', label: 'פרטי חשבון', detail: '' },
+              { kind: 'link' as const, href: '/', icon: '🏠', label: 'לקטלוג', detail: '' },
+            ].map((item) =>
+              item.kind === 'link' ? (
+                <Link
+                  key={item.label}
+                  href={item.href}
+                  className="shrink-0 min-w-[5.5rem] sm:min-w-[6.5rem] p-3 rounded-xl border border-[#eadaaf] bg-gradient-to-b from-[#fffdf8] to-[#f4ebd4] hover:shadow text-center"
+                >
+                  <span className="text-xl block">{item.icon}</span>
+                  <p className="text-[10px] sm:text-[11px] font-bold mt-1 text-[#8b6508] leading-tight">{item.label}</p>
+                </Link>
+              ) : (
                 <button
                   key={item.id}
+                  type="button"
                   onClick={() => navigateToSection(item.id)}
-                  className="p-4 rounded-xl border border-[#eadaaf] bg-white/90 hover:bg-[#fffdf8] text-center"
+                  className="shrink-0 min-w-[5.5rem] sm:min-w-[6.5rem] p-3 rounded-xl border border-[#eadaaf] bg-white/90 hover:bg-[#fffdf8] hover:border-[#d4af37] text-center transition-colors"
                 >
-                  <span className="text-xl">{item.icon}</span>
-                  <p className="text-[11px] font-bold mt-1 text-[#8b6508]">{item.label}</p>
-                  {item.count !== null && (
-                    <p className="text-[10px] text-[#9a7b4f]">{item.count}</p>
-                  )}
+                  <span className="text-xl block">{item.icon}</span>
+                  <p className="text-[10px] sm:text-[11px] font-bold mt-1 text-[#8b6508] leading-tight">{item.label}</p>
+                  {item.detail && <p className="text-[9px] text-[#9a7b4f] mt-0.5 truncate">{item.detail}</p>}
                 </button>
-              ))}
-              <Link
-                href="/"
-                className="p-4 rounded-xl border border-[#eadaaf] bg-gradient-to-b from-[#fffdf8] to-[#f4ebd4] hover:shadow text-center flex flex-col items-center justify-center"
-              >
-                <span className="text-xl">🏠</span>
-                <p className="text-[11px] font-bold mt-1 text-[#8b6508]">לקטלוג</p>
-              </Link>
-            </div>
+              )
+            )}
           </div>
         )}
 
         {section !== 'hub' && (
           <button
+            type="button"
             onClick={() => {
               if (section === 'edit') {
                 setEditingDress(null);
                 navigateToSection('rentals', { replace: true });
-              } else if (viewDressId) {
+              } else if (detailsDress || viewDressId) {
                 closeDetailsDress();
               } else {
                 goToAccountHub();
@@ -641,7 +620,7 @@ function AccountPageContent() {
             }}
             className="mb-4 text-xs text-[#8b6508] font-bold hover:underline"
           >
-            ← {section === 'edit' ? 'חזרה לשמלות שלי' : viewDressId ? 'חזרה לרשימה' : 'חזרה לאזור האישי'}
+            ← {section === 'edit' ? 'חזרה לשמלות שלי' : detailsDress || viewDressId ? 'חזרה לרשימה' : 'חזרה לאזור האישי'}
           </button>
         )}
 
