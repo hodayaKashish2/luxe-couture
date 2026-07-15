@@ -1,3 +1,0 @@
-Add manual payment approval flow and admin payment emails.
-
-Bit and bank transfers notify dressbclick@gmail.com for admin approval before the customer receives confirmation; credit card payments still auto-confirm via Tranzila.
