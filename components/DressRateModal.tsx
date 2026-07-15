@@ -4,15 +4,19 @@ import { useState } from 'react';
 import FormError from '@/components/FormError';
 import type { Dress } from '@/lib/types';
 
+type Props = {
+  dress: Dress;
+  onClose: () => void;
+  onRated: (dressId: string, ratingAvg: number, ratingCount: number) => void;
+  showBackToDetails?: boolean;
+};
+
 export default function DressRateModal({
   dress,
   onClose,
   onRated,
-}: {
-  dress: Dress;
-  onClose: () => void;
-  onRated: (dressId: string, ratingAvg: number, ratingCount: number) => void;
-}) {
+  showBackToDetails = false,
+}: Props) {
   const [name, setName] = useState('');
   const [stars, setStars] = useState(5);
   const [text, setText] = useState('');
@@ -62,6 +66,15 @@ export default function DressRateModal({
         </button>
         <h3 className="text-lg font-black text-neutral-950 mb-1">דרגי את השמלה</h3>
         <p className="text-xs text-[#6e634c] mb-4">{dress.name}</p>
+        {showBackToDetails && (
+          <button
+            type="button"
+            onClick={onClose}
+            className="mb-3 text-[11px] font-bold text-[#8b6508] hover:underline cursor-pointer"
+          >
+            ← חזרה לפרטים מלאים
+          </button>
+        )}
 
         {success ? (
           <div className="bg-gradient-to-l from-[#fffdf9] to-[#f4ebd4] border border-[#e6c687] rounded-xl p-5 text-center space-y-2">

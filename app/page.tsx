@@ -577,9 +577,12 @@ export default function Home() {
   };
 
   const handleDressRated = (dressId: string, ratingAvg: number, ratingCount: number) => {
+    const patch = { rating_avg: ratingAvg, rating_count: ratingCount };
     setDressesList((prev) =>
-      prev.map((d) => (d.id === dressId ? { ...d, rating_avg: ratingAvg, rating_count: ratingCount } : d))
+      prev.map((d) => (d.id === dressId ? { ...d, ...patch } : d))
     );
+    setDetailsDress((prev) => (prev?.id === dressId ? { ...prev, ...patch } : prev));
+    setRateDress((prev) => (prev?.id === dressId ? { ...prev, ...patch } : prev));
   };
 
   const setDressImageIndex = (dressId: string, index: number) => {
@@ -1713,10 +1716,7 @@ export default function Home() {
             openCoordinate(detailsDress);
             setDetailsDress(null);
           }}
-          onRate={() => {
-            setRateDress(detailsDress);
-            setDetailsDress(null);
-          }}
+          onRate={() => setRateDress(detailsDress)}
           onShare={() => {
             void shareDress(detailsDress);
           }}
@@ -1728,6 +1728,7 @@ export default function Home() {
           dress={rateDress}
           onClose={closeRateModal}
           onRated={handleDressRated}
+          showBackToDetails={!!detailsDress}
         />
       )}
 
