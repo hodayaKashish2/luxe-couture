@@ -243,8 +243,8 @@ function AccountPageContent() {
 
   useEffect(() => {
     if (!searchParams.get('rentalDress')) return;
-    router.replace(accountSectionUrl(section), { scroll: false });
-  }, [searchParams, router, section]);
+    router.replace(accountSectionUrl('hub'), { scroll: false });
+  }, [searchParams, router]);
 
   useEffect(() => {
     if (section === 'edit' && dressId) {
@@ -625,7 +625,7 @@ function AccountPageContent() {
               if (section === 'edit') {
                 setEditingDress(null);
                 navigateToSection('rentals', { replace: true });
-              } else if (section === 'rentals') {
+              } else if (section === 'rentals' || section === 'reservations') {
                 goToAccountHub();
               } else if (detailsDress || viewDressId) {
                 closeDetailsDress();

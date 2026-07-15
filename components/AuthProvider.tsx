@@ -31,10 +31,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     if (isAuthDismissed()) return;
     promptedRef.current = pathname;
 
-    const next =
-      typeof window !== 'undefined'
-        ? `${window.location.pathname}${window.location.search}`
-        : pathname;
+    const next = pathname.startsWith('/account') ? '/account' : `${pathname}${window.location.search}`;
 
     openAuthModal({ reason: 'account', next, skipUrl: true });
   }, [pathname, openAuthModal]);

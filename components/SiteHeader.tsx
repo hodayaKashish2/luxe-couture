@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useLuxeStorage } from '@/components/LuxeStorageProvider';
 import { useAuthModal } from '@/components/AuthModalProvider';
@@ -31,13 +31,16 @@ function NavLink({
   onClick,
   variant = 'tab',
   guestOnClick,
+  forceHub,
 }: {
   link: (typeof links)[number];
   active: boolean;
   onClick?: () => void;
   variant?: 'tab' | 'menu';
   guestOnClick?: () => void;
+  forceHub?: boolean;
 }) {
+  const router = useRouter();
   const classNameMenu = `flex items-center gap-3 px-4 py-3.5 min-h-[3rem] rounded-xl text-sm font-bold transition-colors ${
     active
       ? 'bg-[#fffdf8] text-[#8b6508] border-2 border-[#d4af37]'
@@ -48,6 +51,26 @@ function NavLink({
       ? 'bg-white text-[#8b6508] border-[#d4af37] shadow-[0_-4px_16px_rgba(212,175,55,0.18)] z-10 -mb-px'
       : 'bg-transparent text-[#7a6f58] border-transparent hover:bg-white/90 hover:text-[#b8860b] hover:border-[#decfa8] hover:shadow-[0_-2px_10px_rgba(212,175,55,0.12)] hover:-translate-y-0.5'
   }`;
+
+  if (forceHub) {
+    const cls = variant === 'menu' ? classNameMenu : classNameTab;
+    return (
+      <Link
+        href="/account"
+        onClick={(e) => {
+          e.preventDefault();
+          router.replace('/account', { scroll: false });
+          onClick?.();
+        }}
+        className={cls}
+      >
+        <span aria-hidden className={`text-sm ${variant === 'tab' ? 'transition-transform duration-200 group-hover:scale-125' : 'text-lg'}`}>
+          {link.icon}
+        </span>
+        {link.label}
+      </Link>
+    );
+  }
 
   if (guestOnClick) {
     const cls = variant === 'menu' ? classNameMenu : classNameTab;
@@ -256,6 +279,7 @@ export default function SiteHeader() {
                     onClick={closeMobileMenu}
                     variant="menu"
                     guestOnClick={!loggedIn && link.href === '/account' ? openAccountAuth : undefined}
+                    forceHub={loggedIn && link.href === '/account'}
                   />
                 ))}
               </div>
@@ -299,6 +323,7 @@ export default function SiteHeader() {
               active={isActive(pathname, link.href)}
               variant="tab"
               guestOnClick={!loggedIn && link.href === '/account' ? openAccountAuth : undefined}
+              forceHub={loggedIn && link.href === '/account'}
             />
           ))}
         </nav>
