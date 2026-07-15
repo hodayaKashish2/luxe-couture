@@ -112,8 +112,6 @@ type Props = {
   dresses: OwnerRentalDress[];
   ownerBookings: OwnerBookingRow[];
   loading: boolean;
-  selectedDressId: string | null;
-  onSelectDress: (dressId: string | null) => void;
   onAddDress: () => void;
   onEditDress: (dress: OwnerRentalDress) => void;
 };
@@ -122,8 +120,6 @@ export default function OwnerDressesPanel({
   dresses,
   ownerBookings,
   loading,
-  selectedDressId,
-  onSelectDress,
   onAddDress,
   onEditDress,
 }: Props) {
@@ -131,8 +127,8 @@ export default function OwnerDressesPanel({
   const [filter, setFilter] = useState<DressFilter>('all');
   const [sort, setSort] = useState<DressSort>('recent');
   const [showUpcoming, setShowUpcoming] = useState(true);
+  const [selectedDressId, setSelectedDressId] = useState<string | null>(null);
   const rowRefs = useRef<Record<string, HTMLButtonElement | null>>({});
-  const autoSelectedRef = useRef(false);
 
   const dressesWithBookings = useMemo(
     () =>
@@ -221,15 +217,14 @@ export default function OwnerDressesPanel({
   }
 
   function handleSelectDress(dressId: string) {
-    onSelectDress(dressId);
+    setSelectedDressId(dressId);
   }
 
   useEffect(() => {
-    if (autoSelectedRef.current || selectedDressId || dresses.length === 0) return;
-    autoSelectedRef.current = true;
+    if (selectedDressId || dresses.length === 0) return;
     const defaultId = pickDefaultDressId(dresses, ownerBookings);
-    if (defaultId) onSelectDress(defaultId);
-  }, [selectedDressId, dresses, ownerBookings, onSelectDress]);
+    if (defaultId) setSelectedDressId(defaultId);
+  }, [selectedDressId, dresses, ownerBookings]);
 
   useEffect(() => {
     if (!selectedDressId) return;
@@ -307,7 +302,7 @@ export default function OwnerDressesPanel({
                 <li key={b.id}>
                   <button
                     type="button"
-                    onClick={() => onSelectDress(String(b.dress_id))}
+                    onClick={() => handleSelectDress(String(b.dress_id))}
                     className="w-full text-right px-4 py-2.5 hover:bg-[#fffdf8] transition-colors flex justify-between gap-2 items-center"
                   >
                     <div className="min-w-0">

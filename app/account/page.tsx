@@ -121,23 +121,15 @@ function AccountPageContent() {
   const [toast, setToast] = useState<{ message: string; variant: SiteToastVariant } | null>(null);
 
   const navigateToSection = useCallback(
-    (next: Section, opts?: { dressId?: string; viewDress?: string; rentalDress?: string; replace?: boolean }) => {
+    (next: Section, opts?: { dressId?: string; viewDress?: string; replace?: boolean }) => {
       const url = accountSectionUrl(next, {
         dressId: opts?.dressId,
         viewDress: opts?.viewDress,
-        rentalDress: opts?.rentalDress,
       });
       if (opts?.replace) router.replace(url, { scroll: false });
       else router.push(url, { scroll: false });
     },
     [router]
-  );
-
-  const selectRentalDress = useCallback(
-    (dressId: string | null) => {
-      navigateToSection('rentals', { rentalDress: dressId || undefined, replace: true });
-    },
-    [navigateToSection]
   );
 
   const goToAccountHub = useCallback(() => {
@@ -526,7 +518,6 @@ function AccountPageContent() {
 
   const pendingReservations = reservations.filter((r) => r.status === 'pending_payment').length;
   const viewDressId = searchParams.get('viewDress');
-  const rentalDressId = searchParams.get('rentalDress');
   const dressesWithBookings = dresses.filter((d) =>
     ownerBookings.some((b) => String(b.dress_id) === String(d.id))
   ).length;
@@ -634,8 +625,8 @@ function AccountPageContent() {
               if (section === 'edit') {
                 setEditingDress(null);
                 navigateToSection('rentals', { replace: true });
-              } else if (section === 'rentals' && rentalDressId) {
-                navigateToSection('rentals', { replace: true });
+              } else if (section === 'rentals') {
+                goToAccountHub();
               } else if (detailsDress || viewDressId) {
                 closeDetailsDress();
               } else {
@@ -644,7 +635,7 @@ function AccountPageContent() {
             }}
             className="mb-4 text-xs text-[#8b6508] font-bold hover:underline"
           >
-            ← {section === 'edit' ? 'חזרה לשמלות שלי' : section === 'rentals' && rentalDressId ? 'חזרה לרשימת שמלות' : detailsDress || viewDressId ? 'חזרה לרשימה' : 'חזרה לאזור האישי'}
+            ← {section === 'edit' ? 'חזרה לשמלות שלי' : detailsDress || viewDressId ? 'חזרה לרשימה' : 'חזרה לאזור האישי'}
           </button>
         )}
 
@@ -729,8 +720,6 @@ function AccountPageContent() {
             dresses={dresses}
             ownerBookings={ownerBookings}
             loading={loading}
-            selectedDressId={rentalDressId}
-            onSelectDress={selectRentalDress}
             onAddDress={() => navigateToSection('add')}
             onEditDress={startEditDress}
           />
