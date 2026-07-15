@@ -11,6 +11,9 @@ function isSchemaError(message: string) {
   return (
     message.includes('bookings') ||
     message.includes('pending_payment') ||
+    message.includes('awaiting_admin_approval') ||
+    message.includes('payment_method') ||
+    message.includes('payment_reported_at') ||
     message.includes('amount_total') ||
     message.includes('schema cache')
   );

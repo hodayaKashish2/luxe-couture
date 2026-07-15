@@ -12,23 +12,39 @@ export const BANK_TRANSFER_DETAILS = {
 
 export type PaymentMethod = 'bit' | 'credit' | 'bank';
 
-export function buildBitAppLink(amount?: number): string {
+function bitIntlPhone() {
+  const digits = BIT_PHONE.replace(/\D/g, '');
+  return digits.startsWith('0') ? `972${digits.slice(1)}` : digits;
+}
+
+export function buildBitTransferLinks(amount: number) {
   const phone = BIT_PHONE.replace(/\D/g, '');
-  const amountQuery = amount != null ? `&amount=${Math.round(amount)}` : '';
-  return `bit://transfer?phoneNumber=${phone}${amountQuery}`;
+  const intl = bitIntlPhone();
+  const amountStr = Math.round(amount).toString();
+
+  return {
+    ios: `bit://transfer/phone/${phone}?amount=${amountStr}`,
+    androidIntent: `intent://transfer/phone/${phone}?amount=${amountStr}#Intent;scheme=bit;package=com.bnhp.payments.paymentsapp;S.phoneNumber=${phone};S.amount=${amountStr};end`,
+    fallback: `bit://pay?phoneNumber=${phone}&amount=${amountStr}&recipientPhone=${intl}`,
+  };
 }
 
 export function openBitPayment(amount: number): void {
   if (typeof window === 'undefined') return;
 
-  const phone = BIT_PHONE.replace(/\D/g, '');
-  const amountStr = Math.round(amount).toString();
+  const links = buildBitTransferLinks(amount);
   const isAndroid = /Android/i.test(navigator.userAgent);
+  const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
   if (isAndroid) {
-    window.location.href = `intent://transfer#Intent;scheme=bit;package=com.bnhp.payments.paymentsapp;S.phoneNumber=${phone};S.amount=${amountStr};end`;
+    window.location.href = links.androidIntent;
     return;
   }
 
-  window.location.href = buildBitAppLink(amount);
+  if (isIOS) {
+    window.location.href = links.ios;
+    return;
+  }
+
+  window.location.href = links.fallback;
 }

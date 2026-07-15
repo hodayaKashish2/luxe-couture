@@ -137,6 +137,7 @@ export default function Home() {
   const [isConfirmingPayment, setIsConfirmingPayment] = useState(false);
   const [isSubmittingBooking, setIsSubmittingBooking] = useState(false);
   const [bookingError, setBookingError] = useState('');
+  const [orderOutcome, setOrderOutcome] = useState<'confirmed' | 'awaiting_approval' | null>(null);
 
   useEffect(() => {
     if (!selectedDress) return;
@@ -483,9 +484,11 @@ export default function Home() {
     );
     setIsOrdered(true);
     setPaymentStep(null);
+    setOrderOutcome('confirmed');
     notifyBookingUpdated();
     setTimeout(() => {
       setIsOrdered(false);
+      setOrderOutcome(null);
       setSelectedDress(null);
       setOrderName('');
       setOrderPhone('');
@@ -572,6 +575,22 @@ export default function Home() {
         body: JSON.stringify({ bookingId: paymentStep.bookingId, paymentMethod }),
       });
       const data = await response.json();
+      if (data.success && data.awaitingAdminApproval) {
+        setPaymentStep(null);
+        setOrderOutcome('awaiting_approval');
+        setIsOrdered(true);
+        notifyBookingUpdated();
+        setTimeout(() => {
+          setIsOrdered(false);
+          setOrderOutcome(null);
+          setSelectedDress(null);
+          setOrderName('');
+          setOrderPhone('');
+          setOrderEmail('');
+          setOrderDate('');
+        }, 6000);
+        return;
+      }
       if (data.success) {
         finishSuccessfulBooking();
       } else {
@@ -1563,10 +1582,22 @@ export default function Home() {
             <div className="w-full md:w-1/2 p-6 flex flex-col justify-between overflow-y-auto bg-gradient-to-b from-[#fffdf9] to-[#faf6eb]">
               {isOrdered ? (
                 <div className="text-center my-auto py-10">
-                  <span className="text-3xl block mb-2">✨ ✨ ✨</span>
-                  <h3 className="text-xl font-black text-neutral-900">ההזמנה והתשלום אושרו!</h3>
+                  <span className="text-3xl block mb-2">{orderOutcome === 'awaiting_approval' ? '📨' : '✨ ✨ ✨'}</span>
+                  <h3 className="text-xl font-black text-neutral-900">
+                    {orderOutcome === 'awaiting_approval'
+                      ? 'דיווח התשלום נשלח!'
+                      : 'ההזמנה והתשלום אושרו!'}
+                  </h3>
                   <p className="mt-2 text-[#5c5037] text-xs font-medium leading-relaxed">
-                    אישור נשלח ל-<strong>{orderEmail}</strong>. ניצור קשר בהקדם לתיאום עם המשכירה.
+                    {orderOutcome === 'awaiting_approval' ? (
+                      <>
+                        קיבלנו את דיווח התשלום. נאשר ברגע שנקבל את הכסף ותישלח הודעה ל-<strong>{orderEmail}</strong>.
+                      </>
+                    ) : (
+                      <>
+                        אישור נשלח ל-<strong>{orderEmail}</strong>. ניצור קשר בהקדם לתיאום עם המשכירה.
+                      </>
+                    )}
                   </p>
                 </div>
               ) : paymentStep ? (

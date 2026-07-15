@@ -67,6 +67,7 @@ const STATUS: Record<string, string> = {
   removed: 'הוסרה',
   confirmed: 'הזמנה מאושרת ✓',
   pending_payment: 'ממתין לתשלום',
+  awaiting_admin_approval: 'ממתין לאישור תשלום',
   cancelled: 'בוטלה',
 };
 function AccountPageContent() {

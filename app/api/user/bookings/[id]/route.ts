@@ -3,7 +3,7 @@ import { getUserFromRequest } from '@/lib/user-auth';
 import { userOwnsBooking } from '@/lib/booking-ownership';
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server';
 
-const CANCELLABLE_STATUSES = new Set(['pending_payment', 'confirmed']);
+const CANCELLABLE_STATUSES = new Set(['pending_payment', 'awaiting_admin_approval', 'confirmed']);
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const user = getUserFromRequest(request);

@@ -107,15 +107,16 @@ export default function BookingPaymentStep({
         <div className="bg-[#f4ebd4]/60 border border-[#decfa8] rounded-xl p-3 text-xs text-[#5c5037] space-y-1">
           <p className="font-bold text-neutral-900">תשלום בביט</p>
           <p>
-            אם אפליקציית ביט לא נפתחה, העבירי ל-<strong dir="ltr">{BIT_PHONE_DISPLAY}</strong> את סכום{' '}
+            האפליקציה אמורה להיפתח על עמוד ההעברה ל-<strong dir="ltr">{BIT_PHONE_DISPLAY}</strong> בסכום{' '}
             <strong>₪{amount}</strong>.
           </p>
+          <p className="text-[10px] text-[#9a7b4f]">אחרי ההעברה לחצי אישור תשלום — נאשר ברגע שנקבל את הכסף.</p>
           <button
             type="button"
             onClick={() => openBitPayment(amount)}
             className="mt-1 text-[#8b6508] font-bold underline"
           >
-            נסי שוב לפתוח את ביט
+            פתיחה מחדש של ביט להעברה
           </button>
         </div>
       )}
@@ -125,7 +126,7 @@ export default function BookingPaymentStep({
           <p className="font-bold text-neutral-900">תשלום מאובטח באשראי</p>
           {paymentUrl ? (
             <>
-              <p>דף התשלום המאובטח נפתח בחלון חדש. אחרי סיום התשלום חזרי לכאן ולחצי אישור תשלום.</p>
+              <p>דף התשלום המאובטח נפתח בחלון חדש. אחרי סיום התשלום תישלח אלייך הודעת אישור אוטומטית במייל.</p>
               <a
                 href={paymentUrl}
                 target="_blank"
@@ -138,7 +139,7 @@ export default function BookingPaymentStep({
           ) : (
             <p className="bg-amber-50 border border-amber-200 rounded-lg p-2 text-amber-800">
               {mockMode
-                ? 'מצב בדיקה — סליקת אשראי לא מוגדרת. ניתן לאשר תשלום ידנית לאחר בדיקה.'
+                ? 'מצב בדיקה — סליקת אשראי לא מוגדרת.'
                 : 'דף התשלום לא זמין כרגע. צרי קשר או בחרי אמצעי תשלום אחר.'}
             </p>
           )}
@@ -169,18 +170,29 @@ export default function BookingPaymentStep({
               <span className="font-bold text-neutral-800">סכום להעברה: </span>₪{amount}
             </p>
           </div>
-          <p className="text-[10px] text-[#9a7b4f] pt-1">אחרי ביצוע ההעברה, לחצי אישור תשלום למטה.</p>
+          <p className="text-[10px] text-[#9a7b4f] pt-1">אחרי ביצוע ההעברה, לחצי אישור תשלום — נאשר ברגע שנקבל את הכסף.</p>
         </div>
       )}
 
-      {method && (
+      {method && method !== 'credit' && (
         <button
           type="button"
           onClick={() => onConfirmPayment(method)}
           disabled={isConfirming}
           className="w-full py-3.5 bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white text-xs font-black rounded-xl shadow-lg disabled:opacity-60"
         >
-          {isConfirming ? 'מאשרת...' : `✓ אישור תשלום (${METHOD_LABELS[method]})`}
+          {isConfirming ? 'שולחת...' : `✓ אישור תשלום (${METHOD_LABELS[method]})`}
+        </button>
+      )}
+
+      {method === 'credit' && mockMode && !paymentUrl && (
+        <button
+          type="button"
+          onClick={() => onConfirmPayment('credit')}
+          disabled={isConfirming}
+          className="w-full py-3.5 bg-[#2c261a] text-white text-xs font-black rounded-xl disabled:opacity-60"
+        >
+          {isConfirming ? 'שולחת...' : '✓ אישור תשלום (בדיקה)'}
         </button>
       )}
 

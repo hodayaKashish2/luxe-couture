@@ -73,5 +73,13 @@ alter table public.bookings drop constraint if exists bookings_status_check;
 alter table public.bookings add constraint bookings_status_check
   check (status in ('pending_payment', 'confirmed', 'cancelled', 'failed'));
 
+-- === upgrade-v4: אישור תשלום ידני (ביט / העברה בנקאית) ===
+alter table public.bookings add column if not exists payment_method text;
+alter table public.bookings add column if not exists payment_reported_at timestamptz;
+
+alter table public.bookings drop constraint if exists bookings_status_check;
+alter table public.bookings add constraint bookings_status_check
+  check (status in ('pending_payment', 'awaiting_admin_approval', 'confirmed', 'cancelled', 'failed'));
+
 -- ניקוי יבש כלול במחיר
 alter table public.dresses add column if not exists includes_dry_cleaning boolean not null default false;
