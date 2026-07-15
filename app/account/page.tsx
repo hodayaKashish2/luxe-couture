@@ -581,7 +581,7 @@ function AccountPageContent() {
                 <span className="text-2xl sm:text-3xl">👗</span>
                 <h2 className="font-black text-base sm:text-lg mt-2 sm:mt-3 text-[#3d2f24] group-hover:text-[#b8860b]">השמלות שלי</h2>
                 <p className="text-[10px] sm:text-xs text-[#6e634c] mt-1 leading-relaxed hidden sm:block">
-                  השמלות שפרסמת — רשימה מסודרת עם חיפוש, סינון ולוח שנה לשמלה שנבחרה
+                  השמלות שפרסמת — רשימה מסודרת לניהול שמלות
                 </p>
                 <p className="text-[10px] text-[#b8860b] font-bold mt-2 sm:mt-3">
                   {!dataReady ? (

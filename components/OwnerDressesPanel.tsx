@@ -39,7 +39,8 @@ const BOOKING_STATUS: Record<string, string> = {
 type DressFilter = 'all' | 'available' | 'booked' | 'pending';
 type DressSort = 'recent' | 'name' | 'bookings' | 'rentals';
 
-const PAGE_SIZE = 15;
+const LIST_SCROLL_CLASS =
+  'max-h-56 sm:max-h-72 lg:max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain space-y-2 pr-0.5';
 
 function getDressBookings(dressId: string, bookings: OwnerBookingRow[]) {
   return bookings.filter((b) => String(b.dress_id) === String(dressId));
@@ -78,6 +79,35 @@ function formatHebrewDate(date: string) {
   }
 }
 
+function pickDefaultDressId(dresses: OwnerRentalDress[], ownerBookings: OwnerBookingRow[]): string | null {
+  if (dresses.length === 0) return null;
+
+  const today = new Date().toISOString().slice(0, 10);
+  const upcoming = [...ownerBookings]
+    .filter(
+      (b) =>
+        b.event_date >= today &&
+        (b.status === 'confirmed' || b.status === 'pending_payment')
+    )
+    .sort((a, b) => a.event_date.localeCompare(b.event_date))[0];
+
+  if (upcoming) {
+    const dressId = String(upcoming.dress_id);
+    if (dresses.some((d) => d.id === dressId)) return dressId;
+  }
+
+  return dresses[0].id;
+}
+
+function nearestBookingDate(bookings: OwnerBookingRow[]) {
+  const today = new Date().toISOString().slice(0, 10);
+  const sorted = [...bookings]
+    .filter((b) => b.status === 'confirmed' || b.status === 'pending_payment')
+    .sort((a, b) => a.event_date.localeCompare(b.event_date));
+  const next = sorted.find((b) => b.event_date >= today);
+  return (next || sorted[0])?.event_date;
+}
+
 type Props = {
   dresses: OwnerRentalDress[];
   ownerBookings: OwnerBookingRow[];
@@ -100,8 +130,9 @@ export default function OwnerDressesPanel({
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<DressFilter>('all');
   const [sort, setSort] = useState<DressSort>('recent');
-  const [page, setPage] = useState(1);
   const [showUpcoming, setShowUpcoming] = useState(true);
+  const rowRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const autoSelectedRef = useRef(false);
 
   const dressesWithBookings = useMemo(
     () =>
@@ -153,13 +184,14 @@ export default function OwnerDressesPanel({
     return list;
   }, [dresses, ownerBookings, search, filter, sort]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredDresses.length / PAGE_SIZE));
-  const safePage = Math.min(page, totalPages);
-
-  const paginatedDresses = useMemo(() => {
-    const start = (safePage - 1) * PAGE_SIZE;
-    return filteredDresses.slice(start, start + PAGE_SIZE);
-  }, [filteredDresses, safePage]);
+  const displayDresses = useMemo(() => {
+    if (!selectedDressId || filteredDresses.some((d) => d.id === selectedDressId)) {
+      return filteredDresses;
+    }
+    const selected = dresses.find((d) => d.id === selectedDressId);
+    if (!selected) return filteredDresses;
+    return [selected, ...filteredDresses];
+  }, [filteredDresses, selectedDressId, dresses]);
 
   const selectedDress = selectedDressId
     ? dresses.find((d) => d.id === selectedDressId) ?? null
@@ -171,6 +203,7 @@ export default function OwnerDressesPanel({
   const selectedConfirmedDates = selectedBookings
     .filter((b) => b.status === 'confirmed')
     .map((b) => b.event_date);
+  const calendarFocusDate = nearestBookingDate(selectedBookings);
 
   const filterChips: { id: DressFilter; label: string }[] = [
     { id: 'all', label: 'הכל' },
@@ -181,24 +214,30 @@ export default function OwnerDressesPanel({
 
   function handleSearchChange(value: string) {
     setSearch(value);
-    setPage(1);
   }
 
   function handleFilterChange(next: DressFilter) {
     setFilter(next);
-    setPage(1);
   }
 
   function handleSelectDress(dressId: string) {
     onSelectDress(dressId);
   }
 
-  const autoSelectedRef = useRef(false);
   useEffect(() => {
-    if (autoSelectedRef.current || selectedDressId || filteredDresses.length === 0) return;
+    if (autoSelectedRef.current || selectedDressId || dresses.length === 0) return;
     autoSelectedRef.current = true;
-    onSelectDress(filteredDresses[0].id);
-  }, [selectedDressId, filteredDresses, onSelectDress]);
+    const defaultId = pickDefaultDressId(dresses, ownerBookings);
+    if (defaultId) onSelectDress(defaultId);
+  }, [selectedDressId, dresses, ownerBookings, onSelectDress]);
+
+  useEffect(() => {
+    if (!selectedDressId) return;
+    const row = rowRefs.current[selectedDressId];
+    if (row) {
+      row.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+  }, [selectedDressId, displayDresses]);
 
   if (loading) {
     return <p className="text-sm text-[#6e634c] animate-pulse">טוען שמלות...</p>;
@@ -225,7 +264,7 @@ export default function OwnerDressesPanel({
         <div>
           <h2 className="font-black text-xl">👗 השמלות שלי</h2>
           <p className="text-xs text-[#6e634c] mt-1 leading-relaxed max-w-lg">
-            רשימה מסודרת לניהול הרבה שמלות — בחרי שמלה לראות לוח שנה והזמנות.
+            רשימה מסודרת לניהול שמלות — בחרי שמלה לראות לוח שנה והזמנות.
           </p>
         </div>
         <button
@@ -328,103 +367,76 @@ export default function OwnerDressesPanel({
         </div>
 
         <p className="text-[10px] text-[#9a7b4f]">
-          {filteredDresses.length} שמלות
-          {search || filter !== 'all' ? ' (מסוננות)' : ''}
-          {filteredDresses.length > PAGE_SIZE && ` · עמוד ${safePage} מתוך ${totalPages}`}
+          {filteredDresses.length} שמלות{search || filter !== 'all' ? ' (מסוננות)' : ''}
         </p>
       </div>
 
       <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:gap-4 lg:items-start">
-        <div className={`space-y-2 min-w-0 ${selectedDress ? 'max-lg:hidden' : ''}`}>
-          {paginatedDresses.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-[#eadaaf] p-6 text-center text-sm text-[#6e634c]">
-              אין שמלות שתואמות את החיפוש
-            </div>
-          ) : (
-            paginatedDresses.map((dress) => {
-              const dressBookings = getDressBookings(dress.id, ownerBookings);
-              const summary = getDressRentalSummary(dressBookings);
-              const isSelected = selectedDressId === dress.id;
-              return (
-                <button
-                  key={dress.id}
-                  type="button"
-                  onClick={() => handleSelectDress(dress.id)}
-                  aria-pressed={isSelected}
-                  className={`w-full text-right bg-white rounded-xl border p-3 flex gap-3 items-center transition-all cursor-pointer hover:shadow-md hover:border-[#d4af37] active:scale-[0.99] ${
-                    isSelected
-                      ? 'border-[#d4af37] ring-2 ring-[#d4af37]/30 bg-[#fffdf8] shadow-sm'
-                      : 'border-[#eadaaf] hover:bg-[#fffdf8]'
-                  }`}
-                >
-                  {dress.images?.[0] ? (
-                    <img
-                      src={dress.images[0]}
-                      alt=""
-                      className="w-12 h-14 object-contain rounded-lg border border-[#f0e2c3] bg-[#faf8f3] shrink-0"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div className="w-12 h-14 rounded-lg border border-dashed border-[#decfa8] bg-[#faf8f3] flex items-center justify-center text-lg shrink-0">
-                      👗
+        <div className="min-w-0 bg-white rounded-2xl border border-[#eadaaf] p-2 sm:p-3">
+          <p className="text-[10px] font-black text-[#8b6508] mb-2 px-1">רשימת השמלות</p>
+          <div className={LIST_SCROLL_CLASS}>
+            {displayDresses.length === 0 ? (
+              <div className="p-4 text-center text-sm text-[#6e634c]">
+                אין שמלות שתואמות את החיפוש
+              </div>
+            ) : (
+              displayDresses.map((dress) => {
+                const dressBookings = getDressBookings(dress.id, ownerBookings);
+                const summary = getDressRentalSummary(dressBookings);
+                const isSelected = selectedDressId === dress.id;
+                return (
+                  <button
+                    key={dress.id}
+                    ref={(el) => {
+                      rowRefs.current[dress.id] = el;
+                    }}
+                    type="button"
+                    onClick={() => handleSelectDress(dress.id)}
+                    aria-pressed={isSelected}
+                    className={`w-full text-right bg-white rounded-xl border p-3 flex gap-3 items-center transition-all cursor-pointer hover:shadow-md hover:border-[#d4af37] active:scale-[0.99] ${
+                      isSelected
+                        ? 'border-[#d4af37] ring-2 ring-[#d4af37]/30 bg-[#fffdf8] shadow-sm'
+                        : 'border-[#eadaaf] hover:bg-[#fffdf8]'
+                    }`}
+                  >
+                    {dress.images?.[0] ? (
+                      <img
+                        src={dress.images[0]}
+                        alt=""
+                        className="w-12 h-14 object-contain rounded-lg border border-[#f0e2c3] bg-[#faf8f3] shrink-0"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="w-12 h-14 rounded-lg border border-dashed border-[#decfa8] bg-[#faf8f3] flex items-center justify-center text-lg shrink-0">
+                        👗
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-sm text-[#3d2f24] truncate">{dress.name}</p>
+                      <p className="text-[10px] text-[#6e634c] mt-0.5">
+                        ₪{dress.price} · {dress.size} · {dress.city}
+                      </p>
+                      <div className="flex flex-wrap gap-1.5 mt-1.5">
+                        <span className="text-[9px] bg-[#f4ebd4] px-1.5 py-0.5 rounded-full">
+                          {DRESS_STATUS[dress.status] || dress.status}
+                        </span>
+                        <span className="text-[9px] font-bold text-[#8b6508]">{summary.badge}</span>
+                        {summary.detail && (
+                          <span className="text-[9px] text-[#9a7b4f]">{summary.detail}</span>
+                        )}
+                      </div>
                     </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="font-bold text-sm text-[#3d2f24] truncate">{dress.name}</p>
-                    <p className="text-[10px] text-[#6e634c] mt-0.5">
-                      ₪{dress.price} · {dress.size} · {dress.city}
-                    </p>
-                    <div className="flex flex-wrap gap-1.5 mt-1.5">
-                      <span className="text-[9px] bg-[#f4ebd4] px-1.5 py-0.5 rounded-full">
-                        {DRESS_STATUS[dress.status] || dress.status}
-                      </span>
-                      <span className="text-[9px] font-bold text-[#8b6508]">{summary.badge}</span>
-                      {summary.detail && (
-                        <span className="text-[9px] text-[#9a7b4f]">{summary.detail}</span>
-                      )}
-                    </div>
-                  </div>
-                  <span className="text-[10px] font-bold text-[#b8860b] shrink-0">פרטים ›</span>
-                </button>
-              );
-            })
-          )}
-
-          {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-2 pt-2">
-              <button
-                type="button"
-                disabled={safePage <= 1}
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                className="px-3 py-1.5 text-[10px] font-bold border border-[#decfa8] rounded-lg disabled:opacity-40"
-              >
-                הקודם
-              </button>
-              <span className="text-[10px] text-[#6e634c]">
-                {safePage} / {totalPages}
-              </span>
-              <button
-                type="button"
-                disabled={safePage >= totalPages}
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                className="px-3 py-1.5 text-[10px] font-bold border border-[#decfa8] rounded-lg disabled:opacity-40"
-              >
-                הבא
-              </button>
-            </div>
-          )}
+                    <span className="text-[10px] font-bold text-[#b8860b] shrink-0">פרטים ›</span>
+                  </button>
+                );
+              })
+            )}
+          </div>
         </div>
 
         {selectedDress ? (
-          <div className="bg-white rounded-2xl border border-[#eadaaf] p-4 sm:p-5 space-y-4 lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100dvh-2rem)] lg:overflow-y-auto max-lg:block">
-            <div className="flex items-start justify-between gap-2">
-              <button
-                type="button"
-                onClick={() => onSelectDress(null)}
-                className="lg:hidden text-[10px] font-bold text-[#8b6508] hover:underline shrink-0"
-              >
-                ← חזרה לרשימה
-              </button>
+          <div className="bg-white rounded-2xl border border-[#eadaaf] p-4 sm:p-5 space-y-4 lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100dvh-2rem)] lg:overflow-y-auto mt-4 lg:mt-0">
+            <div className="flex items-start justify-end gap-2">
               <button
                 type="button"
                 onClick={() => onEditDress(selectedDress)}
@@ -464,7 +476,11 @@ export default function OwnerDressesPanel({
 
             <div>
               <h4 className="text-xs font-black text-[#8b6508] mb-2">לוח שנה — תאריכים תפוסים</h4>
-              <DressCalendar bookedDates={selectedConfirmedDates} compact />
+              <DressCalendar
+                bookedDates={selectedConfirmedDates}
+                focusDate={calendarFocusDate}
+                compact
+              />
             </div>
 
             <div>
@@ -512,17 +528,8 @@ export default function OwnerDressesPanel({
             </div>
           </div>
         ) : (
-          <div className="hidden lg:block bg-[#faf8f3] rounded-xl border border-dashed border-[#decfa8] p-4 text-center">
-            <p className="text-xs text-[#6e634c]">לחצי על שמלה ברשימה משמאל</p>
-            {paginatedDresses[0] && (
-              <button
-                type="button"
-                onClick={() => handleSelectDress(paginatedDresses[0].id)}
-                className="mt-2 text-[10px] font-bold px-3 py-1.5 rounded-lg border border-[#decfa8] bg-white text-[#8b6508] hover:border-[#d4af37] hover:bg-[#fffdf8] cursor-pointer transition-colors"
-              >
-                הצגי: {paginatedDresses[0].name}
-              </button>
-            )}
+          <div className="mt-4 lg:mt-0 bg-[#faf8f3] rounded-xl border border-dashed border-[#decfa8] p-4 text-center text-xs text-[#6e634c]">
+            טוען פרטי שמלה...
           </div>
         )}
       </div>

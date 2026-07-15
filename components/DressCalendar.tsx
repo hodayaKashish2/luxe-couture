@@ -1,10 +1,11 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 type Props = {
   bookedDates?: string[];
   compact?: boolean;
+  focusDate?: string;
 };
 
 const WEEKDAYS = ['א׳', 'ב׳', 'ג׳', 'ד׳', 'ה׳', 'ו׳', 'ש׳'];
@@ -26,10 +27,18 @@ function todayIsoLocal() {
   return toIsoLocal(now.getFullYear(), now.getMonth(), now.getDate());
 }
 
-export default function DressCalendar({ bookedDates = [], compact = false }: Props) {
+export default function DressCalendar({ bookedDates = [], compact = false, focusDate }: Props) {
   const now = new Date();
   const [viewYear, setViewYear] = useState(now.getFullYear());
   const [viewMonth, setViewMonth] = useState(now.getMonth());
+
+  useEffect(() => {
+    if (!focusDate) return;
+    const focused = new Date(`${focusDate}T00:00:00`);
+    if (Number.isNaN(focused.getTime())) return;
+    setViewYear(focused.getFullYear());
+    setViewMonth(focused.getMonth());
+  }, [focusDate]);
 
   const bookedSet = useMemo(() => new Set(bookedDates), [bookedDates]);
   const todayIso = todayIsoLocal();
