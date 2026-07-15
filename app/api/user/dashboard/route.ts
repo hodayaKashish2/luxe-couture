@@ -72,14 +72,14 @@ export async function GET(request: Request) {
     const withUserId = await supabase
       .from('bookings')
       .select('id, dress_id, customer_name, customer_phone, customer_email, event_date, status, created_at, site_user_id')
-      .in('status', ['confirmed', 'pending_payment'])
+      .eq('status', 'confirmed')
       .order('event_date', { ascending: true });
 
     if (withUserId.error?.message?.includes('site_user_id')) {
       const withoutUserId = await supabase
         .from('bookings')
         .select('id, dress_id, customer_name, customer_phone, customer_email, event_date, status, created_at')
-        .in('status', ['confirmed', 'pending_payment'])
+        .eq('status', 'confirmed')
         .order('event_date', { ascending: true });
       allBookings = (withoutUserId.data ?? []) as ReservationRow[];
       resError = withoutUserId.error;

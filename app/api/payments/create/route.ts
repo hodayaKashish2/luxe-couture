@@ -142,6 +142,14 @@ export async function PUT(request: Request) {
 
     const tranzilaIndex = body.tranzilaIndex ? String(body.tranzilaIndex) : null;
 
+    const paymentMethodLabels: Record<string, string> = {
+      bit: 'ביט',
+      credit: 'אשראי',
+      bank: 'העברה בנקאית',
+    };
+    const paymentMethod = body.paymentMethod ? String(body.paymentMethod) : null;
+    const paymentMethodLabel = paymentMethod ? paymentMethodLabels[paymentMethod] || paymentMethod : null;
+
 
 
     if (!bookingId) {
@@ -179,6 +187,40 @@ export async function PUT(request: Request) {
     if (booking.status === 'confirmed') {
 
       return NextResponse.json({ success: true });
+
+    }
+
+
+
+    const { data: conflictingBooking, error: conflictError } = await supabase
+
+      .from('bookings')
+
+      .select('id')
+
+      .eq('dress_id', booking.dress_id)
+
+      .eq('event_date', booking.event_date)
+
+      .eq('status', 'confirmed')
+
+      .neq('id', bookingId)
+
+      .maybeSingle();
+
+
+
+    if (conflictError) throw conflictError;
+
+    if (conflictingBooking) {
+
+      return NextResponse.json(
+
+        { error: 'השמלה כבר הוזמנה לתאריך זה. לא ניתן לאשר תשלום.' },
+
+        { status: 409 }
+
+      );
 
     }
 
@@ -249,6 +291,8 @@ export async function PUT(request: Request) {
           <p><strong>תאריך:</strong> ${booking.event_date}</p>
 
           <p><strong>סכום:</strong> ₪${booking.amount_total}</p>
+
+          ${paymentMethodLabel ? `<p><strong>אמצעי תשלום:</strong> ${paymentMethodLabel}</p>` : ''}
 
         </div>
 

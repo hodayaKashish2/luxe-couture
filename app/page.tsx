@@ -17,6 +17,8 @@ import { useLuxeStorage } from '@/components/LuxeStorageProvider';
 import { useAuthModal } from '@/components/AuthModalProvider';
 import SavedDressList from '@/components/SavedDressList';
 import DressSizeInput from '@/components/DressSizeInput';
+import BookingPaymentStep from '@/components/BookingPaymentStep';
+import type { PaymentMethod } from '@/lib/payment-methods';
 import { FAQS } from '@/lib/constants';
 import { validateAddDressForm, validateDressImageFiles } from '@/lib/form-validation';
 import { notifyBookingUpdated } from '@/lib/booking-events';
@@ -26,6 +28,7 @@ import { useModalHistory } from '@/hooks/use-modal-history';
 import { useScrollToError } from '@/hooks/use-scroll-to-error';
 import { compareDresses, getTopRentalRanks } from '@/lib/dress-sort';
 import { dressSizeMatchesFilter } from '@/lib/dress-size';
+import { isPastDate, todayDateString } from '@/lib/booking-dates';
 import { OFF_PLATFORM_COORDINATE_NOTICE } from '@/lib/commission';
 import { fetchDressById, findDressInList } from '@/lib/dress-api';
 import { dressPageUrl, ownerWhatsAppLink, WHATSAPP_LINK } from '@/lib/site-config';
@@ -34,14 +37,6 @@ import type { SavedDress } from '@/lib/luxe-storage';
 
 const DRESS_CARD_BTN =
   'cursor-pointer transition-all duration-200 hover:border-[#d4af37] hover:bg-[#fffdf8] hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98]';
-
-function isPastDate(date: string) {
-  if (!date) return false;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const selected = new Date(`${date}T00:00:00`);
-  return selected < today;
-}
 
 function formatHebrewDate(date: string) {
   try {
@@ -430,7 +425,17 @@ export default function Home() {
   };
 
   const checkDateAvailability = (date: string, dress: Dress) => {
+    if (isPastDate(date)) return false;
     return !dress.booked_dates?.includes(date);
+  };
+
+  const getDateValidationError = (date: string, dress: Dress | null) => {
+    if (!date) return '';
+    if (isPastDate(date)) return 'לא ניתן לבחור תאריך שכבר עבר.';
+    if (dress && dress.booked_dates?.includes(date)) {
+      return 'השמלה תפוסה בתאריך הזה. בחרי תאריך אחר.';
+    }
+    return '';
   };
 
   const showToast = useCallback((message: string, variant: SiteToastVariant = 'success') => {
@@ -460,11 +465,7 @@ export default function Home() {
 
   const handleDateChange = (date: string) => {
     setOrderDate(date);
-    if (selectedDress && !checkDateAvailability(date, selectedDress)) {
-      setDateError('השמלה תפוסה בתאריך הזה. בחרי תאריך אחר.');
-    } else {
-      setDateError('');
-    }
+    setDateError(getDateValidationError(date, selectedDress));
   };
 
   const finishSuccessfulBooking = () => {
@@ -500,8 +501,10 @@ export default function Home() {
       setBookingError('יש למלא את כל השדות כולל אימייל');
       return;
     }
-    if (!checkDateAvailability(orderDate, selectedDress)) {
-      setBookingError('השמלה תפוסה בתאריך הזה. בחרי תאריך אחר.');
+    const dateValidationError = getDateValidationError(orderDate, selectedDress);
+    if (dateValidationError) {
+      setDateError(dateValidationError);
+      setBookingError(dateValidationError);
       return;
     }
 
@@ -554,7 +557,7 @@ export default function Home() {
     }
   };
 
-  const handleConfirmMockPayment = async () => {
+  const handleConfirmPayment = async (paymentMethod: PaymentMethod) => {
     if (!paymentStep || !selectedDress) return;
     setIsConfirmingPayment(true);
     try {
@@ -566,7 +569,7 @@ export default function Home() {
       const response = await fetch('/api/payments/create', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ bookingId: paymentStep.bookingId }),
+        body: JSON.stringify({ bookingId: paymentStep.bookingId, paymentMethod }),
       });
       const data = await response.json();
       if (data.success) {
@@ -1567,50 +1570,14 @@ export default function Home() {
                   </p>
                 </div>
               ) : paymentStep ? (
-                <div className="flex flex-col gap-4 my-auto">
-                  <h3 className="text-lg font-black text-neutral-900">💳 תשלום מאובטח</h3>
-                  <p className="text-xs text-[#5c5037]">ההזמנה נשמרה. השלימי תשלום דרך Tranzila כדי לאשר.</p>
-                  <div className="bg-white border border-[#decfa8] rounded-xl p-4 text-xs">
-                    <div className="flex justify-between font-black text-neutral-900">
-                      <span>סה״כ לתשלום</span>
-                      <span>₪{paymentStep.amount}</span>
-                    </div>
-                  </div>
-                  {paymentStep.paymentUrl ? (
-                    <>
-                      <a
-                        href={paymentStep.paymentUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="w-full text-center py-3.5 bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white text-xs font-black rounded-xl shadow-lg"
-                      >
-                        עברי לתשלום ב-Tranzila →
-                      </a>
-                      <p className="text-[10px] text-center text-[#9a7b4f]">אחרי התשלום תוחזרי לאתר עם אישור</p>
-                    </>
-                  ) : (
-                    <>
-                      <p className="text-[10px] bg-amber-50 border border-amber-200 rounded-lg p-2 text-amber-800">
-                        מצב בדיקה — Tranzila לא מוגדר. לחצי לאישור תשלום מדומה.
-                      </p>
-                      <button
-                        type="button"
-                        onClick={handleConfirmMockPayment}
-                        disabled={isConfirmingPayment}
-                        className="w-full py-3.5 bg-[#2c261a] text-white text-xs font-black rounded-xl disabled:opacity-60"
-                      >
-                        {isConfirmingPayment ? 'מאשרת...' : '✓ אישור תשלום (בדיקה)'}
-                      </button>
-                    </>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => setPaymentStep(null)}
-                    className="text-xs text-[#8b6508] hover:underline"
-                  >
-                    ← חזרה לפרטים
-                  </button>
-                </div>
+                <BookingPaymentStep
+                  amount={paymentStep.amount}
+                  paymentUrl={paymentStep.paymentUrl}
+                  mockMode={paymentStep.mockMode}
+                  isConfirming={isConfirmingPayment}
+                  onConfirmPayment={handleConfirmPayment}
+                  onBack={() => setPaymentStep(null)}
+                />
               ) : (
                 <form onSubmit={handlePlaceOrder} className="flex flex-col gap-3">
                   <div>
@@ -1650,6 +1617,7 @@ export default function Home() {
                     <input 
                       type="date" 
                       required 
+                      min={todayDateString()}
                       value={orderDate} 
                       onChange={(e) => handleDateChange(e.target.value)} 
                       className="p-3 bg-white border border-[#decfa8] rounded-xl text-xs text-right font-medium focus:outline-none focus:border-[#d4af37]" 
@@ -1676,7 +1644,7 @@ export default function Home() {
                         : 'bg-gradient-to-r from-[#d4af37] via-[#b8860b] to-[#d4af37] hover:from-[#b8860b] hover:to-[#8b6508]'
                     }`}
                   >
-                    {isSubmittingBooking ? 'שומרת הזמנה...' : 'המשכי לתשלום מאובטח'}
+                    {isSubmittingBooking ? 'שומרת הזמנה...' : 'המשכי לבחירת אמצעי תשלום'}
                   </button>
                 </form>
               )}

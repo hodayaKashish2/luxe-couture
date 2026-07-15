@@ -88,6 +88,7 @@ function AccountPageContent() {
   const [dresses, setDresses] = useState<RentalDress[]>([]);
   const [ownerBookings, setOwnerBookings] = useState<BookingRow[]>([]);
   const [reservations, setReservations] = useState<BookingRow[]>([]);
+  const [revealedOwnerIds, setRevealedOwnerIds] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState(true);
   const [dataReady, setDataReady] = useState(false);
   const [addFiles, setAddFiles] = useState<File[]>([]);
@@ -518,11 +519,7 @@ function AccountPageContent() {
     }
   }
 
-  const reservationDates = reservations
-    .filter((r) => r.status === 'confirmed')
-    .map((r) => r.event_date);
-
-  const pendingReservations = reservations.filter((r) => r.status === 'pending_payment').length;
+  const reservationDates = reservations.map((r) => r.event_date);
   const dressesWithBookings = dresses.filter((d) =>
     ownerBookings.some((b) => String(b.dress_id) === String(d.id))
   ).length;
@@ -562,8 +559,7 @@ function AccountPageContent() {
                     <span className="text-[#9a7b4f] animate-pulse">טוען...</span>
                   ) : (
                     <>
-                      {reservations.length} הזמנות
-                      {pendingReservations > 0 && ` · ${pendingReservations} ממתינות`}
+                      {reservations.length} הזמנות מאושרות
                     </>
                   )}
                 </p>
@@ -651,7 +647,7 @@ function AccountPageContent() {
               <p className="text-sm text-[#6e634c] animate-pulse">טוען שמלות...</p>
             ) : reservations.length === 0 ? (
               <div className="bg-white rounded-2xl border border-[#eadaaf] p-8 text-center">
-                <p className="text-sm text-[#6e634c]">עדיין אין הזמנות. מצאי שמלה בקטלוג!</p>
+                <p className="text-sm text-[#6e634c]">עדיין אין הזמנות מאושרות. מצאי שמלה בקטלוג והשלימי תשלום!</p>
                 <Link href="/" className="inline-block mt-4 px-4 py-2 bg-[#b8860b] text-white rounded-xl text-xs font-bold">
                   לקטלוג →
                 </Link>
@@ -670,48 +666,57 @@ function AccountPageContent() {
                         <span className="text-[10px] bg-[#f4ebd4] px-2 py-0.5 rounded-full">{STATUS[r.status] || r.status}</span>
                       </div>
                       <p className="text-sm text-[#8b6508] font-bold mt-1">📅 {r.event_date}</p>
-                      {r.status === 'confirmed' && (r.owner_name || r.owner_phone) && (
-                        <div className="mt-3 p-3 bg-[#fffdf8] border border-[#decfa8] rounded-xl space-y-1.5">
-                          <p className="text-[10px] font-black text-[#8b6508]">פרטי המשכירה</p>
-                          {r.owner_name && (
-                            <p className="text-xs font-bold text-[#3d2f24]">{r.owner_name}</p>
-                          )}
-                          {r.owner_phone && (
-                            <a
-                              href={`tel:${r.owner_phone}`}
-                              className="text-xs text-[#6e634c] hover:underline block"
-                              dir="ltr"
-                            >
-                              📞 {r.owner_phone}
-                            </a>
-                          )}
-                          {r.owner_phone && (
-                            <a
-                              href={ownerWhatsAppLink(r.owner_phone, r.dress_name)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 text-[10px] font-bold text-[#25D366] hover:underline"
-                            >
-                              💬 WhatsApp למשכירה
-                            </a>
-                          )}
-                        </div>
+                      {(r.owner_name || r.owner_phone) && (
+                        revealedOwnerIds.has(r.id) ? (
+                          <div className="mt-3 p-3 bg-[#fffdf8] border border-[#decfa8] rounded-xl space-y-1.5">
+                            <p className="text-[10px] font-black text-[#8b6508]">פרטי המשכירה</p>
+                            {r.owner_name && (
+                              <p className="text-xs font-bold text-[#3d2f24]">{r.owner_name}</p>
+                            )}
+                            {r.owner_phone && (
+                              <a
+                                href={`tel:${r.owner_phone}`}
+                                className="text-xs text-[#6e634c] hover:underline block"
+                                dir="ltr"
+                              >
+                                📞 {r.owner_phone}
+                              </a>
+                            )}
+                            {r.owner_phone && (
+                              <a
+                                href={ownerWhatsAppLink(r.owner_phone, r.dress_name)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 text-[10px] font-bold text-[#25D366] hover:underline"
+                              >
+                                💬 WhatsApp למשכירה
+                              </a>
+                            )}
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setRevealedOwnerIds((prev) => {
+                                const next = new Set(prev);
+                                next.add(r.id);
+                                return next;
+                              })
+                            }
+                            className="mt-3 px-3 py-2 bg-[#f4ebd4] border border-[#decfa8] rounded-xl text-[10px] font-black text-[#8b6508] hover:bg-[#ebdcb6] transition-colors"
+                          >
+                            הצגת פרטי המשכירה
+                          </button>
+                        )
                       )}
-                      {r.status === 'pending_payment' && (
-                        <p className="text-[10px] text-[#9a7b4f] mt-2">
-                          פרטי המשכירה יוצגו אחרי אישור התשלום
-                        </p>
-                      )}
-                      {(r.status === 'confirmed' || r.status === 'pending_payment') && (
-                        <button
-                          type="button"
-                          onClick={() => cancelReservation(r.id)}
-                          disabled={cancellingId === r.id}
-                          className="mt-3 text-[10px] font-bold text-red-600 hover:underline disabled:opacity-50"
-                        >
-                          {cancellingId === r.id ? 'מבטלת...' : '✕ ביטול הזמנה'}
-                        </button>
-                      )}
+                      <button
+                        type="button"
+                        onClick={() => cancelReservation(r.id)}
+                        disabled={cancellingId === r.id}
+                        className="mt-3 text-[10px] font-bold text-red-600 hover:underline disabled:opacity-50"
+                      >
+                        {cancellingId === r.id ? 'מבטלת...' : '✕ ביטול הזמנה'}
+                      </button>
                     </li>
                   ))}
                 </ul>
