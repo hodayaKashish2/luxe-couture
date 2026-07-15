@@ -21,6 +21,7 @@ const ACCOUNT_SECTIONS = new Set([
 export type AccountSectionUrlOptions = {
   dressId?: string;
   viewDress?: string;
+  rentalDress?: string;
 };
 
 export function accountSectionUrl(
@@ -31,6 +32,7 @@ export function accountSectionUrl(
   if (section === 'hub') return '/account';
   const params = new URLSearchParams({ section });
   if (section === 'edit' && options?.dressId) params.set('dressId', options.dressId);
+  if (section === 'rentals' && options?.rentalDress) params.set('rentalDress', options.rentalDress);
   if (options?.viewDress && (section === 'cart' || section === 'favorites')) {
     params.set('viewDress', options.viewDress);
   }
@@ -41,6 +43,7 @@ export function parseAccountSection(searchParams: URLSearchParams): {
   section: AccountSection;
   dressId?: string;
   viewDress?: string;
+  rentalDress?: string;
 } {
   const tab = searchParams.get('section');
   if (tab && ACCOUNT_SECTIONS.has(tab)) {
@@ -48,6 +51,7 @@ export function parseAccountSection(searchParams: URLSearchParams): {
       section: tab as AccountSection,
       dressId: searchParams.get('dressId') || undefined,
       viewDress: searchParams.get('viewDress') || undefined,
+      rentalDress: searchParams.get('rentalDress') || undefined,
     };
   }
   return { section: 'hub' };

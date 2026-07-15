@@ -12,6 +12,7 @@ import DressCalendar from '@/components/DressCalendar';
 import OwnerPlatformNotice from '@/components/OwnerPlatformNotice';
 import FormError from '@/components/FormError';
 import SiteToast, { type SiteToastVariant } from '@/components/SiteToast';
+import OwnerDressesPanel from '@/components/OwnerDressesPanel';
 import DressSizeInput from '@/components/DressSizeInput';
 import { validateAddDressForm, validateDressImageFiles, validateUpdateProfileForm } from '@/lib/form-validation';
 import { BOOKING_UPDATED_EVENT, notifyBookingUpdated } from '@/lib/booking-events';
@@ -63,27 +64,6 @@ const STATUS: Record<string, string> = {
   pending_payment: 'ממתין לתשלום',
   cancelled: 'בוטלה',
 };
-
-function getDressRentalSummary(bookings: BookingRow[]) {
-  const confirmed = bookings.filter((b) => b.status === 'confirmed');
-  const pending = bookings.filter((b) => b.status === 'pending_payment');
-  if (confirmed.length === 0 && pending.length === 0) {
-    return { badge: '🟢 פנויה להשכרה', detail: 'עדיין אין הזמנות על השמלה' };
-  }
-  if (confirmed.length > 0) {
-    const sorted = [...confirmed].sort((a, b) => a.event_date.localeCompare(b.event_date));
-    const next = sorted[0];
-    return {
-      badge: `📅 ${confirmed.length} הזמנ${confirmed.length === 1 ? 'ה' : 'ות'} פעילות`,
-      detail: next ? `השכרה הבאה: ${next.event_date}` : '',
-    };
-  }
-  return {
-    badge: `⏳ ${pending.length} ממתינות לתשלום`,
-    detail: 'ממתין לאישור תשלום',
-  };
-}
-
 function AccountPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -137,10 +117,11 @@ function AccountPageContent() {
   const [toast, setToast] = useState<{ message: string; variant: SiteToastVariant } | null>(null);
 
   const navigateToSection = useCallback(
-    (next: Section, opts?: { dressId?: string; viewDress?: string; replace?: boolean }) => {
+    (next: Section, opts?: { dressId?: string; viewDress?: string; rentalDress?: string; replace?: boolean }) => {
       const url = accountSectionUrl(next, {
         dressId: opts?.dressId,
         viewDress: opts?.viewDress,
+        rentalDress: opts?.rentalDress,
       });
       if (opts?.replace) router.replace(url, { scroll: false });
       else router.push(url, { scroll: false });
@@ -534,6 +515,7 @@ function AccountPageContent() {
 
   const pendingReservations = reservations.filter((r) => r.status === 'pending_payment').length;
   const viewDressId = searchParams.get('viewDress');
+  const rentalDressId = searchParams.get('rentalDress');
   const dressesWithBookings = dresses.filter((d) =>
     ownerBookings.some((b) => String(b.dress_id) === String(d.id))
   ).length;
@@ -542,7 +524,7 @@ function AccountPageContent() {
     <div className="min-h-screen bg-gradient-to-b from-[#fbf8f0] to-[#e8dcbd] text-[#332c1e]" dir="rtl">
       <SiteHeader />
 
-      <main className="max-w-4xl mx-auto px-3 sm:px-4 py-6 sm:py-8 w-full min-w-0">
+      <main className="max-w-6xl mx-auto px-3 sm:px-4 py-6 sm:py-8 w-full min-w-0">
         <div className="flex flex-wrap justify-between items-start gap-3 mb-8">
           <div>
             <p className="text-[10px] tracking-widest text-[#9a7b4f] font-bold">✦ האזור האישי ✦</p>
@@ -588,7 +570,7 @@ function AccountPageContent() {
                 <span className="text-2xl sm:text-3xl">👗</span>
                 <h2 className="font-black text-base sm:text-lg mt-2 sm:mt-3 text-[#3d2f24] group-hover:text-[#b8860b]">השמלות שלי</h2>
                 <p className="text-[10px] sm:text-xs text-[#6e634c] mt-1 leading-relaxed hidden sm:block">
-                  השמלות שפרסמת — רואות מה מושכר, מי השכירה ומתי
+                  השמלות שפרסמת — רשימה מסודרת עם חיפוש, סינון ולוח שנה לשמלה שנבחרה
                 </p>
                 <p className="text-[10px] text-[#b8860b] font-bold mt-2 sm:mt-3">
                   {!dataReady ? (
@@ -641,6 +623,8 @@ function AccountPageContent() {
               if (section === 'edit') {
                 setEditingDress(null);
                 navigateToSection('rentals', { replace: true });
+              } else if (section === 'rentals' && rentalDressId) {
+                navigateToSection('rentals', { replace: true });
               } else if (detailsDress || viewDressId) {
                 closeDetailsDress();
               } else {
@@ -649,7 +633,7 @@ function AccountPageContent() {
             }}
             className="mb-4 text-xs text-[#8b6508] font-bold hover:underline"
           >
-            ← {section === 'edit' ? 'חזרה לשמלות שלי' : detailsDress || viewDressId ? 'חזרה לרשימה' : 'חזרה לאזור האישי'}
+            ← {section === 'edit' ? 'חזרה לשמלות שלי' : section === 'rentals' && rentalDressId ? 'חזרה לרשימת שמלות' : detailsDress || viewDressId ? 'חזרה לרשימה' : 'חזרה לאזור האישי'}
           </button>
         )}
 
@@ -698,132 +682,17 @@ function AccountPageContent() {
         )}
 
         {section === 'rentals' && (
-          <div className="space-y-6">
-            <div className="flex justify-between items-start flex-wrap gap-3">
-              <div>
-                <h2 className="font-black text-xl">👗 השמלות שלי</h2>
-                <p className="text-xs text-[#6e634c] mt-1 leading-relaxed max-w-md">
-                  רשימת כל השמלות שפרסמת. לכל שמלה תראי אם היא מושכרת, מי השכירה ומתי.
-                </p>
-              </div>
-              <button onClick={() => navigateToSection('add')} className="px-4 py-2 bg-[#b8860b] text-white rounded-xl text-xs font-bold shrink-0">
-                ➕ הוספת שמלה
-              </button>
-            </div>
-
-            {dresses.length > 0 && (
-              <div className="grid grid-cols-3 gap-2 text-center">
-                <div className="bg-white rounded-xl border border-[#eadaaf] p-3">
-                  <p className="text-lg font-black text-[#3d2f24]">{dresses.length}</p>
-                  <p className="text-[10px] text-[#6e634c]">שמלות</p>
-                </div>
-                <div className="bg-white rounded-xl border border-[#eadaaf] p-3">
-                  <p className="text-lg font-black text-green-700">{dresses.length - dressesWithBookings}</p>
-                  <p className="text-[10px] text-[#6e634c]">פנויות</p>
-                </div>
-                <div className="bg-white rounded-xl border border-[#eadaaf] p-3">
-                  <p className="text-lg font-black text-[#b8860b]">{dressesWithBookings}</p>
-                  <p className="text-[10px] text-[#6e634c]">עם הזמנות</p>
-                </div>
-              </div>
-            )}
-
-            {loading ? (
-              <p className="text-sm text-[#6e634c] animate-pulse">טוען שמלות...</p>
-            ) : dresses.length === 0 ? (
-              <p className="text-sm text-[#6e634c]">אין שמלות. הוסיפי שמלה חדשה!</p>
-            ) : (
-              dresses.map((dress) => {
-                const dressBookings = ownerBookings.filter(
-                  (b) => String(b.dress_id) === String(dress.id)
-                );
-                const confirmedBookings = dressBookings.filter((b) => b.status === 'confirmed');
-                const rentalSummary = getDressRentalSummary(dressBookings);
-                return (
-                  <div key={dress.id} className="bg-white rounded-2xl border border-[#eadaaf] p-4 sm:p-5 space-y-4">
-                    <div className="flex gap-4">
-                      {dress.images?.[0] ? (
-                        <img src={dress.images[0]} alt="" className="w-20 h-24 sm:w-24 sm:h-28 object-contain rounded-xl border border-[#f0e2c3] shrink-0 bg-[#faf8f3]" />
-                      ) : (
-                        <div className="w-20 h-24 sm:w-24 sm:h-28 rounded-xl border border-dashed border-[#decfa8] bg-[#faf8f3] flex items-center justify-center text-2xl shrink-0">👗</div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex flex-wrap items-start justify-between gap-2">
-                          <h3 className="font-bold text-base">{dress.name}</h3>
-                          <div className="flex flex-wrap gap-2 shrink-0">
-                            <button
-                              type="button"
-                              onClick={() => startEditDress(dress)}
-                              className="text-[10px] font-bold px-2.5 py-1 rounded-full border border-[#decfa8] text-[#8b6508] hover:bg-[#fffdf8]"
-                            >
-                              ✏️ עדכון
-                            </button>
-                          </div>
-                        </div>
-                        <p className="text-xs text-[#6e634c] mt-1">₪{dress.price} · מידה {dress.size} · {dress.city}</p>
-                        {dress.rental_count > 0 && (
-                          <p className="text-[10px] text-[#9a7b4f] mt-0.5">
-                            {dress.rental_count} השכרות עד כה
-                          </p>
-                        )}
-                        <div className="flex flex-wrap gap-2 mt-2">
-                          <span className="inline-block text-[10px] bg-[#f4ebd4] px-2 py-0.5 rounded-full">{STATUS[dress.status]}</span>
-                          <span className="inline-block text-[10px] font-bold bg-[#fffdf8] border border-[#decfa8] px-2 py-0.5 rounded-full text-[#8b6508]">
-                            {rentalSummary.badge}
-                          </span>
-                        </div>
-                        {rentalSummary.detail && (
-                          <p className="text-[10px] text-[#9a7b4f] mt-1">{rentalSummary.detail}</p>
-                        )}
-                      </div>
-                    </div>
-
-                    <div>
-                      <h4 className="text-xs font-black text-[#8b6508] mb-2">תאריכים מושכרים</h4>
-                      <DressCalendar bookedDates={confirmedBookings.map((b) => b.event_date)} />
-                    </div>
-
-                    <div>
-                      <h4 className="text-xs font-black text-[#8b6508] mb-3">מי הזמינה את השמלה</h4>
-                      {dressBookings.length === 0 ? (
-                        <p className="text-xs text-[#9a7b4f] bg-[#faf8f3] rounded-xl border border-dashed border-[#decfa8] px-4 py-3 text-center">
-                          עדיין אין הזמנות על השמלה הזו — השמלה פנויה להשכרה
-                        </p>
-                      ) : (
-                        <ul className="space-y-2">
-                          {dressBookings.map((b) => (
-                            <li
-                              key={b.id}
-                              className="flex flex-wrap items-center justify-between gap-2 bg-gradient-to-l from-[#fffdf8] to-[#f4ebd4] border border-[#decfa8] rounded-xl px-4 py-3"
-                            >
-                              <div>
-                                <p className="text-sm font-bold text-[#3d2f24]">
-                                  {b.customer_name || 'שוכרת'}
-                                </p>
-                                <p className="text-xs text-[#8b6508] font-bold mt-0.5">📅 {b.event_date}</p>
-                                {b.customer_phone && (
-                                  <a href={`tel:${b.customer_phone}`} className="text-[11px] text-[#6e634c] mt-1 inline-block hover:underline">
-                                    📞 {b.customer_phone}
-                                  </a>
-                                )}
-                              </div>
-                              <span className={`text-[10px] font-black px-2.5 py-1 rounded-full shrink-0 ${
-                                b.status === 'confirmed'
-                                  ? 'bg-green-100 text-green-800'
-                                  : 'bg-amber-100 text-amber-800'
-                              }`}>
-                                {STATUS[b.status] || b.status}
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
+          <OwnerDressesPanel
+            dresses={dresses}
+            ownerBookings={ownerBookings}
+            loading={loading}
+            selectedDressId={rentalDressId}
+            onSelectDress={(dressId) =>
+              navigateToSection('rentals', { rentalDress: dressId || undefined, replace: true })
+            }
+            onAddDress={() => navigateToSection('add')}
+            onEditDress={startEditDress}
+          />
         )}
 
         {section === 'cart' && (
