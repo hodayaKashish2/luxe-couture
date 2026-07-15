@@ -1,6 +1,8 @@
 export const SITE_NAME = 'שמלה בקליק';
 
-export const CONTACT_EMAIL = process.env.ADMIN_EMAIL || 'hodayaka1212@gmail.com';
+export const DEFAULT_ADMIN_EMAIL = 'dressbclick@gmail.com';
+
+export const CONTACT_EMAIL = process.env.ADMIN_EMAIL || DEFAULT_ADMIN_EMAIL;
 
 export const CONTACT_PHONE = '053-420-1133';
 

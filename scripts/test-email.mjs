@@ -33,7 +33,7 @@ const resend = new Resend(env.RESEND_API_KEY);
 
 const { data, error } = await resend.emails.send({
   from: env.RESEND_FROM || 'DressRental <onboarding@resend.dev>',
-  to: env.ADMIN_EMAIL || 'hodayaka1212@gmail.com',
+  to: env.ADMIN_EMAIL || 'dressbclick@gmail.com',
   subject: 'בדיקת מייל מאתר שמלה להשכיר',
   html: '<div dir="rtl" style="font-family:sans-serif">✅ אם קיבלת את המייל הזה — שליחת המיילים עובדת!</div>',
 });

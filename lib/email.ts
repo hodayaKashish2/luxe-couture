@@ -1,5 +1,6 @@
 import { Resend } from 'resend';
 import nodemailer from 'nodemailer';
+import { DEFAULT_ADMIN_EMAIL } from '@/lib/site-config';
 
 let resendClient: Resend | null = null;
 let smtpTransport: nodemailer.Transporter | null = null;
@@ -57,7 +58,7 @@ function getSmtpTransport(): nodemailer.Transporter | null {
 }
 
 export function getAdminEmail(): string {
-  return (process.env.ADMIN_EMAIL || 'hodayaka1212@gmail.com').trim().toLowerCase();
+  return (process.env.ADMIN_EMAIL || DEFAULT_ADMIN_EMAIL).trim().toLowerCase();
 }
 
 export function getAppUrl(): string {
@@ -179,7 +180,7 @@ function getSmtpEnvDiagnostics() {
     fix =
       'חסר SMTP_PASSWORD ב-Vercel. הוסיפי: SMTP_PASSWORD = סיסמת אפליקציה של Gmail (16 תווים), סמני Production, ואז Redeploy';
   } else if (!hasUser) {
-    fix = 'חסר SMTP_USER ב-Vercel. הוסיפי: SMTP_USER = hodayaka1212@gmail.com';
+    fix = `חסר SMTP_USER ב-Vercel. הוסיפי: SMTP_USER = ${DEFAULT_ADMIN_EMAIL}`;
   }
 
   return { hasUser, hasPassword, userFrom, passwordFrom, fix };
@@ -232,7 +233,7 @@ export async function sendEmailTo(to: string, subject: string, html: string) {
     return {
       success: false as const,
       error:
-        'חסרה הגדרת מיילים. הוסיפי ב-Vercel: SMTP_PASSWORD (סיסמת אפליקציה של Gmail) ו-SMTP_USER=hodayaka1212@gmail.com',
+        `חסרה הגדרת מיילים. הוסיפי ב-Vercel: SMTP_PASSWORD (סיסמת אפליקציה של Gmail) ו-SMTP_USER=${DEFAULT_ADMIN_EMAIL}`,
     };
   }
 
