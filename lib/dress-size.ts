@@ -1,18 +1,6 @@
 import { DRESS_SIZES } from '@/lib/constants';
 
-export const DRESS_SIZE_DATALIST = [
-  ...new Set([
-    ...DRESS_SIZES.flatMap((s) => [s.value, s.label]),
-    '34',
-    '36',
-    '38',
-    '40',
-    '42',
-    '44',
-    '46',
-    '48',
-  ]),
-];
+export const DRESS_SIZE_DATALIST = DRESS_SIZES.map((s) => s.label);
 
 export function getDressSizeSearchText(size: string): string {
   const trimmed = size.trim();

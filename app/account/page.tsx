@@ -825,12 +825,15 @@ function AccountPageContent() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <input required placeholder="שם השמלה *" value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} className="p-2.5 border border-[#decfa8] rounded-xl text-xs col-span-1 sm:col-span-2" />
               <input required type="number" placeholder="מחיר *" value={editForm.price} onChange={(e) => setEditForm({ ...editForm, price: e.target.value })} className="p-2.5 border border-[#decfa8] rounded-xl text-xs" />
-              <DressSizeInput
-                required
-                value={editForm.size}
-                onChange={(size) => setEditForm({ ...editForm, size })}
-                className="p-2.5 border border-[#decfa8] rounded-xl text-xs w-full"
-              />
+              <div>
+                <label className="block text-xs font-bold text-[#8b6508] mb-1">מידה *</label>
+                <DressSizeInput
+                  required
+                  value={editForm.size}
+                  onChange={(size) => setEditForm({ ...editForm, size })}
+                  className="p-2.5 border border-[#decfa8] rounded-xl text-xs w-full"
+                />
+              </div>
               <input required placeholder="עיר *" value={editForm.city} onChange={(e) => setEditForm({ ...editForm, city: e.target.value })} className="p-2.5 border border-[#decfa8] rounded-xl text-xs" />
               <input placeholder="צבע" value={editForm.color} onChange={(e) => setEditForm({ ...editForm, color: e.target.value })} className="p-2.5 border border-[#decfa8] rounded-xl text-xs" />
               <textarea
@@ -963,12 +966,15 @@ function AccountPageContent() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <input required placeholder="שם השמלה *" value={addForm.name} onChange={(e) => setAddForm({ ...addForm, name: e.target.value })} className="p-2.5 border border-[#decfa8] rounded-xl text-xs text-[#2c261a] placeholder:text-[#9a7b4f] bg-white col-span-1 sm:col-span-2" />
               <input required type="number" placeholder="מחיר *" value={addForm.price} onChange={(e) => setAddForm({ ...addForm, price: e.target.value })} className="p-2.5 border border-[#decfa8] rounded-xl text-xs text-[#2c261a] placeholder:text-[#9a7b4f] bg-white" />
-              <DressSizeInput
-                required
-                value={addForm.size}
-                onChange={(size) => setAddForm({ ...addForm, size })}
-                className="p-2.5 border border-[#decfa8] rounded-xl text-xs text-[#2c261a] bg-white w-full"
-              />
+              <div>
+                <label className="block text-xs font-bold text-[#8b6508] mb-1">מידה *</label>
+                <DressSizeInput
+                  required
+                  value={addForm.size}
+                  onChange={(size) => setAddForm({ ...addForm, size })}
+                  className="p-2.5 border border-[#decfa8] rounded-xl text-xs text-[#2c261a] bg-white w-full"
+                />
+              </div>
               <input required placeholder="עיר *" value={addForm.city} onChange={(e) => setAddForm({ ...addForm, city: e.target.value })} className="p-2.5 border border-[#decfa8] rounded-xl text-xs text-[#2c261a] placeholder:text-[#9a7b4f] bg-white" />
               <div className="col-span-1 sm:col-span-2">
                 <input

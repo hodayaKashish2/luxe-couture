@@ -1,6 +1,7 @@
 'use client';
 
 import { useId } from 'react';
+import { DRESS_SIZES } from '@/lib/constants';
 import { DRESS_SIZE_DATALIST } from '@/lib/dress-size';
 
 type Props = {
@@ -9,6 +10,7 @@ type Props = {
   required?: boolean;
   className?: string;
   placeholder?: string;
+  showQuickPick?: boolean;
 };
 
 const defaultClass =
@@ -19,12 +21,13 @@ export default function DressSizeInput({
   onChange,
   required = false,
   className = defaultClass,
-  placeholder = 'הקלידי מידה, למשל: 38, M, XL',
+  placeholder = 'הקלידי או בחרי מידה, למשל: S (36)',
+  showQuickPick = true,
 }: Props) {
   const listId = useId();
 
   return (
-    <>
+    <div className="space-y-2">
       <input
         type="text"
         required={required}
@@ -41,6 +44,27 @@ export default function DressSizeInput({
           <option key={option} value={option} />
         ))}
       </datalist>
-    </>
+      {showQuickPick && (
+        <div className="flex flex-wrap gap-1.5">
+          {DRESS_SIZES.map((size) => {
+            const selected = value.trim() === size.label;
+            return (
+              <button
+                key={size.label}
+                type="button"
+                onClick={() => onChange(size.label)}
+                className={`text-[10px] font-bold px-2.5 py-1 rounded-full border transition-colors ${
+                  selected
+                    ? 'bg-[#d4af37] text-white border-[#d4af37]'
+                    : 'bg-white text-[#8b6508] border-[#decfa8] hover:bg-[#fffdf8] hover:border-[#d4af37]'
+                }`}
+              >
+                {size.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }
