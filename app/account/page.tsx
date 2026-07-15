@@ -71,8 +71,8 @@ const STATUS: Record<string, string> = {
 function AccountPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { section, dressId, viewDress: viewDressId } = parseAccountSection(searchParams);
   const { cart, favorites, cartCount, favCount, removeFromCart, removeFromFavorites, toggleCart, toggleFavorite, isDressInCart, isDressFavorite } = useLuxeStorage();
-  const [section, setSection] = useState<Section>('hub');
   const [detailsDress, setDetailsDress] = useState<Dress | null>(null);
   const [user, setUser] = useState<AccountUser | null>(() => {
     const stored = getStoredSiteUser();
@@ -135,7 +135,6 @@ function AccountPageContent() {
   const goToAccountHub = useCallback(() => {
     setDetailsDress(null);
     pendingViewDressRef.current = null;
-    setSection('hub');
     router.replace('/account', { scroll: false });
   }, [router]);
 
@@ -243,10 +242,12 @@ function AccountPageContent() {
   }, [section, load]);
 
   useEffect(() => {
-    const { section: urlSection, dressId, viewDress } = parseAccountSection(searchParams);
-    setSection(urlSection);
+    if (!searchParams.get('rentalDress')) return;
+    router.replace(accountSectionUrl(section), { scroll: false });
+  }, [searchParams, router, section]);
 
-    if (urlSection === 'edit' && dressId) {
+  useEffect(() => {
+    if (section === 'edit' && dressId) {
       const dress = dresses.find((d) => d.id === dressId);
       if (dress) {
         setEditingDress(dress);
@@ -260,29 +261,29 @@ function AccountPageContent() {
         });
         setEditImages(Array.isArray(dress.images) ? [...dress.images] : []);
       }
-    } else if (urlSection !== 'edit') {
+    } else if (section !== 'edit') {
       setEditingDress(null);
     }
 
-    if (viewDress && (urlSection === 'cart' || urlSection === 'favorites')) {
+    if (viewDressId && (section === 'cart' || section === 'favorites')) {
       pendingViewDressRef.current = null;
       preloadDressesCatalog().then((list) => {
-        const cached = findDressInList(list, viewDress);
+        const cached = findDressInList(list, viewDressId);
         if (cached) {
           setDetailsDress(cached);
           return;
         }
-        fetchDressById(viewDress).then((dress) => {
+        fetchDressById(viewDressId).then((dress) => {
           if (dress) setDetailsDress(dress);
         });
       });
-    } else if (urlSection !== 'cart' && urlSection !== 'favorites') {
+    } else if (section !== 'cart' && section !== 'favorites') {
       setDetailsDress(null);
       pendingViewDressRef.current = null;
-    } else if (!viewDress && !pendingViewDressRef.current) {
+    } else if (!viewDressId && !pendingViewDressRef.current) {
       setDetailsDress(null);
     }
-  }, [searchParams, dresses]);
+  }, [section, dressId, viewDressId, dresses]);
 
   async function cancelReservation(bookingId: number) {
     if (!confirm('לבטל את ההזמנה? התאריך ישוחרר לשוכרות אחרות.')) return;
@@ -517,7 +518,6 @@ function AccountPageContent() {
     .map((r) => r.event_date);
 
   const pendingReservations = reservations.filter((r) => r.status === 'pending_payment').length;
-  const viewDressId = searchParams.get('viewDress');
   const dressesWithBookings = dresses.filter((d) =>
     ownerBookings.some((b) => String(b.dress_id) === String(d.id))
   ).length;

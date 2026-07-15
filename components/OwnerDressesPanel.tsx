@@ -221,10 +221,10 @@ export default function OwnerDressesPanel({
   }
 
   useEffect(() => {
-    if (selectedDressId || dresses.length === 0) return;
+    if (loading || selectedDressId || dresses.length === 0) return;
     const defaultId = pickDefaultDressId(dresses, ownerBookings);
     if (defaultId) setSelectedDressId(defaultId);
-  }, [selectedDressId, dresses, ownerBookings]);
+  }, [loading, selectedDressId, dresses, ownerBookings]);
 
   useEffect(() => {
     if (!selectedDressId) return;
