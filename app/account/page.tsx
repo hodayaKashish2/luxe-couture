@@ -11,6 +11,7 @@ import { useLuxeStorage } from '@/components/LuxeStorageProvider';
 import DressCalendar from '@/components/DressCalendar';
 import OwnerPlatformNotice from '@/components/OwnerPlatformNotice';
 import FormError from '@/components/FormError';
+import SiteToast, { type SiteToastVariant } from '@/components/SiteToast';
 import { DRESS_SIZES } from '@/lib/constants';
 import { validateAddDressForm, validateDressImageFiles, validateUpdateProfileForm } from '@/lib/form-validation';
 import { BOOKING_UPDATED_EVENT, notifyBookingUpdated } from '@/lib/booking-events';
@@ -133,6 +134,7 @@ function AccountPageContent() {
   const [profileError, setProfileError] = useState('');
   const [profileSaving, setProfileSaving] = useState(false);
   const [cancellingId, setCancellingId] = useState<number | null>(null);
+  const [toast, setToast] = useState<{ message: string; variant: SiteToastVariant } | null>(null);
 
   const navigateToSection = useCallback(
     (next: Section, opts?: { dressId?: string; viewDress?: string; replace?: boolean }) => {
@@ -416,11 +418,11 @@ function AccountPageContent() {
     });
     const data = await res.json();
     if (res.ok) {
-      alert(data.message);
       setAddFiles([]);
       addImagePreviews.forEach((url) => URL.revokeObjectURL(url));
       setAddImagePreviews([]);
       if (addFileInputRef.current) addFileInputRef.current.value = '';
+      setToast({ message: 'השמלה נשלחה לאישור! נעדכן אותך כשתופיע בקטלוג.', variant: 'success' });
       navigateToSection('rentals', { replace: true });
       load();
     } else {
@@ -1096,6 +1098,10 @@ function AccountPageContent() {
       )}
 
       <SiteFooter />
+
+      {toast && (
+        <SiteToast message={toast.message} variant={toast.variant} onClose={() => setToast(null)} />
+      )}
     </div>
   );
 }

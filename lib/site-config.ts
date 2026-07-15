@@ -13,6 +13,11 @@ export function dressShareUrl(dressName: string, dressId: string) {
   return `${base}/?dress=${dressId}&text=${encodeURIComponent(`שמתי לב לשמלה "${dressName}" באתר ${SITE_NAME}`)}`;
 }
 
+export function dressPageUrl(dressId: string) {
+  const base = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  return `${base}/?dress=${dressId}`;
+}
+
 export function ownerWhatsAppLink(phone: string, dressName: string) {
   const digits = phone.replace(/\D/g, '');
   const wa = digits.startsWith('972')

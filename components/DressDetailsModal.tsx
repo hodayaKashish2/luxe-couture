@@ -136,11 +136,6 @@ export default function DressDetailsModal({
               <p className="text-[10px] text-[#b8860b] font-black tracking-widest mb-1">✦ פרטי שמלה ✦</p>
               <h2 className="text-xl sm:text-2xl font-black text-[#3d2f24] leading-tight">{dress.name}</h2>
               <div className="flex flex-wrap gap-2 mt-3">
-                {dress.city && (
-                  <span className="bg-[#f4ebd4] text-[#8b6508] text-[10px] font-bold px-3 py-1 rounded-full">
-                    📍 {dress.city}
-                  </span>
-                )}
                 {dress.event_type && (
                   <span className="bg-neutral-100 text-[#6e634c] text-[10px] px-3 py-1 rounded-full">
                     {dress.event_type}

@@ -11,6 +11,7 @@ import DressCardSummary from '@/components/DressCardSummary';
 import RentalCountBadge from '@/components/RentalCountBadge';
 import DressDetailsModal from '@/components/DressDetailsModal';
 import DressRateModal from '@/components/DressRateModal';
+import SiteToast, { type SiteToastVariant } from '@/components/SiteToast';
 import { useLuxeStorage } from '@/components/LuxeStorageProvider';
 import { useAuthModal } from '@/components/AuthModalProvider';
 import SavedDressList from '@/components/SavedDressList';
@@ -24,12 +25,32 @@ import { useScrollToError } from '@/hooks/use-scroll-to-error';
 import { compareDresses, getTopRentalRanks, toggleFilterValue } from '@/lib/dress-sort';
 import { OFF_PLATFORM_COORDINATE_NOTICE } from '@/lib/commission';
 import { fetchDressById, findDressInList } from '@/lib/dress-api';
-import { dressShareUrl, ownerWhatsAppLink, WHATSAPP_LINK } from '@/lib/site-config';
+import { dressPageUrl, ownerWhatsAppLink, WHATSAPP_LINK } from '@/lib/site-config';
 import { Dress, Review, SortOption, EVENT_TYPES, PICKUP_METHODS } from '@/lib/types';
 import type { SavedDress } from '@/lib/luxe-storage';
 
 const DRESS_CARD_BTN =
   'cursor-pointer transition-all duration-200 hover:border-[#d4af37] hover:bg-[#fffdf8] hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98]';
+
+function isPastDate(date: string) {
+  if (!date) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const selected = new Date(`${date}T00:00:00`);
+  return selected < today;
+}
+
+function formatHebrewDate(date: string) {
+  try {
+    return new Date(`${date}T00:00:00`).toLocaleDateString('he-IL', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
+  } catch {
+    return date;
+  }
+}
 
 export default function Home() {
   const { openAuthModal } = useAuthModal();
@@ -106,6 +127,7 @@ export default function Home() {
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
 
   const [rateDress, setRateDress] = useState<Dress | null>(null);
+  const [toast, setToast] = useState<{ message: string; variant: SiteToastVariant } | null>(null);
   const [paymentStep, setPaymentStep] = useState<{
     bookingId: number;
     amount: number;
@@ -408,6 +430,31 @@ export default function Home() {
     return !dress.booked_dates?.includes(date);
   };
 
+  const showToast = useCallback((message: string, variant: SiteToastVariant = 'success') => {
+    setToast({ message, variant });
+  }, []);
+
+  const shareDress = useCallback(async (dress: Dress) => {
+    const url = dressPageUrl(dress.id);
+    const shareText = `שמתי לב לשמלה "${dress.name}" באתר שמלה בקליק`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: dress.name, text: shareText, url });
+        showToast('השיתוף נשלח בהצלחה');
+        return;
+      }
+      await navigator.clipboard.writeText(url);
+      showToast('הקישור לשמלה הועתק — אפשר להדביק ולשלוח');
+    } catch {
+      try {
+        await navigator.clipboard.writeText(url);
+        showToast('הקישור לשמלה הועתק');
+      } catch {
+        showToast('לא הצלחנו לשתף את הקישור', 'error');
+      }
+    }
+  }, [showToast]);
+
   const handleDateChange = (date: string) => {
     setOrderDate(date);
     if (selectedDress && !checkDateAvailability(date, selectedDress)) {
@@ -644,7 +691,7 @@ export default function Home() {
 
       closeAddDressModal();
       setAddDressError('');
-      alert(data.message || 'השמלה נשלחה לאישור! היא תופיע באתר לאחר אישור בדף הניהול.');
+      showToast('השמלה נשלחה לאישור! נעדכן אותך כשתופיע בקטלוג.');
     } catch (error) {
       console.error('Error submitting dress:', error);
       setAddDressError('תקלה בשליחת השמלה. נסי שוב.');
@@ -697,8 +744,9 @@ export default function Home() {
 
   const topRentalRanks = getTopRentalRanks(filteredDresses);
 
+  const coordinateDatePast = coordinateDate ? isPastDate(coordinateDate) : false;
   const coordinateAvailable =
-    coordinateDress && coordinateDate
+    coordinateDress && coordinateDate && !coordinateDatePast
       ? checkDateAvailability(coordinateDate, coordinateDress)
       : false;
 
@@ -997,11 +1045,9 @@ export default function Home() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => {
-                          const url = dressShareUrl(dress.name, dress.id);
-                          if (navigator.share) navigator.share({ title: dress.name, url }).catch(() => {});
-                          else navigator.clipboard.writeText(url);
-                          alert('קישור לשמלה הועתק!');
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void shareDress(dress);
                         }}
                         className={`px-3 py-2 border border-[#decfa8] rounded-xl text-xs text-[#8b6508] ${DRESS_CARD_BTN}`}
                       >
@@ -1667,12 +1713,12 @@ export default function Home() {
             openCoordinate(detailsDress);
             setDetailsDress(null);
           }}
-          onRate={() => setRateDress(detailsDress)}
+          onRate={() => {
+            setRateDress(detailsDress);
+            setDetailsDress(null);
+          }}
           onShare={() => {
-            const url = dressShareUrl(detailsDress.name, detailsDress.id);
-            if (navigator.share) navigator.share({ title: detailsDress.name, url }).catch(() => {});
-            else navigator.clipboard.writeText(url);
-            alert('קישור לשמלה הועתק!');
+            void shareDress(detailsDress);
           }}
         />
       )}
@@ -1700,6 +1746,7 @@ export default function Home() {
             <label className="text-[10px] text-[#8b6508] font-black mb-1 block">בחרי תאריך אירוע</label>
             <input
               type="date"
+              min={new Date().toISOString().split('T')[0]}
               value={coordinateDate}
               onChange={(e) => {
                 setCoordinateDate(e.target.value);
@@ -1721,13 +1768,30 @@ export default function Home() {
               בדקי זמינות
             </button>
 
-            {coordinateChecked && coordinateDate && !coordinateAvailable && (
-              <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-xs text-red-700 font-bold">
-                השמלה תפוסה בתאריך הזה. בחרי תאריך אחר.
+            {coordinateChecked && coordinateDate && coordinateDatePast && (
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-900 leading-relaxed">
+                <p className="font-black mb-1">התאריך שבחרת כבר עבר</p>
+                <p>
+                  {formatHebrewDate(coordinateDate)} — לא ניתן לתאם לאירוע שכבר התקיים. בחרי תאריך עתידי
+                  כדי לבדוק זמינות.
+                </p>
               </div>
             )}
 
-            {coordinateChecked && coordinateDate && coordinateAvailable && !coordinateDisclaimerAccepted && (
+            {coordinateChecked && coordinateDate && !coordinateDatePast && !coordinateAvailable && (
+              <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-xs text-red-700 leading-relaxed">
+                <p className="font-black mb-1">השמלה תפוסה בתאריך הזה</p>
+                <p>{formatHebrewDate(coordinateDate)} — נסי לבחור תאריך אחר.</p>
+              </div>
+            )}
+
+            {coordinateChecked && coordinateDate && !coordinateDatePast && coordinateAvailable && (
+              <div className="bg-green-50 border border-green-200 rounded-xl p-3 text-xs text-green-800 leading-relaxed mb-3">
+                <p className="font-black">✓ השמלה פנויה בתאריך {formatHebrewDate(coordinateDate)}</p>
+              </div>
+            )}
+
+            {coordinateChecked && coordinateDate && !coordinateDatePast && coordinateAvailable && !coordinateDisclaimerAccepted && (
               <div className="bg-gradient-to-l from-[#fffdf9] to-[#f4ebd4] border border-[#e6c687] rounded-xl p-4 space-y-3">
                 <p className="text-xs font-black text-[#8b6508]">{OFF_PLATFORM_COORDINATE_NOTICE.title}</p>
                 <p className="text-xs text-[#5c5037] leading-relaxed">{OFF_PLATFORM_COORDINATE_NOTICE.body}</p>
@@ -1741,9 +1805,9 @@ export default function Home() {
               </div>
             )}
 
-            {coordinateChecked && coordinateDate && coordinateAvailable && coordinateDisclaimerAccepted && (
+            {coordinateChecked && coordinateDate && !coordinateDatePast && coordinateAvailable && coordinateDisclaimerAccepted && (
               <div className="bg-[#f4ebd4] border border-[#decfa8] rounded-xl p-4 space-y-2">
-                <p className="text-xs font-black text-[#3d2f24]">✓ השמלה פנויה! פרטי המשכירה:</p>
+                <p className="text-xs font-black text-[#3d2f24]">פרטי המשכירה:</p>
                 <p className="text-sm font-bold">{coordinateDress.owner_name || 'משכירה'}</p>
                 {coordinateDress.owner_phone ? (
                   <p className="text-xs" dir="ltr">{coordinateDress.owner_phone}</p>
@@ -1767,6 +1831,14 @@ export default function Home() {
       )}
 
       <SiteFooter />
+
+      {toast && (
+        <SiteToast
+          message={toast.message}
+          variant={toast.variant}
+          onClose={() => setToast(null)}
+        />
+      )}
 
       <a 
         href={WHATSAPP_LINK}
