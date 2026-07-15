@@ -29,7 +29,6 @@ export function getDressDetailRows(dress: Dress) {
     { label: 'עיר', value: dress.city },
     { label: 'סוג אירוע', value: dress.event_type },
     { label: 'צבע', value: dress.color },
-    { label: 'מצב', value: getConditionLabel(dress.condition) },
     dress.deposit > 0 ? { label: 'פיקדון', value: `₪${dress.deposit}` } : null,
     {
       label: 'ניקוי יבש',

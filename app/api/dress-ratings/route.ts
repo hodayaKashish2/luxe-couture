@@ -170,7 +170,7 @@ export async function POST(request: Request) {
       pendingApproval: true,
       rating_avg: ratingAvg,
       rating_count: ratingCount,
-      message: 'תודה! הדירוג נשלח לאישור ויופיע באתר אחרי אישור.',
+      message: 'תודה! הדירוג התקבל בהצלחה.',
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'שגיאה בשמירת דירוג';

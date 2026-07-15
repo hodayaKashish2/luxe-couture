@@ -45,7 +45,7 @@ export default function DressRateModal({
         return;
       }
       onRated(dress.id, data.rating_avg, data.rating_count);
-      setSuccess(data.message || 'תודה! הדירוג נשלח לאישור ויופיע באתר אחרי אישור.');
+      setSuccess(data.message || 'תודה! הדירוג התקבל בהצלחה.');
       window.setTimeout(onClose, 1400);
     } catch {
       setError('תקלה בשליחה — נסי שוב');
@@ -116,7 +116,7 @@ export default function DressRateModal({
               disabled={loading}
               className="w-full py-3 bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white text-xs font-black rounded-xl disabled:opacity-60"
             >
-              {loading ? 'שולחת...' : 'שליחת דירוג לאישור'}
+              {loading ? 'שולחת...' : 'שליחת דירוג'}
             </button>
           </form>
         )}

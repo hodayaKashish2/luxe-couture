@@ -21,11 +21,12 @@ export function buildBitTransferLinks(amount: number) {
   const phone = BIT_PHONE.replace(/\D/g, '');
   const intl = bitIntlPhone();
   const amountStr = Math.round(amount).toString();
+  const encodedPhone = encodeURIComponent(phone);
 
   return {
-    ios: `bit://transfer/phone/${phone}?amount=${amountStr}`,
-    androidIntent: `intent://transfer/phone/${phone}?amount=${amountStr}#Intent;scheme=bit;package=com.bnhp.payments.paymentsapp;S.phoneNumber=${phone};S.amount=${amountStr};end`,
-    fallback: `bit://pay?phoneNumber=${phone}&amount=${amountStr}&recipientPhone=${intl}`,
+    ios: `bit://transfer?phoneNumber=${encodedPhone}&amount=${amountStr}&recipientPhone=${intl}`,
+    androidIntent: `intent://transfer?phoneNumber=${encodedPhone}&amount=${amountStr}#Intent;scheme=bit;package=com.bnhp.payments.paymentsapp;S.phoneNumber=${phone};S.amount=${amountStr};end`,
+    fallback: `bit://pay?phoneNumber=${encodedPhone}&amount=${amountStr}&recipientPhone=${intl}`,
   };
 }
 
@@ -36,15 +37,12 @@ export function openBitPayment(amount: number): void {
   const isAndroid = /Android/i.test(navigator.userAgent);
   const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-  if (isAndroid) {
-    window.location.href = links.androidIntent;
-    return;
-  }
+  const target = isAndroid ? links.androidIntent : isIOS ? links.ios : links.fallback;
+  window.location.href = target;
 
-  if (isIOS) {
-    window.location.href = links.ios;
-    return;
-  }
-
-  window.location.href = links.fallback;
+  window.setTimeout(() => {
+    if (document.visibilityState === 'visible') {
+      window.location.href = links.fallback;
+    }
+  }, 1200);
 }

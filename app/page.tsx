@@ -18,6 +18,7 @@ import { useAuthModal } from '@/components/AuthModalProvider';
 import SavedDressList from '@/components/SavedDressList';
 import DressSizeInput from '@/components/DressSizeInput';
 import BookingPaymentStep from '@/components/BookingPaymentStep';
+import OwnDressNoticeModal from '@/components/OwnDressNoticeModal';
 import type { PaymentMethod } from '@/lib/payment-methods';
 import { FAQS } from '@/lib/constants';
 import { validateAddDressForm, validateDressImageFiles } from '@/lib/form-validation';
@@ -31,6 +32,7 @@ import { dressSizeMatchesFilter } from '@/lib/dress-size';
 import { isPastDate, todayDateString } from '@/lib/booking-dates';
 import { OFF_PLATFORM_COORDINATE_NOTICE } from '@/lib/commission';
 import { fetchDressById, findDressInList } from '@/lib/dress-api';
+import { dressBelongsToCustomer } from '@/lib/self-dress-guard';
 import { dressPageUrl, ownerWhatsAppLink, WHATSAPP_LINK } from '@/lib/site-config';
 import { Dress, Review, SortOption, EVENT_TYPES, PICKUP_METHODS } from '@/lib/types';
 import type { SavedDress } from '@/lib/luxe-storage';
@@ -137,7 +139,11 @@ export default function Home() {
   const [isConfirmingPayment, setIsConfirmingPayment] = useState(false);
   const [isSubmittingBooking, setIsSubmittingBooking] = useState(false);
   const [bookingError, setBookingError] = useState('');
-  const [orderOutcome, setOrderOutcome] = useState<'confirmed' | 'awaiting_approval' | null>(null);
+  const [orderOutcome, setOrderOutcome] = useState<'confirmed' | 'payment_reported' | null>(null);
+  const [ownDressNotice, setOwnDressNotice] = useState<{
+    dressName: string;
+    variant: 'booking' | 'coordinate';
+  } | null>(null);
 
   useEffect(() => {
     if (!selectedDress) return;
@@ -166,7 +172,19 @@ export default function Home() {
     const dress = findDressInList(dressesList, reserveId);
     if (!dress) return;
 
-    setSelectedDress(dress);
+    const user = getStoredSiteUser();
+    if (
+      user &&
+      dressBelongsToCustomer(dress, {
+        phone: user.phone,
+        email: user.email,
+        userId: user.userId,
+      })
+    ) {
+      setOwnDressNotice({ dressName: dress.name, variant: 'booking' });
+    } else {
+      setSelectedDress(dress);
+    }
     params.delete('reserve');
     const next = params.toString() ? `/?${params}` : '/';
     window.history.replaceState(null, '', next);
@@ -195,6 +213,7 @@ export default function Home() {
                 event_type: dress.event_type || '',
                 owner_name: dress.owner_name || '',
                 owner_phone: dress.owner_phone || '',
+                owner_email: dress.owner_email || '',
                 deposit: Number(dress.deposit || 0),
                 pickup_method: dress.pickup_method || 'pickup',
                 includes_dry_cleaning: Boolean(dress.includes_dry_cleaning),
@@ -497,11 +516,34 @@ export default function Home() {
     }, 4000);
   };
 
+  const isOwnDress = useCallback((dress: Dress) => {
+    const user = getStoredSiteUser();
+    if (!user) return false;
+    return dressBelongsToCustomer(dress, {
+      phone: user.phone,
+      email: user.email,
+      userId: user.userId,
+    });
+  }, []);
+
+  const tryReserveDress = (dress: Dress, imageIndex?: number) => {
+    if (isOwnDress(dress)) {
+      setOwnDressNotice({ dressName: dress.name, variant: 'booking' });
+      return;
+    }
+    setModalImageIndex(imageIndex ?? (currentImageIndexes[dress.id] || 0));
+    setSelectedDress(dress);
+  };
+
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
     setBookingError('');
     if (!orderName || !orderPhone || !orderEmail || !orderDate || !selectedDress) {
       setBookingError('יש למלא את כל השדות כולל אימייל');
+      return;
+    }
+    if (isOwnDress(selectedDress)) {
+      setOwnDressNotice({ dressName: selectedDress.name, variant: 'booking' });
       return;
     }
     const dateValidationError = getDateValidationError(orderDate, selectedDress);
@@ -577,7 +619,7 @@ export default function Home() {
       const data = await response.json();
       if (data.success && data.awaitingAdminApproval) {
         setPaymentStep(null);
-        setOrderOutcome('awaiting_approval');
+        setOrderOutcome('payment_reported');
         setIsOrdered(true);
         notifyBookingUpdated();
         setTimeout(() => {
@@ -775,6 +817,10 @@ export default function Home() {
       : false;
 
   const openCoordinate = (dress: Dress) => {
+    if (isOwnDress(dress)) {
+      setOwnDressNotice({ dressName: dress.name, variant: 'coordinate' });
+      return;
+    }
     setCoordinateDress(dress);
     setCoordinateDate('');
     setCoordinateChecked(false);
@@ -1045,10 +1091,7 @@ export default function Home() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => {
-                          setSelectedDress(dress);
-                          setModalImageIndex(currentImgIndex);
-                        }}
+                        onClick={() => tryReserveDress(dress, currentImgIndex)}
                         className={`w-full bg-gradient-to-r from-[#2c261a] to-[#4a3f2b] hover:from-[#d4af37] hover:to-[#b8860b] text-white text-[9px] sm:text-[11px] font-bold py-2 sm:py-2.5 rounded-lg sm:rounded-xl shadow-md ${DRESS_CARD_BTN}`}
                       >
                         שרייני
@@ -1241,46 +1284,6 @@ export default function Home() {
                   <select value={newDressData.pickup_method} onChange={(e) => setNewDressData({...newDressData, pickup_method: e.target.value})} className="w-full p-2.5 bg-white border border-[#decfa8] rounded-xl text-xs text-[#2c261a] placeholder:text-[#9a7b4f]">
                     {PICKUP_METHODS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
                   </select>
-                </div>
-              </div>
-
-              {/* מצב השמלה */}
-              <div>
-                <label className="block text-xs font-bold text-[#8b6508] mb-2">מצב השמלה</label>
-                <div className="flex gap-4 bg-neutral-50 p-2.5 rounded-xl border border-[#decfa8] justify-around">
-                  <label className="flex items-center gap-1.5 text-xs font-medium cursor-pointer">
-                    <input 
-                      type="radio" 
-                      name="condition" 
-                      value="new"
-                      checked={newDressData.condition === 'new'}
-                      onChange={(e) => setNewDressData({...newDressData, condition: e.target.value})}
-                      className="accent-[#d4af37]"
-                    />
-                    חדש עם תווית
-                  </label>
-                  <label className="flex items-center gap-1.5 text-xs font-medium cursor-pointer">
-                    <input 
-                      type="radio" 
-                      name="condition" 
-                      value="like-new"
-                      checked={newDressData.condition === 'like-new'}
-                      onChange={(e) => setNewDressData({...newDressData, condition: e.target.value})}
-                      className="accent-[#d4af37]"
-                    />
-                    כמו חדש
-                  </label>
-                  <label className="flex items-center gap-1.5 text-xs font-medium cursor-pointer">
-                    <input 
-                      type="radio" 
-                      name="condition" 
-                      value="used"
-                      checked={newDressData.condition === 'used'}
-                      onChange={(e) => setNewDressData({...newDressData, condition: e.target.value})}
-                      className="accent-[#d4af37]"
-                    />
-                    יד שנייה
-                  </label>
                 </div>
               </div>
 
@@ -1521,7 +1524,7 @@ export default function Home() {
                   onClick={() => {
                     closeCartModal();
                     const fullDress = dressesList.find((d) => d.id === cart[0].id) || null;
-                    if (fullDress) setSelectedDress(fullDress);
+                    if (fullDress) tryReserveDress(fullDress);
                   }}
                   className="w-full bg-[#2c261a] hover:bg-[#b8860b] text-white text-xs font-bold py-3 rounded-xl transition shadow-md"
                 >
@@ -1582,16 +1585,16 @@ export default function Home() {
             <div className="w-full md:w-1/2 p-6 flex flex-col justify-between overflow-y-auto bg-gradient-to-b from-[#fffdf9] to-[#faf6eb]">
               {isOrdered ? (
                 <div className="text-center my-auto py-10">
-                  <span className="text-3xl block mb-2">{orderOutcome === 'awaiting_approval' ? '📨' : '✨ ✨ ✨'}</span>
+                  <span className="text-3xl block mb-2">{orderOutcome === 'payment_reported' ? '✅' : '✨ ✨ ✨'}</span>
                   <h3 className="text-xl font-black text-neutral-900">
-                    {orderOutcome === 'awaiting_approval'
-                      ? 'דיווח התשלום נשלח!'
+                    {orderOutcome === 'payment_reported'
+                      ? 'דיווח התשלום התקבל בהצלחה!'
                       : 'ההזמנה והתשלום אושרו!'}
                   </h3>
                   <p className="mt-2 text-[#5c5037] text-xs font-medium leading-relaxed">
-                    {orderOutcome === 'awaiting_approval' ? (
+                    {orderOutcome === 'payment_reported' ? (
                       <>
-                        קיבלנו את דיווח התשלום. נאשר ברגע שנקבל את הכסף ותישלח הודעה ל-<strong>{orderEmail}</strong>.
+                        תודה! קיבלנו את דיווח התשלום — בקרוב תישלח אלייך הודעת אישור ל-<strong>{orderEmail}</strong>.
                       </>
                     ) : (
                       <>
@@ -1692,9 +1695,7 @@ export default function Home() {
           isInCart={isDressInCart(detailsDress.id)}
           isFavorite={isDressFavorite(detailsDress.id)}
           onReserve={() => {
-            const idx = currentImageIndexes[detailsDress.id] || 0;
-            setModalImageIndex(idx);
-            setSelectedDress(detailsDress);
+            tryReserveDress(detailsDress, currentImageIndexes[detailsDress.id] || 0);
             setDetailsDress(null);
           }}
           onToggleCart={() => toggleCart(detailsDress)}
@@ -1825,6 +1826,14 @@ export default function Home() {
           message={toast.message}
           variant={toast.variant}
           onClose={() => setToast(null)}
+        />
+      )}
+
+      {ownDressNotice && (
+        <OwnDressNoticeModal
+          dressName={ownDressNotice.dressName}
+          variant={ownDressNotice.variant}
+          onClose={() => setOwnDressNotice(null)}
         />
       )}
 

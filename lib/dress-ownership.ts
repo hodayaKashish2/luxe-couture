@@ -1,4 +1,4 @@
-import { phonesMatch } from '@/lib/owner-auth';
+import { phonesMatch } from '@/lib/phone-match';
 import type { SiteUser } from '@/lib/user-auth';
 
 function emailsMatch(a: string, b: string) {

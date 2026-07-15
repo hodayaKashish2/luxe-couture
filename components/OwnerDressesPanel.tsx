@@ -134,6 +134,15 @@ export default function OwnerDressesPanel({
   onAddDress,
   onEditDress,
 }: Props) {
+  const activeDresses = useMemo(
+    () => dresses.filter((d) => d.status !== 'removed'),
+    [dresses]
+  );
+  const removedDresses = useMemo(
+    () => dresses.filter((d) => d.status === 'removed'),
+    [dresses]
+  );
+
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<DressFilter>('all');
   const [sort, setSort] = useState<DressSort>('recent');
@@ -143,10 +152,10 @@ export default function OwnerDressesPanel({
 
   const dressesWithBookings = useMemo(
     () =>
-      dresses.filter((d) =>
+      activeDresses.filter((d) =>
         getConfirmedBookings(getDressBookings(d.id, ownerBookings)).length > 0
       ).length,
-    [dresses, ownerBookings]
+    [activeDresses, ownerBookings]
   );
 
   const upcomingBookings = useMemo(() => {
@@ -167,7 +176,7 @@ export default function OwnerDressesPanel({
 
   const filteredDresses = useMemo(() => {
     const query = search.trim().toLowerCase();
-    let list = dresses.filter((d) => {
+    let list = activeDresses.filter((d) => {
       if (!query) return true;
       return (
         d.name.toLowerCase().includes(query) ||
@@ -197,19 +206,19 @@ export default function OwnerDressesPanel({
     });
 
     return list;
-  }, [dresses, ownerBookings, search, filter, sort]);
+  }, [activeDresses, ownerBookings, search, filter, sort]);
 
   const displayDresses = useMemo(() => {
     if (!selectedDressId || filteredDresses.some((d) => d.id === selectedDressId)) {
       return filteredDresses;
     }
-    const selected = dresses.find((d) => d.id === selectedDressId);
+    const selected = activeDresses.find((d) => d.id === selectedDressId);
     if (!selected) return filteredDresses;
     return [selected, ...filteredDresses];
-  }, [filteredDresses, selectedDressId, dresses]);
+  }, [filteredDresses, selectedDressId, activeDresses]);
 
   const selectedDress = selectedDressId
-    ? dresses.find((d) => d.id === selectedDressId) ?? null
+    ? activeDresses.find((d) => d.id === selectedDressId) ?? null
     : null;
 
   const selectedBookings = selectedDress
@@ -240,10 +249,10 @@ export default function OwnerDressesPanel({
   }
 
   useEffect(() => {
-    if (loading || selectedDressId || dresses.length === 0) return;
-    const defaultId = pickDefaultDressId(dresses, ownerBookings);
+    if (loading || selectedDressId || activeDresses.length === 0) return;
+    const defaultId = pickDefaultDressId(activeDresses, ownerBookings);
     if (defaultId) setSelectedDressId(defaultId);
-  }, [loading, selectedDressId, dresses, ownerBookings]);
+  }, [loading, selectedDressId, activeDresses, ownerBookings]);
 
   useEffect(() => {
     if (!selectedDressId) return;
@@ -257,7 +266,7 @@ export default function OwnerDressesPanel({
     return <p className="text-sm text-[#6e634c] animate-pulse">טוען שמלות...</p>;
   }
 
-  if (dresses.length === 0) {
+  if (activeDresses.length === 0 && removedDresses.length === 0) {
     return (
       <div className="bg-white rounded-2xl border border-[#eadaaf] p-8 text-center space-y-4">
         <p className="text-sm text-[#6e634c]">אין שמלות. הוסיפי שמלה חדשה!</p>
@@ -268,6 +277,50 @@ export default function OwnerDressesPanel({
         >
           ➕ הוספת שמלה
         </button>
+      </div>
+    );
+  }
+
+  if (activeDresses.length === 0) {
+    return (
+      <div className="space-y-4">
+        <div className="flex justify-between items-start flex-wrap gap-3">
+          <div>
+            <h2 className="font-black text-xl">👗 השמלות שלי</h2>
+            <p className="text-xs text-[#6e634c] mt-1">אין שמלות פעילות כרגע.</p>
+          </div>
+          <button
+            type="button"
+            onClick={onAddDress}
+            className="px-4 py-2 bg-[#b8860b] text-white rounded-xl text-xs font-bold shrink-0"
+          >
+            ➕ הוספת שמלה
+          </button>
+        </div>
+        {removedDresses.length > 0 && (
+          <div className="bg-neutral-50 rounded-2xl border border-neutral-200 overflow-hidden">
+            <div className="px-4 py-3 bg-neutral-100 border-b border-neutral-200">
+              <h4 className="text-xs font-black text-neutral-700">
+                🗂️ שמלות שהוסרו מהאתר ({removedDresses.length})
+              </h4>
+            </div>
+            <ul className="divide-y divide-neutral-200 max-h-56 overflow-y-auto">
+              {removedDresses.map((dress) => (
+                <li key={dress.id} className="px-4 py-3 flex gap-3 items-center">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-bold text-neutral-700 truncate">{dress.name}</p>
+                    <p className="text-[10px] text-neutral-500 mt-0.5">
+                      ₪{dress.price} · {dress.size} · {dress.city}
+                    </p>
+                  </div>
+                  <span className="text-[9px] shrink-0 bg-neutral-200 text-neutral-600 px-2 py-0.5 rounded-full">
+                    הוסרה
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
     );
   }
@@ -292,11 +345,11 @@ export default function OwnerDressesPanel({
 
       <div className="grid grid-cols-3 gap-2 text-center">
         <div className="bg-white rounded-xl border border-[#eadaaf] p-3">
-          <p className="text-lg font-black text-[#3d2f24]">{dresses.length}</p>
-          <p className="text-[10px] text-[#6e634c]">שמלות</p>
+          <p className="text-lg font-black text-[#3d2f24]">{activeDresses.length}</p>
+          <p className="text-[10px] text-[#6e634c]">שמלות פעילות</p>
         </div>
         <div className="bg-white rounded-xl border border-[#eadaaf] p-3">
-          <p className="text-lg font-black text-green-700">{dresses.length - dressesWithBookings}</p>
+          <p className="text-lg font-black text-green-700">{activeDresses.length - dressesWithBookings}</p>
           <p className="text-[10px] text-[#6e634c]">פנויות</p>
         </div>
         <div className="bg-white rounded-xl border border-[#eadaaf] p-3">
@@ -576,6 +629,46 @@ export default function OwnerDressesPanel({
                     {BOOKING_STATUS[b.status] || b.status}
                   </span>
                 </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {removedDresses.length > 0 && (
+        <div className="bg-neutral-50 rounded-2xl border border-neutral-200 overflow-hidden">
+          <div className="px-4 py-3 bg-neutral-100 border-b border-neutral-200">
+            <h4 className="text-xs font-black text-neutral-700">
+              🗂️ שמלות שהוסרו מהאתר ({removedDresses.length})
+            </h4>
+            <p className="text-[10px] text-neutral-600 mt-1">
+              שמלות שלא מוצגות יותר בקטלוג — מופיעות כאן לעיון בלבד
+            </p>
+          </div>
+          <ul className="divide-y divide-neutral-200 max-h-56 overflow-y-auto">
+            {removedDresses.map((dress) => (
+              <li key={dress.id} className="px-4 py-3 flex gap-3 items-center">
+                {dress.images?.[0] ? (
+                  <img
+                    src={dress.images[0]}
+                    alt=""
+                    className="w-10 h-12 object-contain rounded-lg border border-neutral-200 bg-white shrink-0 opacity-70"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="w-10 h-12 rounded-lg border border-dashed border-neutral-300 bg-white flex items-center justify-center text-sm shrink-0 opacity-70">
+                    👗
+                  </div>
+                )}
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-bold text-neutral-700 truncate">{dress.name}</p>
+                  <p className="text-[10px] text-neutral-500 mt-0.5">
+                    ₪{dress.price} · {dress.size} · {dress.city}
+                  </p>
+                </div>
+                <span className="text-[9px] shrink-0 bg-neutral-200 text-neutral-600 px-2 py-0.5 rounded-full">
+                  הוסרה
+                </span>
               </li>
             ))}
           </ul>

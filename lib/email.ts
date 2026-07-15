@@ -368,23 +368,26 @@ export async function sendPaymentReportedAdminEmail(params: {
   const approveUrl = `${getAppUrl()}/api/payments/approve?bookingId=${params.bookingId}&token=${encodeURIComponent(process.env.ADMIN_SECRET || '')}`;
 
   return sendAdminEmail(
-    `💰 דיווח תשלום (${params.paymentMethodLabel}): ${params.dressName}`,
+    `💰 דיווח תשלום — ${params.paymentMethodLabel}: ${params.dressName}`,
     `
       <div dir="rtl" style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px;border:1px solid #eadaaf;border-radius:16px;background:#fffdf8;">
         <h2 style="color:#3d2f24;margin-top:0;">לקוחה דיווחה על ביצוע תשלום</h2>
-        <p style="line-height:1.7;color:#554a33;">אחרי שתאשרי שקיבלת את התשלום, לחצי על הכפתור — יישלח מייל אישור ללקוחה.</p>
+        <div style="background:#f4ebd4;border:2px solid #d4af37;border-radius:12px;padding:16px;margin:16px 0;">
+          <p style="margin:0;font-size:13px;color:#6e634c;">אמצעי התשלום שבו שילמה:</p>
+          <p style="margin:8px 0 0;font-size:20px;font-weight:bold;color:#3d2f24;">${params.paymentMethodLabel}</p>
+        </div>
         <p style="line-height:1.7;color:#554a33;"><strong>שמלה:</strong> ${params.dressName}</p>
         <p style="line-height:1.7;color:#554a33;"><strong>שוכרת:</strong> ${params.customerName}</p>
         <p style="line-height:1.7;color:#554a33;"><strong>טלפון:</strong> ${params.customerPhone}</p>
         <p style="line-height:1.7;color:#554a33;"><strong>אימייל:</strong> ${params.customerEmail}</p>
-        <p style="line-height:1.7;color:#554a33;"><strong>תאריך אירוע:</strong> ${params.eventDate}</p>
+        <p style="line-height:1.7;color:#554a33;"><strong>תאריך אירוע לשריון:</strong> ${params.eventDate}</p>
         <p style="line-height:1.7;color:#554a33;"><strong>סכום:</strong> ₪${params.amount}</p>
-        <p style="line-height:1.7;color:#554a33;"><strong>אמצעי תשלום:</strong> ${params.paymentMethodLabel}</p>
         <p style="margin-top:24px;">
           <a href="${approveUrl}" style="display:inline-block;background:#166534;color:#fff;padding:14px 24px;border-radius:12px;text-decoration:none;font-weight:bold;">
-            ✓ אישרתי שקיבלתי את התשלום
+            ✓ אישור תשלום ושריון לתאריך
           </a>
         </p>
+        <p style="font-size:12px;color:#9a7b4f;margin-top:12px;">לחיצה על הכפתור תאשר את התשלום ותשמור את השמלה לתאריך האירוע.</p>
       </div>
     `
   );
@@ -400,12 +403,12 @@ export async function sendPaymentReportedCustomerEmail(params: {
 }) {
   return sendEmailTo(
     params.to,
-    `📨 התשלום התקבל לבדיקה: ${params.dressName}`,
+    `✅ דיווח התשלום התקבל: ${params.dressName}`,
     `
       <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #eadaaf;border-radius:16px;background:#fffdf8;">
         <h2 style="color:#3d2f24;margin-top:0;">שלום ${params.customerName}!</h2>
-        <p style="line-height:1.7;color:#554a33;">קיבלנו את דיווח התשלום שלך ב<strong>${params.paymentMethodLabel}</strong>.</p>
-        <p style="line-height:1.7;color:#554a33;">ברגע שנאמת קבלת התשלום תישלח אלייך הודעת אישור סופית במייל.</p>
+        <p style="line-height:1.7;color:#554a33;">קיבלנו את דיווח התשלום שלך ב<strong>${params.paymentMethodLabel}</strong> — תודה!</p>
+        <p style="line-height:1.7;color:#554a33;">בקרוב תישלח אלייך הודעת אישור סופית במייל עם פרטי ההזמנה.</p>
         <p style="line-height:1.7;color:#554a33;"><strong>שמלה:</strong> ${params.dressName}</p>
         <p style="line-height:1.7;color:#554a33;"><strong>תאריך אירוע:</strong> ${params.eventDate}</p>
         <p style="line-height:1.7;color:#554a33;"><strong>סכום:</strong> ₪${params.amount}</p>

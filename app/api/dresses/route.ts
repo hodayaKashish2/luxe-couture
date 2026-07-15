@@ -19,6 +19,7 @@ function mapDress(row: Record<string, unknown>, bookedDates: string[] = []) {
     event_type: row.event_type || '',
     owner_name: row.owner_name || '',
     owner_phone: row.owner_phone || '',
+    owner_email: row.owner_email || '',
     deposit: Number(row.deposit || 0),
     pickup_method: row.pickup_method || 'pickup',
     includes_dry_cleaning: Boolean(row.includes_dry_cleaning),

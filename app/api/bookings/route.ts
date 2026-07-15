@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import { calculateCommission, COMMISSION_PERCENT } from '@/lib/commission';
 import { sendAdminEmail, sendBookingConfirmationEmail, sendBookingPendingEmail } from '@/lib/email';
+import { userOwnsDress } from '@/lib/dress-ownership';
 import { getUserFromRequest } from '@/lib/user-auth';
-import { phonesMatch } from '@/lib/owner-auth';
+import { phonesMatch } from '@/lib/phone-match';
 import { isPastDate } from '@/lib/booking-dates';
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server';
 import { buildTranzilaPaymentUrl, isTranzilaConfigured } from '@/lib/tranzila';
@@ -129,6 +130,35 @@ export async function POST(request: Request) {
     }
 
     const supabase = getSupabaseAdmin();
+
+    const { data: dressRow, error: dressError } = await supabase
+      .from('dresses')
+      .select('id, owner_phone, owner_email, submitter_user_id')
+      .eq('id', dressId)
+      .maybeSingle();
+
+    if (dressError) throw dressError;
+    if (!dressRow) {
+      return NextResponse.json({ error: 'השמלה לא נמצאה' }, { status: 404 });
+    }
+
+    if (
+      loggedInUser &&
+      userOwnsDress(dressRow, {
+        userId: loggedInUser.userId,
+        phone: loggedInUser.phone || phone,
+        email: loggedInUser.email || email,
+      })
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            'זו השמלה שפרסמת באתר — לא ניתן להזמין אותה לעצמך. לניהול ההזמנות והתאריכים, היכנסי ל״השמלות שלי״ באזור האישי.',
+        },
+        { status: 403 }
+      );
+    }
+
     const { platformFee, ownerPayout, total } = calculateCommission(dressPrice);
 
     const { data: confirmedBooking, error: confirmedError } = await supabase

@@ -49,7 +49,7 @@ export default function BookingPaymentStep({
 
   const handleBank = () => {
     setMethod('bank');
-    setShowBankDetails(true);
+    setShowBankDetails((open) => !open);
   };
 
   return (
@@ -100,7 +100,9 @@ export default function BookingPaymentStep({
             : 'bg-white border-[#decfa8] text-neutral-900 hover:border-[#b8860b]'
         }`}
       >
-        🏦 צפייה בפרטי העברה בנקאית
+        {method === 'bank' && showBankDetails
+          ? '🏦 הסתרת פרטי העברה בנקאית'
+          : '🏦 צפייה בפרטי העברה בנקאית'}
       </button>
 
       {method === 'bit' && (
@@ -110,7 +112,7 @@ export default function BookingPaymentStep({
             האפליקציה אמורה להיפתח על עמוד ההעברה ל-<strong dir="ltr">{BIT_PHONE_DISPLAY}</strong> בסכום{' '}
             <strong>₪{amount}</strong>.
           </p>
-          <p className="text-[10px] text-[#9a7b4f]">אחרי ההעברה לחצי אישור תשלום — נאשר ברגע שנקבל את הכסף.</p>
+          <p className="text-[10px] text-[#9a7b4f]">אחרי ההעברה לחצי אישור תשלום — נשלח אלייך אישור במייל.</p>
           <button
             type="button"
             onClick={() => openBitPayment(amount)}
@@ -148,7 +150,16 @@ export default function BookingPaymentStep({
 
       {method === 'bank' && showBankDetails && (
         <div className="bg-white border border-[#decfa8] rounded-xl p-4 text-xs space-y-2">
-          <p className="font-black text-neutral-900">פרטי העברה בנקאית</p>
+          <div className="flex items-center justify-between gap-2">
+            <p className="font-black text-neutral-900">פרטי העברה בנקאית</p>
+            <button
+              type="button"
+              onClick={() => setShowBankDetails(false)}
+              className="text-[10px] font-bold text-[#8b6508] hover:underline shrink-0"
+            >
+              ✕ סגירה
+            </button>
+          </div>
           <div className="space-y-1 text-[#5c5037]">
             <p>
               <span className="font-bold text-neutral-800">שם: </span>
@@ -170,7 +181,7 @@ export default function BookingPaymentStep({
               <span className="font-bold text-neutral-800">סכום להעברה: </span>₪{amount}
             </p>
           </div>
-          <p className="text-[10px] text-[#9a7b4f] pt-1">אחרי ביצוע ההעברה, לחצי אישור תשלום — נאשר ברגע שנקבל את הכסף.</p>
+          <p className="text-[10px] text-[#9a7b4f] pt-1">אחרי ביצוע ההעברה, לחצי אישור תשלום — נשלח אלייך אישור במייל.</p>
         </div>
       )}
 

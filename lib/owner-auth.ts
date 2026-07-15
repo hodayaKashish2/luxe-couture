@@ -1,24 +1,14 @@
 import crypto from 'crypto';
 
+import { normalizePhone } from '@/lib/phone-match';
+
+export { normalizePhone, phonesMatch } from '@/lib/phone-match';
+
 const TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
 function getSecret() {
   return process.env.ADMIN_SECRET || process.env.OWNER_SECRET || '';
 }
-
-export function normalizePhone(phone: string) {
-  const digits = phone.replace(/\D/g, '');
-  if (digits.startsWith('972')) return digits;
-  if (digits.startsWith('0')) return `972${digits.slice(1)}`;
-  if (digits.length === 9) return `972${digits}`;
-  return digits;
-}
-
-export function phonesMatch(a: string, b: string) {
-  if (!a || !b) return false;
-  return normalizePhone(a) === normalizePhone(b);
-}
-
 export function createOwnerToken(phone: string, ownerName: string) {
   const secret = getSecret();
   if (!secret) throw new Error('ADMIN_SECRET לא מוגדר');

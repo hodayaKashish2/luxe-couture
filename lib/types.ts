@@ -11,6 +11,7 @@ export type Dress = {
   event_type: string;
   owner_name: string;
   owner_phone: string;
+  owner_email?: string;
   deposit: number;
   pickup_method: string;
   booked_dates: string[];
