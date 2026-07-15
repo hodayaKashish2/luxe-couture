@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import type { Dress } from '@/lib/types';
+import DressRatingsSection from '@/components/DressRatingsSection';
 import { getCleanDescription, getDressDetailRows } from '@/lib/dress-display';
 
 type Props = {
@@ -12,10 +13,14 @@ type Props = {
   onToggleCart?: () => void;
   onToggleFavorite?: () => void;
   onCoordinate?: () => void;
-  onViewRatings?: () => void;
+  onRate?: () => void;
+  onShare?: () => void;
   isInCart?: boolean;
   isFavorite?: boolean;
 };
+
+const actionBtnClass =
+  'cursor-pointer transition-all duration-200 hover:border-[#d4af37] hover:bg-[#fffdf8] hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98]';
 
 export default function DressDetailsModal({
   dress,
@@ -25,7 +30,8 @@ export default function DressDetailsModal({
   onToggleCart,
   onToggleFavorite,
   onCoordinate,
-  onViewRatings,
+  onRate,
+  onShare,
   isInCart = false,
   isFavorite = false,
 }: Props) {
@@ -47,13 +53,12 @@ export default function DressDetailsModal({
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-4 left-4 z-30 bg-white hover:bg-[#d4af37] text-[#b8860b] hover:text-white w-9 h-9 rounded-full flex items-center justify-center border-2 border-[#ebd4a8] shadow-md font-bold transition-all"
+          className="absolute top-4 left-4 z-30 bg-white hover:bg-[#d4af37] text-[#b8860b] hover:text-white w-9 h-9 rounded-full flex items-center justify-center border-2 border-[#ebd4a8] shadow-md font-bold transition-all cursor-pointer"
           aria-label="סגירה"
         >
           ✕
         </button>
 
-        {/* גלריה גדולה — גודל אחיד עם או בלי סליידר */}
         <div className="relative w-full md:w-3/5 flex flex-col bg-[#faf8f3] border-b md:border-b-0 md:border-l border-[#f0e2c3] min-h-[50vh] md:min-h-[70vh]">
           <div className="relative flex-1 min-h-[42vh] sm:min-h-[48vh] md:min-h-0">
             {images.length > 0 ? (
@@ -63,13 +68,16 @@ export default function DressDetailsModal({
                   alt={dress.name}
                   className="absolute inset-0 w-full h-full object-contain p-3 sm:p-4"
                 />
+                <span className="absolute top-4 right-4 z-20 bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white text-[10px] font-black px-3 py-1 rounded-full shadow-md pointer-events-none">
+                  מידה {dress.size}
+                </span>
 
                 {images.length > 1 && (
                   <>
                     <button
                       type="button"
                       onClick={() => setImageIndex((prev) => (prev - 1 + images.length) % images.length)}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 z-20 bg-white/95 text-[#b8860b] w-10 h-10 rounded-full flex items-center justify-center shadow-lg border border-[#e8cc92] font-black text-xl hover:bg-[#d4af37] hover:text-white transition-all"
+                      className={`absolute left-3 top-1/2 -translate-y-1/2 z-20 bg-white/95 text-[#b8860b] w-10 h-10 rounded-full flex items-center justify-center shadow-lg border border-[#e8cc92] font-black text-xl hover:bg-[#d4af37] hover:text-white ${actionBtnClass}`}
                       aria-label="תמונה קודמת"
                     >
                       ‹
@@ -77,7 +85,7 @@ export default function DressDetailsModal({
                     <button
                       type="button"
                       onClick={() => setImageIndex((prev) => (prev + 1) % images.length)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 z-20 bg-white/95 text-[#b8860b] w-10 h-10 rounded-full flex items-center justify-center shadow-lg border border-[#e8cc92] font-black text-xl hover:bg-[#d4af37] hover:text-white transition-all"
+                      className={`absolute right-3 top-1/2 -translate-y-1/2 z-20 bg-white/95 text-[#b8860b] w-10 h-10 rounded-full flex items-center justify-center shadow-lg border border-[#e8cc92] font-black text-xl hover:bg-[#d4af37] hover:text-white ${actionBtnClass}`}
                       aria-label="תמונה הבאה"
                     >
                       ›
@@ -89,7 +97,7 @@ export default function DressDetailsModal({
                           key={`${img}-${idx}`}
                           type="button"
                           onClick={() => setImageIndex(idx)}
-                          className={`rounded-full transition-all ${
+                          className={`rounded-full transition-all cursor-pointer ${
                             idx === imageIndex ? 'bg-[#d4af37] w-3 h-3' : 'bg-[#e5d9bd] w-2 h-2 hover:bg-[#d4af37]/60'
                           }`}
                           aria-label={`תמונה ${idx + 1}`}
@@ -111,8 +119,8 @@ export default function DressDetailsModal({
                   key={`thumb-${img}-${idx}`}
                   type="button"
                   onClick={() => setImageIndex(idx)}
-                  className={`shrink-0 w-16 h-16 rounded-lg border-2 overflow-hidden bg-[#faf8f3] ${
-                    idx === imageIndex ? 'border-[#d4af37] ring-2 ring-[#d4af37]/40' : 'border-[#eadaaf]'
+                  className={`shrink-0 w-16 h-16 rounded-lg border-2 overflow-hidden bg-[#faf8f3] cursor-pointer transition-all hover:scale-105 ${
+                    idx === imageIndex ? 'border-[#d4af37] ring-2 ring-[#d4af37]/40' : 'border-[#eadaaf] hover:border-[#d4af37]'
                   }`}
                 >
                   <img src={img} alt="" className="w-full h-full object-contain" />
@@ -122,16 +130,12 @@ export default function DressDetailsModal({
           )}
         </div>
 
-        {/* פרטים */}
         <div className="w-full md:w-2/5 flex flex-col overflow-y-auto max-h-[50vh] md:max-h-[70vh] bg-gradient-to-b from-[#fffdf9] to-[#faf6eb]">
           <div className="p-5 sm:p-6 space-y-4 flex-1">
             <div>
               <p className="text-[10px] text-[#b8860b] font-black tracking-widest mb-1">✦ פרטי שמלה ✦</p>
               <h2 className="text-xl sm:text-2xl font-black text-[#3d2f24] leading-tight">{dress.name}</h2>
               <div className="flex flex-wrap gap-2 mt-3">
-                <span className="bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white text-[10px] font-black px-3 py-1 rounded-full">
-                  מידה {dress.size}
-                </span>
                 {dress.city && (
                   <span className="bg-[#f4ebd4] text-[#8b6508] text-[10px] font-bold px-3 py-1 rounded-full">
                     📍 {dress.city}
@@ -153,35 +157,18 @@ export default function DressDetailsModal({
             )}
 
             <div className="space-y-2">
-              {rows.map((row) => {
-                const isRatingRow = row.label === 'דירוג' && onViewRatings;
-                if (isRatingRow) {
-                  return (
-                    <button
-                      key={row.label}
-                      type="button"
-                      onClick={onViewRatings}
-                      className="w-full flex justify-between items-center py-2.5 px-3 rounded-xl bg-white border border-[#ede3c8] hover:border-[#d4af37] hover:bg-[#fffdf8] transition-colors text-right"
-                    >
-                      <span className="text-xs text-[#8b6508] font-bold">{row.label}</span>
-                      <span className="text-sm font-black text-[#3d2f24] flex items-center gap-1">
-                        {row.value}
-                        <span className="text-[10px] text-[#b8860b] font-bold">← צפי</span>
-                      </span>
-                    </button>
-                  );
-                }
-                return (
-                  <div
-                    key={row.label}
-                    className="flex justify-between items-center py-2.5 px-3 rounded-xl bg-white border border-[#ede3c8]"
-                  >
-                    <span className="text-xs text-[#8b6508] font-bold">{row.label}</span>
-                    <span className="text-sm font-black text-[#3d2f24]">{row.value}</span>
-                  </div>
-                );
-              })}
+              {rows.map((row) => (
+                <div
+                  key={row.label}
+                  className="flex justify-between items-center py-2.5 px-3 rounded-xl bg-white border border-[#ede3c8]"
+                >
+                  <span className="text-xs text-[#8b6508] font-bold">{row.label}</span>
+                  <span className="text-sm font-black text-[#3d2f24]">{row.value}</span>
+                </div>
+              ))}
             </div>
+
+            <DressRatingsSection dress={dress} />
 
             <div className="flex justify-between items-center pt-2 border-t-2 border-dotted border-[#eadaaf]">
               <span className="text-sm font-bold text-[#8b6508]">מחיר השכרה</span>
@@ -195,13 +182,13 @@ export default function DressDetailsModal({
             )}
           </div>
 
-          {(onReserve || onToggleCart || onToggleFavorite || onCoordinate) && (
+          {(onReserve || onToggleCart || onToggleFavorite || onCoordinate || onRate || onShare) && (
             <div className="p-5 sm:p-6 pt-0 space-y-2 border-t border-[#f0e2c3] bg-white/60">
               {onReserve && (
                 <button
                   type="button"
                   onClick={onReserve}
-                  className="w-full py-3.5 bg-gradient-to-r from-[#2c261a] to-[#4a3f2b] hover:from-[#d4af37] hover:to-[#b8860b] text-white text-sm font-black rounded-xl shadow-md transition-all"
+                  className={`w-full py-3.5 bg-gradient-to-r from-[#2c261a] to-[#4a3f2b] hover:from-[#d4af37] hover:to-[#b8860b] text-white text-sm font-black rounded-xl shadow-md ${actionBtnClass}`}
                 >
                   שרייני עכשיו
                 </button>
@@ -211,7 +198,7 @@ export default function DressDetailsModal({
                   <button
                     type="button"
                     onClick={onToggleCart}
-                    className={`py-2.5 rounded-xl text-xs font-bold border transition ${
+                    className={`py-2.5 rounded-xl text-xs font-bold border ${actionBtnClass} ${
                       isInCart
                         ? 'bg-[#f4ebd4] border-[#d4af37] text-[#b8860b]'
                         : 'bg-white border-[#decfa8] text-[#8b6508]'
@@ -224,7 +211,7 @@ export default function DressDetailsModal({
                   <button
                     type="button"
                     onClick={onToggleFavorite}
-                    className="py-2.5 rounded-xl text-xs font-bold border border-[#decfa8] bg-white text-[#8b6508]"
+                    className={`py-2.5 rounded-xl text-xs font-bold border border-[#decfa8] bg-white text-[#8b6508] ${actionBtnClass}`}
                   >
                     {isFavorite ? '❤️ במועדפים' : '🤍 הוסיפי למועדפים'}
                   </button>
@@ -234,10 +221,32 @@ export default function DressDetailsModal({
                 <button
                   type="button"
                   onClick={onCoordinate}
-                  className="w-full py-2.5 border-2 border-[#decfa8] bg-white text-[#8b6508] text-xs font-bold rounded-xl"
+                  className={`w-full py-2.5 border-2 border-[#decfa8] bg-white text-[#8b6508] text-xs font-bold rounded-xl ${actionBtnClass}`}
                 >
                   📅 תיאום עם המשכירה
                 </button>
+              )}
+              {(onRate || onShare) && (
+                <div className="grid grid-cols-2 gap-2">
+                  {onRate && (
+                    <button
+                      type="button"
+                      onClick={onRate}
+                      className={`py-2.5 rounded-xl text-xs font-bold border border-[#decfa8] bg-white text-[#8b6508] ${actionBtnClass}`}
+                    >
+                      ⭐ דרגי
+                    </button>
+                  )}
+                  {onShare && (
+                    <button
+                      type="button"
+                      onClick={onShare}
+                      className={`py-2.5 rounded-xl text-xs font-bold border border-[#decfa8] bg-white text-[#8b6508] ${actionBtnClass}`}
+                    >
+                      📤 שתפי
+                    </button>
+                  )}
+                </div>
               )}
             </div>
           )}

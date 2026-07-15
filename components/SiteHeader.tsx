@@ -153,7 +153,7 @@ export default function SiteHeader() {
           <Link href="/" className="flex items-center gap-2 sm:gap-3 shrink min-w-0">
             <img
               src="/logo.svg"
-              alt=""
+              alt={SITE_NAME}
               className="w-9 h-9 sm:w-11 sm:h-11 shrink-0 drop-shadow-[0_4px_14px_rgba(184,134,11,0.28)]"
             />
             <div className="min-w-0">

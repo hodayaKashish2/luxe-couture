@@ -11,7 +11,6 @@ import DressCardSummary from '@/components/DressCardSummary';
 import RentalCountBadge from '@/components/RentalCountBadge';
 import DressDetailsModal from '@/components/DressDetailsModal';
 import DressRateModal from '@/components/DressRateModal';
-import DressRatingsModal from '@/components/DressRatingsModal';
 import { useLuxeStorage } from '@/components/LuxeStorageProvider';
 import { useAuthModal } from '@/components/AuthModalProvider';
 import SavedDressList from '@/components/SavedDressList';
@@ -28,6 +27,9 @@ import { fetchDressById, findDressInList } from '@/lib/dress-api';
 import { dressShareUrl, ownerWhatsAppLink, WHATSAPP_LINK } from '@/lib/site-config';
 import { Dress, Review, SortOption, EVENT_TYPES, PICKUP_METHODS } from '@/lib/types';
 import type { SavedDress } from '@/lib/luxe-storage';
+
+const DRESS_CARD_BTN =
+  'cursor-pointer transition-all duration-200 hover:border-[#d4af37] hover:bg-[#fffdf8] hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98]';
 
 export default function Home() {
   const { openAuthModal } = useAuthModal();
@@ -104,7 +106,6 @@ export default function Home() {
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
 
   const [rateDress, setRateDress] = useState<Dress | null>(null);
-  const [ratingsDress, setRatingsDress] = useState<Dress | null>(null);
   const [paymentStep, setPaymentStep] = useState<{
     bookingId: number;
     amount: number;
@@ -881,7 +882,7 @@ export default function Home() {
                       type="button"
                       onPointerDown={(e) => e.stopPropagation()}
                       onClick={(e) => handleToggleFavorite(dress, e)}
-                      className="absolute top-2 left-2 sm:top-3 sm:left-3 z-40 bg-white/90 hover:bg-white w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center shadow-md border border-[#eadaaf] text-xs sm:text-sm transition transform active:scale-90"
+                      className={`absolute top-2 left-2 sm:top-3 sm:left-3 z-40 bg-white/90 hover:bg-white w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center shadow-md border border-[#eadaaf] text-xs sm:text-sm ${DRESS_CARD_BTN}`}
                     >
                       {isFav ? '❤️' : '🤍'}
                     </button>
@@ -942,13 +943,13 @@ export default function Home() {
                     <button
                       type="button"
                       onClick={() => setDetailsDress(dress)}
-                      className="text-sm sm:text-lg font-bold text-neutral-900 tracking-wide group-hover:text-[#b8860b] transition-colors text-right line-clamp-2"
+                      className="text-sm sm:text-lg font-bold text-neutral-900 tracking-wide group-hover:text-[#b8860b] transition-colors text-right line-clamp-2 cursor-pointer hover:underline underline-offset-2"
                     >
                       {dress.name}
                     </button>
                     <button 
                       onClick={(e) => handleToggleCart(dress, e)}
-                      className={`text-[10px] sm:text-xs p-1 sm:p-1.5 rounded-lg border transition shrink-0 ${
+                      className={`text-[10px] sm:text-xs p-1 sm:p-1.5 rounded-lg border shrink-0 ${DRESS_CARD_BTN} ${
                         inCart ? 'bg-[#f4ebd4] border-[#d4af37] text-[#b8860b]' : 'border-neutral-200 hover:bg-neutral-50'
                       }`}
                       title={inCart ? "הסר מהסל" : "הוסף לסל הזמנות מרוכז"}
@@ -971,37 +972,26 @@ export default function Home() {
                       <button
                         type="button"
                         onClick={() => openCoordinate(dress)}
-                        className="w-full px-2 sm:px-3 py-2 sm:py-2.5 border-2 border-[#decfa8] bg-white text-[#8b6508] text-[9px] sm:text-[11px] font-bold rounded-lg sm:rounded-xl"
+                        className={`w-full px-2 sm:px-3 py-2 sm:py-2.5 border-2 border-[#decfa8] bg-white text-[#8b6508] text-[9px] sm:text-[11px] font-bold rounded-lg sm:rounded-xl ${DRESS_CARD_BTN}`}
                       >
                         📅 תיאום
                       </button>
                       <button
+                        type="button"
                         onClick={() => {
                           setSelectedDress(dress);
                           setModalImageIndex(currentImgIndex);
                         }}
-                        className="w-full bg-gradient-to-r from-[#2c261a] to-[#4a3f2b] hover:from-[#d4af37] hover:to-[#b8860b] text-white text-[9px] sm:text-[11px] font-bold py-2 sm:py-2.5 rounded-lg sm:rounded-xl shadow-md"
+                        className={`w-full bg-gradient-to-r from-[#2c261a] to-[#4a3f2b] hover:from-[#d4af37] hover:to-[#b8860b] text-white text-[9px] sm:text-[11px] font-bold py-2 sm:py-2.5 rounded-lg sm:rounded-xl shadow-md ${DRESS_CARD_BTN}`}
                       >
                         שרייני
                       </button>
                     </div>
                     <div className="hidden sm:flex gap-2 justify-center">
-                      {dress.rating_count > 0 && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setRatingsDress(dress);
-                          }}
-                          className="px-3 py-2 border border-[#decfa8] rounded-xl text-xs text-[#8b6508]"
-                        >
-                          ⭐ דירוגים ({dress.rating_count})
-                        </button>
-                      )}
                       <button
                         type="button"
                         onClick={(e) => { e.stopPropagation(); setRateDress(dress); }}
-                        className="px-3 py-2 border border-[#decfa8] rounded-xl text-xs text-[#8b6508]"
+                        className={`px-3 py-2 border border-[#decfa8] rounded-xl text-xs text-[#8b6508] ${DRESS_CARD_BTN}`}
                       >
                         ⭐ דרגי
                       </button>
@@ -1013,7 +1003,7 @@ export default function Home() {
                           else navigator.clipboard.writeText(url);
                           alert('קישור לשמלה הועתק!');
                         }}
-                        className="px-3 py-2 border border-[#decfa8] rounded-xl text-xs text-[#8b6508]"
+                        className={`px-3 py-2 border border-[#decfa8] rounded-xl text-xs text-[#8b6508] ${DRESS_CARD_BTN}`}
                       >
                         📤 שתפי
                       </button>
@@ -1677,18 +1667,14 @@ export default function Home() {
             openCoordinate(detailsDress);
             setDetailsDress(null);
           }}
-          onViewRatings={
-            detailsDress.rating_count > 0
-              ? () => {
-                  setRatingsDress(detailsDress);
-                }
-              : undefined
-          }
+          onRate={() => setRateDress(detailsDress)}
+          onShare={() => {
+            const url = dressShareUrl(detailsDress.name, detailsDress.id);
+            if (navigator.share) navigator.share({ title: detailsDress.name, url }).catch(() => {});
+            else navigator.clipboard.writeText(url);
+            alert('קישור לשמלה הועתק!');
+          }}
         />
-      )}
-
-      {ratingsDress && (
-        <DressRatingsModal dress={ratingsDress} onClose={() => setRatingsDress(null)} />
       )}
 
       {rateDress && (

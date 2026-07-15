@@ -26,7 +26,6 @@ export function getCleanDescription(description: string) {
 
 export function getDressDetailRows(dress: Dress) {
   return [
-    { label: 'מידה', value: dress.size },
     { label: 'עיר', value: dress.city },
     { label: 'סוג אירוע', value: dress.event_type },
     { label: 'צבע', value: dress.color },
@@ -37,8 +36,5 @@ export function getDressDetailRows(dress: Dress) {
       value: dress.includes_dry_cleaning ? 'כלול במחיר' : 'לא כלול',
     },
     dress.rental_count > 0 ? { label: 'השכרות', value: String(dress.rental_count) } : null,
-    dress.rating_count > 0
-      ? { label: 'דירוג', value: `⭐ ${dress.rating_avg} (${dress.rating_count})` }
-      : null,
   ].filter((row): row is { label: string; value: string } => Boolean(row?.value));
 }
