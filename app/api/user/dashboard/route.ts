@@ -97,13 +97,13 @@ export async function GET(request: Request) {
       let dressMap: Record<string, string> = {};
       let dressOwnerMap: Record<
         string,
-        { owner_name: string; owner_phone: string; owner_email: string }
+        { owner_name: string; owner_phone: string; owner_email: string; status: string }
       > = {};
 
       if (dressIdsNeeded.length > 0) {
         const { data: dressRows } = await supabase
           .from('dresses')
-          .select('id, name, owner_name, owner_phone, owner_email')
+          .select('id, name, owner_name, owner_phone, owner_email, status')
           .in('id', dressIdsNeeded);
         dressMap = Object.fromEntries((dressRows ?? []).map((d) => [String(d.id), d.name]));
         dressOwnerMap = Object.fromEntries(
@@ -113,6 +113,7 @@ export async function GET(request: Request) {
               owner_name: d.owner_name || '',
               owner_phone: d.owner_phone || '',
               owner_email: d.owner_email || '',
+              status: d.status || 'approved',
             },
           ])
         );
@@ -139,6 +140,7 @@ export async function GET(request: Request) {
             owner_name: '',
             owner_phone: '',
             owner_email: '',
+            status: 'approved',
           };
           return {
             ...b,
@@ -146,6 +148,7 @@ export async function GET(request: Request) {
             owner_name: owner.owner_name,
             owner_phone: owner.owner_phone,
             owner_email: owner.owner_email,
+            dress_status: owner.status,
           };
         });
     }

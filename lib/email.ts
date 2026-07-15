@@ -1,6 +1,6 @@
 import { Resend } from 'resend';
 import nodemailer from 'nodemailer';
-import { DEFAULT_ADMIN_EMAIL, resolveSiteEmail } from '@/lib/site-config';
+import { DEFAULT_ADMIN_EMAIL, getSiteAdminEmail } from '@/lib/site-config';
 
 let resendClient: Resend | null = null;
 let smtpTransport: nodemailer.Transporter | null = null;
@@ -20,12 +20,7 @@ function getResendClient(): Resend | null {
 }
 
 function getSmtpCredentials() {
-  const user = resolveSiteEmail(
-    process.env.SMTP_USER ||
-      process.env.SMTP_EMAIL ||
-      process.env.ADMIN_EMAIL ||
-      DEFAULT_ADMIN_EMAIL
-  );
+  const user = getSiteAdminEmail();
 
   const pass = (
     process.env.SMTP_PASSWORD ||
@@ -58,7 +53,7 @@ function getSmtpTransport(): nodemailer.Transporter | null {
 }
 
 export function getAdminEmail(): string {
-  return resolveSiteEmail(process.env.ADMIN_EMAIL);
+  return getSiteAdminEmail();
 }
 
 export function getAppUrl(): string {

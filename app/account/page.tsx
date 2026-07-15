@@ -59,6 +59,7 @@ type BookingRow = {
   owner_email?: string;
   event_date: string;
   status: string;
+  dress_status?: string;
 };
 
 const STATUS: Record<string, string> = {
@@ -520,8 +521,11 @@ function AccountPageContent() {
     }
   }
 
-  const reservationDates = reservations.map((r) => r.event_date);
-  const dressesWithBookings = dresses.filter((d) =>
+  const activeDresses = dresses.filter((d) => d.status !== 'removed');
+  const activeReservations = reservations.filter((r) => r.dress_status !== 'removed');
+  const removedReservations = reservations.filter((r) => r.dress_status === 'removed');
+  const reservationDates = activeReservations.map((r) => r.event_date);
+  const dressesWithBookings = activeDresses.filter((d) =>
     ownerBookings.some((b) => String(b.dress_id) === String(d.id))
   ).length;
 
@@ -560,7 +564,7 @@ function AccountPageContent() {
                     <span className="text-[#9a7b4f] animate-pulse">טוען...</span>
                   ) : (
                     <>
-                      {reservations.length} הזמנות מאושרות
+                      {activeReservations.length} הזמנות מאושרות
                     </>
                   )}
                 </p>
@@ -581,7 +585,7 @@ function AccountPageContent() {
                     <span className="text-[#9a7b4f] animate-pulse">טוען...</span>
                   ) : (
                     <>
-                      {dresses.length} שמלות
+                      {activeDresses.length} שמלות
                       {dressesWithBookings > 0 && ` · ${dressesWithBookings} עם הזמנות`}
                     </>
                   )}
@@ -646,7 +650,7 @@ function AccountPageContent() {
             <h2 className="font-black text-xl">📅 ההזמנות שלי</h2>
             {loading ? (
               <p className="text-sm text-[#6e634c] animate-pulse">טוען שמלות...</p>
-            ) : reservations.length === 0 ? (
+            ) : activeReservations.length === 0 && removedReservations.length === 0 ? (
               <div className="bg-white rounded-2xl border border-[#eadaaf] p-8 text-center">
                 <p className="text-sm text-[#6e634c]">עדיין אין הזמנות מאושרות. מצאי שמלה בקטלוג והשלימי תשלום!</p>
                 <Link href="/" className="inline-block mt-4 px-4 py-2 bg-[#b8860b] text-white rounded-xl text-xs font-bold">
@@ -660,7 +664,7 @@ function AccountPageContent() {
                   <DressCalendar bookedDates={reservationDates} />
                 </div>
                 <ul className="space-y-3">
-                  {reservations.map((r) => (
+                  {activeReservations.map((r) => (
                     <li key={r.id} className="bg-white rounded-xl border border-[#eadaaf] p-4">
                       <div className="flex justify-between gap-2 flex-wrap">
                         <strong>{r.dress_name}</strong>
@@ -740,6 +744,30 @@ function AccountPageContent() {
                     </li>
                   ))}
                 </ul>
+
+                {removedReservations.length > 0 && (
+                  <div className="bg-neutral-50 rounded-2xl border border-neutral-200 overflow-hidden">
+                    <div className="px-4 py-3 bg-neutral-100 border-b border-neutral-200">
+                      <h4 className="text-xs font-black text-neutral-700">🗂️ שמלות שהוסרו מהאתר</h4>
+                      <p className="text-[10px] text-neutral-600 mt-1">
+                        הזמנות קודמות לשמלות שכבר לא מוצגות בקטלוג
+                      </p>
+                    </div>
+                    <ul className="divide-y divide-neutral-200">
+                      {removedReservations.map((r) => (
+                        <li key={r.id} className="px-4 py-3">
+                          <div className="flex justify-between gap-2 flex-wrap">
+                            <strong className="text-neutral-700">{r.dress_name}</strong>
+                            <span className="text-[10px] bg-neutral-200 text-neutral-600 px-2 py-0.5 rounded-full">
+                              הוסרה מהאתר
+                            </span>
+                          </div>
+                          <p className="text-sm text-neutral-500 font-bold mt-1">📅 {r.event_date}</p>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </>
             )}
           </div>

@@ -27,6 +27,7 @@ import { getStoredSiteUser } from '@/lib/session-user';
 import { isLoggedIn } from '@/lib/require-login';
 import { useModalHistory } from '@/hooks/use-modal-history';
 import { useScrollToError } from '@/hooks/use-scroll-to-error';
+import { popModalStackInPlace } from '@/lib/modal-history';
 import { compareDresses, getTopRentalRanks } from '@/lib/dress-sort';
 import { dressSizeMatchesFilter } from '@/lib/dress-size';
 import { isPastDate, todayDateString } from '@/lib/booking-dates';
@@ -320,7 +321,7 @@ export default function Home() {
     setCoordinateDisclaimerAccepted(false);
   }, []);
 
-  const { close: closeAddDressModal } = useModalHistory({
+  useModalHistory({
     key: 'add-dress',
     isOpen: isAddDressOpen,
     onClose: () => {
@@ -328,6 +329,12 @@ export default function Home() {
       setIsAddDressOpen(false);
     },
   });
+
+  const closeAddDressModal = useCallback(() => {
+    resetAddDressForm();
+    setIsAddDressOpen(false);
+    popModalStackInPlace();
+  }, []);
 
   const { close: closeAddReviewModal } = useModalHistory({
     key: 'add-review',

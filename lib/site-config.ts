@@ -6,11 +6,22 @@ export const LEGACY_ADMIN_EMAIL = 'hodayaka1212@gmail.com';
 
 export function resolveSiteEmail(email?: string | null) {
   const value = (email || DEFAULT_ADMIN_EMAIL).trim().toLowerCase();
-  if (value === LEGACY_ADMIN_EMAIL) return DEFAULT_ADMIN_EMAIL;
+  if (
+    !value ||
+    value === LEGACY_ADMIN_EMAIL ||
+    value.includes('hodayaka1212')
+  ) {
+    return DEFAULT_ADMIN_EMAIL;
+  }
   return value;
 }
 
-export const CONTACT_EMAIL = resolveSiteEmail(process.env.ADMIN_EMAIL);
+/** כתובת המייל הראשית של האתר — תמיד dressbclick אלא אם הוגדר מייל חדש במפורש */
+export function getSiteAdminEmail() {
+  return resolveSiteEmail(process.env.ADMIN_EMAIL);
+}
+
+export const CONTACT_EMAIL = getSiteAdminEmail();
 
 export const CONTACT_PHONE = '053-420-1133';
 

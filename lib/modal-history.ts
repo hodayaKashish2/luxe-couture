@@ -61,6 +61,17 @@ export function pushModal(entry: ModalHistoryEntry) {
   notify();
 }
 
+export function popModalStackInPlace() {
+  if (typeof window === 'undefined') return false;
+  const stack = getModalStack();
+  if (stack.length === 0) return false;
+
+  const next = stack.slice(0, -1);
+  window.history.replaceState({ modalStack: next }, '', window.location.href);
+  notify();
+  return true;
+}
+
 export function closeTopModalFromHistory() {
   if (typeof window === 'undefined') return false;
   const stack = getModalStack();

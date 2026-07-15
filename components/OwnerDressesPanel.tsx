@@ -300,9 +300,7 @@ export default function OwnerDressesPanel({
         {removedDresses.length > 0 && (
           <div className="bg-neutral-50 rounded-2xl border border-neutral-200 overflow-hidden">
             <div className="px-4 py-3 bg-neutral-100 border-b border-neutral-200">
-              <h4 className="text-xs font-black text-neutral-700">
-                🗂️ שמלות שהוסרו מהאתר ({removedDresses.length})
-              </h4>
+              <h4 className="text-xs font-black text-neutral-700">🗂️ שמלות שהוסרו מהאתר</h4>
             </div>
             <ul className="divide-y divide-neutral-200 max-h-56 overflow-y-auto">
               {removedDresses.map((dress) => (
@@ -639,7 +637,7 @@ export default function OwnerDressesPanel({
         <div className="bg-neutral-50 rounded-2xl border border-neutral-200 overflow-hidden">
           <div className="px-4 py-3 bg-neutral-100 border-b border-neutral-200">
             <h4 className="text-xs font-black text-neutral-700">
-              🗂️ שמלות שהוסרו מהאתר ({removedDresses.length})
+            <h4 className="text-xs font-black text-neutral-700">🗂️ שמלות שהוסרו מהאתר</h4>
             </h4>
             <p className="text-[10px] text-neutral-600 mt-1">
               שמלות שלא מוצגות יותר בקטלוג — מופיעות כאן לעיון בלבד
