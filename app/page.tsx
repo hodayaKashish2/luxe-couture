@@ -9,6 +9,7 @@ import CatalogFilterDrawer from '@/components/CatalogFilterDrawer';
 import CatalogFilterSidebar from '@/components/CatalogFilterSidebar';
 import DressCardSummary from '@/components/DressCardSummary';
 import RentalCountBadge from '@/components/RentalCountBadge';
+import TopRentalBadge from '@/components/TopRentalBadge';
 import DressDetailsModal from '@/components/DressDetailsModal';
 import DressRateModal from '@/components/DressRateModal';
 import SiteToast, { type SiteToastVariant } from '@/components/SiteToast';
@@ -941,11 +942,6 @@ export default function Home() {
                     <span className="absolute top-2 right-2 sm:top-3 sm:right-3 z-40 pointer-events-none bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white text-[8px] sm:text-[10px] font-black px-2 sm:px-3 py-0.5 sm:py-1 rounded shadow-md">
                       מידה {dress.size}
                     </span>
-                    {topRank !== undefined && (
-                      <span className="absolute top-9 sm:top-12 right-2 sm:right-3 z-40 pointer-events-none bg-[#2c261a] text-[#f4ebd4] text-[7px] sm:text-[9px] font-black px-1.5 sm:px-2 py-0.5 rounded shadow-md">
-                        🏆 TOP {topRank}
-                      </span>
-                    )}
 
                     {dress.images.length > 1 && (
                       <>
@@ -999,23 +995,25 @@ export default function Home() {
                       {dress.name}
                     </button>
                     <button 
+                      type="button"
                       onClick={(e) => handleToggleCart(dress, e)}
-                      className={`text-[10px] sm:text-xs p-1 sm:p-1.5 rounded-lg border shrink-0 ${DRESS_CARD_BTN} ${
-                        inCart ? 'bg-[#f4ebd4] border-[#d4af37] text-[#b8860b]' : 'border-neutral-200 hover:bg-neutral-50'
+                      className={`text-[8px] sm:text-[9px] px-1.5 sm:px-2 py-1 sm:py-1.5 rounded-lg border shrink-0 font-bold whitespace-nowrap ${DRESS_CARD_BTN} ${
+                        inCart ? 'bg-[#f4ebd4] border-[#d4af37] text-[#b8860b]' : 'border-neutral-200 hover:bg-neutral-50 text-[#8b6508]'
                       }`}
-                      title={inCart ? "הסר מהסל" : "הוסף לסל הזמנות מרוכז"}
+                      title={inCart ? 'הסר מהסל' : 'הוסף לסל הזמנות מרוכז'}
                     >
-                      {inCart ? '🛒' : '➕'}
+                      {inCart ? '🛒 בסל' : '➕ לסל'}
                     </button>
                   </div>
                   <div className="mt-2 sm:mt-3 hidden sm:block">
                     <DressCardSummary dress={dress} onShowDetails={() => setDetailsDress(dress)} />
                   </div>
                   <div className="flex flex-col gap-2 sm:gap-3 mt-auto pt-2 sm:pt-4 border-t-2 border-dotted border-[#f0e6cc]">
+                    {topRank !== undefined && <TopRentalBadge rank={topRank} />}
                     <div>
                       <span className="text-[8px] sm:text-[9px] text-[#b8860b] font-black">מחיר השכרה</span>
                       <p className="text-neutral-900 font-black text-base sm:text-xl">₪{dress.price}</p>
-                      <div className="mt-0.5 sm:hidden">
+                      <div className="mt-1 sm:hidden">
                         <RentalCountBadge dress={dress} inline />
                       </div>
                     </div>
