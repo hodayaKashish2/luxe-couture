@@ -20,6 +20,7 @@ import { getStoredSiteUser } from '@/lib/session-user';
 import { clearAllLuxeStorage } from '@/lib/luxe-storage';
 import { notifySiteAuthChange } from '@/lib/site-auth-events';
 import { accountSectionUrl, parseAccountSection } from '@/lib/account-section-url';
+import { ownerWhatsAppLink } from '@/lib/site-config';
 import { fetchDressById, findDressInList, preloadDressesCatalog } from '@/lib/dress-api';
 import { useScrollToError } from '@/hooks/use-scroll-to-error';
 import type { Dress } from '@/lib/types';
@@ -52,6 +53,9 @@ type BookingRow = {
   dress_name: string;
   customer_name?: string;
   customer_phone?: string;
+  owner_name?: string;
+  owner_phone?: string;
+  owner_email?: string;
   event_date: string;
   status: string;
 };
@@ -127,6 +131,13 @@ function AccountPageContent() {
       else router.push(url, { scroll: false });
     },
     [router]
+  );
+
+  const selectRentalDress = useCallback(
+    (dressId: string | null) => {
+      navigateToSection('rentals', { rentalDress: dressId || undefined, replace: true });
+    },
+    [navigateToSection]
   );
 
   const goToAccountHub = useCallback(() => {
@@ -663,6 +674,38 @@ function AccountPageContent() {
                         <span className="text-[10px] bg-[#f4ebd4] px-2 py-0.5 rounded-full">{STATUS[r.status] || r.status}</span>
                       </div>
                       <p className="text-sm text-[#8b6508] font-bold mt-1">📅 {r.event_date}</p>
+                      {r.status === 'confirmed' && (r.owner_name || r.owner_phone) && (
+                        <div className="mt-3 p-3 bg-[#fffdf8] border border-[#decfa8] rounded-xl space-y-1.5">
+                          <p className="text-[10px] font-black text-[#8b6508]">פרטי המשכירה</p>
+                          {r.owner_name && (
+                            <p className="text-xs font-bold text-[#3d2f24]">{r.owner_name}</p>
+                          )}
+                          {r.owner_phone && (
+                            <a
+                              href={`tel:${r.owner_phone}`}
+                              className="text-xs text-[#6e634c] hover:underline block"
+                              dir="ltr"
+                            >
+                              📞 {r.owner_phone}
+                            </a>
+                          )}
+                          {r.owner_phone && (
+                            <a
+                              href={ownerWhatsAppLink(r.owner_phone, r.dress_name)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-[10px] font-bold text-[#25D366] hover:underline"
+                            >
+                              💬 WhatsApp למשכירה
+                            </a>
+                          )}
+                        </div>
+                      )}
+                      {r.status === 'pending_payment' && (
+                        <p className="text-[10px] text-[#9a7b4f] mt-2">
+                          פרטי המשכירה יוצגו אחרי אישור התשלום
+                        </p>
+                      )}
                       {(r.status === 'confirmed' || r.status === 'pending_payment') && (
                         <button
                           type="button"
@@ -687,9 +730,7 @@ function AccountPageContent() {
             ownerBookings={ownerBookings}
             loading={loading}
             selectedDressId={rentalDressId}
-            onSelectDress={(dressId) =>
-              navigateToSection('rentals', { rentalDress: dressId || undefined, replace: true })
-            }
+            onSelectDress={selectRentalDress}
             onAddDress={() => navigateToSection('add')}
             onEditDress={startEditDress}
           />

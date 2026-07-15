@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import DressCalendar from '@/components/DressCalendar';
 
 export type OwnerRentalDress = {
@@ -190,8 +190,15 @@ export default function OwnerDressesPanel({
   }
 
   function handleSelectDress(dressId: string) {
-    onSelectDress(selectedDressId === dressId ? null : dressId);
+    onSelectDress(dressId);
   }
+
+  const autoSelectedRef = useRef(false);
+  useEffect(() => {
+    if (autoSelectedRef.current || selectedDressId || filteredDresses.length === 0) return;
+    autoSelectedRef.current = true;
+    onSelectDress(filteredDresses[0].id);
+  }, [selectedDressId, filteredDresses, onSelectDress]);
 
   if (loading) {
     return <p className="text-sm text-[#6e634c] animate-pulse">טוען שמלות...</p>;
@@ -327,8 +334,8 @@ export default function OwnerDressesPanel({
         </p>
       </div>
 
-      <div className={`lg:grid lg:gap-4 ${selectedDress ? 'lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]' : 'lg:grid-cols-1'}`}>
-        <div className={`space-y-2 ${selectedDress ? 'hidden lg:block' : ''}`}>
+      <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:gap-4 lg:items-start">
+        <div className={`space-y-2 min-w-0 ${selectedDress ? 'max-lg:hidden' : ''}`}>
           {paginatedDresses.length === 0 ? (
             <div className="bg-white rounded-2xl border border-[#eadaaf] p-6 text-center text-sm text-[#6e634c]">
               אין שמלות שתואמות את החיפוש
@@ -343,10 +350,11 @@ export default function OwnerDressesPanel({
                   key={dress.id}
                   type="button"
                   onClick={() => handleSelectDress(dress.id)}
-                  className={`w-full text-right bg-white rounded-xl border p-3 flex gap-3 items-center transition-all hover:shadow-sm ${
+                  aria-pressed={isSelected}
+                  className={`w-full text-right bg-white rounded-xl border p-3 flex gap-3 items-center transition-all cursor-pointer hover:shadow-md hover:border-[#d4af37] active:scale-[0.99] ${
                     isSelected
-                      ? 'border-[#d4af37] ring-2 ring-[#d4af37]/30 bg-[#fffdf8]'
-                      : 'border-[#eadaaf] hover:border-[#decfa8]'
+                      ? 'border-[#d4af37] ring-2 ring-[#d4af37]/30 bg-[#fffdf8] shadow-sm'
+                      : 'border-[#eadaaf] hover:bg-[#fffdf8]'
                   }`}
                 >
                   {dress.images?.[0] ? (
@@ -376,7 +384,7 @@ export default function OwnerDressesPanel({
                       )}
                     </div>
                   </div>
-                  <span className="text-[#b8860b] text-xs shrink-0">‹</span>
+                  <span className="text-[10px] font-bold text-[#b8860b] shrink-0">פרטים ›</span>
                 </button>
               );
             })
@@ -408,7 +416,7 @@ export default function OwnerDressesPanel({
         </div>
 
         {selectedDress ? (
-          <div className="bg-white rounded-2xl border border-[#eadaaf] p-4 sm:p-5 space-y-4 lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100dvh-2rem)] lg:overflow-y-auto">
+          <div className="bg-white rounded-2xl border border-[#eadaaf] p-4 sm:p-5 space-y-4 lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100dvh-2rem)] lg:overflow-y-auto max-lg:block">
             <div className="flex items-start justify-between gap-2">
               <button
                 type="button"
@@ -504,14 +512,17 @@ export default function OwnerDressesPanel({
             </div>
           </div>
         ) : (
-          <div className="hidden lg:flex bg-[#faf8f3] rounded-2xl border border-dashed border-[#decfa8] p-8 items-center justify-center text-center min-h-[16rem]">
-            <div>
-              <p className="text-3xl mb-2">👗</p>
-              <p className="text-sm font-bold text-[#3d2f24]">בחרי שמלה מהרשימה</p>
-              <p className="text-xs text-[#9a7b4f] mt-1 max-w-xs">
-                לוח שנה והזמנות יוצגו כאן — רק לשמלה שנבחרה
-              </p>
-            </div>
+          <div className="hidden lg:block bg-[#faf8f3] rounded-xl border border-dashed border-[#decfa8] p-4 text-center">
+            <p className="text-xs text-[#6e634c]">לחצי על שמלה ברשימה משמאל</p>
+            {paginatedDresses[0] && (
+              <button
+                type="button"
+                onClick={() => handleSelectDress(paginatedDresses[0].id)}
+                className="mt-2 text-[10px] font-bold px-3 py-1.5 rounded-lg border border-[#decfa8] bg-white text-[#8b6508] hover:border-[#d4af37] hover:bg-[#fffdf8] cursor-pointer transition-colors"
+              >
+                הצגי: {paginatedDresses[0].name}
+              </button>
+            )}
           </div>
         )}
       </div>

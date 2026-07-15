@@ -95,13 +95,27 @@ export async function GET(request: Request) {
     if (allBookings) {
       const dressIdsNeeded = [...new Set(allBookings.map((b) => b.dress_id))];
       let dressMap: Record<string, string> = {};
+      let dressOwnerMap: Record<
+        string,
+        { owner_name: string; owner_phone: string; owner_email: string }
+      > = {};
 
       if (dressIdsNeeded.length > 0) {
         const { data: dressRows } = await supabase
           .from('dresses')
-          .select('id, name')
+          .select('id, name, owner_name, owner_phone, owner_email')
           .in('id', dressIdsNeeded);
         dressMap = Object.fromEntries((dressRows ?? []).map((d) => [String(d.id), d.name]));
+        dressOwnerMap = Object.fromEntries(
+          (dressRows ?? []).map((d) => [
+            String(d.id),
+            {
+              owner_name: d.owner_name || '',
+              owner_phone: d.owner_phone || '',
+              owner_email: d.owner_email || '',
+            },
+          ])
+        );
       }
 
       myReservations = allBookings
@@ -120,10 +134,20 @@ export async function GET(request: Request) {
           }
           return false;
         })
-        .map((b) => ({
-          ...b,
-          dress_name: dressMap[String(b.dress_id)] || 'שמלה',
-        }));
+        .map((b) => {
+          const owner = dressOwnerMap[String(b.dress_id)] || {
+            owner_name: '',
+            owner_phone: '',
+            owner_email: '',
+          };
+          return {
+            ...b,
+            dress_name: dressMap[String(b.dress_id)] || 'שמלה',
+            owner_name: owner.owner_name,
+            owner_phone: owner.owner_phone,
+            owner_email: owner.owner_email,
+          };
+        });
     }
 
     return NextResponse.json({
