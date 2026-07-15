@@ -1,13 +1,14 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useLuxeStorage } from '@/components/LuxeStorageProvider';
 import { useAuthModal } from '@/components/AuthModalProvider';
 import { SITE_NAME } from '@/lib/site-config';
 import { getStoredDisplayName } from '@/lib/session-user';
 import { SITE_AUTH_EVENT } from '@/lib/site-auth-events';
+import { navigateAccountHub } from '@/lib/account-hub-nav';
 import { isLoggedIn } from '@/lib/require-login';
 
 const links = [
@@ -40,7 +41,6 @@ function NavLink({
   guestOnClick?: () => void;
   forceHub?: boolean;
 }) {
-  const router = useRouter();
   const classNameMenu = `flex items-center gap-3 px-4 py-3.5 min-h-[3rem] rounded-xl text-sm font-bold transition-colors ${
     active
       ? 'bg-[#fffdf8] text-[#8b6508] border-2 border-[#d4af37]'
@@ -55,11 +55,10 @@ function NavLink({
   if (forceHub) {
     const cls = variant === 'menu' ? classNameMenu : classNameTab;
     return (
-      <Link
-        href="/account"
-        onClick={(e) => {
-          e.preventDefault();
-          router.replace('/account', { scroll: false });
+      <button
+        type="button"
+        onClick={() => {
+          navigateAccountHub();
           onClick?.();
         }}
         className={cls}
@@ -68,7 +67,7 @@ function NavLink({
           {link.icon}
         </span>
         {link.label}
-      </Link>
+      </button>
     );
   }
 

@@ -20,6 +20,7 @@ import { getStoredSiteUser } from '@/lib/session-user';
 import { clearAllLuxeStorage } from '@/lib/luxe-storage';
 import { notifySiteAuthChange } from '@/lib/site-auth-events';
 import { accountSectionUrl, parseAccountSection } from '@/lib/account-section-url';
+import { navigateAccountHub } from '@/lib/account-hub-nav';
 import { ownerWhatsAppLink } from '@/lib/site-config';
 import { fetchDressById, findDressInList, preloadDressesCatalog } from '@/lib/dress-api';
 import { useScrollToError } from '@/hooks/use-scroll-to-error';
@@ -122,6 +123,10 @@ function AccountPageContent() {
 
   const navigateToSection = useCallback(
     (next: Section, opts?: { dressId?: string; viewDress?: string; replace?: boolean }) => {
+      if (next === 'hub') {
+        navigateAccountHub();
+        return;
+      }
       const url = accountSectionUrl(next, {
         dressId: opts?.dressId,
         viewDress: opts?.viewDress,
@@ -135,8 +140,8 @@ function AccountPageContent() {
   const goToAccountHub = useCallback(() => {
     setDetailsDress(null);
     pendingViewDressRef.current = null;
-    router.replace('/account', { scroll: false });
-  }, [router]);
+    navigateAccountHub();
+  }, []);
 
   const closeDetailsDress = useCallback(() => {
     setDetailsDress(null);
@@ -243,8 +248,8 @@ function AccountPageContent() {
 
   useEffect(() => {
     if (!searchParams.get('rentalDress')) return;
-    router.replace(accountSectionUrl('hub'), { scroll: false });
-  }, [searchParams, router]);
+    navigateAccountHub();
+  }, [searchParams]);
 
   useEffect(() => {
     if (section === 'edit' && dressId) {
