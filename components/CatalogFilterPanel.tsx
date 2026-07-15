@@ -1,7 +1,6 @@
 'use client';
 
 import FilterSection from '@/components/FilterSection';
-import { DRESS_SIZES } from '@/lib/constants';
 import { EVENT_TYPES, type SortOption } from '@/lib/types';
 
 export type CatalogFilterPanelProps = {
@@ -9,8 +8,8 @@ export type CatalogFilterPanelProps = {
   setSearchTerm: (value: string) => void;
   cityFilter: string;
   setCityFilter: (value: string) => void;
-  selectedSizes: string[];
-  onToggleSize: (size: string) => void;
+  sizeFilter: string;
+  setSizeFilter: (value: string) => void;
   selectedEventType: string;
   setSelectedEventType: (value: string) => void;
   sortBy: SortOption;
@@ -25,13 +24,6 @@ export type CatalogFilterPanelProps = {
 
 const fieldClass =
   'w-full p-2 bg-neutral-50 border border-[#dfc48c] rounded-lg text-xs text-[#2c261a] focus:outline-none focus:border-[#d4af37]';
-
-const chipClass = (checked: boolean) =>
-  `flex items-center gap-1.5 text-[11px] px-2 py-1.5 rounded-lg border cursor-pointer transition-colors ${
-    checked
-      ? 'border-[#d4af37] bg-[#fffdf8] text-[#8b6508] font-bold'
-      : 'border-[#f0e6cc] text-[#5c5037] hover:border-[#decfa8]'
-  }`;
 
 function sortHint(sortBy: SortOption) {
   if (sortBy === 'price-asc' || sortBy === 'price-desc') {
@@ -48,8 +40,8 @@ export default function CatalogFilterPanel({
   setSearchTerm,
   cityFilter,
   setCityFilter,
-  selectedSizes,
-  onToggleSize,
+  sizeFilter,
+  setSizeFilter,
   selectedEventType,
   setSelectedEventType,
   sortBy,
@@ -83,21 +75,16 @@ export default function CatalogFilterPanel({
         />
       </FilterSection>
 
-      <FilterSection title="מידה" defaultOpen={selectedSizes.length > 0}>
-        <p className="text-[10px] text-[#9a7b4f] mb-2">ניתן לבחור כמה מידות</p>
-        <div className="grid grid-cols-2 gap-1.5">
-          {DRESS_SIZES.map((size) => (
-            <label key={size.value} className={chipClass(selectedSizes.includes(size.value))}>
-              <input
-                type="checkbox"
-                checked={selectedSizes.includes(size.value)}
-                onChange={() => onToggleSize(size.value)}
-                className="accent-[#d4af37] shrink-0"
-              />
-              <span className="truncate">{size.label}</span>
-            </label>
-          ))}
-        </div>
+      <FilterSection title="מידה" defaultOpen={!!sizeFilter}>
+        <input
+          type="text"
+          placeholder="הקלידי מידה, למשל: 38, M"
+          value={sizeFilter}
+          onChange={(e) => setSizeFilter(e.target.value)}
+          className={fieldClass}
+          inputMode="text"
+        />
+        <p className="text-[10px] text-[#9a7b4f] mt-1.5">ניתן להקליד מספר או אותיות (XS, M, 40...)</p>
       </FilterSection>
 
       <FilterSection title="סוג אירוע" defaultOpen={!!selectedEventType}>

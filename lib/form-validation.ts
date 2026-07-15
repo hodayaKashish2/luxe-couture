@@ -44,7 +44,7 @@ export function validateAddDressForm(form: AddDressFormFields, imageCount: numbe
   if (!form.price.trim() || Number.isNaN(Number(form.price)) || Number(form.price) <= 0) {
     return 'יש להזין מחיר תקין';
   }
-  if (!form.size.trim()) return 'יש לבחור מידה';
+  if (!form.size.trim()) return 'יש להזין מידה';
   if (!form.city.trim()) return 'יש להזין עיר';
 
   if (form.owner_name !== undefined && !form.owner_name.trim()) {

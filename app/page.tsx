@@ -16,14 +16,16 @@ import SiteToast, { type SiteToastVariant } from '@/components/SiteToast';
 import { useLuxeStorage } from '@/components/LuxeStorageProvider';
 import { useAuthModal } from '@/components/AuthModalProvider';
 import SavedDressList from '@/components/SavedDressList';
-import { FAQS, DRESS_SIZES } from '@/lib/constants';
+import DressSizeInput from '@/components/DressSizeInput';
+import { FAQS } from '@/lib/constants';
 import { validateAddDressForm, validateDressImageFiles } from '@/lib/form-validation';
 import { notifyBookingUpdated } from '@/lib/booking-events';
 import { getStoredSiteUser } from '@/lib/session-user';
 import { isLoggedIn } from '@/lib/require-login';
 import { useModalHistory } from '@/hooks/use-modal-history';
 import { useScrollToError } from '@/hooks/use-scroll-to-error';
-import { compareDresses, getTopRentalRanks, toggleFilterValue } from '@/lib/dress-sort';
+import { compareDresses, getTopRentalRanks } from '@/lib/dress-sort';
+import { dressSizeMatchesFilter } from '@/lib/dress-size';
 import { OFF_PLATFORM_COORDINATE_NOTICE } from '@/lib/commission';
 import { fetchDressById, findDressInList } from '@/lib/dress-api';
 import { dressPageUrl, ownerWhatsAppLink, WHATSAPP_LINK } from '@/lib/site-config';
@@ -66,7 +68,7 @@ export default function Home() {
   // פילטרים
   const [searchTerm, setSearchTerm] = useState('');
   const [maxPrice, setMaxPrice] = useState(2000);
-  const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
+  const [sizeFilter, setSizeFilter] = useState('');
   const [colorFilter, setColorFilter] = useState('');
   const [cityFilter, setCityFilter] = useState('');
   const [selectedEventType, setSelectedEventType] = useState('');
@@ -710,7 +712,7 @@ export default function Home() {
       const matchesCity =
         !cityFilter.trim() || dress.city.toLowerCase().includes(cityFilter.trim().toLowerCase());
       const matchesPrice = dress.price <= maxPrice;
-      const matchesSize = selectedSizes.length === 0 || selectedSizes.includes(dress.size);
+      const matchesSize = dressSizeMatchesFilter(dress.size, sizeFilter);
       const matchesColor =
         !colorFilter.trim() || dress.color.toLowerCase().includes(colorFilter.trim().toLowerCase());
       const matchesEvent = !selectedEventType || dress.event_type === selectedEventType;
@@ -722,7 +724,7 @@ export default function Home() {
   const activeFilterCount = [
     searchTerm,
     cityFilter,
-    ...selectedSizes,
+    sizeFilter,
     selectedEventType,
     colorFilter,
     maxPrice < 2000 ? 'price' : '',
@@ -731,15 +733,11 @@ export default function Home() {
   const clearFilters = () => {
     setSearchTerm('');
     setCityFilter('');
-    setSelectedSizes([]);
+    setSizeFilter('');
     setSelectedEventType('');
     setColorFilter('');
     setSortBy('popular');
     setMaxPrice(2000);
-  };
-
-  const toggleSize = (size: string) => {
-    setSelectedSizes((prev) => toggleFilterValue(prev, size));
   };
 
   const hasActiveFilters = activeFilterCount > 0;
@@ -844,9 +842,7 @@ export default function Home() {
           <div className="mb-3 flex flex-wrap items-center gap-1.5">
             {searchTerm && <span className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">"{searchTerm}"</span>}
             {cityFilter && <span className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">עיר: {cityFilter}</span>}
-            {selectedSizes.map((size) => (
-              <span key={size} className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">מידה {size}</span>
-            ))}
+            {sizeFilter && <span className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">מידה: {sizeFilter}</span>}
             {selectedEventType && <span className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">{selectedEventType}</span>}
             {colorFilter && <span className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">צבע: {colorFilter}</span>}
             {maxPrice < 2000 && <span className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">עד ₪{maxPrice}</span>}
@@ -866,8 +862,8 @@ export default function Home() {
             setSearchTerm={setSearchTerm}
             cityFilter={cityFilter}
             setCityFilter={setCityFilter}
-            selectedSizes={selectedSizes}
-            onToggleSize={toggleSize}
+            sizeFilter={sizeFilter}
+            setSizeFilter={setSizeFilter}
             selectedEventType={selectedEventType}
             setSelectedEventType={setSelectedEventType}
             sortBy={sortBy}
@@ -1076,8 +1072,8 @@ export default function Home() {
           setSearchTerm={setSearchTerm}
           cityFilter={cityFilter}
           setCityFilter={setCityFilter}
-          selectedSizes={selectedSizes}
-          onToggleSize={toggleSize}
+          sizeFilter={sizeFilter}
+          setSizeFilter={setSizeFilter}
           selectedEventType={selectedEventType}
           setSelectedEventType={setSelectedEventType}
           sortBy={sortBy}
@@ -1141,17 +1137,11 @@ export default function Home() {
                 {/* מידה */}
                 <div>
                   <label className="block text-xs font-bold text-[#8b6508] mb-1">מידה *</label>
-                  <select 
+                  <DressSizeInput
                     required
                     value={newDressData.size}
-                    onChange={(e) => setNewDressData({...newDressData, size: e.target.value})}
-                    className="w-full p-2.5 bg-white border border-[#decfa8] rounded-xl text-xs text-[#2c261a] placeholder:text-[#9a7b4f] font-medium focus:outline-none focus:border-[#d4af37]"
-                  >
-                    <option value="">בחרי...</option>
-                    {DRESS_SIZES.map((size) => (
-                      <option key={size.value} value={size.value}>{size.label}</option>
-                    ))}
-                  </select>
+                    onChange={(size) => setNewDressData({ ...newDressData, size })}
+                  />
                 </div>
               </div>
 
