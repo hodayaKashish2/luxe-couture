@@ -2,7 +2,15 @@ export const SITE_NAME = 'שמלה בקליק';
 
 export const DEFAULT_ADMIN_EMAIL = 'dressbclick@gmail.com';
 
-export const CONTACT_EMAIL = process.env.ADMIN_EMAIL || DEFAULT_ADMIN_EMAIL;
+export const LEGACY_ADMIN_EMAIL = 'hodayaka1212@gmail.com';
+
+export function resolveSiteEmail(email?: string | null) {
+  const value = (email || DEFAULT_ADMIN_EMAIL).trim().toLowerCase();
+  if (value === LEGACY_ADMIN_EMAIL) return DEFAULT_ADMIN_EMAIL;
+  return value;
+}
+
+export const CONTACT_EMAIL = resolveSiteEmail(process.env.ADMIN_EMAIL);
 
 export const CONTACT_PHONE = '053-420-1133';
 

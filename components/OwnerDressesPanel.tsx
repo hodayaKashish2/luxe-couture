@@ -34,7 +34,26 @@ const DRESS_STATUS: Record<string, string> = {
 const BOOKING_STATUS: Record<string, string> = {
   confirmed: 'הזמנה מאושרת ✓',
   pending_payment: 'ממתין לתשלום',
+  awaiting_admin_approval: 'ממתין לאישור תשלום',
 };
+
+const PENDING_APPROVAL_STATUSES = new Set(['pending_payment', 'awaiting_admin_approval']);
+
+function isConfirmedBooking(status: string) {
+  return status === 'confirmed';
+}
+
+function isPendingApprovalBooking(status: string) {
+  return PENDING_APPROVAL_STATUSES.has(status);
+}
+
+function getConfirmedBookings(bookings: OwnerBookingRow[]) {
+  return bookings.filter((b) => isConfirmedBooking(b.status));
+}
+
+function getPendingApprovalBookings(bookings: OwnerBookingRow[]) {
+  return bookings.filter((b) => isPendingApprovalBooking(b.status));
+}
 
 type DressFilter = 'all' | 'available' | 'booked' | 'pending';
 type DressSort = 'recent' | 'name' | 'bookings' | 'rentals';
@@ -47,23 +66,15 @@ function getDressBookings(dressId: string, bookings: OwnerBookingRow[]) {
 }
 
 function getDressRentalSummary(bookings: OwnerBookingRow[]) {
-  const confirmed = bookings.filter((b) => b.status === 'confirmed');
-  const pending = bookings.filter((b) => b.status === 'pending_payment');
-  if (confirmed.length === 0 && pending.length === 0) {
+  const confirmed = getConfirmedBookings(bookings);
+  if (confirmed.length === 0) {
     return { badge: '🟢 פנויה', detail: '', hasBookings: false };
   }
-  if (confirmed.length > 0) {
-    const sorted = [...confirmed].sort((a, b) => a.event_date.localeCompare(b.event_date));
-    const next = sorted.find((b) => b.event_date >= new Date().toISOString().slice(0, 10)) || sorted[0];
-    return {
-      badge: `📅 ${confirmed.length} הזמנ${confirmed.length === 1 ? 'ה' : 'ות'}`,
-      detail: next ? `הבאה: ${next.event_date}` : '',
-      hasBookings: true,
-    };
-  }
+  const sorted = [...confirmed].sort((a, b) => a.event_date.localeCompare(b.event_date));
+  const next = sorted.find((b) => b.event_date >= new Date().toISOString().slice(0, 10)) || sorted[0];
   return {
-    badge: `⏳ ${pending.length} ממתינות`,
-    detail: 'ממתין לתשלום',
+    badge: `📅 ${confirmed.length} הזמנ${confirmed.length === 1 ? 'ה' : 'ות'}`,
+    detail: next ? `הבאה: ${next.event_date}` : '',
     hasBookings: true,
   };
 }
@@ -87,7 +98,7 @@ function pickDefaultDressId(dresses: OwnerRentalDress[], ownerBookings: OwnerBoo
     .filter(
       (b) =>
         b.event_date >= today &&
-        (b.status === 'confirmed' || b.status === 'pending_payment')
+        isConfirmedBooking(b.status)
     )
     .sort((a, b) => a.event_date.localeCompare(b.event_date))[0];
 
@@ -101,9 +112,9 @@ function pickDefaultDressId(dresses: OwnerRentalDress[], ownerBookings: OwnerBoo
 
 function nearestBookingDate(bookings: OwnerBookingRow[]) {
   const today = new Date().toISOString().slice(0, 10);
-  const sorted = [...bookings]
-    .filter((b) => b.status === 'confirmed' || b.status === 'pending_payment')
-    .sort((a, b) => a.event_date.localeCompare(b.event_date));
+  const sorted = getConfirmedBookings(bookings).sort((a, b) =>
+    a.event_date.localeCompare(b.event_date)
+  );
   const next = sorted.find((b) => b.event_date >= today);
   return (next || sorted[0])?.event_date;
 }
@@ -133,18 +144,26 @@ export default function OwnerDressesPanel({
   const dressesWithBookings = useMemo(
     () =>
       dresses.filter((d) =>
-        ownerBookings.some((b) => String(b.dress_id) === String(d.id))
+        getConfirmedBookings(getDressBookings(d.id, ownerBookings)).length > 0
       ).length,
     [dresses, ownerBookings]
   );
 
   const upcomingBookings = useMemo(() => {
     const today = new Date().toISOString().slice(0, 10);
-    return [...ownerBookings]
-      .filter((b) => b.event_date >= today && b.status !== 'cancelled')
+    return getConfirmedBookings(ownerBookings)
+      .filter((b) => b.event_date >= today)
       .sort((a, b) => a.event_date.localeCompare(b.event_date))
       .slice(0, 8);
   }, [ownerBookings]);
+
+  const pendingApprovalBookings = useMemo(
+    () =>
+      getPendingApprovalBookings(ownerBookings).sort((a, b) =>
+        a.event_date.localeCompare(b.event_date)
+      ),
+    [ownerBookings]
+  );
 
   const filteredDresses = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -158,7 +177,7 @@ export default function OwnerDressesPanel({
     });
 
     list = list.filter((d) => {
-      const bookings = getDressBookings(d.id, ownerBookings);
+      const bookings = getConfirmedBookings(getDressBookings(d.id, ownerBookings));
       const hasBookings = bookings.length > 0;
       if (filter === 'available') return !hasBookings && d.status === 'approved';
       if (filter === 'booked') return hasBookings;
@@ -170,8 +189,8 @@ export default function OwnerDressesPanel({
       if (sort === 'name') return a.name.localeCompare(b.name, 'he');
       if (sort === 'rentals') return b.rental_count - a.rental_count;
       if (sort === 'bookings') {
-        const aCount = getDressBookings(a.id, ownerBookings).length;
-        const bCount = getDressBookings(b.id, ownerBookings).length;
+        const aCount = getConfirmedBookings(getDressBookings(a.id, ownerBookings)).length;
+        const bCount = getConfirmedBookings(getDressBookings(b.id, ownerBookings)).length;
         return bCount - aCount;
       }
       return 0;
@@ -194,7 +213,7 @@ export default function OwnerDressesPanel({
     : null;
 
   const selectedBookings = selectedDress
-    ? getDressBookings(selectedDress.id, ownerBookings)
+    ? getConfirmedBookings(getDressBookings(selectedDress.id, ownerBookings))
     : [];
   const selectedConfirmedDates = selectedBookings
     .filter((b) => b.status === 'confirmed')
@@ -528,6 +547,40 @@ export default function OwnerDressesPanel({
           </div>
         )}
       </div>
+
+      {pendingApprovalBookings.length > 0 && (
+        <div className="bg-amber-50/70 rounded-2xl border border-amber-200 overflow-hidden">
+          <div className="px-4 py-3 bg-amber-50 border-b border-amber-200">
+            <h4 className="text-xs font-black text-amber-900">
+              ⏳ הזמנות שממתינות לאישור תשלום ({pendingApprovalBookings.length})
+            </h4>
+            <p className="text-[10px] text-amber-800 mt-1">
+              מוצגות בנפרד — ברשימות העיקריות מופיעות רק הזמנות ששולמו ואושרו
+            </p>
+          </div>
+          <ul className="divide-y divide-amber-100 max-h-64 overflow-y-auto">
+            {pendingApprovalBookings.map((b) => (
+              <li key={b.id}>
+                <button
+                  type="button"
+                  onClick={() => handleSelectDress(String(b.dress_id))}
+                  className="w-full text-right px-4 py-3 hover:bg-amber-50/80 transition-colors flex justify-between gap-3 items-center"
+                >
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-[#3d2f24] truncate">{b.dress_name}</p>
+                    <p className="text-[10px] text-amber-900 mt-0.5">
+                      {formatHebrewDate(b.event_date)} · {b.customer_name || 'שוכרת'}
+                    </p>
+                  </div>
+                  <span className="text-[9px] shrink-0 bg-amber-100 text-amber-900 px-2 py-0.5 rounded-full font-bold">
+                    {BOOKING_STATUS[b.status] || b.status}
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,0 +1,3 @@
+Add dress rating approval flow and tidy owner booking lists.
+
+Ratings email admin for approval before publish; owner panel shows only confirmed bookings in main lists with pending payments separated; reservations UI can collapse landlord details.

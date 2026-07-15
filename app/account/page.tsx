@@ -668,56 +668,75 @@ function AccountPageContent() {
                       </div>
                       <p className="text-sm text-[#8b6508] font-bold mt-1">📅 {r.event_date}</p>
                       {(r.owner_name || r.owner_phone) && (
-                        revealedOwnerIds.has(r.id) ? (
-                          <div className="mt-3 p-3 bg-[#fffdf8] border border-[#decfa8] rounded-xl space-y-1.5">
-                            <p className="text-[10px] font-black text-[#8b6508]">פרטי המשכירה</p>
-                            {r.owner_name && (
-                              <p className="text-xs font-bold text-[#3d2f24]">{r.owner_name}</p>
-                            )}
-                            {r.owner_phone && (
-                              <a
-                                href={`tel:${r.owner_phone}`}
-                                className="text-xs text-[#6e634c] hover:underline block"
-                                dir="ltr"
-                              >
-                                📞 {r.owner_phone}
-                              </a>
-                            )}
-                            {r.owner_phone && (
-                              <a
-                                href={ownerWhatsAppLink(r.owner_phone, r.dress_name)}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1 text-[10px] font-bold text-[#25D366] hover:underline"
-                              >
-                                💬 WhatsApp למשכירה
-                              </a>
-                            )}
-                          </div>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setRevealedOwnerIds((prev) => {
-                                const next = new Set(prev);
-                                next.add(r.id);
-                                return next;
-                              })
-                            }
-                            className="mt-3 px-3 py-2 bg-[#f4ebd4] border border-[#decfa8] rounded-xl text-[10px] font-black text-[#8b6508] hover:bg-[#ebdcb6] transition-colors"
-                          >
-                            הצגת פרטי המשכירה
-                          </button>
-                        )
+                        <div className="mt-3">
+                          {revealedOwnerIds.has(r.id) ? (
+                            <div className="p-3 bg-[#fffdf8] border border-[#decfa8] rounded-xl space-y-1.5">
+                              <div className="flex items-center justify-between gap-2">
+                                <p className="text-[10px] font-black text-[#8b6508]">פרטי המשכירה</p>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setRevealedOwnerIds((prev) => {
+                                      const next = new Set(prev);
+                                      next.delete(r.id);
+                                      return next;
+                                    })
+                                  }
+                                  className="text-[10px] font-bold text-[#8b6508] hover:underline"
+                                >
+                                  הסתרה
+                                </button>
+                              </div>
+                              {r.owner_name && (
+                                <p className="text-xs font-bold text-[#3d2f24]">{r.owner_name}</p>
+                              )}
+                              {r.owner_phone && (
+                                <a
+                                  href={`tel:${r.owner_phone}`}
+                                  className="text-xs text-[#6e634c] hover:underline block"
+                                  dir="ltr"
+                                >
+                                  📞 {r.owner_phone}
+                                </a>
+                              )}
+                              {r.owner_phone && (
+                                <a
+                                  href={ownerWhatsAppLink(r.owner_phone, r.dress_name)}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1 text-[10px] font-bold text-[#25D366] hover:underline"
+                                >
+                                  💬 WhatsApp למשכירה
+                                </a>
+                              )}
+                            </div>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setRevealedOwnerIds((prev) => {
+                                  const next = new Set(prev);
+                                  next.add(r.id);
+                                  return next;
+                                })
+                              }
+                              className="px-3 py-2 bg-[#f4ebd4] border border-[#decfa8] rounded-xl text-[10px] font-black text-[#8b6508] hover:bg-[#ebdcb6] transition-colors"
+                            >
+                              הצגת פרטי המשכירה
+                            </button>
+                          )}
+                        </div>
                       )}
-                      <button
-                        type="button"
-                        onClick={() => cancelReservation(r.id)}
-                        disabled={cancellingId === r.id}
-                        className="mt-3 text-[10px] font-bold text-red-600 hover:underline disabled:opacity-50"
-                      >
-                        {cancellingId === r.id ? 'מבטלת...' : '✕ ביטול הזמנה'}
-                      </button>
+                      <div className="mt-4 pt-3 border-t border-[#f0e6cc]">
+                        <button
+                          type="button"
+                          onClick={() => cancelReservation(r.id)}
+                          disabled={cancellingId === r.id}
+                          className="text-[10px] font-bold text-red-600 hover:underline disabled:opacity-50"
+                        >
+                          {cancellingId === r.id ? 'מבטלת...' : '✕ ביטול הזמנה'}
+                        </button>
+                      </div>
                     </li>
                   ))}
                 </ul>

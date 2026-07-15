@@ -81,5 +81,14 @@ alter table public.bookings drop constraint if exists bookings_status_check;
 alter table public.bookings add constraint bookings_status_check
   check (status in ('pending_payment', 'awaiting_admin_approval', 'confirmed', 'cancelled', 'failed'));
 
+-- === upgrade-v5: אישור דירוגי שמלות ===
+alter table public.dress_ratings add column if not exists status text;
+update public.dress_ratings set status = 'approved' where status is null;
+alter table public.dress_ratings alter column status set default 'pending';
+alter table public.dress_ratings alter column status set not null;
+alter table public.dress_ratings drop constraint if exists dress_ratings_status_check;
+alter table public.dress_ratings add constraint dress_ratings_status_check
+  check (status in ('pending', 'approved'));
+
 -- ניקוי יבש כלול במחיר
 alter table public.dresses add column if not exists includes_dry_cleaning boolean not null default false;
