@@ -986,12 +986,12 @@ export default function Home() {
                 className="group flex flex-col h-full bg-white rounded-2xl overflow-hidden border-2 border-[#ebd3a4]/60 shadow-[0_10px_30px_rgba(212,175,55,0.06)] hover:shadow-[0_25px_60px_rgba(212,175,55,0.22)] hover:border-[#d4af37] transition-all duration-300 transform hover:-translate-y-1"
               >
                 {/* 📸 גלריית התמונות */}
-                <div className="h-[150px] sm:h-[220px] md:h-[260px] lg:h-[300px] w-full relative overflow-hidden bg-[#faf8f3] p-1.5 sm:p-2">
-                  <div className="w-full h-full rounded-xl overflow-hidden relative border border-[#f0e2c3]">
+                <div className="h-[150px] sm:h-[220px] md:h-[260px] lg:h-[300px] w-full relative overflow-hidden bg-[#faf8f3]">
+                  <div className="w-full h-full relative overflow-hidden">
                     <img
                       src={dress.images[currentImgIndex]}
                       alt={dress.name}
-                      className="absolute inset-0 w-full h-full object-contain pointer-events-none z-0 group-hover:scale-105 transition-transform duration-700 ease-out"
+                      className="absolute inset-0 w-full h-full object-cover object-center pointer-events-none z-0 group-hover:scale-105 transition-transform duration-700 ease-out"
                     />
 
                     <button
@@ -1324,7 +1324,7 @@ export default function Home() {
                   <div className="flex gap-2 flex-wrap mt-2 bg-neutral-50 p-2 rounded-xl border border-neutral-100">
                     {newDressData.images.map((img, index) => (
                       <div key={`${img}-${index}`} className="relative">
-                        <img src={img} alt={`תצוגה ${index + 1}`} className="w-16 h-16 object-contain rounded-lg border border-[#decfa8] bg-[#faf8f3]" />
+                        <img src={img} alt={`תצוגה ${index + 1}`} className="w-16 h-16 object-cover object-center rounded-lg border border-[#decfa8]" />
                         <button
                           type="button"
                           onClick={() => removeNewDressImage(index)}
@@ -1585,7 +1585,7 @@ export default function Home() {
                   </div>
                 </>
               )}
-              <img src={selectedDress.images[modalImageIndex]} alt={selectedDress.name} className="absolute inset-0 w-full h-full object-contain p-3" />
+              <img src={selectedDress.images[modalImageIndex]} alt={selectedDress.name} className="absolute inset-0 w-full h-full object-cover object-center" />
             </div>
 
             {/* טופס הזמנה בקליק */}

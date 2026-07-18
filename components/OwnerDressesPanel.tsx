@@ -468,7 +468,7 @@ export default function OwnerDressesPanel({
                       <img
                         src={dress.images[0]}
                         alt=""
-                        className="w-12 h-14 object-contain rounded-lg border border-[#f0e2c3] bg-[#faf8f3] shrink-0"
+                        className="w-12 h-14 object-cover object-center rounded-lg border border-[#f0e2c3] bg-[#faf8f3] shrink-0"
                         loading="lazy"
                       />
                     ) : (
@@ -516,7 +516,7 @@ export default function OwnerDressesPanel({
                 <img
                   src={selectedDress.images[0]}
                   alt=""
-                  className="w-24 h-28 object-contain rounded-xl border border-[#f0e2c3] bg-[#faf8f3] shrink-0"
+                  className="w-24 h-28 object-cover object-center rounded-xl border border-[#f0e2c3] bg-[#faf8f3] shrink-0"
                 />
               ) : (
                 <div className="w-24 h-28 rounded-xl border border-dashed border-[#decfa8] bg-[#faf8f3] flex items-center justify-center text-3xl shrink-0">
@@ -650,7 +650,7 @@ export default function OwnerDressesPanel({
                   <img
                     src={dress.images[0]}
                     alt=""
-                    className="w-10 h-12 object-contain rounded-lg border border-neutral-200 bg-white shrink-0 opacity-70"
+                    className="w-10 h-12 object-cover object-center rounded-lg border border-neutral-200 bg-white shrink-0 opacity-70"
                     loading="lazy"
                   />
                 ) : (

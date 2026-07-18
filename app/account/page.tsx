@@ -853,7 +853,7 @@ function AccountPageContent() {
                 <div className="flex gap-2 flex-wrap mb-3 bg-neutral-50 p-3 rounded-xl border border-[#eadaaf]">
                   {editImages.map((img) => (
                     <div key={img} className="relative">
-                      <img src={img} alt="" className="w-20 h-20 sm:w-24 sm:h-24 object-contain rounded-xl border-2 border-[#decfa8] bg-[#faf8f3]" />
+                      <img src={img} alt="" className="w-20 h-20 sm:w-24 sm:h-24 object-cover object-center rounded-xl border-2 border-[#decfa8]" />
                       <button
                         type="button"
                         onClick={() => removeEditExistingImage(img)}
@@ -866,7 +866,7 @@ function AccountPageContent() {
                   ))}
                   {editNewPreviews.map((img, index) => (
                     <div key={`${img}-${index}`} className="relative">
-                      <img src={img} alt="" className="w-20 h-20 sm:w-24 sm:h-24 object-contain rounded-xl border-2 border-[#d4af37] bg-[#faf8f3]" />
+                      <img src={img} alt="" className="w-20 h-20 sm:w-24 sm:h-24 object-cover object-center rounded-xl border-2 border-[#d4af37]" />
                       <span className="absolute bottom-1 right-1 text-[8px] bg-[#d4af37] text-white px-1 rounded">חדש</span>
                       <button
                         type="button"
@@ -1025,7 +1025,7 @@ function AccountPageContent() {
                 <div className="flex gap-2 flex-wrap mt-3 bg-neutral-50 p-3 rounded-xl border border-[#eadaaf]">
                   {addImagePreviews.map((img, index) => (
                     <div key={`${img}-${index}`} className="relative">
-                      <img src={img} alt={`תצוגה ${index + 1}`} className="w-20 h-20 sm:w-24 sm:h-24 object-contain rounded-xl border-2 border-[#decfa8] bg-[#faf8f3]" />
+                      <img src={img} alt={`תצוגה ${index + 1}`} className="w-20 h-20 sm:w-24 sm:h-24 object-cover object-center rounded-xl border-2 border-[#decfa8]" />
                       <button
                         type="button"
                         onClick={() => removeAddImage(index)}

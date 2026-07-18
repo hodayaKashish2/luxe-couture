@@ -66,7 +66,7 @@ export default function DressDetailsModal({
                 <img
                   src={images[imageIndex]}
                   alt={dress.name}
-                  className="absolute inset-0 w-full h-full object-contain p-3 sm:p-4"
+                  className="absolute inset-0 w-full h-full object-cover object-center"
                 />
                 <span className="absolute top-4 right-4 z-20 bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white text-[10px] font-black px-3 py-1 rounded-full shadow-md pointer-events-none">
                   מידה {dress.size}
@@ -123,7 +123,7 @@ export default function DressDetailsModal({
                     idx === imageIndex ? 'border-[#d4af37] ring-2 ring-[#d4af37]/40' : 'border-[#eadaaf] hover:border-[#d4af37]'
                   }`}
                 >
-                  <img src={img} alt="" className="w-full h-full object-contain" />
+                  <img src={img} alt="" className="w-full h-full object-cover object-center" />
                 </button>
               ))}
             </div>
