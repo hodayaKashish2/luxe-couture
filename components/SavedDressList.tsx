@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import DressImageFill from '@/components/DressImageFill';
 import type { SavedDress } from '@/lib/luxe-storage';
 
 type Props = {
@@ -61,7 +62,12 @@ export default function SavedDressList({
               >
                 <div className="relative shrink-0 w-20 h-24 sm:w-24 sm:h-28 rounded-xl overflow-hidden border border-[#f0e2c3] bg-[#faf8f3]">
                   {image ? (
-                    <img src={image} alt={item.name} className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500" />
+                    <DressImageFill
+                      src={image}
+                      alt={item.name}
+                      className="h-full w-full"
+                      hoverScale
+                    />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-2xl text-[#decfa8]">👗</div>
                   )}

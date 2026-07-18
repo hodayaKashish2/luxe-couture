@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import DressImageFill from '@/components/DressImageFill';
 import SiteFooter from '@/components/SiteFooter';
 import SiteHeader from '@/components/SiteHeader';
 
@@ -148,7 +149,7 @@ export default function AdminPage() {
                   {publishedDresses.map((dress) => (
                     <div key={dress.id} className="bg-white rounded-xl border border-red-100 p-4 flex gap-4 items-center">
                       {dress.images?.[0] && (
-                        <img src={dress.images[0]} alt="" className="w-16 h-20 object-contain rounded-lg bg-[#faf8f3]" />
+                        <DressImageFill src={dress.images[0]} alt="" className="w-16 h-20 shrink-0 rounded-lg" />
                       )}
                       <div className="flex-grow min-w-0">
                         <h3 className="font-bold text-sm">{dress.name}</h3>
@@ -177,7 +178,7 @@ export default function AdminPage() {
                   {pendingDresses.map((dress) => (
                     <div key={dress.id} className="bg-white rounded-xl border border-[#eadaaf] p-4 flex gap-4">
                       {dress.images?.[0] && (
-                        <img src={dress.images[0]} alt="" className="w-20 h-24 object-contain rounded-lg bg-[#faf8f3]" />
+                        <DressImageFill src={dress.images[0]} alt="" className="w-20 h-24 shrink-0 rounded-lg" />
                       )}
                       <div className="flex-grow">
                         <h3 className="font-bold">{dress.name}</h3>

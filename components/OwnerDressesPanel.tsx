@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import DressImageFill from '@/components/DressImageFill';
 import DressCalendar from '@/components/DressCalendar';
 
 export type OwnerRentalDress = {
@@ -465,10 +466,10 @@ export default function OwnerDressesPanel({
                     }`}
                   >
                     {dress.images?.[0] ? (
-                      <img
+                      <DressImageFill
                         src={dress.images[0]}
                         alt=""
-                        className="w-12 h-14 object-cover object-center rounded-lg border border-[#f0e2c3] bg-[#faf8f3] shrink-0"
+                        className="w-12 h-14 shrink-0 rounded-lg border border-[#f0e2c3]"
                         loading="lazy"
                       />
                     ) : (
@@ -513,10 +514,10 @@ export default function OwnerDressesPanel({
 
             <div className="flex gap-4">
               {selectedDress.images?.[0] ? (
-                <img
+                <DressImageFill
                   src={selectedDress.images[0]}
                   alt=""
-                  className="w-24 h-28 object-cover object-center rounded-xl border border-[#f0e2c3] bg-[#faf8f3] shrink-0"
+                  className="w-24 h-28 shrink-0 rounded-xl border border-[#f0e2c3]"
                 />
               ) : (
                 <div className="w-24 h-28 rounded-xl border border-dashed border-[#decfa8] bg-[#faf8f3] flex items-center justify-center text-3xl shrink-0">
@@ -647,10 +648,10 @@ export default function OwnerDressesPanel({
             {removedDresses.map((dress) => (
               <li key={dress.id} className="px-4 py-3 flex gap-3 items-center">
                 {dress.images?.[0] ? (
-                  <img
+                  <DressImageFill
                     src={dress.images[0]}
                     alt=""
-                    className="w-10 h-12 object-cover object-center rounded-lg border border-neutral-200 bg-white shrink-0 opacity-70"
+                    className="w-10 h-12 shrink-0 rounded-lg border border-neutral-200 opacity-70"
                     loading="lazy"
                   />
                 ) : (
