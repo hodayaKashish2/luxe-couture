@@ -983,10 +983,10 @@ export default function Home() {
             return (
               <div 
                 key={dress.id} 
-                className="group flex flex-col h-full bg-white rounded-xl sm:rounded-2xl overflow-hidden border border-[#ebd3a4]/70 sm:border-2 shadow-sm hover:shadow-md hover:border-[#d4af37] transition-all duration-200"
+                className="group flex flex-col h-full min-h-[220px] sm:min-h-[280px] bg-white rounded-xl sm:rounded-2xl overflow-hidden border border-[#ebd3a4]/70 sm:border-2 shadow-sm hover:shadow-md hover:border-[#d4af37] transition-all duration-200"
               >
-                {/* תמונה — קומפקט */}
-                <div className="aspect-[3/4] max-h-[132px] sm:max-h-[190px] md:max-h-[210px] w-full relative overflow-hidden bg-[#faf8f3]">
+                {/* תמונה — ~75% מהכרטיס */}
+                <div className="flex-[3] min-h-0 w-full relative overflow-hidden bg-[#faf8f3]">
                   <DressImageFill
                     src={dress.images[currentImgIndex]}
                     alt={dress.name}
@@ -1000,6 +1000,10 @@ export default function Home() {
                     className="absolute inset-0 z-[5] cursor-pointer bg-transparent"
                     aria-label={`פרטים על ${dress.name}`}
                   />
+
+                  <span className="absolute top-2 right-2 sm:top-3 sm:right-3 z-40 pointer-events-none bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white text-[8px] sm:text-[10px] font-black px-2 sm:px-3 py-0.5 sm:py-1 rounded shadow-md border border-[#c9a227]">
+                    מידה {dress.size}
+                  </span>
 
                   {dress.images.length > 1 && (
                     <>
@@ -1041,8 +1045,8 @@ export default function Home() {
                   )}
                 </div>
 
-                {/* פרטים קומפקטיים */}
-                <div className="p-2 sm:p-2.5 flex flex-col flex-grow bg-gradient-to-b from-white to-[#fdfbf7] gap-1.5 sm:gap-2">
+                {/* פרטים — ~25% מהכרטיס */}
+                <div className="flex-[1] shrink-0 p-2 sm:p-2.5 flex flex-col justify-center bg-gradient-to-b from-white to-[#fdfbf7] gap-1 sm:gap-1.5">
                   <button
                     type="button"
                     onClick={() => setDetailsDress(dress)}
@@ -1060,7 +1064,6 @@ export default function Home() {
                   <div className="flex items-center justify-between gap-2">
                     <div className="min-w-0 text-right leading-none">
                       <span className="text-neutral-900 font-black text-sm sm:text-base">₪{dress.price}</span>
-                      <span className="text-[9px] sm:text-[10px] text-[#9a7b4f] font-bold mr-1">· מידה {dress.size}</span>
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
                       <button
@@ -1096,10 +1099,10 @@ export default function Home() {
 
                   <button
                     type="button"
-                    onClick={() => tryReserveDress(dress, currentImgIndex)}
-                    className={`w-full bg-gradient-to-r from-[#2c261a] to-[#4a3f2b] hover:from-[#d4af37] hover:to-[#b8860b] text-white text-[10px] sm:text-[11px] font-bold py-2 rounded-lg sm:rounded-xl shadow-sm mt-auto ${DRESS_CARD_BTN}`}
+                    onClick={() => setDetailsDress(dress)}
+                    className={`w-full border-2 border-[#decfa8] bg-white hover:bg-[#fffdf8] text-[#8b6508] text-[10px] sm:text-[11px] font-bold py-1.5 sm:py-2 rounded-lg sm:rounded-xl mt-auto ${DRESS_CARD_BTN}`}
                   >
-                    שרייני
+                    ℹ️ פרטים מלאים
                   </button>
                 </div>
               </div>
