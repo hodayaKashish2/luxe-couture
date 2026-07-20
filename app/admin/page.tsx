@@ -14,6 +14,8 @@ type DressRow = {
   owner_name: string;
   images: string[];
   created_at: string;
+  featured_boost?: number;
+  featured_until?: string | null;
 };
 
 type PendingReview = {
@@ -73,7 +75,7 @@ export default function AdminPage() {
   async function handleAction(
     type: 'dress' | 'review',
     id: number,
-    action: 'approve' | 'reject' | 'delete'
+    action: 'approve' | 'reject' | 'delete' | 'toggle_featured' | 'extend_featured'
   ) {
     if (!savedToken) return;
     if (action === 'delete' && !confirm('להסיר את השמלה מהאתר? היא לא תופיע יותר בקטלוג.')) return;
@@ -89,7 +91,17 @@ export default function AdminPage() {
     });
     const data = await response.json();
     if (response.ok) {
-      setActionMsg(action === 'delete' ? '✓ השמלה הוסרה מהאתר' : '✓ עודכן בהצלחה');
+      const msg =
+        action === 'delete'
+          ? '✓ השמלה הוסרה מהאתר'
+          : action === 'toggle_featured'
+            ? data.featured_boost > 0
+              ? '✓ חשיפה מועדפת הופעלה'
+              : '✓ חשיפה מועדפת בוטלה'
+            : action === 'extend_featured'
+              ? '✓ חשיפה מועדפת הוארכה ב-30 יום'
+              : '✓ עודכן בהצלחה';
+      setActionMsg(msg);
       loadData(savedToken);
     } else {
       setActionMsg(data.error || 'שגיאה בפעולה');
@@ -137,6 +149,66 @@ export default function AdminPage() {
 
             {loading && <p className="text-sm">טוען...</p>}
             {error && <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3">{error}</p>}
+
+            <section className="bg-[#fffdf8] border-2 border-[#e6c687] rounded-2xl p-5">
+              <h2 className="font-black text-lg mb-1 text-[#8b6508]">💛 חשיפה מועדפת ({publishedDresses.length})</h2>
+              <p className="text-xs text-[#6e634c] mb-4">
+                הוספת חשיפה מוסתרת לשמלות נבחרות — לא מוצג לשוכרות, רק משפיע על מיון «מומלצות».
+              </p>
+              {publishedDresses.length === 0 ? (
+                <p className="text-xs text-[#6e634c]">אין שמלות מפורסמות כרגע</p>
+              ) : (
+                <div className="space-y-3">
+                  {publishedDresses.map((dress) => {
+                    const isFeatured = (dress.featured_boost || 0) > 0;
+                    const untilLabel = dress.featured_until
+                      ? new Date(dress.featured_until).toLocaleDateString('he-IL', {
+                          day: 'numeric',
+                          month: 'short',
+                        })
+                      : null;
+                    return (
+                      <div
+                        key={`featured-${dress.id}`}
+                        className="bg-white rounded-xl border border-[#eadaaf] p-4 flex gap-4 items-center flex-wrap"
+                      >
+                        {dress.images?.[0] && (
+                          <DressImageFill src={dress.images[0]} alt="" className="w-16 h-20 shrink-0 rounded-lg" />
+                        )}
+                        <div className="flex-grow min-w-0">
+                          <h3 className="font-bold text-sm">{dress.name}</h3>
+                          <p className="text-[10px] text-[#6e634c]">
+                            ₪{dress.price} · {dress.city || '—'} · משכירה: {dress.owner_name || '—'}
+                          </p>
+                          <p className="text-[10px] text-[#8b6508] mt-1">
+                            {isFeatured ? `חשיפה מועדפת פעילה (${dress.featured_boost})` : 'ללא חשיפה מועדפת'}
+                            {untilLabel ? ` · עד ${untilLabel}` : ''}
+                          </p>
+                        </div>
+                        <div className="flex gap-2 shrink-0 flex-wrap">
+                          <button
+                            onClick={() => handleAction('dress', dress.id, 'toggle_featured')}
+                            className={`px-3 py-2 text-xs rounded-xl font-bold ${
+                              isFeatured
+                                ? 'border border-[#decfa8] text-[#8b6508] bg-white'
+                                : 'bg-[#d4af37] text-white'
+                            }`}
+                          >
+                            {isFeatured ? 'בטלי חשיפה' : 'הפעילי חשיפה'}
+                          </button>
+                          <button
+                            onClick={() => handleAction('dress', dress.id, 'extend_featured')}
+                            className="px-3 py-2 border border-[#decfa8] text-[#8b6508] text-xs rounded-xl font-bold bg-white"
+                          >
+                            +30 יום
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
 
             {/* מחיקה — ראשון וברור */}
             <section className="bg-red-50/50 border-2 border-red-200 rounded-2xl p-5">

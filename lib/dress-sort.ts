@@ -1,22 +1,24 @@
 import type { Dress } from '@/lib/types';
+import { getDressRecommendScore } from '@/lib/dress-ranking';
 
 const TOP_TIERS = 3;
 
-/** דירוג TOP לפי מספר השכרות — TOP 1 = הכי הרבה השכרות */
+/** @deprecated השתמשי ב-getCatalogHighlights */
 export function getTopRentalRanks(dresses: Dress[]): Map<string, number> {
   const ranks = new Map<string, number>();
-  const withRentals = dresses
-    .filter((d) => (d.rental_count || 0) > 0)
-    .sort((a, b) => (b.rental_count || 0) - (a.rental_count || 0));
+  const sorted = [...dresses].sort(
+    (a, b) => getDressRecommendScore(b) - getDressRecommendScore(a)
+  );
 
   let tier = 0;
-  let prevCount: number | null = null;
+  let prevScore: number | null = null;
 
-  for (const dress of withRentals) {
-    const count = dress.rental_count || 0;
-    if (count !== prevCount) {
+  for (const dress of sorted) {
+    const score = getDressRecommendScore(dress);
+    if (score <= 0) continue;
+    if (score !== prevScore) {
       tier += 1;
-      prevCount = count;
+      prevScore = score;
       if (tier > TOP_TIERS) break;
     }
     if (tier <= TOP_TIERS) {
@@ -27,30 +29,37 @@ export function getTopRentalRanks(dresses: Dress[]): Map<string, number> {
   return ranks;
 }
 
-/** מיון קטלוג — popular=הכי מושכרות (ברירת מחדל), אחרת לפי בחירת המשתמש */
+function normalizeSortBy(sortBy: string) {
+  if (sortBy === 'popular') return 'recommended';
+  return sortBy;
+}
+
+/** מיון קטלוג */
 export function compareDresses(a: Dress, b: Dress, sortBy: string) {
-  if (sortBy === 'price-asc') {
+  const mode = normalizeSortBy(sortBy);
+
+  if (mode === 'price-asc') {
     const priceDiff = a.price - b.price;
     if (priceDiff !== 0) return priceDiff;
-    return (b.rental_count || 0) - (a.rental_count || 0);
+    return getDressRecommendScore(b) - getDressRecommendScore(a);
   }
 
-  if (sortBy === 'price-desc') {
+  if (mode === 'price-desc') {
     const priceDiff = b.price - a.price;
     if (priceDiff !== 0) return priceDiff;
-    return (b.rental_count || 0) - (a.rental_count || 0);
+    return getDressRecommendScore(b) - getDressRecommendScore(a);
   }
 
-  if (sortBy === 'newest') {
+  if (mode === 'newest') {
     const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
     const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
     const timeDiff = bTime - aTime;
     if (timeDiff !== 0) return timeDiff;
-    return (b.rental_count || 0) - (a.rental_count || 0);
+    return getDressRecommendScore(b) - getDressRecommendScore(a);
   }
 
-  const rentalDiff = (b.rental_count || 0) - (a.rental_count || 0);
-  if (rentalDiff !== 0) return rentalDiff;
+  const scoreDiff = getDressRecommendScore(b) - getDressRecommendScore(a);
+  if (scoreDiff !== 0) return scoreDiff;
 
   const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
   const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;

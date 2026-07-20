@@ -18,6 +18,8 @@ export type Dress = {
   rental_count: number;
   rating_avg: number;
   rating_count: number;
+  featured_boost?: number;
+  featured_until?: string | null;
   created_at?: string;
   includes_dry_cleaning: boolean;
 };
@@ -39,7 +41,7 @@ export type Review = {
   stars: number;
 };
 
-export type SortOption = 'popular' | 'newest' | 'price-asc' | 'price-desc';
+export type SortOption = 'recommended' | 'popular' | 'newest' | 'price-asc' | 'price-desc';
 
 export const EVENT_TYPES = [
   'חתונה',

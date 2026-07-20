@@ -4,7 +4,8 @@ import {
   sendPaymentReportedAdminEmail,
   sendPaymentReportedCustomerEmail,
 } from '@/lib/email';
-import type { getSupabaseAdmin } from '@/lib/supabase/server';
+import { FEATURED_REWARD_DAYS, extendFeaturedUntil } from '@/lib/dress-ranking';
+import { getSupabaseAdmin } from '@/lib/supabase/server';
 
 type SupabaseAdmin = ReturnType<typeof getSupabaseAdmin>;
 
@@ -130,7 +131,7 @@ export async function confirmBookingPayment(
 
   const { data: dress } = await supabase
     .from('dresses')
-    .select('name, owner_name, rental_count')
+    .select('name, owner_name, rental_count, featured_until')
     .eq('id', booking.dress_id)
     .maybeSingle();
 
@@ -150,10 +151,30 @@ export async function confirmBookingPayment(
   if (updateBookingError) throw updateBookingError;
 
   if (dress) {
-    await supabase
+    const featuredUntil = extendFeaturedUntil(dress.featured_until, FEATURED_REWARD_DAYS);
+
+    const dressUpdate: Record<string, unknown> = {
+      rental_count: Number(dress.rental_count || 0) + 1,
+      featured_until: featuredUntil,
+    };
+
+    let { error: dressUpdateError } = await supabase
       .from('dresses')
-      .update({ rental_count: Number(dress.rental_count || 0) + 1 })
+      .update(dressUpdate)
       .eq('id', booking.dress_id);
+
+    if (
+      dressUpdateError &&
+      (dressUpdateError.message.includes('featured_until') ||
+        dressUpdateError.message.includes('schema cache'))
+    ) {
+      ({ error: dressUpdateError } = await supabase
+        .from('dresses')
+        .update({ rental_count: Number(dress.rental_count || 0) + 1 })
+        .eq('id', booking.dress_id));
+    }
+
+    if (dressUpdateError) throw dressUpdateError;
   }
 
   if (options?.notifyAdmin !== false && methodLabel) {

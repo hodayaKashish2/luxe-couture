@@ -3,6 +3,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import DressImageFill from '@/components/DressImageFill';
 import DressCalendar from '@/components/DressCalendar';
+import {
+  FEATURED_REWARD_DAYS,
+  formatFeaturedUntilDate,
+  hasActiveFeaturedBoost,
+} from '@/lib/dress-ranking';
 
 export type OwnerRentalDress = {
   id: string;
@@ -13,6 +18,8 @@ export type OwnerRentalDress = {
   status: string;
   images: string[];
   rental_count: number;
+  featured_boost?: number;
+  featured_until?: string | null;
   booked_dates: string[];
 };
 
@@ -330,7 +337,7 @@ export default function OwnerDressesPanel({
         <div>
           <h2 className="font-black text-xl">👗 השמלות שלי</h2>
           <p className="text-xs text-[#6e634c] mt-1 leading-relaxed max-w-lg">
-            רשימה מסודרת לניהול שמלות — בחרי שמלה לראות לוח שנה והזמנות.
+            רשימה מסודרת לניהול שמלות — בחרי שמלה לראות לוח שנה והזמנות. תשלום מאובטח דרך האתר מעניק חשיפה מוגברת בקטלוג למשך {FEATURED_REWARD_DAYS} יום.
           </p>
         </div>
         <button
@@ -532,6 +539,14 @@ export default function OwnerDressesPanel({
                 {selectedDress.rental_count > 0 && (
                   <p className="text-[10px] text-[#9a7b4f] mt-1">
                     {selectedDress.rental_count} השכרות עד כה
+                  </p>
+                )}
+                {hasActiveFeaturedBoost(selectedDress) && (
+                  <p className="text-[10px] font-bold text-[#8b6508] mt-1.5 bg-[#fffdf8] border border-[#decfa8] rounded-lg px-2 py-1 inline-block">
+                    💛 חשיפה מוגברת בקטלוג
+                    {selectedDress.featured_until
+                      ? ` · עד ${formatFeaturedUntilDate(selectedDress.featured_until)}`
+                      : ''}
                   </p>
                 )}
                 <span className="inline-block mt-2 text-[10px] bg-[#f4ebd4] px-2 py-0.5 rounded-full">

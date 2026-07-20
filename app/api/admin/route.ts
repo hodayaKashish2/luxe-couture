@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { fetchDressForNotify, notifyDressApproved } from '@/lib/dress-approval-notify';
+import { extendFeaturedUntil, FEATURED_REWARD_DAYS } from '@/lib/dress-ranking';
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server';
 
 function verifyToken(request: Request) {
@@ -34,7 +35,7 @@ export async function GET(request: Request) {
         .order('created_at', { ascending: false }),
       supabase
         .from('dresses')
-        .select('id, name, price, size, city, owner_name, created_at, images')
+        .select('id, name, price, size, city, owner_name, created_at, images, featured_boost, featured_until')
         .eq('status', 'approved')
         .order('created_at', { ascending: false }),
     ]);
@@ -82,7 +83,7 @@ export async function POST(request: Request) {
     const { type, id, action } = body as {
       type: 'dress' | 'review';
       id: string | number;
-      action: 'approve' | 'reject' | 'delete';
+      action: 'approve' | 'reject' | 'delete' | 'toggle_featured' | 'extend_featured';
     };
 
     if (!type || !id || !action) {
@@ -90,6 +91,56 @@ export async function POST(request: Request) {
     }
 
     const supabase = getSupabaseAdmin();
+
+    if (type === 'dress' && action === 'toggle_featured') {
+      const { data: row, error: fetchError } = await supabase
+        .from('dresses')
+        .select('featured_boost')
+        .eq('id', id)
+        .maybeSingle();
+
+      if (fetchError && !fetchError.message.includes('featured_boost')) throw fetchError;
+
+      const nextBoost = Number(row?.featured_boost || 0) > 0 ? 0 : 50;
+      const { error } = await supabase
+        .from('dresses')
+        .update({ featured_boost: nextBoost })
+        .eq('id', id);
+
+      if (error?.message?.includes('featured_boost')) {
+        return NextResponse.json(
+          { error: 'הריצי upgrade-v6.sql ב-Supabase לפני שימוש בחשיפה מועדפת' },
+          { status: 503 }
+        );
+      }
+      if (error) throw error;
+      return NextResponse.json({ success: true, featured_boost: nextBoost });
+    }
+
+    if (type === 'dress' && action === 'extend_featured') {
+      const { data: row, error: fetchError } = await supabase
+        .from('dresses')
+        .select('featured_until')
+        .eq('id', id)
+        .maybeSingle();
+
+      if (fetchError && !fetchError.message.includes('featured_until')) throw fetchError;
+
+      const featuredUntil = extendFeaturedUntil(row?.featured_until, FEATURED_REWARD_DAYS);
+      const { error } = await supabase
+        .from('dresses')
+        .update({ featured_until: featuredUntil })
+        .eq('id', id);
+
+      if (error?.message?.includes('featured_until')) {
+        return NextResponse.json(
+          { error: 'הריצי upgrade-v6.sql ב-Supabase לפני שימוש בחשיפה מועדפת' },
+          { status: 503 }
+        );
+      }
+      if (error) throw error;
+      return NextResponse.json({ success: true, featured_until: featuredUntil });
+    }
 
     if (type === 'dress' && action === 'delete') {
       let { error } = await supabase.from('dresses').update({ status: 'removed' }).eq('id', id);

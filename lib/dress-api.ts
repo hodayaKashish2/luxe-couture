@@ -18,6 +18,8 @@ export function normalizeDress(dress: Dress): Dress {
     rental_count: Number(dress.rental_count || 0),
     rating_avg: Number(dress.rating_avg || 0),
     rating_count: Number(dress.rating_count || 0),
+    featured_boost: Number(dress.featured_boost || 0),
+    featured_until: dress.featured_until || null,
     created_at: dress.created_at,
   };
 }

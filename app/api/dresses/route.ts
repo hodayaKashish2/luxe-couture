@@ -27,6 +27,8 @@ function mapDress(row: Record<string, unknown>, bookedDates: string[] = []) {
     rental_count: Number(row.rental_count || 0),
     rating_avg: ratingAvg,
     rating_count: ratingCount,
+    featured_boost: Number(row.featured_boost || 0),
+    featured_until: row.featured_until || null,
     created_at: row.created_at,
   };
 }

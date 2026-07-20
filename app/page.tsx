@@ -9,7 +9,7 @@ import CatalogFilterDrawer from '@/components/CatalogFilterDrawer';
 import CatalogFilterSidebar from '@/components/CatalogFilterSidebar';
 import DressCardSummary from '@/components/DressCardSummary';
 import RentalCountBadge from '@/components/RentalCountBadge';
-import TopRentalBadge from '@/components/TopRentalBadge';
+import DressHighlightBadge from '@/components/DressHighlightBadge';
 import DressDetailsModal from '@/components/DressDetailsModal';
 import DressImageFill from '@/components/DressImageFill';
 import DressRateModal from '@/components/DressRateModal';
@@ -29,7 +29,8 @@ import { isLoggedIn } from '@/lib/require-login';
 import { useModalHistory } from '@/hooks/use-modal-history';
 import { useScrollToError } from '@/hooks/use-scroll-to-error';
 import { popModalStackInPlace } from '@/lib/modal-history';
-import { compareDresses, getTopRentalRanks } from '@/lib/dress-sort';
+import { compareDresses } from '@/lib/dress-sort';
+import { getCatalogHighlights } from '@/lib/dress-ranking';
 import { dressSizeMatchesFilter } from '@/lib/dress-size';
 import { isPastDate, todayDateString } from '@/lib/booking-dates';
 import { OFF_PLATFORM_COORDINATE_NOTICE } from '@/lib/commission';
@@ -71,7 +72,7 @@ export default function Home() {
   const [colorFilter, setColorFilter] = useState('');
   const [cityFilter, setCityFilter] = useState('');
   const [selectedEventType, setSelectedEventType] = useState('');
-  const [sortBy, setSortBy] = useState<SortOption>('popular');
+  const [sortBy, setSortBy] = useState<SortOption>('recommended');
   const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [filtersSidebarCollapsed, setFiltersSidebarCollapsed] = useState(true);
@@ -808,7 +809,7 @@ export default function Home() {
     setSizeFilter('');
     setSelectedEventType('');
     setColorFilter('');
-    setSortBy('popular');
+    setSortBy('recommended');
     setMaxPrice(2000);
   };
 
@@ -816,7 +817,7 @@ export default function Home() {
   const catalogIsEmpty = !isLoadingDresses && dressesList.length === 0;
   const noFilterMatches = !isLoadingDresses && dressesList.length > 0 && filteredDresses.length === 0;
 
-  const topRentalRanks = getTopRentalRanks(filteredDresses);
+  const catalogHighlights = getCatalogHighlights(filteredDresses);
 
   const coordinateDatePast = coordinateDate ? isPastDate(coordinateDate) : false;
   const coordinateAvailable =
@@ -869,7 +870,7 @@ export default function Home() {
           <span className="bg-gradient-to-l from-[#c9a227] via-[#e8c547] to-[#a67c00] bg-clip-text text-transparent">בקליק</span>
         </h1>
         <p className="mt-3 text-sm text-[#554a33] max-w-xl mx-auto leading-relaxed">
-          יש לך שמלה בארון? פרסמי אותה — ככל שיותר בנות שוכרות דרכך, השמלה שלך תופיע ראשונה ותקבל יותר חשיפה.
+          יש לך שמלה בארון? פרסמי אותה — שמלות חדשות ומומלצות מקבלות חשיפה מוגברת, ותשלום מאובטח דרך האתר מחזק את המיקום שלך בקטלוג.
         </p>
         <div className="flex flex-wrap justify-center gap-3 mt-4 mb-0">
           <button onClick={openAddDressForm} className="px-6 py-3 bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white rounded-xl text-sm font-bold shadow-lg">
@@ -894,7 +895,7 @@ export default function Home() {
               className="text-[10px] sm:text-[11px] p-1.5 sm:px-2.5 sm:py-2 bg-white border border-[#decfa8] rounded-lg text-[#8b6508] font-bold max-w-[10rem] sm:max-w-none"
               aria-label="מיון שמלות"
             >
-              <option value="popular">המושכרות ביותר</option>
+              <option value="recommended">מומלצות</option>
               <option value="newest">חדש ביותר</option>
               <option value="price-asc">מחיר ↑</option>
               <option value="price-desc">מחיר ↓</option>
@@ -980,7 +981,7 @@ export default function Home() {
             const currentImgIndex = currentImageIndexes[dress.id] || 0;
             const isFav = isDressFavorite(dress.id);
             const inCart = isDressInCart(dress.id);
-            const topRank = topRentalRanks.get(dress.id);
+            const highlight = catalogHighlights.get(dress.id);
             return (
               <div 
                 key={dress.id} 
@@ -1080,7 +1081,7 @@ export default function Home() {
                     <DressCardSummary dress={dress} onShowDetails={() => setDetailsDress(dress)} />
                   </div>
                   <div className="flex flex-col gap-2 sm:gap-3 mt-auto pt-2 sm:pt-4 border-t-2 border-dotted border-[#f0e6cc]">
-                    {topRank !== undefined && <TopRentalBadge rank={topRank} />}
+                    {highlight && <DressHighlightBadge highlight={highlight} compact />}
                     <div>
                       <span className="text-[8px] sm:text-[9px] text-[#b8860b] font-black">מחיר השכרה</span>
                       <p className="text-neutral-900 font-black text-base sm:text-xl">₪{dress.price}</p>

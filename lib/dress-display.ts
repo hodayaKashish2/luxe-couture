@@ -34,6 +34,5 @@ export function getDressDetailRows(dress: Dress) {
       label: 'ניקוי יבש',
       value: dress.includes_dry_cleaning ? 'כלול במחיר' : 'לא כלול',
     },
-    dress.rental_count > 0 ? { label: 'השכרות', value: String(dress.rental_count) } : null,
   ].filter((row): row is { label: string; value: string } => Boolean(row?.value));
 }

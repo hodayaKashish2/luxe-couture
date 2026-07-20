@@ -27,12 +27,12 @@ const fieldClass =
 
 function sortHint(sortBy: SortOption) {
   if (sortBy === 'price-asc' || sortBy === 'price-desc') {
-    return 'מיון לפי מחיר, ואז לפי הכי מושכרות';
+    return 'מיון לפי מחיר, ואז לפי מומלצות';
   }
   if (sortBy === 'newest') {
-    return 'מיון לפי חדש ביותר, ואז לפי הכי מושכרות';
+    return 'מיון לפי חדש ביותר, ואז לפי מומלצות';
   }
-  return 'ברירת מחדל: המושכרות ביותר';
+  return 'ברירת מחדל: מומלצות';
 }
 
 export default function CatalogFilterPanel({
@@ -119,7 +119,7 @@ export default function CatalogFilterPanel({
             onChange={(e) => setSortBy(e.target.value as SortOption)}
             className={fieldClass}
           >
-            <option value="popular">המושכרות ביותר</option>
+            <option value="recommended">מומלצות</option>
             <option value="newest">חדש ביותר</option>
             <option value="price-asc">מחיר: נמוך לגבוה</option>
             <option value="price-desc">מחיר: גבוה לנמוך</option>

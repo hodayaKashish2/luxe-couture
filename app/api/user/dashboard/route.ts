@@ -165,6 +165,8 @@ export async function GET(request: Request) {
           status: d.status,
           images: Array.isArray(d.images) ? d.images : [],
           rental_count: Number(d.rental_count || 0),
+          featured_boost: Number(d.featured_boost || 0),
+          featured_until: d.featured_until || null,
           booked_dates: ownerBookings
             .filter((b) => String(b.dress_id) === String(d.id) && b.status === 'confirmed')
             .map((b) => b.event_date),
