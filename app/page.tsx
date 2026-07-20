@@ -983,10 +983,10 @@ export default function Home() {
             return (
               <div 
                 key={dress.id} 
-                className="group flex flex-col h-full min-h-[220px] sm:min-h-[280px] bg-white rounded-xl sm:rounded-2xl overflow-hidden border border-[#ebd3a4]/70 sm:border-2 shadow-sm hover:shadow-md hover:border-[#d4af37] transition-all duration-200"
+                className="group grid grid-rows-[3fr_1fr] h-full min-h-[220px] sm:min-h-[280px] bg-white rounded-xl sm:rounded-2xl overflow-hidden border border-[#ebd3a4]/70 sm:border-2 shadow-sm hover:shadow-md hover:border-[#d4af37] transition-all duration-200"
               >
-                {/* תמונה — ~75% מהכרטיס */}
-                <div className="flex-[3] min-h-0 w-full relative overflow-hidden bg-[#faf8f3]">
+                {/* תמונה — בדיוק 75% מגובה הכרטיס */}
+                <div className="relative min-h-0 w-full overflow-hidden bg-[#faf8f3]">
                   <DressImageFill
                     src={dress.images[currentImgIndex]}
                     alt={dress.name}
@@ -1045,32 +1045,27 @@ export default function Home() {
                   )}
                 </div>
 
-                {/* פרטים — ~25% מהכרטיס */}
-                <div className="flex-[1] shrink-0 p-2 sm:p-2.5 flex flex-col justify-center bg-gradient-to-b from-white to-[#fdfbf7] gap-1 sm:gap-1.5">
+                {/* פרטים — בדיוק 25% מגובה הכרטיס */}
+                <div className="min-h-0 overflow-hidden p-1.5 sm:p-2 flex flex-col justify-between bg-gradient-to-b from-white to-[#fdfbf7]">
                   <button
                     type="button"
                     onClick={() => setDetailsDress(dress)}
-                    className="text-[11px] sm:text-sm font-bold text-neutral-900 leading-snug text-right line-clamp-2 cursor-pointer hover:text-[#b8860b] transition-colors"
+                    className="text-[10px] sm:text-[11px] font-bold text-neutral-900 leading-tight text-right line-clamp-1 cursor-pointer hover:text-[#b8860b] transition-colors"
                   >
                     {dress.name}
                   </button>
 
-                  {highlight && (
-                    <div className="flex">
-                      <DressHighlightBadge highlight={highlight} compact />
+                  <div className="flex items-center justify-between gap-1.5 mt-0.5">
+                    <div className="min-w-0 flex items-center gap-1">
+                      <span className="text-neutral-900 font-black text-xs sm:text-sm leading-none">₪{dress.price}</span>
+                      {highlight && <DressHighlightBadge highlight={highlight} compact />}
                     </div>
-                  )}
-
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="min-w-0 text-right leading-none">
-                      <span className="text-neutral-900 font-black text-sm sm:text-base">₪{dress.price}</span>
-                    </div>
-                    <div className="flex items-center gap-1 shrink-0">
+                    <div className="flex items-center gap-0.5 shrink-0">
                       <button
                         type="button"
                         onPointerDown={(e) => e.stopPropagation()}
                         onClick={(e) => handleToggleFavorite(dress, e)}
-                        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center border text-xs sm:text-sm ${DRESS_CARD_BTN} ${
+                        className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center border text-[10px] sm:text-xs ${DRESS_CARD_BTN} ${
                           isFav
                             ? 'bg-[#fff0f0] border-[#f0c0c0] text-red-500'
                             : 'bg-white border-[#decfa8] text-[#8b6508]'
@@ -1084,7 +1079,7 @@ export default function Home() {
                         type="button"
                         onPointerDown={(e) => e.stopPropagation()}
                         onClick={(e) => handleToggleCart(dress, e)}
-                        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center border text-xs sm:text-sm ${DRESS_CARD_BTN} ${
+                        className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center border text-[10px] sm:text-xs ${DRESS_CARD_BTN} ${
                           inCart
                             ? 'bg-[#f4ebd4] border-[#d4af37] text-[#b8860b]'
                             : 'bg-white border-[#decfa8] text-[#8b6508]'
@@ -1100,7 +1095,7 @@ export default function Home() {
                   <button
                     type="button"
                     onClick={() => setDetailsDress(dress)}
-                    className={`w-full border-2 border-[#decfa8] bg-white hover:bg-[#fffdf8] text-[#8b6508] text-[10px] sm:text-[11px] font-bold py-1.5 sm:py-2 rounded-lg sm:rounded-xl mt-auto ${DRESS_CARD_BTN}`}
+                    className={`w-full border border-[#decfa8] bg-white hover:bg-[#fffdf8] text-[#8b6508] text-[9px] sm:text-[10px] font-bold py-1 rounded-md sm:rounded-lg leading-none ${DRESS_CARD_BTN}`}
                   >
                     ℹ️ פרטים מלאים
                   </button>
