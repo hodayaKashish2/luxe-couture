@@ -7,8 +7,6 @@ import OwnerPlatformNotice from '@/components/OwnerPlatformNotice';
 import FormError from '@/components/FormError';
 import CatalogFilterDrawer from '@/components/CatalogFilterDrawer';
 import CatalogFilterSidebar from '@/components/CatalogFilterSidebar';
-import DressCardSummary from '@/components/DressCardSummary';
-import RentalCountBadge from '@/components/RentalCountBadge';
 import DressHighlightBadge from '@/components/DressHighlightBadge';
 import DressDetailsModal from '@/components/DressDetailsModal';
 import DressImageFill from '@/components/DressImageFill';
@@ -985,10 +983,10 @@ export default function Home() {
             return (
               <div 
                 key={dress.id} 
-                className="group flex flex-col h-full bg-white rounded-2xl overflow-hidden border-2 border-[#ebd3a4]/60 shadow-[0_10px_30px_rgba(212,175,55,0.06)] hover:shadow-[0_25px_60px_rgba(212,175,55,0.22)] hover:border-[#d4af37] transition-all duration-300 transform hover:-translate-y-1"
+                className="group flex flex-col h-full bg-white rounded-xl sm:rounded-2xl overflow-hidden border border-[#ebd3a4]/70 sm:border-2 shadow-sm hover:shadow-md hover:border-[#d4af37] transition-all duration-200"
               >
-                {/* 📸 גלריית התמונות */}
-                <div className="h-[150px] sm:h-[220px] md:h-[260px] lg:h-[300px] w-full relative overflow-hidden">
+                {/* תמונה — קומפקט */}
+                <div className="aspect-[3/4] max-h-[132px] sm:max-h-[190px] md:max-h-[210px] w-full relative overflow-hidden bg-[#faf8f3]">
                   <DressImageFill
                     src={dress.images[currentImgIndex]}
                     alt={dress.name}
@@ -996,135 +994,113 @@ export default function Home() {
                     hoverScale
                   />
 
-                    <button
-                      type="button"
-                      onClick={() => setDetailsDress(dress)}
-                      className="absolute inset-0 z-[5] cursor-pointer bg-transparent"
-                      aria-label={`פרטים על ${dress.name}`}
-                    />
+                  <button
+                    type="button"
+                    onClick={() => setDetailsDress(dress)}
+                    className="absolute inset-0 z-[5] cursor-pointer bg-transparent"
+                    aria-label={`פרטים על ${dress.name}`}
+                  />
 
-                    <button
-                      type="button"
-                      onPointerDown={(e) => e.stopPropagation()}
-                      onClick={(e) => handleToggleFavorite(dress, e)}
-                      className={`absolute top-2 left-2 sm:top-3 sm:left-3 z-40 bg-white/90 hover:bg-white w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center shadow-md border border-[#eadaaf] text-xs sm:text-sm ${DRESS_CARD_BTN}`}
-                    >
-                      {isFav ? '❤️' : '🤍'}
-                    </button>
+                  {dress.images.length > 1 && (
+                    <>
+                      <button
+                        type="button"
+                        onPointerDown={(e) => e.stopPropagation()}
+                        onClick={(e) => prevImage(dress.id, dress.images.length, e)}
+                        className="absolute left-1 top-1/2 -translate-y-1/2 z-40 bg-white/90 text-[#b8860b] w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center shadow border border-[#e8cc92] font-black text-sm hover:bg-[#fffdf8] transition-all"
+                        aria-label="תמונה קודמת"
+                      >
+                        ‹
+                      </button>
+                      <button
+                        type="button"
+                        onPointerDown={(e) => e.stopPropagation()}
+                        onClick={(e) => nextImage(dress.id, dress.images.length, e)}
+                        className="absolute right-1 top-1/2 -translate-y-1/2 z-40 bg-white/90 text-[#b8860b] w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center shadow border border-[#e8cc92] font-black text-sm hover:bg-[#fffdf8] transition-all"
+                        aria-label="תמונה הבאה"
+                      >
+                        ›
+                      </button>
 
-                    <span className="absolute top-2 right-2 sm:top-3 sm:right-3 z-40 pointer-events-none bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white text-[8px] sm:text-[10px] font-black px-2 sm:px-3 py-0.5 sm:py-1 rounded shadow-md">
-                      מידה {dress.size}
-                    </span>
-
-                    {dress.images.length > 1 && (
-                      <>
-                        <button
-                          type="button"
-                          onPointerDown={(e) => e.stopPropagation()}
-                          onClick={(e) => prevImage(dress.id, dress.images.length, e)}
-                          className="absolute left-1.5 sm:left-2.5 top-1/2 -translate-y-1/2 z-40 bg-white/95 text-[#b8860b] w-7 h-7 sm:w-9 sm:h-9 rounded-full flex items-center justify-center shadow-lg border border-[#e8cc92] font-black text-base sm:text-lg hover:bg-gradient-to-r hover:from-[#d4af37] hover:to-[#b8860b] hover:text-white transition-all"
-                          aria-label="תמונה קודמת"
-                        >
-                          ‹
-                        </button>
-                        <button
-                          type="button"
-                          onPointerDown={(e) => e.stopPropagation()}
-                          onClick={(e) => nextImage(dress.id, dress.images.length, e)}
-                          className="absolute right-1.5 sm:right-2.5 top-1/2 -translate-y-1/2 z-40 bg-white/95 text-[#b8860b] w-7 h-7 sm:w-9 sm:h-9 rounded-full flex items-center justify-center shadow-lg border border-[#e8cc92] font-black text-base sm:text-lg hover:bg-gradient-to-r hover:from-[#d4af37] hover:to-[#b8860b] hover:text-white transition-all"
-                          aria-label="תמונה הבאה"
-                        >
-                          ›
-                        </button>
-
-                        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-40 flex gap-1.5 bg-white/95 px-2.5 py-1 rounded-full shadow-md border border-[#e0cba0]">
-                          {dress.images.map((_, idx) => (
-                            <button
-                              key={idx}
-                              type="button"
-                              onPointerDown={(e) => e.stopPropagation()}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setDressImageIndex(dress.id, idx);
-                              }}
-                              className={`h-1.5 rounded-full transition-all duration-300 ${idx === currentImgIndex ? 'bg-[#d4af37] w-3.5' : 'bg-[#e5d9bd] w-1.5 hover:bg-[#d4af37]/60'}`}
-                              aria-label={`תמונה ${idx + 1}`}
-                            />
-                          ))}
-                        </div>
-                      </>
-                    )}
+                      <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 z-40 flex gap-1 bg-black/25 px-1.5 py-0.5 rounded-full">
+                        {dress.images.map((_, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onPointerDown={(e) => e.stopPropagation()}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDressImageIndex(dress.id, idx);
+                            }}
+                            className={`h-1 rounded-full transition-all ${idx === currentImgIndex ? 'bg-white w-2.5' : 'bg-white/50 w-1 hover:bg-white/80'}`}
+                            aria-label={`תמונה ${idx + 1}`}
+                          />
+                        ))}
+                      </div>
+                    </>
+                  )}
                 </div>
 
-                {/* פרטי השמלה והמחיר */}
-                <div className="p-2.5 sm:p-5 flex flex-col flex-grow bg-gradient-to-b from-white to-[#fdfbf7]">
-                  <div className="flex justify-between items-start gap-1 sm:gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setDetailsDress(dress)}
-                      className="text-sm sm:text-lg font-bold text-neutral-900 tracking-wide group-hover:text-[#b8860b] transition-colors text-right line-clamp-2 cursor-pointer hover:underline underline-offset-2"
-                    >
-                      {dress.name}
-                    </button>
-                    <button 
-                      type="button"
-                      onClick={(e) => handleToggleCart(dress, e)}
-                      className={`text-[8px] sm:text-[9px] px-1.5 sm:px-2 py-1 sm:py-1.5 rounded-lg border shrink-0 font-bold whitespace-nowrap ${DRESS_CARD_BTN} ${
-                        inCart ? 'bg-[#f4ebd4] border-[#d4af37] text-[#b8860b]' : 'border-neutral-200 hover:bg-neutral-50 text-[#8b6508]'
-                      }`}
-                      title={inCart ? 'הסר מהסל' : 'הוסף לסל הזמנות מרוכז'}
-                    >
-                      {inCart ? '🛒 בסל' : '➕ לסל'}
-                    </button>
-                  </div>
-                  <div className="mt-2 sm:mt-3 hidden sm:block">
-                    <DressCardSummary dress={dress} onShowDetails={() => setDetailsDress(dress)} />
-                  </div>
-                  <div className="flex flex-col gap-2 sm:gap-3 mt-auto pt-2 sm:pt-4 border-t-2 border-dotted border-[#f0e6cc]">
-                    {highlight && <DressHighlightBadge highlight={highlight} compact />}
-                    <div>
-                      <span className="text-[8px] sm:text-[9px] text-[#b8860b] font-black">מחיר השכרה</span>
-                      <p className="text-neutral-900 font-black text-base sm:text-xl">₪{dress.price}</p>
-                      <div className="mt-1 sm:hidden">
-                        <RentalCountBadge dress={dress} inline />
-                      </div>
+                {/* פרטים קומפקטיים */}
+                <div className="p-2 sm:p-2.5 flex flex-col flex-grow bg-gradient-to-b from-white to-[#fdfbf7] gap-1.5 sm:gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setDetailsDress(dress)}
+                    className="text-[11px] sm:text-sm font-bold text-neutral-900 leading-snug text-right line-clamp-2 cursor-pointer hover:text-[#b8860b] transition-colors"
+                  >
+                    {dress.name}
+                  </button>
+
+                  {highlight && (
+                    <div className="flex">
+                      <DressHighlightBadge highlight={highlight} compact />
                     </div>
-                    <div className="grid grid-cols-1 gap-1.5 sm:gap-2">
-                      <button
-                        type="button"
-                        onClick={() => openCoordinate(dress)}
-                        className={`w-full px-2 sm:px-3 py-2 sm:py-2.5 border-2 border-[#decfa8] bg-white text-[#8b6508] text-[9px] sm:text-[11px] font-bold rounded-lg sm:rounded-xl ${DRESS_CARD_BTN}`}
-                      >
-                        📅 תיאום
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => tryReserveDress(dress, currentImgIndex)}
-                        className={`w-full bg-gradient-to-r from-[#2c261a] to-[#4a3f2b] hover:from-[#d4af37] hover:to-[#b8860b] text-white text-[9px] sm:text-[11px] font-bold py-2 sm:py-2.5 rounded-lg sm:rounded-xl shadow-md ${DRESS_CARD_BTN}`}
-                      >
-                        שרייני
-                      </button>
+                  )}
+
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="min-w-0 text-right leading-none">
+                      <span className="text-neutral-900 font-black text-sm sm:text-base">₪{dress.price}</span>
+                      <span className="text-[9px] sm:text-[10px] text-[#9a7b4f] font-bold mr-1">· מידה {dress.size}</span>
                     </div>
-                    <div className="hidden sm:flex gap-2 justify-center">
+                    <div className="flex items-center gap-1 shrink-0">
                       <button
                         type="button"
-                        onClick={(e) => { e.stopPropagation(); setRateDress(dress); }}
-                        className={`px-3 py-2 border border-[#decfa8] rounded-xl text-xs text-[#8b6508] ${DRESS_CARD_BTN}`}
+                        onPointerDown={(e) => e.stopPropagation()}
+                        onClick={(e) => handleToggleFavorite(dress, e)}
+                        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center border text-xs sm:text-sm ${DRESS_CARD_BTN} ${
+                          isFav
+                            ? 'bg-[#fff0f0] border-[#f0c0c0] text-red-500'
+                            : 'bg-white border-[#decfa8] text-[#8b6508]'
+                        }`}
+                        title={isFav ? 'הסירי ממועדפים' : 'הוסיפי למועדפים'}
+                        aria-label={isFav ? 'הסירי ממועדפים' : 'הוסיפי למועדפים'}
                       >
-                        ⭐ דרגי
+                        {isFav ? '❤️' : '🤍'}
                       </button>
                       <button
                         type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          void shareDress(dress);
-                        }}
-                        className={`px-3 py-2 border border-[#decfa8] rounded-xl text-xs text-[#8b6508] ${DRESS_CARD_BTN}`}
+                        onPointerDown={(e) => e.stopPropagation()}
+                        onClick={(e) => handleToggleCart(dress, e)}
+                        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center border text-xs sm:text-sm ${DRESS_CARD_BTN} ${
+                          inCart
+                            ? 'bg-[#f4ebd4] border-[#d4af37] text-[#b8860b]'
+                            : 'bg-white border-[#decfa8] text-[#8b6508]'
+                        }`}
+                        title={inCart ? 'הסר מהסל' : 'הוסף לסל'}
+                        aria-label={inCart ? 'הסר מהסל' : 'הוסף לסל'}
                       >
-                        📤 שתפי
+                        {inCart ? '🛒' : '🛍️'}
                       </button>
                     </div>
                   </div>
+
+                  <button
+                    type="button"
+                    onClick={() => tryReserveDress(dress, currentImgIndex)}
+                    className={`w-full bg-gradient-to-r from-[#2c261a] to-[#4a3f2b] hover:from-[#d4af37] hover:to-[#b8860b] text-white text-[10px] sm:text-[11px] font-bold py-2 rounded-lg sm:rounded-xl shadow-sm mt-auto ${DRESS_CARD_BTN}`}
+                  >
+                    שרייני
+                  </button>
                 </div>
               </div>
             );
