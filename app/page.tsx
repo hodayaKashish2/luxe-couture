@@ -985,12 +985,11 @@ export default function Home() {
                 key={dress.id} 
                 className="group flex flex-col bg-white rounded-lg sm:rounded-xl overflow-hidden border border-[#ebd3a4]/60 shadow-sm hover:shadow-md hover:border-[#d4af37] transition-all duration-200"
               >
-                {/* תמונה — SHEIN: גובה קבוע לפי רוחב, ממלאה את כל השטח */}
+                {/* תמונה — גובה SHEIN, כל השמלה נראית (contain + רקע מטושטש) */}
                 <div className="relative w-full aspect-[3/4] overflow-hidden bg-[#f5f0e6]">
                   <DressImageFill
                     src={dress.images[currentImgIndex]}
                     alt={dress.name}
-                    fillMode="cover"
                     className="absolute inset-0 h-full w-full"
                     hoverScale
                   />

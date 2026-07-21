@@ -61,7 +61,7 @@ export default function DressDetailsModal({
         </button>
 
         <div className="relative w-full md:w-3/5 shrink-0 flex flex-col bg-[#faf8f3] border-b md:border-b-0 md:border-l border-[#f0e2c3] md:min-h-[70vh]">
-          <div className="relative w-full aspect-[3/4] max-h-[min(52vh,28rem)] md:max-h-none md:flex-1 md:min-h-[55vh]">
+          <div className="relative w-full h-[min(50vh,26rem)] sm:h-[min(55vh,30rem)] md:h-auto md:flex-1 md:min-h-[55vh]">
             {images.length > 0 ? (
               <>
                 <DressImageFill

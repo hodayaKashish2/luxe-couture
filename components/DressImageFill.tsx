@@ -5,7 +5,7 @@ type DressImageFillProps = {
   alt: string;
   className?: string;
   imageClassName?: string;
-  /** contain = כל השמלה נראית (מודאל). cover = ממלא את השטח (קטלוג כמו SHEIN) */
+  /** contain = כל השמלה נראית (ברירת מחדל). cover = חיתוך למילוי מלא */
   fillMode?: 'contain' | 'cover';
   /** אפקט hover עדין — רק ברקע, כדי שלא ייחתך השמלה */
   hoverScale?: boolean;
@@ -27,7 +27,13 @@ export default function DressImageFill({
   const isCover = fillMode === 'cover';
   const mainImageClass = isCover
     ? `absolute inset-0 z-[1] h-full w-full object-cover object-center ${imageClassName}`
-    : `absolute inset-0 z-[1] h-full w-full max-h-full max-w-full object-contain object-center ${imageClassName}`;
+    : `absolute inset-0 z-[1] m-auto h-full w-full object-contain object-center ${imageClassName}`;
+  const mainHoverClass =
+    hoverScale && isCover
+      ? 'transition-transform duration-500 ease-out group-hover:scale-[1.03]'
+      : hoverScale
+        ? 'transition-transform duration-500 ease-out group-hover:scale-[1.02]'
+        : '';
 
   return (
     <div className={`relative overflow-hidden bg-[#ebe4d6] ${className}`}>
@@ -51,7 +57,7 @@ export default function DressImageFill({
         alt={alt}
         loading={loading}
         draggable={false}
-        className={`${mainImageClass} ${hoverScale && isCover ? 'transition-transform duration-500 ease-out group-hover:scale-[1.03]' : ''}`}
+        className={`${mainImageClass} ${mainHoverClass}`}
       />
     </div>
   );
