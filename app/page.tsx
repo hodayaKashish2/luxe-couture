@@ -983,13 +983,14 @@ export default function Home() {
             return (
               <div 
                 key={dress.id} 
-                className="group grid grid-rows-[3fr_1fr] h-full min-h-[220px] sm:min-h-[280px] bg-white rounded-xl sm:rounded-2xl overflow-hidden border border-[#ebd3a4]/70 sm:border-2 shadow-sm hover:shadow-md hover:border-[#d4af37] transition-all duration-200"
+                className="group flex flex-col bg-white rounded-lg sm:rounded-xl overflow-hidden border border-[#ebd3a4]/60 shadow-sm hover:shadow-md hover:border-[#d4af37] transition-all duration-200"
               >
-                {/* תמונה — בדיוק 75% מגובה הכרטיס */}
-                <div className="relative min-h-0 w-full overflow-hidden bg-[#faf8f3]">
+                {/* תמונה — SHEIN: גובה קבוע לפי רוחב, ממלאה את כל השטח */}
+                <div className="relative w-full aspect-[3/4] overflow-hidden bg-[#f5f0e6]">
                   <DressImageFill
                     src={dress.images[currentImgIndex]}
                     alt={dress.name}
+                    fillMode="cover"
                     className="absolute inset-0 h-full w-full"
                     hoverScale
                   />
@@ -1001,9 +1002,40 @@ export default function Home() {
                     aria-label={`פרטים על ${dress.name}`}
                   />
 
-                  <span className="absolute top-2 right-2 sm:top-3 sm:right-3 z-40 pointer-events-none bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white text-[8px] sm:text-[10px] font-black px-2 sm:px-3 py-0.5 sm:py-1 rounded shadow-md border border-[#c9a227]">
+                  <span className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 z-40 pointer-events-none bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white text-[7px] sm:text-[9px] font-black px-1.5 sm:px-2 py-0.5 rounded shadow border border-[#c9a227]">
                     מידה {dress.size}
                   </span>
+
+                  <div className="absolute top-1.5 left-1.5 sm:top-2 sm:left-2 z-40 flex flex-col gap-1">
+                    <button
+                      type="button"
+                      onPointerDown={(e) => e.stopPropagation()}
+                      onClick={(e) => handleToggleFavorite(dress, e)}
+                      className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center shadow-md border text-xs ${DRESS_CARD_BTN} ${
+                        isFav
+                          ? 'bg-white/95 border-[#f0c0c0] text-red-500'
+                          : 'bg-white/95 border-white/80 text-[#8b6508]'
+                      }`}
+                      title={isFav ? 'הסירי ממועדפים' : 'הוסיפי למועדפים'}
+                      aria-label={isFav ? 'הסירי ממועדפים' : 'הוסיפי למועדפים'}
+                    >
+                      {isFav ? '❤️' : '🤍'}
+                    </button>
+                    <button
+                      type="button"
+                      onPointerDown={(e) => e.stopPropagation()}
+                      onClick={(e) => handleToggleCart(dress, e)}
+                      className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center shadow-md border text-xs ${DRESS_CARD_BTN} ${
+                        inCart
+                          ? 'bg-[#f4ebd4]/95 border-[#d4af37] text-[#b8860b]'
+                          : 'bg-white/95 border-white/80 text-[#8b6508]'
+                      }`}
+                      title={inCart ? 'הסר מהסל' : 'הוסף לסל'}
+                      aria-label={inCart ? 'הסר מהסל' : 'הוסף לסל'}
+                    >
+                      {inCart ? '🛒' : '🛍️'}
+                    </button>
+                  </div>
 
                   {dress.images.length > 1 && (
                     <>
@@ -1011,7 +1043,7 @@ export default function Home() {
                         type="button"
                         onPointerDown={(e) => e.stopPropagation()}
                         onClick={(e) => prevImage(dress.id, dress.images.length, e)}
-                        className="absolute left-1 top-1/2 -translate-y-1/2 z-40 bg-white/90 text-[#b8860b] w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center shadow border border-[#e8cc92] font-black text-sm hover:bg-[#fffdf8] transition-all"
+                        className="absolute left-1 bottom-8 sm:bottom-10 z-40 bg-white/90 text-[#b8860b] w-6 h-6 rounded-full flex items-center justify-center shadow border border-[#e8cc92] font-black text-sm hover:bg-[#fffdf8] transition-all opacity-0 group-hover:opacity-100 sm:opacity-100"
                         aria-label="תמונה קודמת"
                       >
                         ‹
@@ -1020,13 +1052,13 @@ export default function Home() {
                         type="button"
                         onPointerDown={(e) => e.stopPropagation()}
                         onClick={(e) => nextImage(dress.id, dress.images.length, e)}
-                        className="absolute right-1 top-1/2 -translate-y-1/2 z-40 bg-white/90 text-[#b8860b] w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center shadow border border-[#e8cc92] font-black text-sm hover:bg-[#fffdf8] transition-all"
+                        className="absolute right-1 bottom-8 sm:bottom-10 z-40 bg-white/90 text-[#b8860b] w-6 h-6 rounded-full flex items-center justify-center shadow border border-[#e8cc92] font-black text-sm hover:bg-[#fffdf8] transition-all opacity-0 group-hover:opacity-100 sm:opacity-100"
                         aria-label="תמונה הבאה"
                       >
                         ›
                       </button>
 
-                      <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 z-40 flex gap-1 bg-black/25 px-1.5 py-0.5 rounded-full">
+                      <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 z-40 flex gap-1 bg-black/30 px-1.5 py-0.5 rounded-full">
                         {dress.images.map((_, idx) => (
                           <button
                             key={idx}
@@ -1045,60 +1077,30 @@ export default function Home() {
                   )}
                 </div>
 
-                {/* פרטים — בדיוק 25% מגובה הכרטיס */}
-                <div className="min-h-0 overflow-hidden p-1.5 sm:p-2 flex flex-col justify-between bg-gradient-to-b from-white to-[#fdfbf7]">
+                {/* פרטים — רצועה דקה כמו SHEIN (~15% מהכרטיס) */}
+                <div className="px-2 py-1.5 sm:px-2.5 sm:py-2 bg-white space-y-1">
                   <button
                     type="button"
                     onClick={() => setDetailsDress(dress)}
-                    className="text-[10px] sm:text-[11px] font-bold text-neutral-900 leading-tight text-right line-clamp-1 cursor-pointer hover:text-[#b8860b] transition-colors"
+                    className="w-full text-[10px] sm:text-[11px] font-medium text-neutral-800 leading-tight text-right line-clamp-2 cursor-pointer hover:text-[#b8860b] transition-colors"
                   >
                     {dress.name}
                   </button>
 
-                  <div className="flex items-center justify-between gap-1.5 mt-0.5">
-                    <div className="min-w-0 flex items-center gap-1">
-                      <span className="text-neutral-900 font-black text-xs sm:text-sm leading-none">₪{dress.price}</span>
-                      {highlight && <DressHighlightBadge highlight={highlight} compact />}
-                    </div>
-                    <div className="flex items-center gap-0.5 shrink-0">
-                      <button
-                        type="button"
-                        onPointerDown={(e) => e.stopPropagation()}
-                        onClick={(e) => handleToggleFavorite(dress, e)}
-                        className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center border text-[10px] sm:text-xs ${DRESS_CARD_BTN} ${
-                          isFav
-                            ? 'bg-[#fff0f0] border-[#f0c0c0] text-red-500'
-                            : 'bg-white border-[#decfa8] text-[#8b6508]'
-                        }`}
-                        title={isFav ? 'הסירי ממועדפים' : 'הוסיפי למועדפים'}
-                        aria-label={isFav ? 'הסירי ממועדפים' : 'הוסיפי למועדפים'}
-                      >
-                        {isFav ? '❤️' : '🤍'}
-                      </button>
-                      <button
-                        type="button"
-                        onPointerDown={(e) => e.stopPropagation()}
-                        onClick={(e) => handleToggleCart(dress, e)}
-                        className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center border text-[10px] sm:text-xs ${DRESS_CARD_BTN} ${
-                          inCart
-                            ? 'bg-[#f4ebd4] border-[#d4af37] text-[#b8860b]'
-                            : 'bg-white border-[#decfa8] text-[#8b6508]'
-                        }`}
-                        title={inCart ? 'הסר מהסל' : 'הוסף לסל'}
-                        aria-label={inCart ? 'הסר מהסל' : 'הוסף לסל'}
-                      >
-                        {inCart ? '🛒' : '🛍️'}
-                      </button>
-                    </div>
+                  <div className="flex items-center justify-between gap-1">
+                    <span className="text-neutral-900 font-black text-xs sm:text-sm leading-none">₪{dress.price}</span>
+                    <button
+                      type="button"
+                      onClick={() => setDetailsDress(dress)}
+                      className={`text-[9px] sm:text-[10px] font-bold text-[#b8860b] hover:underline shrink-0 ${DRESS_CARD_BTN}`}
+                    >
+                      פרטים מלאים ›
+                    </button>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() => setDetailsDress(dress)}
-                    className={`w-full border border-[#decfa8] bg-white hover:bg-[#fffdf8] text-[#8b6508] text-[9px] sm:text-[10px] font-bold py-1 rounded-md sm:rounded-lg leading-none ${DRESS_CARD_BTN}`}
-                  >
-                    ℹ️ פרטים מלאים
-                  </button>
+                  {highlight && (
+                    <DressHighlightBadge highlight={highlight} compact />
+                  )}
                 </div>
               </div>
             );
