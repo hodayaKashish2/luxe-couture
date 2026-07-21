@@ -4,10 +4,11 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import DressImageFill from '@/components/DressImageFill';
 import DressCalendar from '@/components/DressCalendar';
 import {
-  FEATURED_REWARD_DAYS,
   formatFeaturedUntilDate,
   hasActiveFeaturedBoost,
+  FEATURED_REWARD_DAYS,
 } from '@/lib/dress-ranking';
+import { isPastDate, splitBookingsByEventDate } from '@/lib/booking-dates';
 
 export type OwnerRentalDress = {
   id: string;
@@ -155,6 +156,7 @@ export default function OwnerDressesPanel({
   const [filter, setFilter] = useState<DressFilter>('all');
   const [sort, setSort] = useState<DressSort>('recent');
   const [showUpcoming, setShowUpcoming] = useState(true);
+  const [showPastBookings, setShowPastBookings] = useState(false);
   const [selectedDressId, setSelectedDressId] = useState<string | null>(null);
   const rowRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
@@ -166,13 +168,17 @@ export default function OwnerDressesPanel({
     [activeDresses, ownerBookings]
   );
 
-  const upcomingBookings = useMemo(() => {
-    const today = new Date().toISOString().slice(0, 10);
-    return getConfirmedBookings(ownerBookings)
-      .filter((b) => b.event_date >= today)
-      .sort((a, b) => a.event_date.localeCompare(b.event_date))
-      .slice(0, 8);
-  }, [ownerBookings]);
+  const confirmedOwnerBookings = useMemo(
+    () => getConfirmedBookings(ownerBookings),
+    [ownerBookings]
+  );
+
+  const { upcoming: upcomingOwnerBookings, past: pastOwnerBookings } = useMemo(
+    () => splitBookingsByEventDate(confirmedOwnerBookings),
+    [confirmedOwnerBookings]
+  );
+
+  const upcomingBookings = upcomingOwnerBookings.slice(0, 8);
 
   const pendingApprovalBookings = useMemo(
     () =>
@@ -232,9 +238,9 @@ export default function OwnerDressesPanel({
   const selectedBookings = selectedDress
     ? getConfirmedBookings(getDressBookings(selectedDress.id, ownerBookings))
     : [];
-  const selectedConfirmedDates = selectedBookings
-    .filter((b) => b.status === 'confirmed')
-    .map((b) => b.event_date);
+  const selectedUpcomingBookings = selectedBookings.filter((b) => !isPastDate(b.event_date));
+  const selectedPastBookings = selectedBookings.filter((b) => isPastDate(b.event_date));
+  const selectedConfirmedDates = selectedUpcomingBookings.map((b) => b.event_date);
   const calendarFocusDate = nearestBookingDate(selectedBookings);
 
   const filterChips: { id: DressFilter; label: string }[] = [
@@ -566,15 +572,17 @@ export default function OwnerDressesPanel({
 
             <div>
               <h4 className="text-xs font-black text-[#8b6508] mb-2">
-                הזמנות ({selectedBookings.length})
+                הזמנות קרובות ({selectedUpcomingBookings.length})
               </h4>
-              {selectedBookings.length === 0 ? (
+              {selectedUpcomingBookings.length === 0 ? (
                 <p className="text-xs text-[#9a7b4f] bg-[#faf8f3] rounded-xl border border-dashed border-[#decfa8] px-4 py-3 text-center">
-                  אין הזמנות — השמלה פנויה להשכרה
+                  {selectedPastBookings.length > 0
+                    ? 'אין הזמנות קרובות — יש הזמנות בעבר למטה'
+                    : 'אין הזמנות — השמלה פנויה להשכרה'}
                 </p>
               ) : (
                 <ul className="space-y-2 max-h-64 overflow-y-auto">
-                  {selectedBookings.map((b) => (
+                  {selectedUpcomingBookings.map((b) => (
                     <li
                       key={b.id}
                       className="flex flex-wrap items-center justify-between gap-2 bg-gradient-to-l from-[#fffdf8] to-[#f4ebd4] border border-[#decfa8] rounded-xl px-3 py-2.5"
@@ -607,6 +615,32 @@ export default function OwnerDressesPanel({
                 </ul>
               )}
             </div>
+
+            {selectedPastBookings.length > 0 && (
+              <div>
+                <h4 className="text-xs font-black text-neutral-600 mb-2">
+                  הזמנות בעבר ({selectedPastBookings.length})
+                </h4>
+                <ul className="space-y-2 max-h-40 overflow-y-auto">
+                  {selectedPastBookings.map((b) => (
+                    <li
+                      key={b.id}
+                      className="flex flex-wrap items-center justify-between gap-2 bg-neutral-50 border border-neutral-200 rounded-xl px-3 py-2.5"
+                    >
+                      <div>
+                        <p className="text-sm font-bold text-neutral-700">
+                          {b.customer_name || 'שוכרת'}
+                        </p>
+                        <p className="text-xs text-neutral-500 font-bold mt-0.5">📅 {b.event_date}</p>
+                      </div>
+                      <span className="text-[10px] font-black px-2 py-0.5 rounded-full shrink-0 bg-neutral-200 text-neutral-700">
+                        {BOOKING_STATUS[b.status] || b.status}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
         ) : (
           <div className="mt-4 lg:mt-0 bg-[#faf8f3] rounded-xl border border-dashed border-[#decfa8] p-4 text-center text-xs text-[#6e634c]">
@@ -649,12 +683,46 @@ export default function OwnerDressesPanel({
         </div>
       )}
 
+      {pastOwnerBookings.length > 0 && (
+        <div className="bg-neutral-50 rounded-2xl border border-neutral-200 overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setShowPastBookings((v) => !v)}
+            className="w-full flex items-center justify-between gap-2 px-4 py-3 text-xs font-black text-neutral-700 bg-neutral-100 hover:bg-neutral-200/80 transition-colors"
+          >
+            <span>🗓️ השכרות בעבר ({pastOwnerBookings.length})</span>
+            <span>{showPastBookings ? '▲' : '▼'}</span>
+          </button>
+          {showPastBookings && (
+            <ul className="divide-y divide-neutral-200 max-h-72 overflow-y-auto">
+              {pastOwnerBookings.map((b) => (
+                <li key={b.id}>
+                  <button
+                    type="button"
+                    onClick={() => handleSelectDress(String(b.dress_id))}
+                    className="w-full text-right px-4 py-3 hover:bg-neutral-100/80 transition-colors flex justify-between gap-3 items-center"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-neutral-700 truncate">{b.dress_name}</p>
+                      <p className="text-[10px] text-neutral-500 mt-0.5">
+                        {formatHebrewDate(b.event_date)} · {b.customer_name || 'שוכרת'}
+                      </p>
+                    </div>
+                    <span className="text-[9px] shrink-0 bg-neutral-200 text-neutral-600 px-2 py-0.5 rounded-full font-bold">
+                      עבר
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
       {removedDresses.length > 0 && (
         <div className="bg-neutral-50 rounded-2xl border border-neutral-200 overflow-hidden">
           <div className="px-4 py-3 bg-neutral-100 border-b border-neutral-200">
-            <h4 className="text-xs font-black text-neutral-700">
             <h4 className="text-xs font-black text-neutral-700">🗂️ שמלות שהוסרו מהאתר</h4>
-            </h4>
             <p className="text-[10px] text-neutral-600 mt-1">
               שמלות שלא מוצגות יותר בקטלוג — מופיעות כאן לעיון בלבד
             </p>

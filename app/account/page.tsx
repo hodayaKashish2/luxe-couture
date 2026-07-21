@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import SiteFooter from '@/components/SiteFooter';
@@ -23,6 +23,7 @@ import { notifySiteAuthChange } from '@/lib/site-auth-events';
 import { accountSectionUrl, parseAccountSection } from '@/lib/account-section-url';
 import { navigateAccountHub } from '@/lib/account-hub-nav';
 import { ownerWhatsAppLink } from '@/lib/site-config';
+import { splitBookingsByEventDate } from '@/lib/booking-dates';
 import { fetchDressById, findDressInList, preloadDressesCatalog } from '@/lib/dress-api';
 import { useScrollToError } from '@/hooks/use-scroll-to-error';
 import type { Dress } from '@/lib/types';
@@ -92,6 +93,7 @@ function AccountPageContent() {
   const [ownerBookings, setOwnerBookings] = useState<BookingRow[]>([]);
   const [reservations, setReservations] = useState<BookingRow[]>([]);
   const [revealedOwnerIds, setRevealedOwnerIds] = useState<Set<number>>(new Set());
+  const [showPastReservations, setShowPastReservations] = useState(false);
   const [loading, setLoading] = useState(true);
   const [dataReady, setDataReady] = useState(false);
   const [addFiles, setAddFiles] = useState<File[]>([]);
@@ -525,7 +527,11 @@ function AccountPageContent() {
   const activeDresses = dresses.filter((d) => d.status !== 'removed');
   const activeReservations = reservations.filter((r) => r.dress_status !== 'removed');
   const removedReservations = reservations.filter((r) => r.dress_status === 'removed');
-  const reservationDates = activeReservations.map((r) => r.event_date);
+  const { upcoming: upcomingReservations, past: pastReservations } = useMemo(
+    () => splitBookingsByEventDate(activeReservations),
+    [activeReservations]
+  );
+  const reservationDates = upcomingReservations.map((r) => r.event_date);
   const dressesWithBookings = activeDresses.filter((d) =>
     ownerBookings.some((b) => String(b.dress_id) === String(d.id))
   ).length;
@@ -565,7 +571,8 @@ function AccountPageContent() {
                     <span className="text-[#9a7b4f] animate-pulse">טוען...</span>
                   ) : (
                     <>
-                      {activeReservations.length} הזמנות מאושרות
+                      {upcomingReservations.length} הזמנות קרובות
+                      {pastReservations.length > 0 && ` · ${pastReservations.length} בעבר`}
                     </>
                   )}
                 </p>
@@ -651,7 +658,7 @@ function AccountPageContent() {
             <h2 className="font-black text-xl">📅 ההזמנות שלי</h2>
             {loading ? (
               <p className="text-sm text-[#6e634c] animate-pulse">טוען שמלות...</p>
-            ) : activeReservations.length === 0 && removedReservations.length === 0 ? (
+            ) : upcomingReservations.length === 0 && pastReservations.length === 0 && removedReservations.length === 0 ? (
               <div className="bg-white rounded-2xl border border-[#eadaaf] p-8 text-center">
                 <p className="text-sm text-[#6e634c]">עדיין אין הזמנות מאושרות. מצאי שמלה בקטלוג והשלימי תשלום!</p>
                 <Link href="/" className="inline-block mt-4 px-4 py-2 bg-[#b8860b] text-white rounded-xl text-xs font-bold">
@@ -660,12 +667,14 @@ function AccountPageContent() {
               </div>
             ) : (
               <>
-                <div className="bg-white rounded-2xl border border-[#eadaaf] p-5">
-                  <h3 className="text-xs font-black text-[#8b6508] mb-3">לוח התאריכים שלך</h3>
-                  <DressCalendar bookedDates={reservationDates} />
-                </div>
-                <ul className="space-y-3">
-                  {activeReservations.map((r) => (
+                {upcomingReservations.length > 0 && (
+                  <>
+                    <div className="bg-white rounded-2xl border border-[#eadaaf] p-5">
+                      <h3 className="text-xs font-black text-[#8b6508] mb-3">לוח התאריכים שלך</h3>
+                      <DressCalendar bookedDates={reservationDates} />
+                    </div>
+                    <ul className="space-y-3">
+                      {upcomingReservations.map((r) => (
                     <li key={r.id} className="bg-white rounded-xl border border-[#eadaaf] p-4">
                       <div className="flex justify-between gap-2 flex-wrap">
                         <strong>{r.dress_name}</strong>
@@ -744,7 +753,43 @@ function AccountPageContent() {
                       </div>
                     </li>
                   ))}
-                </ul>
+                    </ul>
+                  </>
+                )}
+
+                {upcomingReservations.length === 0 && pastReservations.length > 0 && (
+                  <div className="bg-[#fffdf8] rounded-2xl border border-[#eadaaf] p-5 text-center">
+                    <p className="text-sm text-[#6e634c]">אין הזמנות קרובות — כל ההזמנות שלך בעבר.</p>
+                  </div>
+                )}
+
+                {pastReservations.length > 0 && (
+                  <div className="bg-neutral-50 rounded-2xl border border-neutral-200 overflow-hidden">
+                    <button
+                      type="button"
+                      onClick={() => setShowPastReservations((v) => !v)}
+                      className="w-full flex items-center justify-between gap-2 px-4 py-3 text-xs font-black text-neutral-700 bg-neutral-100 hover:bg-neutral-200/80 transition-colors"
+                    >
+                      <span>🗓️ הזמנות בעבר ({pastReservations.length})</span>
+                      <span>{showPastReservations ? '▲' : '▼'}</span>
+                    </button>
+                    {showPastReservations && (
+                      <ul className="divide-y divide-neutral-200 max-h-72 overflow-y-auto">
+                        {pastReservations.map((r) => (
+                          <li key={r.id} className="px-4 py-3">
+                            <div className="flex justify-between gap-2 flex-wrap">
+                              <strong className="text-neutral-700">{r.dress_name}</strong>
+                              <span className="text-[10px] bg-neutral-200 text-neutral-600 px-2 py-0.5 rounded-full">
+                                {STATUS[r.status] || r.status}
+                              </span>
+                            </div>
+                            <p className="text-sm text-neutral-500 font-bold mt-1">📅 {r.event_date}</p>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
 
                 {removedReservations.length > 0 && (
                   <div className="bg-neutral-50 rounded-2xl border border-neutral-200 overflow-hidden">
