@@ -7,6 +7,7 @@ import SiteFooter from '@/components/SiteFooter';
 import SiteHeader from '@/components/SiteHeader';
 import SavedDressList from '@/components/SavedDressList';
 import DressDetailsModal from '@/components/DressDetailsModal';
+import DressRateModal from '@/components/DressRateModal';
 import { useLuxeStorage } from '@/components/LuxeStorageProvider';
 import DressCalendar from '@/components/DressCalendar';
 import OwnerPlatformNotice from '@/components/OwnerPlatformNotice';
@@ -22,7 +23,7 @@ import { clearAllLuxeStorage } from '@/lib/luxe-storage';
 import { notifySiteAuthChange } from '@/lib/site-auth-events';
 import { accountSectionUrl, parseAccountSection } from '@/lib/account-section-url';
 import { navigateAccountHub } from '@/lib/account-hub-nav';
-import { ownerWhatsAppLink } from '@/lib/site-config';
+import { dressPageUrl, ownerWhatsAppLink } from '@/lib/site-config';
 import { splitBookingsByEventDate } from '@/lib/booking-dates';
 import { fetchDressById, findDressInList, preloadDressesCatalog } from '@/lib/dress-api';
 import { useScrollToError } from '@/hooks/use-scroll-to-error';
@@ -79,6 +80,7 @@ function AccountPageContent() {
   const { section, dressId, viewDress: viewDressId } = parseAccountSection(searchParams);
   const { cart, favorites, cartCount, favCount, removeFromCart, removeFromFavorites, toggleCart, toggleFavorite, isDressInCart, isDressFavorite } = useLuxeStorage();
   const [detailsDress, setDetailsDress] = useState<Dress | null>(null);
+  const [rateDress, setRateDress] = useState<Dress | null>(null);
   const [user, setUser] = useState<AccountUser | null>(() => {
     const stored = getStoredSiteUser();
     if (!stored) return null;
@@ -151,12 +153,34 @@ function AccountPageContent() {
 
   const closeDetailsDress = useCallback(() => {
     setDetailsDress(null);
+    setRateDress(null);
     pendingViewDressRef.current = null;
     const { section: currentSection } = parseAccountSection(searchParams);
     if (searchParams.get('viewDress')) {
       navigateToSection(currentSection, { replace: true });
     }
   }, [searchParams, navigateToSection]);
+
+  const shareDress = useCallback(async (dress: Dress) => {
+    const url = dressPageUrl(dress.id);
+    const shareText = `שמתי לב לשמלה "${dress.name}" באתר שמלה בקליק`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: dress.name, text: shareText, url });
+        setToast({ message: 'השיתוף נשלח בהצלחה', variant: 'success' });
+        return;
+      }
+      await navigator.clipboard.writeText(url);
+      setToast({ message: 'הקישור לשמלה הועתק — אפשר להדביק ולשלוח', variant: 'success' });
+    } catch {
+      try {
+        await navigator.clipboard.writeText(url);
+        setToast({ message: 'הקישור לשמלה הועתק', variant: 'success' });
+      } catch {
+        setToast({ message: 'לא הצלחנו לשתף את הקישור', variant: 'error' });
+      }
+    }
+  }, []);
 
   const openSavedDressDetails = useCallback(async (item: SavedDress) => {
     pendingViewDressRef.current = item.id;
@@ -1111,6 +1135,28 @@ function AccountPageContent() {
             closeDetailsDress();
             router.push(`/?reserve=${encodeURIComponent(dressId)}`);
           }}
+          onCoordinate={() => {
+            const dressId = detailsDress.id;
+            closeDetailsDress();
+            router.push(`/?coordinate=${encodeURIComponent(dressId)}`);
+          }}
+          onRate={() => setRateDress(detailsDress)}
+          onShare={() => {
+            void shareDress(detailsDress);
+          }}
+        />
+      )}
+
+      {rateDress && (
+        <DressRateModal
+          dress={rateDress}
+          onClose={() => setRateDress(null)}
+          onRated={(dressId, ratingAvg, ratingCount) => {
+            const patch = { rating_avg: ratingAvg, rating_count: ratingCount };
+            setDetailsDress((prev) => (prev?.id === dressId ? { ...prev, ...patch } : prev));
+            setRateDress((prev) => (prev?.id === dressId ? { ...prev, ...patch } : prev));
+          }}
+          showBackToDetails={!!detailsDress}
         />
       )}
 

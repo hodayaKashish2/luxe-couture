@@ -191,6 +191,35 @@ export default function Home() {
     window.history.replaceState(null, '', next);
   }, [dressesList]);
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const coordinateId = params.get('coordinate');
+    if (!coordinateId || dressesList.length === 0) return;
+
+    const dress = findDressInList(dressesList, coordinateId);
+    if (!dress) return;
+
+    const user = getStoredSiteUser();
+    if (
+      user &&
+      dressBelongsToCustomer(dress, {
+        phone: user.phone,
+        email: user.email,
+        userId: user.userId,
+      })
+    ) {
+      setOwnDressNotice({ dressName: dress.name, variant: 'coordinate' });
+    } else {
+      setCoordinateDress(dress);
+      setCoordinateDate('');
+      setCoordinateChecked(false);
+      setCoordinateDisclaimerAccepted(false);
+    }
+    params.delete('coordinate');
+    const next = params.toString() ? `/?${params}` : '/';
+    window.history.replaceState(null, '', next);
+  }, [dressesList]);
+
   // טעינת שמלות ותגובות
   useEffect(() => {
     async function loadDresses() {
