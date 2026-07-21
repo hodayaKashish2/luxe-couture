@@ -73,7 +73,7 @@ export default function Home() {
   const [sortBy, setSortBy] = useState<SortOption>('recommended');
   const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [filtersSidebarCollapsed, setFiltersSidebarCollapsed] = useState(true);
+  const [filtersSidebarCollapsed, setFiltersSidebarCollapsed] = useState(false);
 
   const { cart, toggleCart, toggleFavorite, removeFromCart, isDressInCart, isDressFavorite } =
     useLuxeStorage();
@@ -974,7 +974,7 @@ export default function Home() {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 lg:gap-4">
+              <div className={`grid grid-cols-2 gap-2 sm:gap-3 lg:gap-4 ${filtersSidebarCollapsed ? 'lg:grid-cols-5' : 'md:grid-cols-3 lg:grid-cols-4'}`}>
           {filteredDresses.map((dress) => {
             const currentImgIndex = currentImageIndexes[dress.id] || 0;
             const isFav = isDressFavorite(dress.id);

@@ -47,21 +47,21 @@ export default function DressDetailsModal({
       onClick={onClose}
     >
       <div
-        className="relative bg-white w-full sm:max-w-5xl rounded-t-2xl sm:rounded-2xl shadow-2xl border-2 border-[#d4af37] max-h-[94vh] overflow-hidden flex flex-col md:flex-row"
+        className="relative bg-white w-full sm:max-w-5xl rounded-t-2xl sm:rounded-2xl shadow-2xl border-2 border-[#d4af37] max-h-[94vh] overflow-y-auto md:overflow-hidden flex flex-col md:flex-row"
         onClick={(e) => e.stopPropagation()}
         dir="rtl"
       >
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-4 left-4 z-30 bg-white hover:bg-[#d4af37] text-[#b8860b] hover:text-white w-9 h-9 rounded-full flex items-center justify-center border-2 border-[#ebd4a8] shadow-md font-bold transition-all cursor-pointer"
+          className="absolute top-3 left-3 sm:top-4 sm:left-4 z-30 bg-white hover:bg-[#d4af37] text-[#b8860b] hover:text-white w-9 h-9 rounded-full flex items-center justify-center border-2 border-[#ebd4a8] shadow-md font-bold transition-all cursor-pointer"
           aria-label="סגירה"
         >
           ✕
         </button>
 
-        <div className="relative w-full md:w-3/5 flex flex-col bg-[#faf8f3] border-b md:border-b-0 md:border-l border-[#f0e2c3] min-h-[50vh] md:min-h-[70vh]">
-          <div className="relative flex-1 min-h-[42vh] sm:min-h-[48vh] md:min-h-0">
+        <div className="relative w-full md:w-3/5 shrink-0 flex flex-col bg-[#faf8f3] border-b md:border-b-0 md:border-l border-[#f0e2c3] md:min-h-[70vh]">
+          <div className="relative w-full aspect-[3/4] max-h-[min(52vh,28rem)] md:max-h-none md:flex-1 md:min-h-[55vh]">
             {images.length > 0 ? (
               <>
                 <DressImageFill
@@ -69,7 +69,7 @@ export default function DressDetailsModal({
                   alt={dress.name}
                   className="absolute inset-0 h-full w-full"
                 />
-                <span className="absolute top-4 right-4 z-20 bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white text-[10px] font-black px-3 py-1 rounded-full shadow-md pointer-events-none">
+                <span className="absolute top-3 right-3 sm:top-4 sm:right-4 z-20 bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white text-[10px] font-black px-3 py-1 rounded-full shadow-md pointer-events-none border border-[#c9a227]">
                   מידה {dress.size}
                 </span>
 
@@ -78,7 +78,7 @@ export default function DressDetailsModal({
                     <button
                       type="button"
                       onClick={() => setImageIndex((prev) => (prev - 1 + images.length) % images.length)}
-                      className={`absolute left-3 top-1/2 -translate-y-1/2 z-20 bg-white/95 text-[#b8860b] w-10 h-10 rounded-full flex items-center justify-center shadow-lg border border-[#e8cc92] font-black text-xl hover:bg-[#d4af37] hover:text-white ${actionBtnClass}`}
+                      className={`absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 z-20 bg-white/95 text-[#b8860b] w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center shadow-lg border border-[#e8cc92] font-black text-xl hover:bg-[#d4af37] hover:text-white ${actionBtnClass}`}
                       aria-label="תמונה קודמת"
                     >
                       ‹
@@ -86,7 +86,7 @@ export default function DressDetailsModal({
                     <button
                       type="button"
                       onClick={() => setImageIndex((prev) => (prev + 1) % images.length)}
-                      className={`absolute right-3 top-1/2 -translate-y-1/2 z-20 bg-white/95 text-[#b8860b] w-10 h-10 rounded-full flex items-center justify-center shadow-lg border border-[#e8cc92] font-black text-xl hover:bg-[#d4af37] hover:text-white ${actionBtnClass}`}
+                      className={`absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 z-20 bg-white/95 text-[#b8860b] w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center shadow-lg border border-[#e8cc92] font-black text-xl hover:bg-[#d4af37] hover:text-white ${actionBtnClass}`}
                       aria-label="תמונה הבאה"
                     >
                       ›
@@ -131,7 +131,7 @@ export default function DressDetailsModal({
           )}
         </div>
 
-        <div className="w-full md:w-2/5 flex flex-col overflow-y-auto max-h-[50vh] md:max-h-[70vh] bg-gradient-to-b from-[#fffdf9] to-[#faf6eb]">
+        <div className="w-full md:w-2/5 flex flex-col md:overflow-y-auto md:max-h-[70vh] bg-gradient-to-b from-[#fffdf9] to-[#faf6eb]">
           <div className="p-5 sm:p-6 space-y-4 flex-1">
             <div>
               <p className="text-[10px] text-[#b8860b] font-black tracking-widest mb-1">✦ פרטי שמלה ✦</p>
