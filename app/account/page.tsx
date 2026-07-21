@@ -764,13 +764,13 @@ function AccountPageContent() {
                 )}
 
                 {pastReservations.length > 0 && (
-                  <div className="bg-neutral-50 rounded-2xl border border-neutral-200 overflow-hidden">
+                  <div className="bg-neutral-50 rounded-2xl border border-neutral-200 overflow-hidden mt-8">
                     <button
                       type="button"
                       onClick={() => setShowPastReservations((v) => !v)}
                       className="w-full flex items-center justify-between gap-2 px-4 py-3 text-xs font-black text-neutral-700 bg-neutral-100 hover:bg-neutral-200/80 transition-colors"
                     >
-                      <span>🗓️ הזמנות בעבר ({pastReservations.length})</span>
+                      <span>🗓️ שמלות שהוזמנו בעבר ({pastReservations.length})</span>
                       <span>{showPastReservations ? '▲' : '▼'}</span>
                     </button>
                     {showPastReservations && (

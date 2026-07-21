@@ -77,14 +77,28 @@ function getDressBookings(dressId: string, bookings: OwnerBookingRow[]) {
 function getDressRentalSummary(bookings: OwnerBookingRow[]) {
   const confirmed = getConfirmedBookings(bookings);
   if (confirmed.length === 0) {
-    return { badge: '🟢 פנויה', detail: '', hasBookings: false };
+    return { badge: '🟢 פנויה', detail: '', hasBookings: false, hasUpcoming: false };
   }
-  const sorted = [...confirmed].sort((a, b) => a.event_date.localeCompare(b.event_date));
-  const next = sorted.find((b) => b.event_date >= new Date().toISOString().slice(0, 10)) || sorted[0];
+
+  const today = new Date().toISOString().slice(0, 10);
+  const upcoming = confirmed
+    .filter((b) => b.event_date >= today)
+    .sort((a, b) => a.event_date.localeCompare(b.event_date));
+
+  if (upcoming.length === 0) {
+    return {
+      badge: '📋 הושכרה בעבר',
+      detail: '',
+      hasBookings: true,
+      hasUpcoming: false,
+    };
+  }
+
   return {
-    badge: `📅 ${confirmed.length} הזמנ${confirmed.length === 1 ? 'ה' : 'ות'}`,
-    detail: next ? `הבאה: ${next.event_date}` : '',
+    badge: `📅 ${upcoming.length} הזמנ${upcoming.length === 1 ? 'ה קרובה' : 'ות קרובות'}`,
+    detail: `הבאה: ${upcoming[0].event_date}`,
     hasBookings: true,
+    hasUpcoming: true,
   };
 }
 
@@ -121,11 +135,10 @@ function pickDefaultDressId(dresses: OwnerRentalDress[], ownerBookings: OwnerBoo
 
 function nearestBookingDate(bookings: OwnerBookingRow[]) {
   const today = new Date().toISOString().slice(0, 10);
-  const sorted = getConfirmedBookings(bookings).sort((a, b) =>
-    a.event_date.localeCompare(b.event_date)
-  );
-  const next = sorted.find((b) => b.event_date >= today);
-  return (next || sorted[0])?.event_date;
+  const sorted = getConfirmedBookings(bookings)
+    .filter((b) => b.event_date >= today)
+    .sort((a, b) => a.event_date.localeCompare(b.event_date));
+  return sorted[0]?.event_date;
 }
 
 type Props = {
@@ -157,14 +170,18 @@ export default function OwnerDressesPanel({
   const [sort, setSort] = useState<DressSort>('recent');
   const [showUpcoming, setShowUpcoming] = useState(true);
   const [showPastBookings, setShowPastBookings] = useState(false);
+  const [showSelectedPastBookings, setShowSelectedPastBookings] = useState(false);
   const [selectedDressId, setSelectedDressId] = useState<string | null>(null);
   const rowRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
   const dressesWithBookings = useMemo(
     () =>
-      activeDresses.filter((d) =>
-        getConfirmedBookings(getDressBookings(d.id, ownerBookings)).length > 0
-      ).length,
+      activeDresses.filter((d) => {
+        const today = new Date().toISOString().slice(0, 10);
+        return getConfirmedBookings(getDressBookings(d.id, ownerBookings)).some(
+          (b) => b.event_date >= today
+        );
+      }).length,
     [activeDresses, ownerBookings]
   );
 
@@ -200,10 +217,12 @@ export default function OwnerDressesPanel({
     });
 
     list = list.filter((d) => {
+      const today = new Date().toISOString().slice(0, 10);
       const bookings = getConfirmedBookings(getDressBookings(d.id, ownerBookings));
-      const hasBookings = bookings.length > 0;
-      if (filter === 'available') return !hasBookings && d.status === 'approved';
-      if (filter === 'booked') return hasBookings;
+      const upcomingBookings = bookings.filter((b) => b.event_date >= today);
+      const hasUpcomingBookings = upcomingBookings.length > 0;
+      if (filter === 'available') return bookings.length === 0 && d.status === 'approved';
+      if (filter === 'booked') return hasUpcomingBookings;
       if (filter === 'pending') return d.status === 'pending';
       return true;
     });
@@ -270,6 +289,7 @@ export default function OwnerDressesPanel({
 
   useEffect(() => {
     if (!selectedDressId) return;
+    setShowSelectedPastBookings(false);
     const row = rowRefs.current[selectedDressId];
     if (row) {
       row.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
@@ -617,28 +637,35 @@ export default function OwnerDressesPanel({
             </div>
 
             {selectedPastBookings.length > 0 && (
-              <div>
-                <h4 className="text-xs font-black text-neutral-600 mb-2">
-                  הזמנות בעבר ({selectedPastBookings.length})
-                </h4>
-                <ul className="space-y-2 max-h-40 overflow-y-auto">
-                  {selectedPastBookings.map((b) => (
-                    <li
-                      key={b.id}
-                      className="flex flex-wrap items-center justify-between gap-2 bg-neutral-50 border border-neutral-200 rounded-xl px-3 py-2.5"
-                    >
-                      <div>
-                        <p className="text-sm font-bold text-neutral-700">
-                          {b.customer_name || 'שוכרת'}
-                        </p>
-                        <p className="text-xs text-neutral-500 font-bold mt-0.5">📅 {b.event_date}</p>
-                      </div>
-                      <span className="text-[10px] font-black px-2 py-0.5 rounded-full shrink-0 bg-neutral-200 text-neutral-700">
-                        {BOOKING_STATUS[b.status] || b.status}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
+              <div className="bg-neutral-50 rounded-xl border border-neutral-200 overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setShowSelectedPastBookings((v) => !v)}
+                  className="w-full flex items-center justify-between gap-2 px-3 py-2.5 text-[11px] font-black text-neutral-700 bg-neutral-100 hover:bg-neutral-200/80 transition-colors"
+                >
+                  <span>🗓️ הזמנות בעבר לשמלה זו ({selectedPastBookings.length})</span>
+                  <span>{showSelectedPastBookings ? '▲' : '▼'}</span>
+                </button>
+                {showSelectedPastBookings && (
+                  <ul className="space-y-2 max-h-40 overflow-y-auto p-2">
+                    {selectedPastBookings.map((b) => (
+                      <li
+                        key={b.id}
+                        className="flex flex-wrap items-center justify-between gap-2 bg-white border border-neutral-200 rounded-xl px-3 py-2.5"
+                      >
+                        <div>
+                          <p className="text-sm font-bold text-neutral-700">
+                            {b.customer_name || 'שוכרת'}
+                          </p>
+                          <p className="text-xs text-neutral-500 font-bold mt-0.5">📅 {b.event_date}</p>
+                        </div>
+                        <span className="text-[10px] font-black px-2 py-0.5 rounded-full shrink-0 bg-neutral-200 text-neutral-700">
+                          {BOOKING_STATUS[b.status] || b.status}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
             )}
           </div>
@@ -690,7 +717,7 @@ export default function OwnerDressesPanel({
             onClick={() => setShowPastBookings((v) => !v)}
             className="w-full flex items-center justify-between gap-2 px-4 py-3 text-xs font-black text-neutral-700 bg-neutral-100 hover:bg-neutral-200/80 transition-colors"
           >
-            <span>🗓️ השכרות בעבר ({pastOwnerBookings.length})</span>
+            <span>🗓️ שמלות שהושכרו בעבר ({pastOwnerBookings.length})</span>
             <span>{showPastBookings ? '▲' : '▼'}</span>
           </button>
           {showPastBookings && (
