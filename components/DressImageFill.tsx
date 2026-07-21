@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 type DressImageFillProps = {
   src: string;
@@ -14,10 +14,14 @@ type DressImageFillProps = {
   loading?: 'lazy' | 'eager';
 };
 
-/** תמונות מרובעות/רחבות — ממלאות גובה כדי שהרקע ייראה מהצדדים כמו בשמלות לאורך */
-function detectImageFit(width: number, height: number) {
-  if (!width || !height) return 'portrait' as const;
-  return width / height >= 0.92 ? ('square' as const) : ('portrait' as const);
+type LayoutMode = 'wide' | 'tall';
+
+/** השוואה ליחס הקונטיינר — לא ל-1:1. תמונה רחבה/מרובעת ממלאה גובה → רקע מהצדדים */
+function pickLayoutMode(imageW: number, imageH: number, boxW: number, boxH: number): LayoutMode {
+  if (!imageW || !imageH || !boxW || !boxH) return 'tall';
+  const imageRatio = imageW / imageH;
+  const boxRatio = boxW / boxH;
+  return imageRatio > boxRatio ? 'wide' : 'tall';
 }
 
 export default function DressImageFill({
@@ -29,7 +33,10 @@ export default function DressImageFill({
   hoverScale = false,
   loading,
 }: DressImageFillProps) {
-  const [imageFit, setImageFit] = useState<'portrait' | 'square'>('portrait');
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [layoutMode, setLayoutMode] = useState<LayoutMode>('tall');
+  const naturalSizeRef = useRef({ w: 0, h: 0 });
+
   const backdropMotion = hoverScale
     ? 'transition-transform duration-700 ease-out group-hover:scale-110'
     : '';
@@ -41,20 +48,52 @@ export default function DressImageFill({
         ? 'transition-transform duration-500 ease-out group-hover:scale-[1.02]'
         : '';
 
-  useEffect(() => {
-    setImageFit('portrait');
-  }, [src]);
+  const applyLayout = useCallback((naturalW: number, naturalH: number) => {
+    naturalSizeRef.current = { w: naturalW, h: naturalH };
+    const box = containerRef.current;
+    if (!box) return;
+    setLayoutMode(pickLayoutMode(naturalW, naturalH, box.clientWidth, box.clientHeight));
+  }, []);
 
-  const portraitMainClass = `absolute inset-0 z-[1] m-auto h-full w-full object-contain object-center ${imageClassName}`;
-  const squareMainClass = `absolute top-0 left-1/2 z-[1] h-full w-auto max-w-none -translate-x-1/2 object-contain object-center ${imageClassName}`;
+  useEffect(() => {
+    naturalSizeRef.current = { w: 0, h: 0 };
+    setLayoutMode('tall');
+
+    let cancelled = false;
+    const probe = new Image();
+    probe.onload = () => {
+      if (!cancelled) applyLayout(probe.naturalWidth, probe.naturalHeight);
+    };
+    probe.src = src;
+
+    return () => {
+      cancelled = true;
+    };
+  }, [src, applyLayout]);
+
+  useEffect(() => {
+    const box = containerRef.current;
+    if (!box) return;
+
+    const observer = new ResizeObserver(() => {
+      const { w, h } = naturalSizeRef.current;
+      if (w && h) applyLayout(w, h);
+    });
+
+    observer.observe(box);
+    return () => observer.disconnect();
+  }, [applyLayout]);
+
+  const portraitMainClass = `absolute inset-0 z-[1] h-full w-full object-contain object-center ${imageClassName}`;
+  const wideMainClass = `absolute top-0 left-1/2 z-[1] h-full w-auto max-w-none -translate-x-1/2 ${imageClassName}`;
   const mainImageClass = isCover
     ? `absolute inset-0 z-[1] h-full w-full object-cover object-center ${imageClassName}`
-    : imageFit === 'square'
-      ? squareMainClass
+    : layoutMode === 'wide'
+      ? wideMainClass
       : portraitMainClass;
 
   return (
-    <div className={`relative overflow-hidden bg-[#ebe4d6] ${className}`}>
+    <div ref={containerRef} className={`relative overflow-hidden bg-[#ebe4d6] ${className}`}>
       {!isCover && (
         <>
           <img
@@ -75,9 +114,14 @@ export default function DressImageFill({
         alt={alt}
         loading={loading}
         draggable={false}
+        ref={(el) => {
+          if (el?.complete && el.naturalWidth > 0) {
+            applyLayout(el.naturalWidth, el.naturalHeight);
+          }
+        }}
         onLoad={(e) => {
           const img = e.currentTarget;
-          setImageFit(detectImageFit(img.naturalWidth, img.naturalHeight));
+          applyLayout(img.naturalWidth, img.naturalHeight);
         }}
         className={`${mainImageClass} ${mainHoverClass}`}
       />
