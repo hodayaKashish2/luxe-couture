@@ -45,6 +45,7 @@ export type AddDressFormFields = {
   price: string;
   size: string;
   city: string;
+  color: string;
   owner_name?: string;
   owner_phone?: string;
   owner_email?: string;
@@ -61,6 +62,7 @@ export function validateAddDressForm(form: AddDressFormFields, imageCount: numbe
     return 'נא לבחור מידה מהרשימה — XS, S, M, L, XL או XXL';
   }
   if (!form.city.trim()) return 'נא להזין עיר';
+  if (!form.color.trim()) return 'נא להזין צבע לשמלה — למשל: לבן, שמנת, ורוד';
 
   if (form.owner_name !== undefined && !form.owner_name.trim()) {
     return 'נא להזין שם משכירה';

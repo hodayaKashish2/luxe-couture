@@ -736,6 +736,7 @@ export default function Home() {
         price: newDressData.price,
         size: newDressData.size,
         city: newDressData.city,
+        color: newDressData.color,
         owner_name: newDressData.owner_name,
         owner_phone: newDressData.owner_phone,
         owner_email: newDressData.owner_email,
@@ -1227,8 +1228,8 @@ export default function Home() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#8b6508] mb-1">צבע השמלה</label>
-                <input type="text" placeholder="למשל: לבן שמנת, ורוד עתיק" value={newDressData.color} onChange={(e) => setNewDressData({...newDressData, color: e.target.value})} className="w-full p-2.5 bg-white border border-[#decfa8] rounded-xl text-xs text-[#2c261a] placeholder:text-[#9a7b4f]" />
+                <label className="block text-xs font-bold text-[#8b6508] mb-1">צבע השמלה *</label>
+                <input type="text" required placeholder="למשל: לבן שמנת, ורוד עתיק" value={newDressData.color} onChange={(e) => setNewDressData({...newDressData, color: e.target.value})} className="w-full p-2.5 bg-white border border-[#decfa8] rounded-xl text-xs text-[#2c261a] placeholder:text-[#9a7b4f]" />
               </div>
 
               <div className="grid grid-cols-2 gap-4">

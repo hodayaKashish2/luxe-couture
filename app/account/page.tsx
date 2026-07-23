@@ -413,6 +413,7 @@ function AccountPageContent() {
         price: addForm.price,
         size: addForm.size,
         city: addForm.city,
+        color: addForm.color,
         owner_phone: addForm.owner_phone,
       },
       addFiles.length
@@ -1065,7 +1066,7 @@ function AccountPageContent() {
                 />
                 <p className="text-[10px] text-[#9a7b4f] mt-1">טלפון החשבון שלך — לפיו מוצגות השמלות באזור האישי</p>
               </div>
-              <input placeholder="צבע" value={addForm.color} onChange={(e) => setAddForm({ ...addForm, color: e.target.value })} className="p-2.5 border border-[#decfa8] rounded-xl text-xs text-[#2c261a] placeholder:text-[#9a7b4f] bg-white" />
+              <input placeholder="צבע *" required value={addForm.color} onChange={(e) => setAddForm({ ...addForm, color: e.target.value })} className="p-2.5 border border-[#decfa8] rounded-xl text-xs text-[#2c261a] placeholder:text-[#9a7b4f] bg-white" />
               <textarea
                 placeholder="תיאור השמלה (אופציונלי)"
                 value={addForm.description}
