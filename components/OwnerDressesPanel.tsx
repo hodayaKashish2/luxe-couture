@@ -170,6 +170,8 @@ export default function OwnerDressesPanel({
   const [sort, setSort] = useState<DressSort>('recent');
   const [showUpcoming, setShowUpcoming] = useState(true);
   const [showPastBookings, setShowPastBookings] = useState(false);
+  const [showPendingApproval, setShowPendingApproval] = useState(false);
+  const [showRemovedDresses, setShowRemovedDresses] = useState(false);
   const [showSelectedPastBookings, setShowSelectedPastBookings] = useState(false);
   const [selectedDressId, setSelectedDressId] = useState<string | null>(null);
   const rowRefs = useRef<Record<string, HTMLButtonElement | null>>({});
@@ -333,24 +335,31 @@ export default function OwnerDressesPanel({
         </div>
         {removedDresses.length > 0 && (
           <div className="bg-neutral-50 rounded-2xl border border-neutral-200 overflow-hidden">
-            <div className="px-4 py-3 bg-neutral-100 border-b border-neutral-200">
-              <h4 className="text-xs font-black text-neutral-700">🗂️ שמלות שהוסרו מהאתר</h4>
-            </div>
-            <ul className="divide-y divide-neutral-200 max-h-56 overflow-y-auto">
-              {removedDresses.map((dress) => (
-                <li key={dress.id} className="px-4 py-3 flex gap-3 items-center">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs font-bold text-neutral-700 truncate">{dress.name}</p>
-                    <p className="text-[10px] text-neutral-500 mt-0.5">
-                      ₪{dress.price} · {dress.size} · {dress.city}
-                    </p>
-                  </div>
-                  <span className="text-[9px] shrink-0 bg-neutral-200 text-neutral-600 px-2 py-0.5 rounded-full">
-                    הוסרה
-                  </span>
-                </li>
-              ))}
-            </ul>
+            <button
+              type="button"
+              onClick={() => setShowRemovedDresses((v) => !v)}
+              className="w-full flex items-center justify-between gap-2 px-4 py-3 text-xs font-black text-neutral-700 bg-neutral-100 hover:bg-neutral-200/80 transition-colors"
+            >
+              <span>🗂️ שמלות שהוסרו מהאתר ({removedDresses.length})</span>
+              <span>{showRemovedDresses ? '▲' : '▼'}</span>
+            </button>
+            {showRemovedDresses && (
+              <ul className="divide-y divide-neutral-200 max-h-56 overflow-y-auto">
+                {removedDresses.map((dress) => (
+                  <li key={dress.id} className="px-4 py-3 flex gap-3 items-center">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-bold text-neutral-700 truncate">{dress.name}</p>
+                      <p className="text-[10px] text-neutral-500 mt-0.5">
+                        ₪{dress.price} · {dress.size} · {dress.city}
+                      </p>
+                    </div>
+                    <span className="text-[9px] shrink-0 bg-neutral-200 text-neutral-600 px-2 py-0.5 rounded-full">
+                      הוסרה
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         )}
       </div>
@@ -678,35 +687,37 @@ export default function OwnerDressesPanel({
 
       {pendingApprovalBookings.length > 0 && (
         <div className="bg-amber-50/70 rounded-2xl border border-amber-200 overflow-hidden">
-          <div className="px-4 py-3 bg-amber-50 border-b border-amber-200">
-            <h4 className="text-xs font-black text-amber-900">
-              ⏳ הזמנות שממתינות לאישור תשלום ({pendingApprovalBookings.length})
-            </h4>
-            <p className="text-[10px] text-amber-800 mt-1">
-              מוצגות בנפרד — ברשימות העיקריות מופיעות רק הזמנות ששולמו ואושרו
-            </p>
-          </div>
-          <ul className="divide-y divide-amber-100 max-h-64 overflow-y-auto">
-            {pendingApprovalBookings.map((b) => (
-              <li key={b.id}>
-                <button
-                  type="button"
-                  onClick={() => handleSelectDress(String(b.dress_id))}
-                  className="w-full text-right px-4 py-3 hover:bg-amber-50/80 transition-colors flex justify-between gap-3 items-center"
-                >
-                  <div className="min-w-0">
-                    <p className="text-xs font-bold text-[#3d2f24] truncate">{b.dress_name}</p>
-                    <p className="text-[10px] text-amber-900 mt-0.5">
-                      {formatHebrewDate(b.event_date)} · {b.customer_name || 'שוכרת'}
-                    </p>
-                  </div>
-                  <span className="text-[9px] shrink-0 bg-amber-100 text-amber-900 px-2 py-0.5 rounded-full font-bold">
-                    {BOOKING_STATUS[b.status] || b.status}
-                  </span>
-                </button>
-              </li>
-            ))}
-          </ul>
+          <button
+            type="button"
+            onClick={() => setShowPendingApproval((v) => !v)}
+            className="w-full flex items-center justify-between gap-2 px-4 py-3 text-xs font-black text-amber-900 bg-amber-50 hover:bg-amber-100/80 transition-colors"
+          >
+            <span>⏳ הזמנות שממתינות לאישור תשלום ({pendingApprovalBookings.length})</span>
+            <span>{showPendingApproval ? '▲' : '▼'}</span>
+          </button>
+          {showPendingApproval && (
+            <ul className="divide-y divide-amber-100 max-h-64 overflow-y-auto">
+              {pendingApprovalBookings.map((b) => (
+                <li key={b.id}>
+                  <button
+                    type="button"
+                    onClick={() => handleSelectDress(String(b.dress_id))}
+                    className="w-full text-right px-4 py-3 hover:bg-amber-50/80 transition-colors flex justify-between gap-3 items-center"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-[#3d2f24] truncate">{b.dress_name}</p>
+                      <p className="text-[10px] text-amber-900 mt-0.5">
+                        {formatHebrewDate(b.event_date)} · {b.customer_name || 'שוכרת'}
+                      </p>
+                    </div>
+                    <span className="text-[9px] shrink-0 bg-amber-100 text-amber-900 px-2 py-0.5 rounded-full font-bold">
+                      {BOOKING_STATUS[b.status] || b.status}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       )}
 
@@ -748,39 +759,44 @@ export default function OwnerDressesPanel({
 
       {removedDresses.length > 0 && (
         <div className="bg-neutral-50 rounded-2xl border border-neutral-200 overflow-hidden">
-          <div className="px-4 py-3 bg-neutral-100 border-b border-neutral-200">
-            <h4 className="text-xs font-black text-neutral-700">🗂️ שמלות שהוסרו מהאתר</h4>
-            <p className="text-[10px] text-neutral-600 mt-1">
-              שמלות שלא מוצגות יותר בקטלוג — מופיעות כאן לעיון בלבד
-            </p>
-          </div>
-          <ul className="divide-y divide-neutral-200 max-h-56 overflow-y-auto">
-            {removedDresses.map((dress) => (
-              <li key={dress.id} className="px-4 py-3 flex gap-3 items-center">
-                {dress.images?.[0] ? (
-                  <DressImageFill
-                    src={dress.images[0]}
-                    alt=""
-                    className="w-10 h-12 shrink-0 rounded-lg border border-neutral-200 opacity-70"
-                    loading="lazy"
-                  />
-                ) : (
-                  <div className="w-10 h-12 rounded-lg border border-dashed border-neutral-300 bg-white flex items-center justify-center text-sm shrink-0 opacity-70">
-                    👗
+          <button
+            type="button"
+            onClick={() => setShowRemovedDresses((v) => !v)}
+            className="w-full flex items-center justify-between gap-2 px-4 py-3 text-xs font-black text-neutral-700 bg-neutral-100 hover:bg-neutral-200/80 transition-colors"
+          >
+            <span>🗂️ שמלות שהוסרו מהאתר ({removedDresses.length})</span>
+            <span>{showRemovedDresses ? '▲' : '▼'}</span>
+          </button>
+          {showRemovedDresses && (
+            <ul className="divide-y divide-neutral-200 max-h-56 overflow-y-auto">
+              {removedDresses.map((dress) => (
+                <li key={dress.id} className="px-4 py-3 flex gap-3 items-center">
+                  {dress.images?.[0] ? (
+                    <DressImageFill
+                      src={dress.images[0]}
+                      alt=""
+                      className="w-10 h-12 shrink-0 rounded-lg border border-neutral-200 opacity-70"
+                      loading="lazy"
+                      fillMode="cover"
+                    />
+                  ) : (
+                    <div className="w-10 h-12 rounded-lg border border-dashed border-neutral-300 bg-white flex items-center justify-center text-sm shrink-0 opacity-70">
+                      👗
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-bold text-neutral-700 truncate">{dress.name}</p>
+                    <p className="text-[10px] text-neutral-500 mt-0.5">
+                      ₪{dress.price} · {dress.size} · {dress.city}
+                    </p>
                   </div>
-                )}
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-bold text-neutral-700 truncate">{dress.name}</p>
-                  <p className="text-[10px] text-neutral-500 mt-0.5">
-                    ₪{dress.price} · {dress.size} · {dress.city}
-                  </p>
-                </div>
-                <span className="text-[9px] shrink-0 bg-neutral-200 text-neutral-600 px-2 py-0.5 rounded-full">
-                  הוסרה
-                </span>
-              </li>
-            ))}
-          </ul>
+                  <span className="text-[9px] shrink-0 bg-neutral-200 text-neutral-600 px-2 py-0.5 rounded-full">
+                    הוסרה
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       )}
     </div>

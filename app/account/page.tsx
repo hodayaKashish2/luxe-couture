@@ -24,6 +24,7 @@ import { notifySiteAuthChange } from '@/lib/site-auth-events';
 import { accountSectionUrl, parseAccountSection } from '@/lib/account-section-url';
 import { navigateAccountHub } from '@/lib/account-hub-nav';
 import { dressPageUrl, ownerWhatsAppLink } from '@/lib/site-config';
+import { formatAccountPhone } from '@/lib/dress-ownership';
 import { splitBookingsByEventDate } from '@/lib/booking-dates';
 import { fetchDressById, findDressInList, preloadDressesCatalog } from '@/lib/dress-api';
 import { useScrollToError } from '@/hooks/use-scroll-to-error';
@@ -96,6 +97,7 @@ function AccountPageContent() {
   const [reservations, setReservations] = useState<BookingRow[]>([]);
   const [revealedOwnerIds, setRevealedOwnerIds] = useState<Set<number>>(new Set());
   const [showPastReservations, setShowPastReservations] = useState(false);
+  const [showRemovedReservations, setShowRemovedReservations] = useState(false);
   const [loading, setLoading] = useState(true);
   const [dataReady, setDataReady] = useState(false);
   const [addFiles, setAddFiles] = useState<File[]>([]);
@@ -234,7 +236,7 @@ function AccountPageContent() {
     if (section === 'profile' && user) {
       setProfileForm({
         display_name: user.displayName || '',
-        phone: user.phone || '',
+        phone: formatAccountPhone(user.phone || ''),
         email: user.email || '',
         username: user.username || '',
       });
@@ -816,26 +818,30 @@ function AccountPageContent() {
                 )}
 
                 {removedReservations.length > 0 && (
-                  <div className="bg-neutral-50 rounded-2xl border border-neutral-200 overflow-hidden">
-                    <div className="px-4 py-3 bg-neutral-100 border-b border-neutral-200">
-                      <h4 className="text-xs font-black text-neutral-700">🗂️ שמלות שהוסרו מהאתר</h4>
-                      <p className="text-[10px] text-neutral-600 mt-1">
-                        הזמנות קודמות לשמלות שכבר לא מוצגות בקטלוג
-                      </p>
-                    </div>
-                    <ul className="divide-y divide-neutral-200">
-                      {removedReservations.map((r) => (
-                        <li key={r.id} className="px-4 py-3">
-                          <div className="flex justify-between gap-2 flex-wrap">
-                            <strong className="text-neutral-700">{r.dress_name}</strong>
-                            <span className="text-[10px] bg-neutral-200 text-neutral-600 px-2 py-0.5 rounded-full">
-                              הוסרה מהאתר
-                            </span>
-                          </div>
-                          <p className="text-sm text-neutral-500 font-bold mt-1">📅 {r.event_date}</p>
-                        </li>
-                      ))}
-                    </ul>
+                  <div className="bg-neutral-50 rounded-2xl border border-neutral-200 overflow-hidden mt-8">
+                    <button
+                      type="button"
+                      onClick={() => setShowRemovedReservations((v) => !v)}
+                      className="w-full flex items-center justify-between gap-2 px-4 py-3 text-xs font-black text-neutral-700 bg-neutral-100 hover:bg-neutral-200/80 transition-colors"
+                    >
+                      <span>🗂️ שמלות שהוסרו מהאתר ({removedReservations.length})</span>
+                      <span>{showRemovedReservations ? '▲' : '▼'}</span>
+                    </button>
+                    {showRemovedReservations && (
+                      <ul className="divide-y divide-neutral-200 max-h-72 overflow-y-auto">
+                        {removedReservations.map((r) => (
+                          <li key={r.id} className="px-4 py-3">
+                            <div className="flex justify-between gap-2 flex-wrap">
+                              <strong className="text-neutral-700">{r.dress_name}</strong>
+                              <span className="text-[10px] bg-neutral-200 text-neutral-600 px-2 py-0.5 rounded-full">
+                                הוסרה מהאתר
+                              </span>
+                            </div>
+                            <p className="text-sm text-neutral-500 font-bold mt-1">📅 {r.event_date}</p>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
                 )}
               </>
@@ -1000,12 +1006,13 @@ function AccountPageContent() {
               <input
                 required
                 type="tel"
-                placeholder="טלפון *"
+                placeholder="טלפון (0501234567) *"
                 value={profileForm.phone}
                 onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
                 className="w-full p-2.5 border border-[#decfa8] rounded-xl text-xs text-[#2c261a] bg-white"
                 dir="ltr"
               />
+              <p className="text-[10px] text-[#9a7b4f] -mt-1">10 ספרות, מתחיל ב-0 — למשל 0501234567</p>
               <input
                 required
                 type="email"

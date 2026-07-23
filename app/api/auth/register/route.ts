@@ -5,7 +5,8 @@ import {
   createUserToken,
   hashPassword,
 } from '@/lib/user-auth';
-import { normalizePhone, phonesMatch } from '@/lib/owner-auth';
+import { formatPhoneForStorage, phoneValidationMessage } from '@/lib/israeli-phone';
+import { phonesMatch } from '@/lib/owner-auth';
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server';
 import { formatSiteUsersDbError } from '@/lib/db-errors';
 
@@ -37,6 +38,11 @@ export async function POST(request: Request) {
     if (!displayName || !phone) {
       return NextResponse.json({ error: 'יש למלא שם וטלפון' }, { status: 400 });
     }
+
+    const phoneStored = formatPhoneForStorage(phone);
+    if (!phoneStored) {
+      return NextResponse.json({ error: phoneValidationMessage() }, { status: 400 });
+    }
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return NextResponse.json({ error: 'יש להזין כתובת אימייל תקינה' }, { status: 400 });
     }
@@ -62,8 +68,6 @@ export async function POST(request: Request) {
     if (existingEmail) {
       return NextResponse.json({ error: 'האימייל כבר רשום — התחברי או השתמשי באימייל אחר' }, { status: 409 });
     }
-
-    const phoneStored = phone.startsWith('0') ? phone : `0${normalizePhone(phone).slice(3)}`;
 
     const { data: phoneRows } = await supabase.from('site_users').select('id, phone');
 

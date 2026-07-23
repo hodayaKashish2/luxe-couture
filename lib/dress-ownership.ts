@@ -1,3 +1,4 @@
+import { formatPhoneForDisplay } from '@/lib/israeli-phone';
 import { phonesMatch } from '@/lib/phone-match';
 import type { SiteUser } from '@/lib/user-auth';
 
@@ -34,7 +35,5 @@ export function userOwnsDress(
 }
 
 export function formatAccountPhone(phone: string) {
-  const trimmed = phone.trim();
-  if (!trimmed) return '';
-  return trimmed.replace(/^972/, '0') || trimmed;
+  return formatPhoneForDisplay(phone);
 }

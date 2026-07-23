@@ -35,7 +35,7 @@ export async function GET(request: Request) {
         .from('bookings')
         .select('id, dress_id, customer_name, customer_phone, customer_email, event_date, status, created_at')
         .in('dress_id', dressIds)
-        .in('status', ['confirmed', 'pending_payment'])
+        .in('status', ['confirmed', 'pending_payment', 'awaiting_admin_approval'])
         .order('event_date', { ascending: true });
 
       if (bookingsError && !bookingsError.message.includes('bookings')) {

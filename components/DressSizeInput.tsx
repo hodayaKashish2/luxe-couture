@@ -1,8 +1,6 @@
 'use client';
 
-import { useId } from 'react';
 import { DRESS_SIZES } from '@/lib/constants';
-import { DRESS_SIZE_DATALIST } from '@/lib/dress-size';
 
 type Props = {
   value: string;
@@ -14,36 +12,31 @@ type Props = {
 };
 
 const defaultClass =
-  'w-full p-2.5 bg-white border border-[#decfa8] rounded-xl text-xs text-[#2c261a] placeholder:text-[#9a7b4f] focus:outline-none focus:border-[#d4af37]';
+  'w-full p-2.5 bg-white border border-[#decfa8] rounded-xl text-xs text-[#2c261a] focus:outline-none focus:border-[#d4af37]';
 
 export default function DressSizeInput({
   value,
   onChange,
   required = false,
   className = defaultClass,
-  placeholder = 'הקלידי או בחרי מידה, למשל: S (36)',
+  placeholder = 'בחרי מידה',
   showQuickPick = true,
 }: Props) {
-  const listId = useId();
-
   return (
     <div className="space-y-2">
-      <input
-        type="text"
+      <select
         required={required}
-        list={listId}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
         className={className}
-        inputMode="text"
-        autoComplete="off"
-      />
-      <datalist id={listId}>
-        {DRESS_SIZE_DATALIST.map((option) => (
-          <option key={option} value={option} />
+      >
+        <option value="">{placeholder}</option>
+        {DRESS_SIZES.map((size) => (
+          <option key={size.label} value={size.label}>
+            {size.label}
+          </option>
         ))}
-      </datalist>
+      </select>
       {showQuickPick && (
         <div className="flex flex-wrap gap-1.5">
           {DRESS_SIZES.map((size) => {

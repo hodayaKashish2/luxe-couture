@@ -1,6 +1,7 @@
 'use client';
 
 import FilterSection from '@/components/FilterSection';
+import { DRESS_SIZES } from '@/lib/constants';
 import { EVENT_TYPES, type SortOption } from '@/lib/types';
 
 export type CatalogFilterPanelProps = {
@@ -76,15 +77,18 @@ export default function CatalogFilterPanel({
       </FilterSection>
 
       <FilterSection title="מידה" defaultOpen={!!sizeFilter}>
-        <input
-          type="text"
-          placeholder="הקלידי מידה, למשל: 38, M"
+        <select
           value={sizeFilter}
           onChange={(e) => setSizeFilter(e.target.value)}
           className={fieldClass}
-          inputMode="text"
-        />
-        <p className="text-[10px] text-[#9a7b4f] mt-1.5">ניתן להקליד מספר או אותיות (XS, M, 40...)</p>
+        >
+          <option value="">כל המידות</option>
+          {DRESS_SIZES.map((size) => (
+            <option key={size.label} value={size.label}>
+              {size.label}
+            </option>
+          ))}
+        </select>
       </FilterSection>
 
       <FilterSection title="סוג אירוע" defaultOpen={!!selectedEventType}>

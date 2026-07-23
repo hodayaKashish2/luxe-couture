@@ -9,13 +9,18 @@ export default function FormError({ message }: Props) {
   return (
     <div
       role="alert"
-      className="flex items-start gap-2.5 text-sm text-red-800 bg-red-50 border border-red-200 rounded-xl p-3.5 leading-relaxed"
+      className="rounded-2xl border border-[#f0caca] bg-gradient-to-br from-[#fff7f7] to-[#fff0f0] p-4 shadow-sm"
       dir="rtl"
     >
-      <span className="shrink-0 w-6 h-6 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-xs font-black mt-0.5">
-        !
-      </span>
-      <p className="font-bold">{message}</p>
+      <div className="flex items-start gap-3">
+        <span className="shrink-0 w-8 h-8 rounded-full bg-[#fee2e2] text-[#b45309] flex items-center justify-center text-sm">
+          ✦
+        </span>
+        <div className="min-w-0 pt-0.5">
+          <p className="text-xs font-black text-[#8b3a3a] mb-1">רגע, משהו צריך תיקון</p>
+          <p className="text-sm font-bold text-[#7f1d1d] leading-relaxed">{message}</p>
+        </div>
+      </div>
     </div>
   );
 }

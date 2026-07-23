@@ -430,7 +430,7 @@ function AuthModalProviderInner({ children }: { children: ReactNode }) {
             />
             <input
               type="tel"
-              placeholder="טלפון (053...) *"
+              placeholder="טלפון (0501234567) *"
               value={registerForm.phone}
               onChange={(e) => setRegisterForm({ ...registerForm, phone: e.target.value })}
               className={AUTH_INPUT_CLASS}

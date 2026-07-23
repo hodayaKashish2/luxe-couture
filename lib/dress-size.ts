@@ -20,7 +20,17 @@ export function getDressSizeSearchText(size: string): string {
 }
 
 export function dressSizeMatchesFilter(dressSize: string, filter: string): boolean {
-  const query = filter.trim().toLowerCase();
+  const query = filter.trim();
   if (!query) return true;
-  return getDressSizeSearchText(dressSize).includes(query);
+
+  const preset = DRESS_SIZES.find((entry) => entry.label === query || entry.value === query);
+  if (preset) {
+    const dressText = getDressSizeSearchText(dressSize);
+    return (
+      dressText.includes(preset.value.toLowerCase()) ||
+      dressText.includes(preset.label.toLowerCase())
+    );
+  }
+
+  return getDressSizeSearchText(dressSize).includes(query.toLowerCase());
 }

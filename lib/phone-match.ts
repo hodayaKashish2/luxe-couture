@@ -1,4 +1,9 @@
+import { parseIsraeliPhoneDigits } from '@/lib/israeli-phone';
+
 export function normalizePhone(phone: string) {
+  const parsed = parseIsraeliPhoneDigits(phone);
+  if (parsed) return `972${parsed.slice(1)}`;
+
   const digits = phone.replace(/\D/g, '');
   if (digits.startsWith('972')) return digits;
   if (digits.startsWith('0')) return `972${digits.slice(1)}`;

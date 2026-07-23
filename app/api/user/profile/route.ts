@@ -5,13 +5,13 @@ import {
   createUserToken,
   getUserFromRequest,
 } from '@/lib/user-auth';
-import { normalizePhone, phonesMatch } from '@/lib/owner-auth';
+import { formatPhoneForStorage, phoneValidationMessage } from '@/lib/israeli-phone';
+import { phonesMatch } from '@/lib/owner-auth';
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server';
 import { formatSiteUsersDbError } from '@/lib/db-errors';
 
 function formatPhoneStored(phone: string) {
-  const trimmed = phone.trim();
-  return trimmed.startsWith('0') ? trimmed : `0${normalizePhone(trimmed).slice(3)}`;
+  return formatPhoneForStorage(phone);
 }
 
 export async function GET(request: Request) {
@@ -62,11 +62,15 @@ export async function PATCH(request: Request) {
     if (!phone) {
       return NextResponse.json({ error: 'יש להזין מספר טלפון' }, { status: 400 });
     }
+
+    const phoneStored = formatPhoneStored(phone);
+    if (!phoneStored) {
+      return NextResponse.json({ error: phoneValidationMessage() }, { status: 400 });
+    }
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return NextResponse.json({ error: 'יש להזין כתובת אימייל תקינה' }, { status: 400 });
     }
 
-    const phoneStored = formatPhoneStored(phone);
     const supabase = getSupabaseAdmin();
 
     const { data: existingEmail } = await supabase
