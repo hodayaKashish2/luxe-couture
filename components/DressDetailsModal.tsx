@@ -55,7 +55,7 @@ export default function DressDetailsModal({
       onClick={onClose}
     >
       <div
-        className="relative bg-white w-full sm:max-w-5xl rounded-t-2xl sm:rounded-2xl shadow-2xl border-2 border-[#d4af37] max-h-[94vh] overflow-y-auto md:overflow-hidden flex flex-col md:flex-row"
+        className="relative bg-white w-full sm:max-w-5xl rounded-t-2xl sm:rounded-2xl shadow-2xl border-2 border-[#d4af37] max-h-[94vh] min-h-0 overflow-y-auto md:overflow-hidden flex flex-col md:flex-row"
         onClick={(e) => e.stopPropagation()}
         dir="rtl"
       >
@@ -68,8 +68,14 @@ export default function DressDetailsModal({
           ✕
         </button>
 
-        <div className="relative w-full md:w-3/5 shrink-0 flex flex-col bg-[#faf8f3] border-b md:border-b-0 md:border-l border-[#f0e2c3]">
-          <div className="relative w-full h-[min(50vh,26rem)] sm:h-[min(55vh,30rem)] md:h-[min(70vh,36rem)] shrink-0 overflow-hidden">
+        <div className="relative w-full md:w-3/5 shrink-0 flex flex-col min-h-0 md:max-h-[94vh] bg-[#faf8f3] border-b md:border-b-0 md:border-l border-[#f0e2c3]">
+          <div
+            className={`relative w-full shrink-0 overflow-hidden ${
+              images.length > 1
+                ? 'h-[min(40vh,22rem)] sm:h-[min(44vh,24rem)] md:h-[min(48vh,26rem)]'
+                : 'h-[min(50vh,26rem)] sm:h-[min(55vh,30rem)] md:h-[min(58vh,32rem)]'
+            }`}
+          >
             {images.length > 0 ? (
               <>
                 <DressImageFill
@@ -114,8 +120,9 @@ export default function DressDetailsModal({
           )}
         </div>
 
-        <div className="w-full md:w-2/5 flex flex-col md:overflow-y-auto md:max-h-[70vh] bg-gradient-to-b from-[#fffdf9] to-[#faf6eb]">
-          <div className="p-5 sm:p-6 space-y-4 flex-1">
+        <div className="w-full md:w-2/5 flex flex-col min-h-0 flex-1 md:max-h-[94vh] bg-gradient-to-b from-[#fffdf9] to-[#faf6eb]">
+          <div className="flex-1 min-h-0 overflow-y-auto">
+            <div className="p-5 sm:p-6 space-y-4">
             <div>
               <p className="text-[10px] text-[#b8860b] font-black tracking-widest mb-1">✦ פרטי שמלה ✦</p>
               <h2 className="text-xl sm:text-2xl font-black text-[#3d2f24] leading-tight">{dress.name}</h2>
@@ -152,10 +159,11 @@ export default function DressDetailsModal({
                 משכירה: <strong className="text-[#8b6508]">{dress.owner_name}</strong>
               </p>
             )}
+            </div>
           </div>
 
           {(onReserve || onToggleCart || onToggleFavorite || onCoordinate || onRate || onShare) && (
-            <div className="p-5 sm:p-6 pt-0 space-y-2 border-t border-[#f0e2c3] bg-white/60">
+            <div className="shrink-0 p-5 sm:p-6 pt-4 space-y-2 border-t border-[#f0e2c3] bg-white/60">
               {onReserve && (
                 <button
                   type="button"
