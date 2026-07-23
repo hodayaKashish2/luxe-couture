@@ -10,6 +10,7 @@ import CatalogFilterSidebar from '@/components/CatalogFilterSidebar';
 import DressHighlightBadge from '@/components/DressHighlightBadge';
 import DressDetailsModal from '@/components/DressDetailsModal';
 import DressImageFill from '@/components/DressImageFill';
+import DressImageSliderNav, { stepImageIndex } from '@/components/DressImageSliderNav';
 import DressRateModal from '@/components/DressRateModal';
 import SiteToast, { type SiteToastVariant } from '@/components/SiteToast';
 import { useLuxeStorage } from '@/components/LuxeStorageProvider';
@@ -461,23 +462,13 @@ export default function Home() {
   };
 
   const handleToggleFavorite = (dress: Dress, e: React.MouseEvent) => {
+    e.stopPropagation();
     toggleFavorite(dress, e);
   };
 
   const handleToggleCart = (dress: Dress, e: React.MouseEvent) => {
+    e.stopPropagation();
     toggleCart(dress, e);
-  };
-
-  const nextImage = (dressId: string, maxImages: number, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setCurrentImageIndexes(prev => ({ ...prev, [dressId]: (prev[dressId] + 1) % maxImages }));
-  };
-
-  const prevImage = (dressId: string, maxImages: number, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setCurrentImageIndexes(prev => ({ ...prev, [dressId]: (prev[dressId] - 1 + maxImages) % maxImages }));
   };
 
   const checkDateAvailability = (date: string, dress: Dress) => {
@@ -1015,30 +1006,34 @@ export default function Home() {
                 className="group flex flex-col bg-white rounded-lg sm:rounded-xl overflow-hidden border border-[#ebd3a4]/60 shadow-sm hover:shadow-md hover:border-[#d4af37] transition-all duration-200"
               >
                 {/* תמונה — זיהוי דוגמנית, חיתוך מלמעלה/מלמטה, רקע מהצדדים במידת הצורך */}
-                <div className="relative w-full aspect-[3/4] overflow-hidden bg-[#f5f0e6]">
+                <div
+                  className="relative w-full aspect-[3/4] overflow-hidden bg-[#f5f0e6] cursor-pointer"
+                  onClick={() => setDetailsDress(dress)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setDetailsDress(dress);
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`פרטים על ${dress.name}`}
+                >
                   <DressImageFill
                     src={dress.images[currentImgIndex]}
                     alt={dress.name}
-                    className="absolute inset-0 h-full w-full"
+                    className="absolute inset-0 h-full w-full pointer-events-none"
                     fillMode="smart"
                     hoverScale
-                  />
-
-                  <button
-                    type="button"
-                    onClick={() => setDetailsDress(dress)}
-                    className="absolute inset-0 z-[5] cursor-pointer bg-transparent"
-                    aria-label={`פרטים על ${dress.name}`}
                   />
 
                   <span className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 z-40 pointer-events-none bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white text-[7px] sm:text-[9px] font-black px-1.5 sm:px-2 py-0.5 rounded shadow border border-[#c9a227]">
                     מידה {dress.size}
                   </span>
 
-                  <div className="absolute top-1.5 left-1.5 sm:top-2 sm:left-2 z-40 flex flex-col gap-1">
+                  <div className="absolute top-1.5 left-1.5 sm:top-2 sm:left-2 z-50 flex flex-col gap-1">
                     <button
                       type="button"
-                      onPointerDown={(e) => e.stopPropagation()}
                       onClick={(e) => handleToggleFavorite(dress, e)}
                       className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center shadow-md border text-xs ${DRESS_CARD_BTN} ${
                         isFav
@@ -1052,7 +1047,6 @@ export default function Home() {
                     </button>
                     <button
                       type="button"
-                      onPointerDown={(e) => e.stopPropagation()}
                       onClick={(e) => handleToggleCart(dress, e)}
                       className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center shadow-md border text-xs ${DRESS_CARD_BTN} ${
                         inCart
@@ -1066,44 +1060,24 @@ export default function Home() {
                     </button>
                   </div>
 
-                  {dress.images.length > 1 && (
-                    <>
-                      <button
-                        type="button"
-                        onPointerDown={(e) => e.stopPropagation()}
-                        onClick={(e) => prevImage(dress.id, dress.images.length, e)}
-                        className="absolute left-1 bottom-8 sm:bottom-10 z-40 bg-white/90 text-[#b8860b] w-6 h-6 rounded-full flex items-center justify-center shadow border border-[#e8cc92] font-black text-sm hover:bg-[#fffdf8] transition-all opacity-0 group-hover:opacity-100 sm:opacity-100"
-                        aria-label="תמונה קודמת"
-                      >
-                        ‹
-                      </button>
-                      <button
-                        type="button"
-                        onPointerDown={(e) => e.stopPropagation()}
-                        onClick={(e) => nextImage(dress.id, dress.images.length, e)}
-                        className="absolute right-1 bottom-8 sm:bottom-10 z-40 bg-white/90 text-[#b8860b] w-6 h-6 rounded-full flex items-center justify-center shadow border border-[#e8cc92] font-black text-sm hover:bg-[#fffdf8] transition-all opacity-0 group-hover:opacity-100 sm:opacity-100"
-                        aria-label="תמונה הבאה"
-                      >
-                        ›
-                      </button>
-
-                      <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 z-40 flex gap-1 bg-black/30 px-1.5 py-0.5 rounded-full">
-                        {dress.images.map((_, idx) => (
-                          <button
-                            key={idx}
-                            type="button"
-                            onPointerDown={(e) => e.stopPropagation()}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setDressImageIndex(dress.id, idx);
-                            }}
-                            className={`h-1 rounded-full transition-all ${idx === currentImgIndex ? 'bg-white w-2.5' : 'bg-white/50 w-1 hover:bg-white/80'}`}
-                            aria-label={`תמונה ${idx + 1}`}
-                          />
-                        ))}
-                      </div>
-                    </>
-                  )}
+                  <DressImageSliderNav
+                    imageCount={dress.images.length}
+                    currentIndex={currentImgIndex}
+                    onPrev={() =>
+                      setCurrentImageIndexes((prev) => ({
+                        ...prev,
+                        [dress.id]: stepImageIndex(prev[dress.id], -1, dress.images.length),
+                      }))
+                    }
+                    onNext={() =>
+                      setCurrentImageIndexes((prev) => ({
+                        ...prev,
+                        [dress.id]: stepImageIndex(prev[dress.id], 1, dress.images.length),
+                      }))
+                    }
+                    onSelect={(idx) => setDressImageIndex(dress.id, idx)}
+                    variant="compact"
+                  />
                 </div>
 
                 {/* פרטים — רצועה דקה כמו SHEIN (~15% מהכרטיס) */}

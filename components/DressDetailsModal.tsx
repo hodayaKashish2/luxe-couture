@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { Dress } from '@/lib/types';
 import DressImageFill from '@/components/DressImageFill';
+import DressImageSliderNav, { stepImageIndex } from '@/components/DressImageSliderNav';
 import DressRatingsSection from '@/components/DressRatingsSection';
 import { getCleanDescription, getDressDetailRows } from '@/lib/dress-display';
 
@@ -41,6 +42,13 @@ export default function DressDetailsModal({
   const rows = getDressDetailRows(dress);
   const images = dress.images?.length ? dress.images : [];
 
+  useEffect(() => {
+    setImageIndex(initialImageIndex);
+  }, [dress.id, initialImageIndex]);
+
+  const goPrev = () => setImageIndex((prev) => stepImageIndex(prev, -1, images.length));
+  const goNext = () => setImageIndex((prev) => stepImageIndex(prev, 1, images.length));
+
   return (
     <div
       className="fixed inset-0 bg-neutral-900/70 backdrop-blur-sm z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4"
@@ -60,53 +68,28 @@ export default function DressDetailsModal({
           ✕
         </button>
 
-        <div className="relative w-full md:w-3/5 shrink-0 flex flex-col bg-[#faf8f3] border-b md:border-b-0 md:border-l border-[#f0e2c3] md:min-h-[70vh]">
-          <div className="relative w-full h-[min(50vh,26rem)] sm:h-[min(55vh,30rem)] md:h-auto md:flex-1 md:min-h-[55vh]">
+        <div className="relative w-full md:w-3/5 shrink-0 flex flex-col bg-[#faf8f3] border-b md:border-b-0 md:border-l border-[#f0e2c3]">
+          <div className="relative w-full h-[min(50vh,26rem)] sm:h-[min(55vh,30rem)] md:h-[min(70vh,36rem)] shrink-0 overflow-hidden">
             {images.length > 0 ? (
               <>
                 <DressImageFill
                   src={images[imageIndex]}
                   alt={dress.name}
                   className="absolute inset-0 h-full w-full"
+                  fillMode="contain"
                 />
                 <span className="absolute top-3 right-3 sm:top-4 sm:right-4 z-20 bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white text-[10px] font-black px-3 py-1 rounded-full shadow-md pointer-events-none border border-[#c9a227]">
                   מידה {dress.size}
                 </span>
 
-                {images.length > 1 && (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => setImageIndex((prev) => (prev - 1 + images.length) % images.length)}
-                      className={`absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 z-20 bg-white/95 text-[#b8860b] w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center shadow-lg border border-[#e8cc92] font-black text-xl hover:bg-[#d4af37] hover:text-white ${actionBtnClass}`}
-                      aria-label="תמונה קודמת"
-                    >
-                      ‹
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setImageIndex((prev) => (prev + 1) % images.length)}
-                      className={`absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 z-20 bg-white/95 text-[#b8860b] w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center shadow-lg border border-[#e8cc92] font-black text-xl hover:bg-[#d4af37] hover:text-white ${actionBtnClass}`}
-                      aria-label="תמונה הבאה"
-                    >
-                      ›
-                    </button>
-
-                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex gap-2 bg-white/95 px-3 py-1.5 rounded-full shadow-md border border-[#e0cba0]">
-                      {images.map((img, idx) => (
-                        <button
-                          key={`${img}-${idx}`}
-                          type="button"
-                          onClick={() => setImageIndex(idx)}
-                          className={`rounded-full transition-all cursor-pointer ${
-                            idx === imageIndex ? 'bg-[#d4af37] w-3 h-3' : 'bg-[#e5d9bd] w-2 h-2 hover:bg-[#d4af37]/60'
-                          }`}
-                          aria-label={`תמונה ${idx + 1}`}
-                        />
-                      ))}
-                    </div>
-                  </>
-                )}
+                <DressImageSliderNav
+                  imageCount={images.length}
+                  currentIndex={imageIndex}
+                  onPrev={goPrev}
+                  onNext={goNext}
+                  onSelect={setImageIndex}
+                  variant="modal"
+                />
               </>
             ) : (
               <div className="absolute inset-0 flex items-center justify-center text-6xl text-[#decfa8]">👗</div>
