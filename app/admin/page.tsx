@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import DressImageFill from '@/components/DressImageFill';
 import AdminDressCatalog from '@/components/admin/AdminDressCatalog';
+import AdminCollapsibleItem from '@/components/admin/AdminCollapsibleItem';
 import AdminPagination from '@/components/admin/AdminPagination';
 import AdminStatsBar from '@/components/admin/AdminStatsBar';
 import SiteFooter from '@/components/SiteFooter';
@@ -21,7 +22,7 @@ const TABS: { id: AdminTab; label: string }[] = [
   { id: 'overview', label: 'סקירה' },
   { id: 'catalog', label: 'קטלוג שמלות' },
   { id: 'pending', label: 'שמלות ממתינות' },
-  { id: 'pending_payments', label: 'ממתינות לתשלום' },
+  { id: 'pending_payments', label: 'אישור תשלום' },
   { id: 'ratings', label: 'דירוגים על שמלות' },
   { id: 'reviews', label: 'תגובות אתר' },
   { id: 'bookings', label: 'הזמנות מאושרות' },
@@ -53,7 +54,7 @@ export default function AdminPage() {
   const [reviewsTotalPages, setReviewsTotalPages] = useState(1);
   const [reviewsSearch, setReviewsSearch] = useState('');
   const [reviewsSearchInput, setReviewsSearchInput] = useState('');
-  const [reviewsStatus, setReviewsStatus] = useState('pending');
+  const [reviewsStatus, setReviewsStatus] = useState('all');
   const [loadingReviews, setLoadingReviews] = useState(false);
 
   const [bookings, setBookings] = useState<AdminBookingRow[]>([]);
@@ -277,56 +278,69 @@ export default function AdminPage() {
     setCatalogFeatured(featured);
     setTab(next);
     if (next === 'ratings') setRatingsStatus('pending');
-    if (next === 'reviews') setReviewsStatus('pending');
+    if (next === 'reviews') setReviewsStatus('all');
   }
 
   function renderPendingDressCard(dress: AdminDressRow) {
     return (
-      <div key={dress.id} className="bg-white rounded-xl border border-[#eadaaf] p-4 flex gap-4">
+      <AdminCollapsibleItem
+        key={dress.id}
+        title={dress.name}
+        subtitle={`₪${dress.price} · מידה ${dress.size} · ${dress.city}`}
+      >
         {dress.images?.[0] && (
-          <DressImageFill src={dress.images[0]} alt="" className="w-20 h-24 shrink-0 rounded-lg" />
+          <DressImageFill src={dress.images[0]} alt="" className="w-20 h-24 rounded-lg mb-2" />
         )}
-        <div className="flex-grow min-w-0">
-          <h3 className="font-bold">{dress.name}</h3>
-          <p className="text-xs text-[#6e634c]">
-            #{dress.id} · ₪{dress.price} · מידה {dress.size} · {dress.city}
-          </p>
-          <p className="text-xs">משכירה: {dress.owner_name}</p>
-          <div className="flex gap-2 mt-3">
-            <button
-              type="button"
-              onClick={() => handleAction('dress', dress.id, 'approve')}
-              className="px-3 py-1.5 bg-[#b8860b] text-white text-xs rounded-lg font-bold"
-            >
-              אשר
-            </button>
-            <button
-              type="button"
-              onClick={() => handleAction('dress', dress.id, 'reject')}
-              className="px-3 py-1.5 border border-red-300 text-red-600 text-xs rounded-lg"
-            >
-              דחה
-            </button>
-          </div>
+        <p className="text-xs text-[#6e634c] mb-2">משכירה: {dress.owner_name}</p>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => handleAction('dress', dress.id, 'approve')}
+            className="px-3 py-1.5 bg-[#b8860b] text-white text-xs rounded-lg font-bold"
+          >
+            אשר
+          </button>
+          <button
+            type="button"
+            onClick={() => handleAction('dress', dress.id, 'reject')}
+            className="px-3 py-1.5 border border-red-300 text-red-600 text-xs rounded-lg"
+          >
+            דחה
+          </button>
         </div>
-      </div>
+      </AdminCollapsibleItem>
     );
   }
 
   function renderReviewCard(review: AdminSiteReview, showStatus = false) {
+    const statusLabel =
+      review.status === 'approved' ? 'מפורסם' : review.status === 'pending' ? 'ממתין' : 'נדחה';
+
     return (
-      <div key={review.id} className="bg-white rounded-xl border border-[#eadaaf] p-4">
-        <p className="text-xs italic mb-2">&quot;{review.text}&quot;</p>
-        <p className="text-xs font-bold">
-          {review.name} · {review.role} · {'⭐'.repeat(review.stars)}
-          {showStatus && (
-            <span className="mr-2 text-[#9a7b4f]">
-              · {review.status === 'approved' ? 'מפורסם' : review.status === 'pending' ? 'ממתין' : 'נדחה'}
+      <AdminCollapsibleItem
+        key={review.id}
+        title={review.name}
+        subtitle={
+          <>
+            {review.role} · {'⭐'.repeat(review.stars)}
+            {showStatus && ` · ${statusLabel}`}
+          </>
+        }
+        badge={
+          review.status === 'pending' ? (
+            <span className="text-[9px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full">
+              ממתין
             </span>
-          )}
-        </p>
+          ) : review.status === 'approved' ? (
+            <span className="text-[9px] font-bold text-green-800 bg-green-50 px-2 py-0.5 rounded-full">
+              באתר
+            </span>
+          ) : null
+        }
+      >
+        <p className="text-xs italic mb-3">&quot;{review.text}&quot;</p>
         {review.status === 'pending' && (
-          <div className="flex gap-2 mt-3">
+          <div className="flex gap-2">
             <button
               type="button"
               onClick={() => handleAction('review', review.id, 'approve')}
@@ -343,23 +357,22 @@ export default function AdminPage() {
             </button>
           </div>
         )}
-      </div>
+      </AdminCollapsibleItem>
     );
   }
 
   function renderPendingPaymentCard(booking: AdminBookingRow) {
-    const canApprove = booking.status === 'awaiting_admin_approval';
     return (
-      <div key={booking.id} className="bg-white rounded-xl border border-amber-200 p-4">
-        <div className="flex justify-between gap-2 flex-wrap mb-2">
-          <p className="text-sm font-bold">{booking.customer_name}</p>
-          <span className="text-[10px] font-bold text-amber-800 bg-amber-50 px-2 py-1 rounded-full">
-            {BOOKING_STATUS_LABELS[booking.status] || booking.status}
+      <AdminCollapsibleItem
+        key={booking.id}
+        title={booking.customer_name}
+        subtitle={`${booking.dress_name || `שמלה #${booking.dress_id}`} · ${booking.event_date}`}
+        badge={
+          <span className="text-[9px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full">
+            לאישור
           </span>
-        </div>
-        <p className="text-xs text-[#6e634c]">
-          שמלה: {booking.dress_name || `#${booking.dress_id}`} · תאריך: {booking.event_date}
-        </p>
+        }
+      >
         <p className="text-xs text-[#6e634c]" dir="ltr">
           {booking.customer_phone} · {booking.customer_email}
         </p>
@@ -367,23 +380,43 @@ export default function AdminPage() {
           <p className="text-xs font-bold text-[#8b6508] mt-1">₪{booking.amount_total}</p>
         )}
         {booking.payment_method && (
-          <p className="text-xs text-[#6e634c]">
+          <p className="text-xs text-[#6e634c] mt-1">
             אמצעי תשלום: {PAYMENT_METHOD_LABELS[booking.payment_method] || booking.payment_method}
           </p>
         )}
-        {canApprove && (
-          <button
-            type="button"
-            onClick={() => handleAction('booking', booking.id, 'approve_payment')}
-            className="mt-3 px-4 py-2 bg-[#b8860b] text-white text-xs rounded-xl font-black"
-          >
-            אשרי תשלום
-          </button>
+        <button
+          type="button"
+          onClick={() => handleAction('booking', booking.id, 'approve_payment')}
+          className="mt-3 px-4 py-2 bg-[#b8860b] text-white text-xs rounded-xl font-black"
+        >
+          אשרי תשלום
+        </button>
+      </AdminCollapsibleItem>
+    );
+  }
+
+  function renderBookingCard(booking: AdminBookingRow) {
+    return (
+      <AdminCollapsibleItem
+        key={booking.id}
+        title={booking.customer_name}
+        subtitle={`${booking.dress_name || `#${booking.dress_id}`} · ${booking.event_date}`}
+        badge={
+          <span className="text-[9px] font-bold text-green-800 bg-green-50 px-2 py-0.5 rounded-full">
+            אושר
+          </span>
+        }
+      >
+        <p className="text-xs text-[#6e634c]" dir="ltr">
+          {booking.customer_phone} · {booking.customer_email}
+        </p>
+        {booking.amount_total != null && (
+          <p className="text-xs font-bold text-[#8b6508] mt-1">₪{booking.amount_total}</p>
         )}
-        {booking.status === 'pending_payment' && (
-          <p className="mt-2 text-[10px] text-[#9a7b4f]">השוכרת עדיין לא דיווחה על תשלום</p>
-        )}
-      </div>
+        <p className="text-[10px] text-[#9a7b4f] mt-1">
+          נוצר: {new Date(booking.created_at).toLocaleDateString('he-IL')}
+        </p>
+      </AdminCollapsibleItem>
     );
   }
 
@@ -651,7 +684,9 @@ export default function AdminPage() {
                 {overview.pendingDresses.length === 0 ? (
                   <p className="text-xs text-[#6e634c]">אין שמלות ממתינות 🎉</p>
                 ) : (
-                  overview.pendingDresses.map(renderPendingDressCard)
+                  <div className="space-y-2">
+                    {overview.pendingDresses.map(renderPendingDressCard)}
+                  </div>
                 )}
               </section>
             )}
@@ -659,17 +694,17 @@ export default function AdminPage() {
             {tab === 'pending_payments' && (
               <section className="space-y-4">
                 <h2 className="font-bold text-lg">
-                  ממתינות לתשלום ({overview?.stats.pendingPayments ?? pendingPaymentsTotal})
+                  ממתינות לאישור תשלום ({overview?.stats.pendingPayments ?? pendingPaymentsTotal})
                 </h2>
                 <p className="text-xs text-[#6e634c]">
-                  הזמנות שלא שולמו עדיין, או שדווח עליהן תשלום (ביט/העברה) וממתינות לאישור שלך
+                  רק הזמנות שהשוכרת דיווחה עליהן תשלום (ביט/העברה) — ממתינות לאישור שלך
                 </p>
                 {loadingPendingPayments ? (
                   <p className="text-sm">טוען...</p>
                 ) : pendingPayments.length === 0 ? (
                   <p className="text-xs text-[#6e634c]">אין הזמנות ממתינות לתשלום 🎉</p>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {pendingPayments.map(renderPendingPaymentCard)}
                     <AdminPagination
                       page={pendingPaymentsPage}
@@ -685,9 +720,16 @@ export default function AdminPage() {
 
             {tab === 'reviews' && (
               <section className="space-y-4">
-                <h2 className="font-bold text-lg">תגובות כלליות של האתר</h2>
+                <h2 className="font-bold text-lg">
+                  תגובות כלליות של האתר
+                  {overview && (
+                    <span className="text-sm font-normal text-[#6e634c] mr-2">
+                      ({overview.stats.approvedReviews} באתר · {overview.stats.pendingReviews} ממתינות)
+                    </span>
+                  )}
+                </h2>
                 <p className="text-xs text-[#6e634c]">
-                  תגובות שמופיעות בדף הבית — ממתינות לאישור, מפורסמות או נדחות
+                  תגובות שמופיעות בדף הבית — לחצי על כל תגובה לפתיחה/סגירה
                 </p>
                 <div className="bg-white rounded-2xl border border-[#eadaaf] p-4 flex flex-col sm:flex-row gap-2">
                   <form
@@ -716,10 +758,10 @@ export default function AdminPage() {
                     }}
                     className="text-xs border border-[#decfa8] rounded-lg px-2 py-2"
                   >
+                    <option value="all">הכל (ברירת מחדל)</option>
+                    <option value="approved">מפורסמות באתר</option>
                     <option value="pending">ממתינות</option>
-                    <option value="approved">מפורסמות</option>
                     <option value="rejected">נדחות</option>
-                    <option value="all">הכל</option>
                   </select>
                 </div>
 
@@ -728,7 +770,7 @@ export default function AdminPage() {
                 ) : reviews.length === 0 ? (
                   <p className="text-xs text-[#6e634c]">לא נמצאו תגובות</p>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {reviews.map((r) => renderReviewCard(r, true))}
                     <AdminPagination
                       page={reviewsPage}
@@ -786,25 +828,28 @@ export default function AdminPage() {
                 ) : ratings.length === 0 ? (
                   <p className="text-xs text-[#6e634c]">לא נמצאו דירוגים</p>
                 ) : (
-                  <div className="bg-white rounded-2xl border border-[#eadaaf] divide-y divide-[#f0e8d0]">
+                  <div className="space-y-2">
                     {ratings.map((rating) => (
-                      <div key={rating.id} className="p-4">
-                        <div className="flex justify-between gap-2 flex-wrap">
-                          <p className="text-xs font-bold text-[#8b6508]">{rating.dress_name}</p>
-                          <span className="text-[10px] text-[#9a7b4f]">
-                            {new Date(rating.created_at).toLocaleDateString('he-IL')}
-                          </span>
-                        </div>
+                      <AdminCollapsibleItem
+                        key={rating.id}
+                        title={rating.dress_name}
+                        subtitle={`${rating.customer_name} · ${'⭐'.repeat(rating.stars)} · ${
+                          rating.status === 'approved' ? 'מפורסם' : 'ממתין'
+                        }`}
+                        badge={
+                          rating.status === 'pending' ? (
+                            <span className="text-[9px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full">
+                              ממתין
+                            </span>
+                          ) : null
+                        }
+                      >
                         {rating.review_text ? (
-                          <p className="text-xs italic my-2">&quot;{rating.review_text}&quot;</p>
+                          <p className="text-xs italic mb-3">&quot;{rating.review_text}&quot;</p>
                         ) : (
-                          <p className="text-xs text-[#9a7b4f] my-2">(ללא טקסט)</p>
+                          <p className="text-xs text-[#9a7b4f] mb-3">(ללא טקסט)</p>
                         )}
-                        <p className="text-xs font-bold">
-                          {rating.customer_name} · {'⭐'.repeat(rating.stars)} ·{' '}
-                          {rating.status === 'approved' ? 'מפורסם' : 'ממתין'}
-                        </p>
-                        <div className="flex flex-wrap gap-2 mt-2">
+                        <div className="flex flex-wrap gap-2">
                           {rating.status === 'pending' && (
                             <button
                               type="button"
@@ -822,17 +867,15 @@ export default function AdminPage() {
                             מחקי
                           </button>
                         </div>
-                      </div>
+                      </AdminCollapsibleItem>
                     ))}
-                    <div className="p-4">
-                      <AdminPagination
+                    <AdminPagination
                         page={ratingsPage}
                         totalPages={ratingsTotalPages}
                         total={ratingsTotal}
                         limit={20}
                         onPageChange={setRatingsPage}
-                      />
-                    </div>
+                    />
                   </div>
                 )}
               </section>
@@ -866,50 +909,15 @@ export default function AdminPage() {
                 ) : bookings.length === 0 ? (
                   <p className="text-xs text-[#6e634c]">לא נמצאו הזמנות</p>
                 ) : (
-                  <div className="bg-white rounded-2xl border border-[#eadaaf] overflow-x-auto">
-                    <table className="w-full text-xs">
-                      <thead className="bg-[#fffdf8] border-b border-[#eadaaf] text-[#6e634c]">
-                        <tr>
-                          <th className="p-3 text-right">#</th>
-                          <th className="p-3 text-right">שם</th>
-                          <th className="p-3 text-right">שמלה</th>
-                          <th className="p-3 text-right">טלפון</th>
-                          <th className="p-3 text-right">אימייל</th>
-                          <th className="p-3 text-right">תאריך אירוע</th>
-                          <th className="p-3 text-right">סטטוס</th>
-                          <th className="p-3 text-right">נוצר</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {bookings.map((b) => (
-                          <tr key={b.id} className="border-b border-[#f0e8d0]">
-                            <td className="p-3">{b.id}</td>
-                            <td className="p-3 font-bold">{b.customer_name}</td>
-                            <td className="p-3">{b.dress_name || `#${b.dress_id}`}</td>
-                            <td className="p-3" dir="ltr">
-                              {b.customer_phone}
-                            </td>
-                            <td className="p-3" dir="ltr">
-                              {b.customer_email}
-                            </td>
-                            <td className="p-3">{b.event_date}</td>
-                            <td className="p-3">{BOOKING_STATUS_LABELS[b.status] || b.status}</td>
-                            <td className="p-3 text-[#9a7b4f]">
-                              {new Date(b.created_at).toLocaleDateString('he-IL')}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                    <div className="p-4">
-                      <AdminPagination
-                        page={bookingsPage}
-                        totalPages={bookingsTotalPages}
-                        total={bookingsTotal}
-                        limit={20}
-                        onPageChange={setBookingsPage}
-                      />
-                    </div>
+                  <div className="space-y-2">
+                    {bookings.map(renderBookingCard)}
+                    <AdminPagination
+                      page={bookingsPage}
+                      totalPages={bookingsTotalPages}
+                      total={bookingsTotal}
+                      limit={20}
+                      onPageChange={setBookingsPage}
+                    />
                   </div>
                 )}
               </section>

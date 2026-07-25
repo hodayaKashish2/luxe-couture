@@ -85,6 +85,7 @@ async function loadOverview(supabase: ReturnType<typeof getSupabaseAdmin>) {
     pendingReviewsRes,
     pendingRatingsRes,
     pendingPaymentsRes,
+    approvedReviewsRes,
     confirmedBookingsRes,
     pendingDressesListRes,
     pendingReviewsListRes,
@@ -101,7 +102,8 @@ async function loadOverview(supabase: ReturnType<typeof getSupabaseAdmin>) {
     supabase
       .from('bookings')
       .select('*', { count: 'exact', head: true })
-      .in('status', ['pending_payment', 'awaiting_admin_approval']),
+      .eq('status', 'awaiting_admin_approval'),
+    supabase.from('reviews').select('*', { count: 'exact', head: true }).eq('status', 'approved'),
     supabase.from('bookings').select('*', { count: 'exact', head: true }).eq('status', 'confirmed'),
     supabase
       .from('dresses')
@@ -126,7 +128,7 @@ async function loadOverview(supabase: ReturnType<typeof getSupabaseAdmin>) {
       .select(
         'id, dress_id, customer_name, customer_phone, customer_email, event_date, status, amount_total, payment_method, created_at, dresses(name)'
       )
-      .in('status', ['pending_payment', 'awaiting_admin_approval'])
+      .eq('status', 'awaiting_admin_approval')
       .order('created_at', { ascending: false })
       .limit(50),
     supabase
@@ -167,6 +169,7 @@ async function loadOverview(supabase: ReturnType<typeof getSupabaseAdmin>) {
       pendingReviews: pendingReviewsRes.count ?? 0,
       pendingRatings: pendingRatingsRes.error ? pendingRatings.length : (pendingRatingsRes.count ?? 0),
       pendingPayments: pendingPaymentsRes.error ? pendingPayments.length : (pendingPaymentsRes.count ?? 0),
+      approvedReviews: approvedReviewsRes.count ?? 0,
       confirmedBookings: confirmedBookingsRes.count ?? 0,
     },
     pendingDresses: pendingDressesListRes.data ?? [],
@@ -201,7 +204,7 @@ async function loadDressesPage(
   let query = supabase
     .from('dresses')
     .select(
-      'id, name, price, size, city, owner_name, created_at, images, featured_boost, featured_until, rental_count, rating_count',
+      'id, name, price, size, city, owner_name, owner_phone, created_at, images, featured_boost, featured_until, rental_count, rating_count',
       { count: 'exact' }
     )
     .eq('status', 'approved');
@@ -211,10 +214,10 @@ async function loadDressesPage(
     const numericId = /^\d+$/.test(search) ? search : null;
     if (numericId) {
       query = query.or(
-        `name.ilike.%${safe}%,owner_name.ilike.%${safe}%,city.ilike.%${safe}%,id.eq.${numericId}`
+        `name.ilike.%${safe}%,owner_name.ilike.%${safe}%,city.ilike.%${safe}%,owner_phone.ilike.%${safe}%,id.eq.${numericId}`
       );
     } else {
-      query = query.or(`name.ilike.%${safe}%,owner_name.ilike.%${safe}%,city.ilike.%${safe}%`);
+      query = query.or(`name.ilike.%${safe}%,owner_name.ilike.%${safe}%,city.ilike.%${safe}%,owner_phone.ilike.%${safe}%`);
     }
   }
 
@@ -369,7 +372,7 @@ async function loadBookingsPage(
     .order('created_at', { ascending: false });
 
   if (scope === 'pending') {
-    query = query.in('status', ['pending_payment', 'awaiting_admin_approval']);
+    query = query.eq('status', 'awaiting_admin_approval');
   } else if (scope === 'confirmed') {
     query = query.eq('status', 'confirmed');
   } else if (scope === 'all') {

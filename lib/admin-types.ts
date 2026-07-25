@@ -5,6 +5,7 @@ export type AdminDressRow = {
   size: string;
   city: string;
   owner_name: string;
+  owner_phone?: string;
   images: string[];
   created_at: string;
   featured_boost?: number;
@@ -58,6 +59,7 @@ export type AdminOverview = {
     pendingReviews: number;
     pendingRatings: number;
     pendingPayments: number;
+    approvedReviews: number;
     confirmedBookings: number;
   };
   pendingDresses: AdminDressRow[];
