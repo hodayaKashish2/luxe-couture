@@ -2,6 +2,12 @@ import { NextResponse } from 'next/server';
 import { getUserFromRequest } from '@/lib/user-auth';
 import { phonesMatch } from '@/lib/owner-auth';
 import { userOwnsDress } from '@/lib/dress-ownership';
+import {
+  filterBookingsWithinRetention,
+  filterRemovedDressesWithinRetention,
+  shouldShowBookingByEventDate,
+  shouldShowRemovedDress,
+} from '@/lib/retention';
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server';
 
 function emailsMatch(a: string, b: string) {
@@ -29,7 +35,9 @@ export async function GET(request: Request) {
 
     if (dressesError) throw dressesError;
 
-    const myDresses = (allDresses ?? []).filter((d) => userOwnsDress(d, user));
+    const myDresses = filterRemovedDressesWithinRetention(
+      (allDresses ?? []).filter((d) => userOwnsDress(d, user))
+    );
 
     const dressIds = myDresses.map((d) => d.id);
     let ownerBookings: Array<Record<string, unknown>> = [];
@@ -47,10 +55,12 @@ export async function GET(request: Request) {
       }
 
       const dressNames = Object.fromEntries(myDresses.map((d) => [String(d.id), d.name]));
-      ownerBookings = (bookingRows ?? []).map((b) => ({
-        ...b,
-        dress_name: dressNames[String(b.dress_id)] || 'שמלה',
-      }));
+      ownerBookings = filterBookingsWithinRetention(
+        (bookingRows ?? []).map((b) => ({
+          ...b,
+          dress_name: dressNames[String(b.dress_id)] || 'שמלה',
+        }))
+      );
     }
 
     type ReservationRow = {
@@ -97,14 +107,44 @@ export async function GET(request: Request) {
       let dressMap: Record<string, string> = {};
       let dressOwnerMap: Record<
         string,
-        { owner_name: string; owner_phone: string; owner_email: string; status: string }
+        {
+          owner_name: string;
+          owner_phone: string;
+          owner_email: string;
+          status: string;
+          removed_at: string | null;
+          created_at: string | null;
+        }
       > = {};
 
       if (dressIdsNeeded.length > 0) {
-        const { data: dressRows } = await supabase
+        type DressMetaRow = {
+          id: number | string;
+          name: string;
+          owner_name: string | null;
+          owner_phone: string | null;
+          owner_email: string | null;
+          status: string | null;
+          removed_at?: string | null;
+          created_at: string | null;
+        };
+
+        let dressRows: DressMetaRow[] | null = null;
+        const withRemoved = await supabase
           .from('dresses')
-          .select('id, name, owner_name, owner_phone, owner_email, status')
+          .select('id, name, owner_name, owner_phone, owner_email, status, removed_at, created_at')
           .in('id', dressIdsNeeded);
+
+        if (withRemoved.error?.message?.includes('removed_at')) {
+          const withoutRemoved = await supabase
+            .from('dresses')
+            .select('id, name, owner_name, owner_phone, owner_email, status, created_at')
+            .in('id', dressIdsNeeded);
+          dressRows = (withoutRemoved.data ?? []) as DressMetaRow[];
+        } else {
+          dressRows = (withRemoved.data ?? []) as DressMetaRow[];
+        }
+
         dressMap = Object.fromEntries((dressRows ?? []).map((d) => [String(d.id), d.name]));
         dressOwnerMap = Object.fromEntries(
           (dressRows ?? []).map((d) => [
@@ -114,6 +154,8 @@ export async function GET(request: Request) {
               owner_phone: d.owner_phone || '',
               owner_email: d.owner_email || '',
               status: d.status || 'approved',
+              removed_at: d.removed_at ?? null,
+              created_at: d.created_at || null,
             },
           ])
         );
@@ -141,6 +183,8 @@ export async function GET(request: Request) {
             owner_phone: '',
             owner_email: '',
             status: 'approved',
+            removed_at: null,
+            created_at: null,
           };
           return {
             ...b,
@@ -149,7 +193,18 @@ export async function GET(request: Request) {
             owner_phone: owner.owner_phone,
             owner_email: owner.owner_email,
             dress_status: owner.status,
+            dress_removed_at: owner.removed_at,
+            dress_created_at: owner.created_at,
           };
+        })
+        .filter((b) => {
+          if (
+            b.dress_status === 'removed' &&
+            !shouldShowRemovedDress(b.dress_removed_at, b.dress_created_at)
+          ) {
+            return false;
+          }
+          return shouldShowBookingByEventDate(b.event_date, b.status);
         });
     }
 

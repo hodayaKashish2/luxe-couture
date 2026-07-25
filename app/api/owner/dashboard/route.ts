@@ -1,5 +1,10 @@
 import { NextResponse } from 'next/server';
 import { getOwnerFromRequest, phonesMatch } from '@/lib/owner-auth';
+import { markDressRemoved } from '@/lib/dress-removal';
+import {
+  filterBookingsWithinRetention,
+  filterRemovedDressesWithinRetention,
+} from '@/lib/retention';
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server';
 
 export async function GET(request: Request) {
@@ -23,8 +28,8 @@ export async function GET(request: Request) {
 
     if (dressesError) throw dressesError;
 
-    const dresses = (allDresses ?? []).filter((d) =>
-      phonesMatch(String(d.owner_phone || ''), owner.phone)
+    const dresses = filterRemovedDressesWithinRetention(
+      (allDresses ?? []).filter((d) => phonesMatch(String(d.owner_phone || ''), owner.phone))
     );
 
     const dressIds = dresses.map((d) => d.id);
@@ -43,10 +48,12 @@ export async function GET(request: Request) {
       }
 
       const dressNames = Object.fromEntries(dresses.map((d) => [String(d.id), d.name]));
-      bookings = (bookingRows ?? []).map((b) => ({
-        ...b,
-        dress_name: dressNames[String(b.dress_id)] || 'שמלה',
-      }));
+      bookings = filterBookingsWithinRetention(
+        (bookingRows ?? []).map((b) => ({
+          ...b,
+          dress_name: dressNames[String(b.dress_id)] || 'שמלה',
+        }))
+      );
     }
 
     return NextResponse.json({

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getOwnerFromRequest, phonesMatch } from '@/lib/owner-auth';
+import { markDressRemoved } from '@/lib/dress-removal';
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server';
 
 async function getOwnedDress(id: string, ownerPhone: string) {
@@ -62,14 +63,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     const dress = await getOwnedDress(id, owner.phone);
     if (!dress) return NextResponse.json({ error: 'שמלה לא נמצאה' }, { status: 404 });
 
-    const supabase = getSupabaseAdmin();
-    let { error } = await supabase.from('dresses').update({ status: 'removed' }).eq('id', id);
-
-    if (error?.message?.includes('removed')) {
-      ({ error } = await supabase.from('dresses').update({ status: 'rejected' }).eq('id', id));
-    }
-
-    if (error) throw error;
+    await markDressRemoved(id);
 
     return NextResponse.json({ success: true, message: 'השמלה הוסרה מהאתר' });
   } catch (error) {

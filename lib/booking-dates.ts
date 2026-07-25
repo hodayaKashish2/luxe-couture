@@ -7,16 +7,22 @@ export function isPastDate(date: string): boolean {
   return date < todayDateString();
 }
 
-/** מפריד הזמנות עתידיות/היום מול היסטוריה */
+/** מפריד הזמנות עתידיות/היום מול היסטוריה (עד 30 יום אחורה) */
 export function splitBookingsByEventDate<T extends { event_date: string }>(
   bookings: T[],
   today = todayDateString()
 ) {
+  const cutoff = (() => {
+    const date = new Date(`${today}T12:00:00`);
+    date.setDate(date.getDate() - 30);
+    return date.toISOString().slice(0, 10);
+  })();
+
   const upcoming = bookings
     .filter((b) => b.event_date >= today)
     .sort((a, b) => a.event_date.localeCompare(b.event_date));
   const past = bookings
-    .filter((b) => b.event_date < today)
+    .filter((b) => b.event_date < today && b.event_date >= cutoff)
     .sort((a, b) => b.event_date.localeCompare(a.event_date));
   return { upcoming, past };
 }

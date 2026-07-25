@@ -92,3 +92,7 @@ alter table public.dress_ratings add constraint dress_ratings_status_check
 
 -- ניקוי יבש כלול במחיר
 alter table public.dresses add column if not exists includes_dry_cleaning boolean not null default false;
+
+-- === upgrade-v7: תאריך הסרת שמלה (הצגה 30 יום) ===
+alter table public.dresses add column if not exists removed_at timestamptz;
+update public.dresses set removed_at = created_at where status = 'removed' and removed_at is null;

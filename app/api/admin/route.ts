@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
 import { fetchDressForNotify, notifyDressApproved } from '@/lib/dress-approval-notify';
+import { markDressRemoved } from '@/lib/dress-removal';
 import { approveDressRating, recalculateDressRatingStats } from '@/lib/dress-rating-stats';
 import { extendFeaturedUntil, FEATURED_REWARD_DAYS } from '@/lib/dress-ranking';
 import { confirmBookingPayment } from '@/lib/payment-confirmation';
+import { retentionCutoffDateString } from '@/lib/retention';
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server';
 
 function verifyToken(request: Request) {
@@ -104,7 +106,11 @@ async function loadOverview(supabase: ReturnType<typeof getSupabaseAdmin>) {
       .select('*', { count: 'exact', head: true })
       .eq('status', 'awaiting_admin_approval'),
     supabase.from('reviews').select('*', { count: 'exact', head: true }).eq('status', 'approved'),
-    supabase.from('bookings').select('*', { count: 'exact', head: true }).eq('status', 'confirmed'),
+    supabase
+      .from('bookings')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'confirmed')
+      .gte('event_date', retentionCutoffDateString()),
     supabase
       .from('dresses')
       .select('id, name, price, size, city, owner_name, status, created_at, images')
@@ -137,6 +143,7 @@ async function loadOverview(supabase: ReturnType<typeof getSupabaseAdmin>) {
         'id, dress_id, customer_name, customer_phone, customer_email, event_date, status, amount_total, payment_method, created_at, dresses(name)'
       )
       .eq('status', 'confirmed')
+      .gte('event_date', retentionCutoffDateString())
       .order('created_at', { ascending: false })
       .limit(10),
     supabase.from('dresses').select('city').eq('status', 'approved').not('city', 'is', null),
@@ -374,7 +381,7 @@ async function loadBookingsPage(
   if (scope === 'pending') {
     query = query.eq('status', 'awaiting_admin_approval');
   } else if (scope === 'confirmed') {
-    query = query.eq('status', 'confirmed');
+    query = query.eq('status', 'confirmed').gte('event_date', retentionCutoffDateString());
   } else if (scope === 'all') {
     query = query.in('status', ['pending_payment', 'awaiting_admin_approval', 'confirmed', 'cancelled', 'failed']);
   }
@@ -561,11 +568,7 @@ export async function POST(request: Request) {
     }
 
     if (type === 'dress' && action === 'delete') {
-      let { error } = await supabase.from('dresses').update({ status: 'removed' }).eq('id', id);
-      if (error?.message?.includes('removed') || error?.message?.includes('check constraint')) {
-        ({ error } = await supabase.from('dresses').update({ status: 'rejected' }).eq('id', id));
-      }
-      if (error) throw error;
+      await markDressRemoved(id);
       return NextResponse.json({ success: true, status: 'removed' });
     }
 
