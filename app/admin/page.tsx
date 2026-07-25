@@ -27,6 +27,17 @@ type PendingReview = {
   created_at: string;
 };
 
+type DressRatingRow = {
+  id: number;
+  dress_id: number;
+  dress_name: string;
+  customer_name: string;
+  stars: number;
+  review_text: string;
+  status: string;
+  created_at: string;
+};
+
 export default function AdminPage() {
   const [token, setToken] = useState('');
   const [savedToken, setSavedToken] = useState('');
@@ -36,6 +47,7 @@ export default function AdminPage() {
   const [pendingDresses, setPendingDresses] = useState<DressRow[]>([]);
   const [publishedDresses, setPublishedDresses] = useState<DressRow[]>([]);
   const [reviews, setReviews] = useState<PendingReview[]>([]);
+  const [dressRatings, setDressRatings] = useState<DressRatingRow[]>([]);
 
   useEffect(() => {
     const stored = sessionStorage.getItem('admin_token');
@@ -54,6 +66,7 @@ export default function AdminPage() {
       setPendingDresses(data.pendingDresses || []);
       setPublishedDresses(data.publishedDresses || []);
       setReviews(data.pendingReviews || []);
+      setDressRatings(data.dressRatings || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'שגיאה');
     } finally {
@@ -73,12 +86,13 @@ export default function AdminPage() {
   }, [savedToken]);
 
   async function handleAction(
-    type: 'dress' | 'review',
+    type: 'dress' | 'review' | 'dress_rating',
     id: number,
     action: 'approve' | 'reject' | 'delete' | 'toggle_featured' | 'extend_featured'
   ) {
     if (!savedToken) return;
-    if (action === 'delete' && !confirm('להסיר את השמלה מהאתר? היא לא תופיע יותר בקטלוג.')) return;
+    if (action === 'delete' && type === 'dress' && !confirm('להסיר את השמלה מהאתר? היא לא תופיע יותר בקטלוג.')) return;
+    if (action === 'delete' && type === 'dress_rating' && !confirm('למחוק את הדירוג/תגובה על השמלה?')) return;
 
     setActionMsg('');
     const response = await fetch('/api/admin', {
@@ -92,7 +106,9 @@ export default function AdminPage() {
     const data = await response.json();
     if (response.ok) {
       const msg =
-        action === 'delete'
+        action === 'delete' && type === 'dress_rating'
+          ? '✓ הדירוג נמחק'
+          : action === 'delete'
           ? '✓ השמלה הוסרה מהאתר'
           : action === 'toggle_featured'
             ? data.featured_boost > 0
@@ -270,6 +286,39 @@ export default function AdminPage() {
                             דחה
                           </button>
                         </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            <section>
+              <h2 className="font-bold text-lg mb-4">דירוגים ותגובות על שמלות ({dressRatings.length})</h2>
+              <p className="text-xs text-[#6e634c] mb-4">דירוגים שפורסמו או ממתינים — ניתן למחוק תגובה לא ראויה</p>
+              {dressRatings.length === 0 ? (
+                <p className="text-xs text-[#6e634c]">אין דירוגים כרגע</p>
+              ) : (
+                <div className="space-y-4">
+                  {dressRatings.map((rating) => (
+                    <div key={rating.id} className="bg-white rounded-xl border border-[#eadaaf] p-4">
+                      <p className="text-xs font-bold text-[#8b6508] mb-1">{rating.dress_name}</p>
+                      {rating.review_text ? (
+                        <p className="text-xs italic mb-2">&quot;{rating.review_text}&quot;</p>
+                      ) : (
+                        <p className="text-xs text-[#9a7b4f] mb-2">(ללא טקסט)</p>
+                      )}
+                      <p className="text-xs font-bold">
+                        {rating.customer_name} · {'⭐'.repeat(rating.stars)} ·{' '}
+                        {rating.status === 'approved' ? 'מפורסם' : 'ממתין'}
+                      </p>
+                      <div className="flex gap-2 mt-3">
+                        <button
+                          onClick={() => handleAction('dress_rating', rating.id, 'delete')}
+                          className="px-3 py-1.5 border border-red-300 text-red-600 text-xs rounded-lg font-bold"
+                        >
+                          מחקי
+                        </button>
                       </div>
                     </div>
                   ))}

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { fetchDressForNotify, notifyDressApproved } from '@/lib/dress-approval-notify';
+import { recalculateDressRatingStats } from '@/lib/dress-rating-stats';
 import { extendFeaturedUntil, FEATURED_REWARD_DAYS } from '@/lib/dress-ranking';
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server';
 
@@ -22,7 +23,7 @@ export async function GET(request: Request) {
   try {
     const supabase = getSupabaseAdmin();
 
-    const [dressesRes, reviewsRes, publishedRes] = await Promise.all([
+    const [dressesRes, reviewsRes, publishedRes, dressRatingsRes] = await Promise.all([
       supabase
         .from('dresses')
         .select('id, name, price, size, city, owner_name, status, created_at, images')
@@ -38,11 +39,37 @@ export async function GET(request: Request) {
         .select('id, name, price, size, city, owner_name, created_at, images, featured_boost, featured_until')
         .eq('status', 'approved')
         .order('created_at', { ascending: false }),
+      supabase
+        .from('dress_ratings')
+        .select('id, dress_id, customer_name, stars, review_text, status, created_at, dresses(name)')
+        .in('status', ['approved', 'pending'])
+        .order('created_at', { ascending: false })
+        .limit(80),
     ]);
 
     if (dressesRes.error) throw dressesRes.error;
     if (reviewsRes.error) throw reviewsRes.error;
     if (publishedRes.error) throw publishedRes.error;
+
+    let dressRatings: unknown[] = [];
+    if (!dressRatingsRes.error) {
+      dressRatings = (dressRatingsRes.data ?? []).map((row) => {
+        const dressJoin = row.dresses as { name?: string } | { name?: string }[] | null;
+        const dressName = Array.isArray(dressJoin)
+          ? dressJoin[0]?.name
+          : dressJoin?.name;
+        return {
+          id: row.id,
+          dress_id: row.dress_id,
+          dress_name: dressName || 'שמלה',
+          customer_name: row.customer_name,
+          stars: row.stars,
+          review_text: row.review_text,
+          status: row.status,
+          created_at: row.created_at,
+        };
+      });
+    }
 
     let recentBookings: unknown[] = [];
     const bookingsRes = await supabase
@@ -62,6 +89,7 @@ export async function GET(request: Request) {
       })),
       publishedDresses: publishedRes.data ?? [],
       recentBookings,
+      dressRatings,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'שגיאה';
@@ -81,7 +109,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { type, id, action } = body as {
-      type: 'dress' | 'review';
+      type: 'dress' | 'review' | 'dress_rating';
       id: string | number;
       action: 'approve' | 'reject' | 'delete' | 'toggle_featured' | 'extend_featured';
     };
@@ -91,6 +119,28 @@ export async function POST(request: Request) {
     }
 
     const supabase = getSupabaseAdmin();
+
+    if (type === 'dress_rating' && action === 'delete') {
+      const { data: rating, error: fetchError } = await supabase
+        .from('dress_ratings')
+        .select('id, dress_id, status')
+        .eq('id', id)
+        .maybeSingle();
+
+      if (fetchError) throw fetchError;
+      if (!rating) {
+        return NextResponse.json({ error: 'דירוג לא נמצא' }, { status: 404 });
+      }
+
+      const { error: deleteError } = await supabase.from('dress_ratings').delete().eq('id', id);
+      if (deleteError) throw deleteError;
+
+      if (rating.status === 'approved') {
+        await recalculateDressRatingStats(supabase, rating.dress_id);
+      }
+
+      return NextResponse.json({ success: true });
+    }
 
     if (type === 'dress' && action === 'toggle_featured') {
       const { data: row, error: fetchError } = await supabase

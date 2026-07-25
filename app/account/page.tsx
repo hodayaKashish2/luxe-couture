@@ -19,7 +19,7 @@ import DressSizeInput from '@/components/DressSizeInput';
 import { validateAddDressForm, validateDressImageFiles, validateUpdateProfileForm } from '@/lib/form-validation';
 import { BOOKING_UPDATED_EVENT, notifyBookingUpdated } from '@/lib/booking-events';
 import { getStoredSiteUser } from '@/lib/session-user';
-import { clearAllLuxeStorage } from '@/lib/luxe-storage';
+import { consumeDetailsReturnDressId, setDetailsReturnDressId } from '@/lib/details-return';
 import { notifySiteAuthChange } from '@/lib/site-auth-events';
 import { accountSectionUrl, parseAccountSection } from '@/lib/account-section-url';
 import { navigateAccountHub } from '@/lib/account-hub-nav';
@@ -397,8 +397,8 @@ function AccountPageContent() {
 
   async function logout() {
     await fetch('/api/auth/logout', { method: 'POST' });
-    clearAllLuxeStorage();
-    sessionStorage.clear();
+    sessionStorage.removeItem('site_token');
+    sessionStorage.removeItem('site_user');
     notifySiteAuthChange();
     router.replace('/');
   }
@@ -1140,11 +1140,13 @@ function AccountPageContent() {
           onToggleFavorite={() => toggleFavorite(detailsDress)}
           onReserve={() => {
             const dressId = detailsDress.id;
+            setDetailsReturnDressId(dressId);
             closeDetailsDress();
             router.push(`/?reserve=${encodeURIComponent(dressId)}`);
           }}
           onCoordinate={() => {
             const dressId = detailsDress.id;
+            setDetailsReturnDressId(dressId);
             closeDetailsDress();
             router.push(`/?coordinate=${encodeURIComponent(dressId)}`);
           }}

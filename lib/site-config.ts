@@ -29,14 +29,21 @@ export const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP || '972534201133
 
 export const WHATSAPP_LINK = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent('היי, אשמח לפרטים על שמלה מהאתר')}`;
 
+/** כתובת ציבורית של האתר — בדפדפן משתמשים ב-origin הנוכחי */
+export function getPublicAppUrl() {
+  if (typeof window !== 'undefined' && window.location?.origin) {
+    return window.location.origin;
+  }
+  return process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+}
+
 export function dressShareUrl(dressName: string, dressId: string) {
-  const base = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const base = getPublicAppUrl();
   return `${base}/?dress=${dressId}&text=${encodeURIComponent(`שמתי לב לשמלה "${dressName}" באתר ${SITE_NAME}`)}`;
 }
 
 export function dressPageUrl(dressId: string) {
-  const base = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-  return `${base}/?dress=${dressId}`;
+  return `${getPublicAppUrl()}/?dress=${dressId}`;
 }
 
 export function ownerWhatsAppLink(phone: string, dressName: string) {

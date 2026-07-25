@@ -55,7 +55,12 @@ export function LuxeStorageProvider({ children }: { children: ReactNode }) {
     refresh();
 
     const onStorage = (e: StorageEvent) => {
-      if (e.key === 'luxe_cart' || e.key === 'luxe_favs' || e.key === null) refresh();
+      if (
+        e.key === null ||
+        (e.key && (e.key.startsWith('luxe_cart') || e.key.startsWith('luxe_favs')))
+      ) {
+        refresh();
+      }
     };
     const onCustom = () => refresh();
 

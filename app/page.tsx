@@ -36,6 +36,7 @@ import { OFF_PLATFORM_COORDINATE_NOTICE } from '@/lib/commission';
 import { fetchDressById, findDressInList } from '@/lib/dress-api';
 import { dressBelongsToCustomer } from '@/lib/self-dress-guard';
 import { dressPageUrl, ownerWhatsAppLink, WHATSAPP_LINK } from '@/lib/site-config';
+import { consumeDetailsReturnDressId, setDetailsReturnDressId } from '@/lib/details-return';
 import { Dress, Review, SortOption, EVENT_TYPES, PICKUP_METHODS } from '@/lib/types';
 import type { SavedDress } from '@/lib/luxe-storage';
 
@@ -336,20 +337,29 @@ export default function Home() {
     [dressesList]
   );
 
+  const restoreDetailsAfterSubModal = useCallback(() => {
+    const returnId = consumeDetailsReturnDressId();
+    if (!returnId) return;
+    const dress = findDressById(returnId);
+    if (dress) setDetailsDress(dress);
+  }, [findDressById]);
+
   const closeBookingModal = useCallback(() => {
     setSelectedDress(null);
     setDateError('');
     setPaymentStep(null);
     setIsOrdered(false);
     setBookingError('');
-  }, []);
+    restoreDetailsAfterSubModal();
+  }, [restoreDetailsAfterSubModal]);
 
   const closeCoordinateModal = useCallback(() => {
     setCoordinateDress(null);
     setCoordinateDate('');
     setCoordinateChecked(false);
     setCoordinateDisclaimerAccepted(false);
-  }, []);
+    restoreDetailsAfterSubModal();
+  }, [restoreDetailsAfterSubModal]);
 
   useModalHistory({
     key: 'add-dress',
@@ -517,6 +527,7 @@ export default function Home() {
 
   const finishSuccessfulBooking = () => {
     if (!selectedDress) return;
+    consumeDetailsReturnDressId();
     setDressesList((prev) =>
       prev.map((d) =>
         d.id === selectedDress.id
@@ -1683,7 +1694,7 @@ export default function Home() {
         </div>
       )}
 
-      {detailsDress && (
+      {detailsDress && !selectedDress && !coordinateDress && (
         <DressDetailsModal
           dress={detailsDress}
           initialImageIndex={currentImageIndexes[detailsDress.id] || 0}
@@ -1691,12 +1702,14 @@ export default function Home() {
           isInCart={isDressInCart(detailsDress.id)}
           isFavorite={isDressFavorite(detailsDress.id)}
           onReserve={() => {
+            setDetailsReturnDressId(detailsDress.id);
             tryReserveDress(detailsDress, currentImageIndexes[detailsDress.id] || 0);
             setDetailsDress(null);
           }}
           onToggleCart={() => toggleCart(detailsDress)}
           onToggleFavorite={() => toggleFavorite(detailsDress)}
           onCoordinate={() => {
+            setDetailsReturnDressId(detailsDress.id);
             openCoordinate(detailsDress);
             setDetailsDress(null);
           }}
