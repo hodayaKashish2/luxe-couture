@@ -1,98 +1,161 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import DressImageFill from '@/components/DressImageFill';
+import AdminDressCatalog from '@/components/admin/AdminDressCatalog';
+import AdminPagination from '@/components/admin/AdminPagination';
+import AdminStatsBar from '@/components/admin/AdminStatsBar';
 import SiteFooter from '@/components/SiteFooter';
 import SiteHeader from '@/components/SiteHeader';
+import type {
+  AdminBookingRow,
+  AdminDressRatingRow,
+  AdminDressRow,
+  AdminOverview,
+  AdminPendingReview,
+  AdminTab,
+} from '@/lib/admin-types';
 
-type DressRow = {
-  id: number;
-  name: string;
-  price: number;
-  size: string;
-  city: string;
-  owner_name: string;
-  images: string[];
-  created_at: string;
-  featured_boost?: number;
-  featured_until?: string | null;
-};
-
-type PendingReview = {
-  id: number;
-  name: string;
-  role: string;
-  text: string;
-  stars: number;
-  created_at: string;
-};
-
-type DressRatingRow = {
-  id: number;
-  dress_id: number;
-  dress_name: string;
-  customer_name: string;
-  stars: number;
-  review_text: string;
-  status: string;
-  created_at: string;
-};
+const TABS: { id: AdminTab; label: string }[] = [
+  { id: 'overview', label: 'סקירה' },
+  { id: 'catalog', label: 'קטלוג שמלות' },
+  { id: 'pending', label: 'ממתינות' },
+  { id: 'ratings', label: 'דירוגים' },
+  { id: 'reviews', label: 'תגובות' },
+  { id: 'bookings', label: 'הזמנות' },
+];
 
 export default function AdminPage() {
   const [token, setToken] = useState('');
   const [savedToken, setSavedToken] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [tab, setTab] = useState<AdminTab>('overview');
+  const [catalogFeatured, setCatalogFeatured] = useState<'all' | 'yes' | 'no'>('all');
+  const [loadingOverview, setLoadingOverview] = useState(false);
   const [error, setError] = useState('');
   const [actionMsg, setActionMsg] = useState('');
-  const [pendingDresses, setPendingDresses] = useState<DressRow[]>([]);
-  const [publishedDresses, setPublishedDresses] = useState<DressRow[]>([]);
-  const [reviews, setReviews] = useState<PendingReview[]>([]);
-  const [dressRatings, setDressRatings] = useState<DressRatingRow[]>([]);
+  const [overview, setOverview] = useState<AdminOverview | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const [ratings, setRatings] = useState<AdminDressRatingRow[]>([]);
+  const [ratingsPage, setRatingsPage] = useState(1);
+  const [ratingsTotal, setRatingsTotal] = useState(0);
+  const [ratingsTotalPages, setRatingsTotalPages] = useState(1);
+  const [ratingsSearch, setRatingsSearch] = useState('');
+  const [ratingsSearchInput, setRatingsSearchInput] = useState('');
+  const [ratingsStatus, setRatingsStatus] = useState('all');
+  const [loadingRatings, setLoadingRatings] = useState(false);
+
+  const [bookings, setBookings] = useState<AdminBookingRow[]>([]);
+  const [bookingsPage, setBookingsPage] = useState(1);
+  const [bookingsTotal, setBookingsTotal] = useState(0);
+  const [bookingsTotalPages, setBookingsTotalPages] = useState(1);
+  const [bookingsSearch, setBookingsSearch] = useState('');
+  const [bookingsSearchInput, setBookingsSearchInput] = useState('');
+  const [loadingBookings, setLoadingBookings] = useState(false);
 
   useEffect(() => {
     const stored = sessionStorage.getItem('admin_token');
     if (stored) setSavedToken(stored);
   }, []);
 
-  async function loadData(adminToken: string) {
-    setLoading(true);
+  const loadOverview = useCallback(async (adminToken: string) => {
+    setLoadingOverview(true);
     setError('');
     try {
-      const response = await fetch('/api/admin', {
+      const response = await fetch('/api/admin?view=overview', {
         headers: { 'x-admin-token': adminToken },
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'שגיאה');
-      setPendingDresses(data.pendingDresses || []);
-      setPublishedDresses(data.publishedDresses || []);
-      setReviews(data.pendingReviews || []);
-      setDressRatings(data.dressRatings || []);
+      setOverview(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'שגיאה');
     } finally {
-      setLoading(false);
+      setLoadingOverview(false);
     }
-  }
+  }, []);
+
+  const loadRatings = useCallback(async () => {
+    if (!savedToken) return;
+    setLoadingRatings(true);
+    try {
+      const params = new URLSearchParams({
+        view: 'ratings',
+        page: String(ratingsPage),
+        limit: '20',
+        status: ratingsStatus,
+      });
+      if (ratingsSearch) params.set('search', ratingsSearch);
+      const response = await fetch(`/api/admin?${params}`, {
+        headers: { 'x-admin-token': savedToken },
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'שגיאה');
+      setRatings(data.items || []);
+      setRatingsTotal(data.total || 0);
+      setRatingsTotalPages(data.totalPages || 1);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'שגיאה');
+    } finally {
+      setLoadingRatings(false);
+    }
+  }, [savedToken, ratingsPage, ratingsSearch, ratingsStatus]);
+
+  const loadBookings = useCallback(async () => {
+    if (!savedToken) return;
+    setLoadingBookings(true);
+    try {
+      const params = new URLSearchParams({
+        view: 'bookings',
+        page: String(bookingsPage),
+        limit: '20',
+      });
+      if (bookingsSearch) params.set('search', bookingsSearch);
+      const response = await fetch(`/api/admin?${params}`, {
+        headers: { 'x-admin-token': savedToken },
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'שגיאה');
+      setBookings(data.items || []);
+      setBookingsTotal(data.total || 0);
+      setBookingsTotalPages(data.totalPages || 1);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'שגיאה');
+    } finally {
+      setLoadingBookings(false);
+    }
+  }, [savedToken, bookingsPage, bookingsSearch]);
+
+  useEffect(() => {
+    if (savedToken) loadOverview(savedToken);
+  }, [savedToken, loadOverview, refreshKey]);
+
+  useEffect(() => {
+    if (tab === 'ratings' && savedToken) loadRatings();
+  }, [tab, savedToken, loadRatings, refreshKey]);
+
+  useEffect(() => {
+    if (tab === 'bookings' && savedToken) loadBookings();
+  }, [tab, savedToken, loadBookings, refreshKey]);
 
   function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     sessionStorage.setItem('admin_token', token);
     setSavedToken(token);
-    loadData(token);
   }
 
-  useEffect(() => {
-    if (savedToken) loadData(savedToken);
-  }, [savedToken]);
+  function bumpRefresh() {
+    setRefreshKey((k) => k + 1);
+  }
 
   async function handleAction(
     type: 'dress' | 'review' | 'dress_rating',
     id: number,
     action: 'approve' | 'reject' | 'delete' | 'toggle_featured' | 'extend_featured'
-  ) {
-    if (!savedToken) return;
-    if (action === 'delete' && type === 'dress' && !confirm('להסיר את השמלה מהאתר? היא לא תופיע יותר בקטלוג.')) return;
-    if (action === 'delete' && type === 'dress_rating' && !confirm('למחוק את הדירוג/תגובה על השמלה?')) return;
+  ): Promise<boolean> {
+    if (!savedToken) return false;
+    if (action === 'delete' && type === 'dress' && !confirm('להסיר את השמלה מהאתר?')) return false;
+    if (action === 'delete' && type === 'dress_rating' && !confirm('למחוק את הדירוג?')) return false;
 
     setActionMsg('');
     const response = await fetch('/api/admin', {
@@ -105,36 +168,110 @@ export default function AdminPage() {
     });
     const data = await response.json();
     if (response.ok) {
-      const msg =
-        action === 'delete' && type === 'dress_rating'
-          ? '✓ הדירוג נמחק'
-          : action === 'delete'
-          ? '✓ השמלה הוסרה מהאתר'
-          : action === 'toggle_featured'
-            ? data.featured_boost > 0
-              ? '✓ חשיפה מועדפת הופעלה'
-              : '✓ חשיפה מועדפת בוטלה'
-            : action === 'extend_featured'
-              ? '✓ חשיפה מועדפת הוארכה ב-30 יום'
-              : '✓ עודכן בהצלחה';
-      setActionMsg(msg);
-      loadData(savedToken);
-    } else {
-      setActionMsg(data.error || 'שגיאה בפעולה');
+      setActionMsg('✓ עודכן בהצלחה');
+      bumpRefresh();
+      return true;
     }
+    setActionMsg(data.error || 'שגיאה');
+    return false;
+  }
+
+  const tabBadges = useMemo(() => {
+    if (!overview) return {} as Record<AdminTab, number>;
+    return {
+      overview: 0,
+      catalog: overview.stats.published,
+      pending: overview.stats.pendingDresses,
+      ratings: overview.stats.pendingRatings,
+      reviews: overview.stats.pendingReviews,
+      bookings: 0,
+    };
+  }, [overview]);
+
+  function navigateTab(next: AdminTab, featured: 'all' | 'yes' | 'no' = 'all') {
+    setCatalogFeatured(featured);
+    setTab(next);
+  }
+
+  function renderPendingDressCard(dress: AdminDressRow) {
+    return (
+      <div key={dress.id} className="bg-white rounded-xl border border-[#eadaaf] p-4 flex gap-4">
+        {dress.images?.[0] && (
+          <DressImageFill src={dress.images[0]} alt="" className="w-20 h-24 shrink-0 rounded-lg" />
+        )}
+        <div className="flex-grow min-w-0">
+          <h3 className="font-bold">{dress.name}</h3>
+          <p className="text-xs text-[#6e634c]">
+            #{dress.id} · ₪{dress.price} · מידה {dress.size} · {dress.city}
+          </p>
+          <p className="text-xs">משכירה: {dress.owner_name}</p>
+          <div className="flex gap-2 mt-3">
+            <button
+              type="button"
+              onClick={() => handleAction('dress', dress.id, 'approve')}
+              className="px-3 py-1.5 bg-[#b8860b] text-white text-xs rounded-lg font-bold"
+            >
+              אשר
+            </button>
+            <button
+              type="button"
+              onClick={() => handleAction('dress', dress.id, 'reject')}
+              className="px-3 py-1.5 border border-red-300 text-red-600 text-xs rounded-lg"
+            >
+              דחה
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  function renderReviewCard(review: AdminPendingReview) {
+    return (
+      <div key={review.id} className="bg-white rounded-xl border border-[#eadaaf] p-4">
+        <p className="text-xs italic mb-2">&quot;{review.text}&quot;</p>
+        <p className="text-xs font-bold">
+          {review.name} · {review.role} · {'⭐'.repeat(review.stars)}
+        </p>
+        <div className="flex gap-2 mt-3">
+          <button
+            type="button"
+            onClick={() => handleAction('review', review.id, 'approve')}
+            className="px-3 py-1.5 bg-[#b8860b] text-white text-xs rounded-lg font-bold"
+          >
+            אשר
+          </button>
+          <button
+            type="button"
+            onClick={() => handleAction('review', review.id, 'reject')}
+            className="px-3 py-1.5 border border-red-300 text-red-600 text-xs rounded-lg"
+          >
+            דחה
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#fbf8f0] to-[#e8dcbd] text-[#332c1e]" dir="rtl">
       <SiteHeader />
 
-      <main className="max-w-4xl mx-auto px-4 py-10">
-        <h1 className="font-[family-name:var(--font-luxury)] text-3xl text-[#3d2f24] mb-2">ניהול האתר</h1>
-        <p className="text-sm text-[#6e634c] mb-2">כאן מאשרים שמלות חדשות ו<strong className="text-[#8b6508]">מוחקים שמלות מהאתר</strong></p>
-        <p className="text-xs text-[#9a7b4f] mb-8">נתיב: /admin · סיסמה: ADMIN_SECRET מ-.env.local</p>
+      <main className="max-w-7xl mx-auto px-4 py-8">
+        <div className="mb-6">
+          <h1 className="font-[family-name:var(--font-luxury)] text-3xl text-[#3d2f24] mb-1">
+            ניהול האתר
+          </h1>
+          <p className="text-sm text-[#6e634c]">
+            ממשק מסודר לניהול מאות שמלות — חיפוש, סינון ועימוד
+          </p>
+        </div>
 
         {!savedToken ? (
-          <form onSubmit={handleLogin} className="bg-white rounded-2xl border border-[#eadaaf] p-6 max-w-md space-y-4">
+          <form
+            onSubmit={handleLogin}
+            className="bg-white rounded-2xl border border-[#eadaaf] p-6 max-w-md space-y-4"
+          >
             <label className="block text-xs font-bold text-[#8b6508]">סיסמת ניהול (ADMIN_SECRET)</label>
             <input
               type="password"
@@ -143,218 +280,363 @@ export default function AdminPage() {
               className="w-full p-3 border border-[#decfa8] rounded-xl text-sm"
               required
             />
-            <button type="submit" className="w-full py-3 bg-[#2c261a] text-white rounded-xl text-sm font-bold">
+            <button
+              type="submit"
+              className="w-full py-3 bg-[#2c261a] text-white rounded-xl text-sm font-bold"
+            >
               כניסה
             </button>
           </form>
         ) : (
-          <div className="space-y-8">
-            <div className="flex justify-between items-center flex-wrap gap-2">
-              <span className="text-xs text-[#8b6508]">מחוברת ✓</span>
-              {actionMsg && <span className="text-xs font-bold text-[#b8860b]">{actionMsg}</span>}
-              <button
-                onClick={() => {
-                  sessionStorage.removeItem('admin_token');
-                  setSavedToken('');
-                }}
-                className="text-xs text-red-600 hover:underline"
-              >
-                התנתקי
-              </button>
+          <div className="space-y-5">
+            <div className="flex flex-wrap justify-between items-center gap-2">
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-[#8b6508] font-bold">מחוברת ✓</span>
+                {actionMsg && <span className="text-xs font-bold text-[#b8860b]">{actionMsg}</span>}
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => bumpRefresh()}
+                  className="text-xs px-3 py-1.5 border border-[#decfa8] rounded-lg bg-white"
+                >
+                  רענון
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    sessionStorage.removeItem('admin_token');
+                    setSavedToken('');
+                    setOverview(null);
+                  }}
+                  className="text-xs text-red-600 hover:underline px-2"
+                >
+                  התנתקי
+                </button>
+              </div>
             </div>
 
-            {loading && <p className="text-sm">טוען...</p>}
-            {error && <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3">{error}</p>}
+            {loadingOverview && !overview ? (
+              <p className="text-sm">טוען נתונים...</p>
+            ) : overview ? (
+              <AdminStatsBar
+                stats={overview.stats}
+                onNavigate={(target, featured = 'all') => {
+                  navigateTab(target as AdminTab, featured);
+                }}
+              />
+            ) : null}
 
-            <section className="bg-[#fffdf8] border-2 border-[#e6c687] rounded-2xl p-5">
-              <h2 className="font-black text-lg mb-1 text-[#8b6508]">💛 חשיפה מועדפת ({publishedDresses.length})</h2>
-              <p className="text-xs text-[#6e634c] mb-4">
-                הוספת חשיפה מוסתרת לשמלות נבחרות — לא מוצג לשוכרות, רק משפיע על מיון «מומלצות».
+            {error && (
+              <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3">
+                {error}
               </p>
-              {publishedDresses.length === 0 ? (
-                <p className="text-xs text-[#6e634c]">אין שמלות מפורסמות כרגע</p>
-              ) : (
-                <div className="space-y-3">
-                  {publishedDresses.map((dress) => {
-                    const isFeatured = (dress.featured_boost || 0) > 0;
-                    const untilLabel = dress.featured_until
-                      ? new Date(dress.featured_until).toLocaleDateString('he-IL', {
-                          day: 'numeric',
-                          month: 'short',
-                        })
-                      : null;
-                    return (
-                      <div
-                        key={`featured-${dress.id}`}
-                        className="bg-white rounded-xl border border-[#eadaaf] p-4 flex gap-4 items-center flex-wrap"
-                      >
-                        {dress.images?.[0] && (
-                          <DressImageFill src={dress.images[0]} alt="" className="w-16 h-20 shrink-0 rounded-lg" />
-                        )}
-                        <div className="flex-grow min-w-0">
-                          <h3 className="font-bold text-sm">{dress.name}</h3>
-                          <p className="text-[10px] text-[#6e634c]">
-                            ₪{dress.price} · {dress.city || '—'} · משכירה: {dress.owner_name || '—'}
-                          </p>
-                          <p className="text-[10px] text-[#8b6508] mt-1">
-                            {isFeatured ? `חשיפה מועדפת פעילה (${dress.featured_boost})` : 'ללא חשיפה מועדפת'}
-                            {untilLabel ? ` · עד ${untilLabel}` : ''}
-                          </p>
-                        </div>
-                        <div className="flex gap-2 shrink-0 flex-wrap">
-                          <button
-                            onClick={() => handleAction('dress', dress.id, 'toggle_featured')}
-                            className={`px-3 py-2 text-xs rounded-xl font-bold ${
-                              isFeatured
-                                ? 'border border-[#decfa8] text-[#8b6508] bg-white'
-                                : 'bg-[#d4af37] text-white'
-                            }`}
-                          >
-                            {isFeatured ? 'בטלי חשיפה' : 'הפעילי חשיפה'}
-                          </button>
-                          <button
-                            onClick={() => handleAction('dress', dress.id, 'extend_featured')}
-                            className="px-3 py-2 border border-[#decfa8] text-[#8b6508] text-xs rounded-xl font-bold bg-white"
-                          >
-                            +30 יום
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </section>
+            )}
 
-            {/* מחיקה — ראשון וברור */}
-            <section className="bg-red-50/50 border-2 border-red-200 rounded-2xl p-5">
-              <h2 className="font-black text-lg mb-1 text-red-900">🗑️ מחיקת שמלה מהאתר ({publishedDresses.length})</h2>
-              <p className="text-xs text-red-800/80 mb-4">כל השמלות המפורסמות כרגע — לחצי «הסר מהאתר» כדי להסיר מהקטלוג</p>
-              {publishedDresses.length === 0 ? (
-                <p className="text-xs text-[#6e634c]">אין שמלות מפורסמות כרגע</p>
-              ) : (
-                <div className="space-y-3">
-                  {publishedDresses.map((dress) => (
-                    <div key={dress.id} className="bg-white rounded-xl border border-red-100 p-4 flex gap-4 items-center">
-                      {dress.images?.[0] && (
-                        <DressImageFill src={dress.images[0]} alt="" className="w-16 h-20 shrink-0 rounded-lg" />
+            <div className="sticky top-0 z-20 bg-[#fbf8f0]/95 backdrop-blur-sm py-2 -mx-1 px-1">
+              <div className="flex gap-1 overflow-x-auto pb-1">
+                {TABS.map((item) => {
+                  const badge = tabBadges[item.id];
+                  const showBadge = badge > 0 && (item.id === 'pending' || item.id === 'ratings' || item.id === 'reviews');
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => navigateTab(item.id)}
+                      className={`shrink-0 px-4 py-2 rounded-xl text-xs font-bold border transition-colors ${
+                        tab === item.id
+                          ? 'bg-[#2c261a] text-white border-[#2c261a]'
+                          : 'bg-white text-[#3d2f24] border-[#eadaaf] hover:border-[#d4af37]'
+                      }`}
+                    >
+                      {item.label}
+                      {item.id === 'catalog' && overview && (
+                        <span className="mr-1 opacity-70">({overview.stats.published})</span>
                       )}
-                      <div className="flex-grow min-w-0">
-                        <h3 className="font-bold text-sm">{dress.name}</h3>
-                        <p className="text-[10px] text-[#6e634c]">
-                          ₪{dress.price} · מידה {dress.size} · {dress.city || '—'} · משכירה: {dress.owner_name || '—'}
-                        </p>
-                      </div>
+                      {showBadge && (
+                        <span className="mr-1 inline-flex min-w-[18px] h-[18px] items-center justify-center rounded-full bg-amber-500 text-white text-[10px] px-1">
+                          {badge}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {tab === 'overview' && overview && (
+              <div className="space-y-6">
+                {overview.stats.pendingDresses > 0 && (
+                  <section className="bg-amber-50 border-2 border-amber-300 rounded-2xl p-5">
+                    <div className="flex justify-between items-center mb-4">
+                      <h2 className="font-black text-lg text-amber-900">
+                        דורשות טיפול — שמלות ממתינות ({overview.stats.pendingDresses})
+                      </h2>
                       <button
-                        onClick={() => handleAction('dress', dress.id, 'delete')}
-                        className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs rounded-xl font-black shrink-0 shadow-md"
+                        type="button"
+                        onClick={() => navigateTab('pending')}
+                        className="text-xs font-bold text-amber-800 underline"
                       >
-                        הסר מהאתר
+                        הצג הכל
                       </button>
                     </div>
-                  ))}
-                </div>
-              )}
-            </section>
-
-            <section>
-              <h2 className="font-bold text-lg mb-4">שמלות ממתינות לאישור ({pendingDresses.length})</h2>
-              {pendingDresses.length === 0 ? (
-                <p className="text-xs text-[#6e634c]">אין שמלות ממתינות</p>
-              ) : (
-                <div className="space-y-4">
-                  {pendingDresses.map((dress) => (
-                    <div key={dress.id} className="bg-white rounded-xl border border-[#eadaaf] p-4 flex gap-4">
-                      {dress.images?.[0] && (
-                        <DressImageFill src={dress.images[0]} alt="" className="w-20 h-24 shrink-0 rounded-lg" />
-                      )}
-                      <div className="flex-grow">
-                        <h3 className="font-bold">{dress.name}</h3>
-                        <p className="text-xs text-[#6e634c]">₪{dress.price} · מידה {dress.size} · {dress.city}</p>
-                        <p className="text-xs">משכירה: {dress.owner_name}</p>
-                        <div className="flex gap-2 mt-3">
-                          <button
-                            onClick={() => handleAction('dress', dress.id, 'approve')}
-                            className="px-3 py-1.5 bg-[#b8860b] text-white text-xs rounded-lg font-bold"
-                          >
-                            אשר
-                          </button>
-                          <button
-                            onClick={() => handleAction('dress', dress.id, 'reject')}
-                            className="px-3 py-1.5 border border-red-300 text-red-600 text-xs rounded-lg"
-                          >
-                            דחה
-                          </button>
-                        </div>
-                      </div>
+                    <div className="space-y-3">
+                      {overview.pendingDresses.slice(0, 5).map(renderPendingDressCard)}
                     </div>
-                  ))}
-                </div>
-              )}
-            </section>
+                  </section>
+                )}
 
-            <section>
-              <h2 className="font-bold text-lg mb-4">דירוגים ותגובות על שמלות ({dressRatings.length})</h2>
-              <p className="text-xs text-[#6e634c] mb-4">דירוגים שפורסמו או ממתינים — ניתן למחוק תגובה לא ראויה</p>
-              {dressRatings.length === 0 ? (
-                <p className="text-xs text-[#6e634c]">אין דירוגים כרגע</p>
-              ) : (
-                <div className="space-y-4">
-                  {dressRatings.map((rating) => (
-                    <div key={rating.id} className="bg-white rounded-xl border border-[#eadaaf] p-4">
-                      <p className="text-xs font-bold text-[#8b6508] mb-1">{rating.dress_name}</p>
-                      {rating.review_text ? (
-                        <p className="text-xs italic mb-2">&quot;{rating.review_text}&quot;</p>
-                      ) : (
-                        <p className="text-xs text-[#9a7b4f] mb-2">(ללא טקסט)</p>
-                      )}
-                      <p className="text-xs font-bold">
-                        {rating.customer_name} · {'⭐'.repeat(rating.stars)} ·{' '}
-                        {rating.status === 'approved' ? 'מפורסם' : 'ממתין'}
-                      </p>
-                      <div className="flex gap-2 mt-3">
+                <section className="bg-white rounded-2xl border border-[#eadaaf] p-5">
+                  <h2 className="font-bold text-lg mb-4">הזמנות אחרונות</h2>
+                  {overview.recentBookings.length === 0 ? (
+                    <p className="text-xs text-[#6e634c]">אין הזמנות אחרונות</p>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-xs">
+                        <thead className="text-[#6e634c] border-b border-[#eadaaf]">
+                          <tr>
+                            <th className="p-2 text-right">שם</th>
+                            <th className="p-2 text-right">תאריך אירוע</th>
+                            <th className="p-2 text-right">סטטוס</th>
+                            <th className="p-2 text-right">נוצר</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {overview.recentBookings.map((b) => (
+                            <tr key={b.id} className="border-b border-[#f0e8d0]">
+                              <td className="p-2">{b.customer_name}</td>
+                              <td className="p-2">{b.event_date}</td>
+                              <td className="p-2">{b.status}</td>
+                              <td className="p-2 text-[#9a7b4f]">
+                                {new Date(b.created_at).toLocaleDateString('he-IL')}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => navigateTab('bookings')}
+                    className="mt-3 text-xs font-bold text-[#8b6508] underline"
+                  >
+                    כל ההזמנות →
+                  </button>
+                </section>
+
+                <section className="grid sm:grid-cols-2 gap-4">
+                  <button
+                    type="button"
+                    onClick={() => navigateTab('catalog')}
+                    className="text-right bg-[#fffdf8] border border-[#e6c687] rounded-2xl p-5 hover:shadow-md transition-shadow"
+                  >
+                    <h3 className="font-black text-[#8b6508] mb-1">קטלוג שמלות</h3>
+                    <p className="text-xs text-[#6e634c]">
+                      חיפוש, סינון לפי עיר וחשיפה, עימוד — לניהול {overview.stats.published} שמלות
+                    </p>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => navigateTab('catalog', 'yes')}
+                    className="text-right bg-[#fffdf8] border border-[#e6c687] rounded-2xl p-5 hover:shadow-md transition-shadow"
+                  >
+                    <h3 className="font-black text-[#8b6508] mb-1">חשיפה מועדפת</h3>
+                    <p className="text-xs text-[#6e634c]">
+                      {overview.stats.featured} שמלות עם חשיפה מוגברת בקטלוג
+                    </p>
+                  </button>
+                </section>
+              </div>
+            )}
+
+            {tab === 'catalog' && savedToken && overview && (
+              <AdminDressCatalog
+                token={savedToken}
+                cities={overview.cities}
+                initialFeatured={catalogFeatured}
+                refreshKey={refreshKey}
+                onAction={(id, action) => handleAction('dress', id, action)}
+              />
+            )}
+
+            {tab === 'pending' && overview && (
+              <section className="space-y-4">
+                <h2 className="font-bold text-lg">
+                  שמלות ממתינות לאישור ({overview.stats.pendingDresses})
+                </h2>
+                {overview.pendingDresses.length === 0 ? (
+                  <p className="text-xs text-[#6e634c]">אין שמלות ממתינות 🎉</p>
+                ) : (
+                  overview.pendingDresses.map(renderPendingDressCard)
+                )}
+              </section>
+            )}
+
+            {tab === 'reviews' && overview && (
+              <section className="space-y-4">
+                <h2 className="font-bold text-lg">תגובות ממתינות ({overview.stats.pendingReviews})</h2>
+                {overview.pendingReviews.length === 0 ? (
+                  <p className="text-xs text-[#6e634c]">אין תגובות ממתינות</p>
+                ) : (
+                  overview.pendingReviews.map(renderReviewCard)
+                )}
+              </section>
+            )}
+
+            {tab === 'ratings' && (
+              <section className="space-y-4">
+                <div className="bg-white rounded-2xl border border-[#eadaaf] p-4 flex flex-col sm:flex-row gap-2">
+                  <form
+                    className="flex flex-1 gap-2"
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      setRatingsPage(1);
+                      setRatingsSearch(ratingsSearchInput.trim());
+                    }}
+                  >
+                    <input
+                      value={ratingsSearchInput}
+                      onChange={(e) => setRatingsSearchInput(e.target.value)}
+                      placeholder="חיפוש לפי שמלה, שם או טקסט..."
+                      className="flex-1 p-2.5 border border-[#decfa8] rounded-xl text-sm"
+                    />
+                    <button type="submit" className="px-4 py-2 bg-[#2c261a] text-white rounded-xl text-sm font-bold">
+                      חפשי
+                    </button>
+                  </form>
+                  <select
+                    value={ratingsStatus}
+                    onChange={(e) => {
+                      setRatingsStatus(e.target.value);
+                      setRatingsPage(1);
+                    }}
+                    className="text-xs border border-[#decfa8] rounded-lg px-2 py-2"
+                  >
+                    <option value="all">הכל</option>
+                    <option value="pending">ממתינים</option>
+                    <option value="approved">מפורסמים</option>
+                  </select>
+                </div>
+
+                {loadingRatings ? (
+                  <p className="text-sm">טוען דירוגים...</p>
+                ) : ratings.length === 0 ? (
+                  <p className="text-xs text-[#6e634c]">לא נמצאו דירוגים</p>
+                ) : (
+                  <div className="bg-white rounded-2xl border border-[#eadaaf] divide-y divide-[#f0e8d0]">
+                    {ratings.map((rating) => (
+                      <div key={rating.id} className="p-4">
+                        <div className="flex justify-between gap-2 flex-wrap">
+                          <p className="text-xs font-bold text-[#8b6508]">{rating.dress_name}</p>
+                          <span className="text-[10px] text-[#9a7b4f]">
+                            {new Date(rating.created_at).toLocaleDateString('he-IL')}
+                          </span>
+                        </div>
+                        {rating.review_text ? (
+                          <p className="text-xs italic my-2">&quot;{rating.review_text}&quot;</p>
+                        ) : (
+                          <p className="text-xs text-[#9a7b4f] my-2">(ללא טקסט)</p>
+                        )}
+                        <p className="text-xs font-bold">
+                          {rating.customer_name} · {'⭐'.repeat(rating.stars)} ·{' '}
+                          {rating.status === 'approved' ? 'מפורסם' : 'ממתין'}
+                        </p>
                         <button
+                          type="button"
                           onClick={() => handleAction('dress_rating', rating.id, 'delete')}
-                          className="px-3 py-1.5 border border-red-300 text-red-600 text-xs rounded-lg font-bold"
+                          className="mt-2 px-3 py-1.5 border border-red-300 text-red-600 text-xs rounded-lg font-bold"
                         >
                           מחקי
                         </button>
                       </div>
+                    ))}
+                    <div className="p-4">
+                      <AdminPagination
+                        page={ratingsPage}
+                        totalPages={ratingsTotalPages}
+                        total={ratingsTotal}
+                        limit={20}
+                        onPageChange={setRatingsPage}
+                      />
                     </div>
-                  ))}
-                </div>
-              )}
-            </section>
+                  </div>
+                )}
+              </section>
+            )}
 
-            <section>
-              <h2 className="font-bold text-lg mb-4">תגובות ממתינות ({reviews.length})</h2>
-              {reviews.length === 0 ? (
-                <p className="text-xs text-[#6e634c]">אין תגובות ממתינות</p>
-              ) : (
-                <div className="space-y-4">
-                  {reviews.map((review) => (
-                    <div key={review.id} className="bg-white rounded-xl border border-[#eadaaf] p-4">
-                      <p className="text-xs italic mb-2">&quot;{review.text}&quot;</p>
-                      <p className="text-xs font-bold">{review.name} · {review.role} · {'⭐'.repeat(review.stars)}</p>
-                      <div className="flex gap-2 mt-3">
-                        <button
-                          onClick={() => handleAction('review', review.id, 'approve')}
-                          className="px-3 py-1.5 bg-[#b8860b] text-white text-xs rounded-lg font-bold"
-                        >
-                          אשר
-                        </button>
-                        <button
-                          onClick={() => handleAction('review', review.id, 'reject')}
-                          className="px-3 py-1.5 border border-red-300 text-red-600 text-xs rounded-lg"
-                        >
-                          דחה
-                        </button>
-                      </div>
+            {tab === 'bookings' && (
+              <section className="space-y-4">
+                <form
+                  className="flex gap-2"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    setBookingsPage(1);
+                    setBookingsSearch(bookingsSearchInput.trim());
+                  }}
+                >
+                  <input
+                    value={bookingsSearchInput}
+                    onChange={(e) => setBookingsSearchInput(e.target.value)}
+                    placeholder="חיפוש לפי שם, טלפון או אימייל..."
+                    className="flex-1 p-2.5 border border-[#decfa8] rounded-xl text-sm bg-white"
+                  />
+                  <button type="submit" className="px-4 py-2 bg-[#2c261a] text-white rounded-xl text-sm font-bold">
+                    חפשי
+                  </button>
+                </form>
+
+                {loadingBookings ? (
+                  <p className="text-sm">טוען הזמנות...</p>
+                ) : bookings.length === 0 ? (
+                  <p className="text-xs text-[#6e634c]">לא נמצאו הזמנות</p>
+                ) : (
+                  <div className="bg-white rounded-2xl border border-[#eadaaf] overflow-x-auto">
+                    <table className="w-full text-xs">
+                      <thead className="bg-[#fffdf8] border-b border-[#eadaaf] text-[#6e634c]">
+                        <tr>
+                          <th className="p-3 text-right">#</th>
+                          <th className="p-3 text-right">שם</th>
+                          <th className="p-3 text-right">טלפון</th>
+                          <th className="p-3 text-right">אימייל</th>
+                          <th className="p-3 text-right">תאריך אירוע</th>
+                          <th className="p-3 text-right">סטטוס</th>
+                          <th className="p-3 text-right">נוצר</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {bookings.map((b) => (
+                          <tr key={b.id} className="border-b border-[#f0e8d0]">
+                            <td className="p-3">{b.id}</td>
+                            <td className="p-3 font-bold">{b.customer_name}</td>
+                            <td className="p-3" dir="ltr">
+                              {b.customer_phone}
+                            </td>
+                            <td className="p-3" dir="ltr">
+                              {b.customer_email}
+                            </td>
+                            <td className="p-3">{b.event_date}</td>
+                            <td className="p-3">{b.status}</td>
+                            <td className="p-3 text-[#9a7b4f]">
+                              {new Date(b.created_at).toLocaleDateString('he-IL')}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    <div className="p-4">
+                      <AdminPagination
+                        page={bookingsPage}
+                        totalPages={bookingsTotalPages}
+                        total={bookingsTotal}
+                        limit={20}
+                        onPageChange={setBookingsPage}
+                      />
                     </div>
-                  ))}
-                </div>
-              )}
-            </section>
+                  </div>
+                )}
+              </section>
+            )}
           </div>
         )}
       </main>

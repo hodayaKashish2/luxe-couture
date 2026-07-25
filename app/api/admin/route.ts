@@ -11,6 +11,247 @@ function verifyToken(request: Request) {
   return token && process.env.ADMIN_SECRET && token === process.env.ADMIN_SECRET;
 }
 
+function parsePageParams(searchParams: URLSearchParams) {
+  const page = Math.max(1, Number.parseInt(searchParams.get('page') || '1', 10) || 1);
+  const limit = Math.min(50, Math.max(10, Number.parseInt(searchParams.get('limit') || '25', 10) || 25));
+  return { page, limit, from: (page - 1) * limit, to: (page - 1) * limit + limit - 1 };
+}
+
+function escapeIlike(value: string) {
+  return value.replace(/[%_,]/g, ' ');
+}
+
+async function loadOverview(supabase: ReturnType<typeof getSupabaseAdmin>) {
+  const [
+    publishedRes,
+    pendingDressesRes,
+    featuredRes,
+    pendingReviewsRes,
+    pendingRatingsRes,
+    pendingDressesListRes,
+    pendingReviewsListRes,
+    bookingsRes,
+    citiesRes,
+  ] = await Promise.all([
+    supabase.from('dresses').select('*', { count: 'exact', head: true }).eq('status', 'approved'),
+    supabase.from('dresses').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+    supabase.from('dresses').select('*', { count: 'exact', head: true }).eq('status', 'approved').gt('featured_boost', 0),
+    supabase.from('reviews').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+    supabase.from('dress_ratings').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+    supabase
+      .from('dresses')
+      .select('id, name, price, size, city, owner_name, status, created_at, images')
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false })
+      .limit(100),
+    supabase
+      .from('reviews')
+      .select('id, name, role, review_text, stars, status, created_at')
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false })
+      .limit(10),
+    supabase
+      .from('bookings')
+      .select('id, dress_id, customer_name, customer_phone, customer_email, event_date, status, created_at')
+      .order('created_at', { ascending: false })
+      .limit(15),
+    supabase.from('dresses').select('city').eq('status', 'approved').not('city', 'is', null),
+  ]);
+
+  if (pendingDressesListRes.error) throw pendingDressesListRes.error;
+  if (pendingReviewsListRes.error) throw pendingReviewsListRes.error;
+
+  const citySet = new Set<string>();
+  for (const row of citiesRes.data ?? []) {
+    const city = String(row.city || '').trim();
+    if (city) citySet.add(city);
+  }
+
+  return {
+    stats: {
+      published: publishedRes.count ?? 0,
+      pendingDresses: pendingDressesRes.count ?? 0,
+      featured: featuredRes.count ?? 0,
+      pendingReviews: pendingReviewsRes.count ?? 0,
+      pendingRatings: pendingRatingsRes.count ?? 0,
+      recentBookings: bookingsRes.data?.length ?? 0,
+    },
+    pendingDresses: pendingDressesListRes.data ?? [],
+    pendingReviews: (pendingReviewsListRes.data ?? []).map((r) => ({
+      ...r,
+      text: r.review_text,
+    })),
+    recentBookings: bookingsRes.error ? [] : (bookingsRes.data ?? []),
+    cities: [...citySet].sort((a, b) => a.localeCompare(b, 'he')),
+  };
+}
+
+async function loadDressesPage(
+  supabase: ReturnType<typeof getSupabaseAdmin>,
+  searchParams: URLSearchParams
+) {
+  const { page, limit, from, to } = parsePageParams(searchParams);
+  const search = searchParams.get('search')?.trim() || '';
+  const sort = searchParams.get('sort') || 'newest';
+  const featured = searchParams.get('featured');
+  const city = searchParams.get('city')?.trim() || '';
+
+  let query = supabase
+    .from('dresses')
+    .select(
+      'id, name, price, size, city, owner_name, created_at, images, featured_boost, featured_until, rental_count, rating_count',
+      { count: 'exact' }
+    )
+    .eq('status', 'approved');
+
+  if (search) {
+    const safe = escapeIlike(search);
+    const numericId = /^\d+$/.test(search) ? search : null;
+    if (numericId) {
+      query = query.or(
+        `name.ilike.%${safe}%,owner_name.ilike.%${safe}%,city.ilike.%${safe}%,id.eq.${numericId}`
+      );
+    } else {
+      query = query.or(`name.ilike.%${safe}%,owner_name.ilike.%${safe}%,city.ilike.%${safe}%`);
+    }
+  }
+
+  if (city) query = query.eq('city', city);
+  if (featured === 'yes') query = query.gt('featured_boost', 0);
+  if (featured === 'no') query = query.eq('featured_boost', 0);
+
+  switch (sort) {
+    case 'oldest':
+      query = query.order('created_at', { ascending: true });
+      break;
+    case 'price_asc':
+      query = query.order('price', { ascending: true });
+      break;
+    case 'price_desc':
+      query = query.order('price', { ascending: false });
+      break;
+    case 'name':
+      query = query.order('name', { ascending: true });
+      break;
+    case 'rentals':
+      query = query.order('rental_count', { ascending: false });
+      break;
+    default:
+      query = query.order('created_at', { ascending: false });
+  }
+
+  const { data, count, error } = await query.range(from, to);
+  if (error) throw error;
+
+  const total = count ?? 0;
+  return {
+    items: data ?? [],
+    total,
+    page,
+    limit,
+    totalPages: Math.max(1, Math.ceil(total / limit)),
+  };
+}
+
+async function loadRatingsPage(
+  supabase: ReturnType<typeof getSupabaseAdmin>,
+  searchParams: URLSearchParams
+) {
+  const { page, limit, from, to } = parsePageParams(searchParams);
+  const search = searchParams.get('search')?.trim() || '';
+  const status = searchParams.get('status') || 'all';
+
+  let query = supabase
+    .from('dress_ratings')
+    .select('id, dress_id, customer_name, stars, review_text, status, created_at, dresses(name)', {
+      count: 'exact',
+    })
+    .order('created_at', { ascending: false });
+
+  if (status === 'approved') query = query.eq('status', 'approved');
+  else if (status === 'pending') query = query.eq('status', 'pending');
+  else query = query.in('status', ['approved', 'pending']);
+
+  if (search) {
+    const safe = escapeIlike(search);
+    const { data: matchingDresses } = await supabase
+      .from('dresses')
+      .select('id')
+      .ilike('name', `%${safe}%`)
+      .limit(40);
+    const dressIds = (matchingDresses ?? []).map((row) => row.id);
+    if (dressIds.length > 0) {
+      query = query.or(
+        `customer_name.ilike.%${safe}%,review_text.ilike.%${safe}%,dress_id.in.(${dressIds.join(',')})`
+      );
+    } else {
+      query = query.or(`customer_name.ilike.%${safe}%,review_text.ilike.%${safe}%`);
+    }
+  }
+
+  const { data, count, error } = await query.range(from, to);
+  if (error) throw error;
+
+  const items = (data ?? []).map((row) => {
+    const dressJoin = row.dresses as { name?: string } | { name?: string }[] | null;
+    const dressName = Array.isArray(dressJoin) ? dressJoin[0]?.name : dressJoin?.name;
+    return {
+      id: row.id,
+      dress_id: row.dress_id,
+      dress_name: dressName || 'שמלה',
+      customer_name: row.customer_name,
+      stars: row.stars,
+      review_text: row.review_text,
+      status: row.status,
+      created_at: row.created_at,
+    };
+  });
+
+  const total = count ?? 0;
+  return {
+    items,
+    total,
+    page,
+    limit,
+    totalPages: Math.max(1, Math.ceil(total / limit)),
+  };
+}
+
+async function loadBookingsPage(
+  supabase: ReturnType<typeof getSupabaseAdmin>,
+  searchParams: URLSearchParams
+) {
+  const { page, limit, from, to } = parsePageParams(searchParams);
+  const search = searchParams.get('search')?.trim() || '';
+
+  let query = supabase
+    .from('bookings')
+    .select(
+      'id, dress_id, customer_name, customer_phone, customer_email, event_date, status, created_at',
+      { count: 'exact' }
+    )
+    .order('created_at', { ascending: false });
+
+  if (search) {
+    const safe = escapeIlike(search);
+    query = query.or(
+      `customer_name.ilike.%${safe}%,customer_phone.ilike.%${safe}%,customer_email.ilike.%${safe}%`
+    );
+  }
+
+  const { data, count, error } = await query.range(from, to);
+  if (error) throw error;
+
+  const total = count ?? 0;
+  return {
+    items: data ?? [],
+    total,
+    page,
+    limit,
+    totalPages: Math.max(1, Math.ceil(total / limit)),
+  };
+}
+
 export async function GET(request: Request) {
   if (!verifyToken(request)) {
     return NextResponse.json({ error: 'גישה נדחתה' }, { status: 403 });
@@ -22,75 +263,20 @@ export async function GET(request: Request) {
 
   try {
     const supabase = getSupabaseAdmin();
+    const searchParams = new URL(request.url).searchParams;
+    const view = searchParams.get('view') || 'overview';
 
-    const [dressesRes, reviewsRes, publishedRes, dressRatingsRes] = await Promise.all([
-      supabase
-        .from('dresses')
-        .select('id, name, price, size, city, owner_name, status, created_at, images')
-        .eq('status', 'pending')
-        .order('created_at', { ascending: false }),
-      supabase
-        .from('reviews')
-        .select('id, name, role, review_text, stars, status, created_at')
-        .eq('status', 'pending')
-        .order('created_at', { ascending: false }),
-      supabase
-        .from('dresses')
-        .select('id, name, price, size, city, owner_name, created_at, images, featured_boost, featured_until')
-        .eq('status', 'approved')
-        .order('created_at', { ascending: false }),
-      supabase
-        .from('dress_ratings')
-        .select('id, dress_id, customer_name, stars, review_text, status, created_at, dresses(name)')
-        .in('status', ['approved', 'pending'])
-        .order('created_at', { ascending: false })
-        .limit(80),
-    ]);
-
-    if (dressesRes.error) throw dressesRes.error;
-    if (reviewsRes.error) throw reviewsRes.error;
-    if (publishedRes.error) throw publishedRes.error;
-
-    let dressRatings: unknown[] = [];
-    if (!dressRatingsRes.error) {
-      dressRatings = (dressRatingsRes.data ?? []).map((row) => {
-        const dressJoin = row.dresses as { name?: string } | { name?: string }[] | null;
-        const dressName = Array.isArray(dressJoin)
-          ? dressJoin[0]?.name
-          : dressJoin?.name;
-        return {
-          id: row.id,
-          dress_id: row.dress_id,
-          dress_name: dressName || 'שמלה',
-          customer_name: row.customer_name,
-          stars: row.stars,
-          review_text: row.review_text,
-          status: row.status,
-          created_at: row.created_at,
-        };
-      });
+    if (view === 'dresses') {
+      return NextResponse.json(await loadDressesPage(supabase, searchParams));
+    }
+    if (view === 'ratings') {
+      return NextResponse.json(await loadRatingsPage(supabase, searchParams));
+    }
+    if (view === 'bookings') {
+      return NextResponse.json(await loadBookingsPage(supabase, searchParams));
     }
 
-    let recentBookings: unknown[] = [];
-    const bookingsRes = await supabase
-      .from('bookings')
-      .select('id, dress_id, customer_name, customer_phone, customer_email, event_date, status, created_at')
-      .order('created_at', { ascending: false })
-      .limit(20);
-    if (!bookingsRes.error) {
-      recentBookings = bookingsRes.data ?? [];
-    }
-
-    return NextResponse.json({
-      pendingDresses: dressesRes.data ?? [],
-      pendingReviews: (reviewsRes.data ?? []).map((r) => ({
-        ...r,
-        text: r.review_text,
-      })),
-      publishedDresses: publishedRes.data ?? [],
-      recentBookings,
-      dressRatings,
-    });
+    return NextResponse.json(await loadOverview(supabase));
   } catch (error) {
     const message = error instanceof Error ? error.message : 'שגיאה';
     return NextResponse.json({ error: message }, { status: 500 });
