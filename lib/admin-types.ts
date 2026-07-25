@@ -91,8 +91,7 @@ export type AdminTab =
   | 'catalog'
   | 'pending'
   | 'pending_payments'
-  | 'ratings'
-  | 'reviews'
+  | 'pending_comments'
   | 'bookings';
 
 export type AdminDressAction =

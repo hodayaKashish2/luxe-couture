@@ -9,25 +9,33 @@ const cards = [
   { key: 'published', label: 'שמלות בקטלוג', tab: 'catalog', featured: 'all' as const },
   { key: 'pendingDresses', label: 'שמלות ממתינות', tab: 'pending', featured: 'all' as const },
   { key: 'pendingPayments', label: 'לאישור תשלום', tab: 'pending_payments', featured: 'all' as const },
-  { key: 'pendingRatings', label: 'דירוגים ממתינים', tab: 'ratings', featured: 'all' as const },
-  { key: 'pendingReviews', label: 'תגובות ממתינות', tab: 'reviews', featured: 'all' as const },
+  {
+    key: 'pendingComments',
+    label: 'תגובות ממתינות',
+    tab: 'pending_comments',
+    featured: 'all' as const,
+    compute: (stats: AdminOverview['stats']) => stats.pendingReviews + stats.pendingRatings,
+  },
 ] as const;
 
 export default function AdminStatsBar({ stats, onNavigate }: AdminStatsBarProps) {
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
       {cards.map((card) => {
-        const value = stats[card.key];
-        const isAlert = card.key.startsWith('pending') && value > 0;
+        const value =
+          'compute' in card ? card.compute(stats) : stats[card.key as keyof AdminOverview['stats']];
+        const isAlert =
+          (card.key === 'pendingComments' ||
+            card.key === 'pendingDresses' ||
+            card.key === 'pendingPayments') &&
+          Number(value) > 0;
         return (
           <button
             key={card.key}
             type="button"
             onClick={() => onNavigate(card.tab, card.featured)}
             className={`text-right rounded-xl border p-3 transition-shadow hover:shadow-md ${
-              isAlert
-                ? 'bg-amber-50 border-amber-300'
-                : 'bg-white border-[#eadaaf]'
+              isAlert ? 'bg-amber-50 border-amber-300' : 'bg-white border-[#eadaaf]'
             }`}
           >
             <p className="text-[10px] text-[#6e634c] mb-1">{card.label}</p>

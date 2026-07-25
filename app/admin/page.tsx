@@ -1,19 +1,18 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import DressImageFill from '@/components/DressImageFill';
 import AdminDressCatalog from '@/components/admin/AdminDressCatalog';
+import AdminPendingComments from '@/components/admin/AdminPendingComments';
+import AdminPendingDressesGrid from '@/components/admin/AdminPendingDressesGrid';
 import AdminCollapsibleItem from '@/components/admin/AdminCollapsibleItem';
+import AdminCollapsibleSection from '@/components/admin/AdminCollapsibleSection';
 import AdminPagination from '@/components/admin/AdminPagination';
 import AdminStatsBar from '@/components/admin/AdminStatsBar';
 import SiteFooter from '@/components/SiteFooter';
 import SiteHeader from '@/components/SiteHeader';
 import type {
   AdminBookingRow,
-  AdminDressRatingRow,
-  AdminDressRow,
   AdminOverview,
-  AdminSiteReview,
   AdminTab,
 } from '@/lib/admin-types';
 import { BOOKING_STATUS_LABELS, PAYMENT_METHOD_LABELS } from '@/lib/admin-types';
@@ -23,8 +22,7 @@ const TABS: { id: AdminTab; label: string }[] = [
   { id: 'catalog', label: 'קטלוג שמלות' },
   { id: 'pending', label: 'שמלות ממתינות' },
   { id: 'pending_payments', label: 'אישור תשלום' },
-  { id: 'ratings', label: 'דירוגים על שמלות' },
-  { id: 'reviews', label: 'תגובות אתר' },
+  { id: 'pending_comments', label: 'תגובות ממתינות' },
   { id: 'bookings', label: 'הזמנות מאושרות' },
 ];
 
@@ -38,24 +36,6 @@ export default function AdminPage() {
   const [actionMsg, setActionMsg] = useState('');
   const [overview, setOverview] = useState<AdminOverview | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
-
-  const [ratings, setRatings] = useState<AdminDressRatingRow[]>([]);
-  const [ratingsPage, setRatingsPage] = useState(1);
-  const [ratingsTotal, setRatingsTotal] = useState(0);
-  const [ratingsTotalPages, setRatingsTotalPages] = useState(1);
-  const [ratingsSearch, setRatingsSearch] = useState('');
-  const [ratingsSearchInput, setRatingsSearchInput] = useState('');
-  const [ratingsStatus, setRatingsStatus] = useState('pending');
-  const [loadingRatings, setLoadingRatings] = useState(false);
-
-  const [reviews, setReviews] = useState<AdminSiteReview[]>([]);
-  const [reviewsPage, setReviewsPage] = useState(1);
-  const [reviewsTotal, setReviewsTotal] = useState(0);
-  const [reviewsTotalPages, setReviewsTotalPages] = useState(1);
-  const [reviewsSearch, setReviewsSearch] = useState('');
-  const [reviewsSearchInput, setReviewsSearchInput] = useState('');
-  const [reviewsStatus, setReviewsStatus] = useState('all');
-  const [loadingReviews, setLoadingReviews] = useState(false);
 
   const [bookings, setBookings] = useState<AdminBookingRow[]>([]);
   const [bookingsPage, setBookingsPage] = useState(1);
@@ -92,58 +72,6 @@ export default function AdminPage() {
       setLoadingOverview(false);
     }
   }, []);
-
-  const loadRatings = useCallback(async () => {
-    if (!savedToken) return;
-    setLoadingRatings(true);
-    try {
-      const params = new URLSearchParams({
-        view: 'ratings',
-        page: String(ratingsPage),
-        limit: '20',
-        status: ratingsStatus,
-      });
-      if (ratingsSearch) params.set('search', ratingsSearch);
-      const response = await fetch(`/api/admin?${params}`, {
-        headers: { 'x-admin-token': savedToken },
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'שגיאה');
-      setRatings(data.items || []);
-      setRatingsTotal(data.total || 0);
-      setRatingsTotalPages(data.totalPages || 1);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'שגיאה');
-    } finally {
-      setLoadingRatings(false);
-    }
-  }, [savedToken, ratingsPage, ratingsSearch, ratingsStatus]);
-
-  const loadReviews = useCallback(async () => {
-    if (!savedToken) return;
-    setLoadingReviews(true);
-    try {
-      const params = new URLSearchParams({
-        view: 'reviews',
-        page: String(reviewsPage),
-        limit: '20',
-        status: reviewsStatus,
-      });
-      if (reviewsSearch) params.set('search', reviewsSearch);
-      const response = await fetch(`/api/admin?${params}`, {
-        headers: { 'x-admin-token': savedToken },
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'שגיאה');
-      setReviews(data.items || []);
-      setReviewsTotal(data.total || 0);
-      setReviewsTotalPages(data.totalPages || 1);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'שגיאה');
-    } finally {
-      setLoadingReviews(false);
-    }
-  }, [savedToken, reviewsPage, reviewsSearch, reviewsStatus]);
 
   const loadBookings = useCallback(async () => {
     if (!savedToken) return;
@@ -201,14 +129,6 @@ export default function AdminPage() {
   }, [savedToken, loadOverview, refreshKey]);
 
   useEffect(() => {
-    if (tab === 'ratings' && savedToken) loadRatings();
-  }, [tab, savedToken, loadRatings, refreshKey]);
-
-  useEffect(() => {
-    if (tab === 'reviews' && savedToken) loadReviews();
-  }, [tab, savedToken, loadReviews, refreshKey]);
-
-  useEffect(() => {
     if (tab === 'bookings' && savedToken) loadBookings();
   }, [tab, savedToken, loadBookings, refreshKey]);
 
@@ -240,6 +160,7 @@ export default function AdminPage() {
     if (!savedToken) return false;
     if (action === 'delete' && type === 'dress' && !confirm('להסיר את השמלה מהאתר?')) return false;
     if (action === 'delete' && type === 'dress_rating' && !confirm('למחוק את הדירוג?')) return false;
+    if (action === 'delete' && type === 'review' && !confirm('למחוק את התגובה?')) return false;
     if (action === 'approve_payment' && !confirm('לאשר שהתשלום התקבל?')) return false;
 
     setActionMsg('');
@@ -268,8 +189,7 @@ export default function AdminPage() {
       catalog: overview.stats.published,
       pending: overview.stats.pendingDresses,
       pending_payments: overview.stats.pendingPayments,
-      ratings: overview.stats.pendingRatings,
-      reviews: overview.stats.pendingReviews,
+      pending_comments: overview.stats.pendingReviews + overview.stats.pendingRatings,
       bookings: 0,
     };
   }, [overview]);
@@ -277,96 +197,23 @@ export default function AdminPage() {
   function navigateTab(next: AdminTab, featured: 'all' | 'yes' | 'no' = 'all') {
     setCatalogFeatured(featured);
     setTab(next);
-    if (next === 'ratings') setRatingsStatus('pending');
-    if (next === 'reviews') setReviewsStatus('all');
-  }
-
-  function renderPendingDressCard(dress: AdminDressRow) {
-    return (
-      <AdminCollapsibleItem
-        key={dress.id}
-        title={dress.name}
-        subtitle={`₪${dress.price} · מידה ${dress.size} · ${dress.city}`}
-      >
-        {dress.images?.[0] && (
-          <DressImageFill src={dress.images[0]} alt="" className="w-20 h-24 rounded-lg mb-2" />
-        )}
-        <p className="text-xs text-[#6e634c] mb-2">משכירה: {dress.owner_name}</p>
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => handleAction('dress', dress.id, 'approve')}
-            className="px-3 py-1.5 bg-[#b8860b] text-white text-xs rounded-lg font-bold"
-          >
-            אשר
-          </button>
-          <button
-            type="button"
-            onClick={() => handleAction('dress', dress.id, 'reject')}
-            className="px-3 py-1.5 border border-red-300 text-red-600 text-xs rounded-lg"
-          >
-            דחה
-          </button>
-        </div>
-      </AdminCollapsibleItem>
-    );
-  }
-
-  function renderReviewCard(review: AdminSiteReview, showStatus = false) {
-    const statusLabel =
-      review.status === 'approved' ? 'מפורסם' : review.status === 'pending' ? 'ממתין' : 'נדחה';
-
-    return (
-      <AdminCollapsibleItem
-        key={review.id}
-        title={review.name}
-        subtitle={
-          <>
-            {review.role} · {'⭐'.repeat(review.stars)}
-            {showStatus && ` · ${statusLabel}`}
-          </>
-        }
-        badge={
-          review.status === 'pending' ? (
-            <span className="text-[9px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full">
-              ממתין
-            </span>
-          ) : review.status === 'approved' ? (
-            <span className="text-[9px] font-bold text-green-800 bg-green-50 px-2 py-0.5 rounded-full">
-              באתר
-            </span>
-          ) : null
-        }
-      >
-        <p className="text-xs italic mb-3">&quot;{review.text}&quot;</p>
-        {review.status === 'pending' && (
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => handleAction('review', review.id, 'approve')}
-              className="px-3 py-1.5 bg-[#b8860b] text-white text-xs rounded-lg font-bold"
-            >
-              אשר
-            </button>
-            <button
-              type="button"
-              onClick={() => handleAction('review', review.id, 'reject')}
-              className="px-3 py-1.5 border border-red-300 text-red-600 text-xs rounded-lg"
-            >
-              דחה
-            </button>
-          </div>
-        )}
-      </AdminCollapsibleItem>
-    );
   }
 
   function renderPendingPaymentCard(booking: AdminBookingRow) {
     return (
       <AdminCollapsibleItem
         key={booking.id}
-        title={booking.customer_name}
-        subtitle={`${booking.dress_name || `שמלה #${booking.dress_id}`} · ${booking.event_date}`}
+        title={booking.dress_name || `שמלה #${booking.dress_id}`}
+        subtitle={
+          <>
+            העברה מ:{' '}
+            <span dir="ltr" className="font-bold text-[#3d2f24]">
+              {booking.customer_phone}
+            </span>
+            {' · '}
+            {booking.customer_name} · {booking.event_date}
+          </>
+        }
         badge={
           <span className="text-[9px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full">
             לאישור
@@ -374,7 +221,7 @@ export default function AdminPage() {
         }
       >
         <p className="text-xs text-[#6e634c]" dir="ltr">
-          {booking.customer_phone} · {booking.customer_email}
+          {booking.customer_email}
         </p>
         {booking.amount_total != null && (
           <p className="text-xs font-bold text-[#8b6508] mt-1">₪{booking.amount_total}</p>
@@ -508,8 +355,7 @@ export default function AdminPage() {
                     badge > 0 &&
                     (item.id === 'pending' ||
                       item.id === 'pending_payments' ||
-                      item.id === 'ratings' ||
-                      item.id === 'reviews');
+                      item.id === 'pending_comments');
                   return (
                     <button
                       key={item.id}
@@ -537,73 +383,106 @@ export default function AdminPage() {
             </div>
 
             {tab === 'overview' && overview && (
-              <div className="space-y-6">
-                {overview.stats.pendingDresses > 0 && (
-                  <section className="bg-amber-50 border-2 border-amber-300 rounded-2xl p-5">
-                    <div className="flex justify-between items-center mb-4">
-                      <h2 className="font-black text-lg text-amber-900">
-                        דורשות טיפול — שמלות ממתינות ({overview.stats.pendingDresses})
-                      </h2>
-                      <button
-                        type="button"
-                        onClick={() => navigateTab('pending')}
-                        className="text-xs font-bold text-amber-800 underline"
-                      >
-                        הצג הכל
-                      </button>
+              <div className="space-y-4">
+                {(overview.stats.pendingDresses > 0 ||
+                  overview.stats.pendingPayments > 0 ||
+                  overview.stats.pendingRatings > 0 ||
+                  overview.stats.pendingReviews > 0) && (
+                  <AdminCollapsibleSection
+                    title="דורשות טיפול"
+                    count={
+                      overview.stats.pendingDresses +
+                      overview.stats.pendingPayments +
+                      overview.stats.pendingRatings +
+                      overview.stats.pendingReviews
+                    }
+                    defaultOpen={false}
+                    tone="alert"
+                  >
+                    <div className="space-y-4">
+                      {overview.stats.pendingDresses > 0 && (
+                        <AdminCollapsibleSection
+                          title="שמלות ממתינות לאישור"
+                          count={overview.stats.pendingDresses}
+                          action={
+                            <button
+                              type="button"
+                              onClick={() => navigateTab('pending')}
+                              className="text-xs font-bold text-amber-800 underline"
+                            >
+                              הצג הכל
+                            </button>
+                          }
+                        >
+                          <AdminPendingDressesGrid
+                            dresses={overview.pendingDresses.slice(0, 16)}
+                            onAction={(id, action) => handleAction('dress', id, action)}
+                          />
+                        </AdminCollapsibleSection>
+                      )}
+
+                      {overview.stats.pendingPayments > 0 && (
+                        <AdminCollapsibleSection
+                          title="ממתינות לאישור תשלום"
+                          count={overview.stats.pendingPayments}
+                          action={
+                            <button
+                              type="button"
+                              onClick={() => navigateTab('pending_payments')}
+                              className="text-xs font-bold text-amber-800 underline"
+                            >
+                              הצג הכל
+                            </button>
+                          }
+                        >
+                          <div className="space-y-2">
+                            {overview.pendingPayments.slice(0, 5).map(renderPendingPaymentCard)}
+                          </div>
+                        </AdminCollapsibleSection>
+                      )}
+
+                      {(overview.stats.pendingRatings > 0 || overview.stats.pendingReviews > 0) && (
+                        <AdminCollapsibleSection
+                          title="תגובות ממתינות"
+                          count={overview.stats.pendingRatings + overview.stats.pendingReviews}
+                          action={
+                            <button
+                              type="button"
+                              onClick={() => navigateTab('pending_comments')}
+                              className="text-xs font-bold text-amber-800 underline"
+                            >
+                              הצג הכל
+                            </button>
+                          }
+                        >
+                          <div className="space-y-3 text-xs">
+                            {overview.pendingReviews.slice(0, 3).map((review) => (
+                              <div key={review.id} className="bg-white rounded-lg p-3 border border-[#eadaaf]">
+                                <p className="font-bold">
+                                  אתר · {review.name} · {'⭐'.repeat(review.stars)}
+                                </p>
+                                <p className="italic mt-1 text-[#6e634c]">&quot;{review.text}&quot;</p>
+                              </div>
+                            ))}
+                            {overview.pendingRatings.slice(0, 3).map((rating) => (
+                              <div key={rating.id} className="bg-white rounded-lg p-3 border border-[#eadaaf]">
+                                <p className="font-bold">
+                                  שמלה · {rating.dress_name} · {rating.customer_name} ·{' '}
+                                  {'⭐'.repeat(rating.stars)}
+                                </p>
+                                {rating.review_text && (
+                                  <p className="italic mt-1 text-[#6e634c]">&quot;{rating.review_text}&quot;</p>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </AdminCollapsibleSection>
+                      )}
                     </div>
-                    <div className="space-y-3">
-                      {overview.pendingDresses.slice(0, 5).map(renderPendingDressCard)}
-                    </div>
-                  </section>
+                  </AdminCollapsibleSection>
                 )}
 
-                {(overview.stats.pendingPayments > 0 || overview.stats.pendingRatings > 0 || overview.stats.pendingReviews > 0) && (
-                  <section className="bg-amber-50 border-2 border-amber-300 rounded-2xl p-5 space-y-4">
-                    <h2 className="font-black text-lg text-amber-900">דורשות טיפול</h2>
-                    {overview.stats.pendingPayments > 0 && (
-                      <div>
-                        <div className="flex justify-between mb-2">
-                          <p className="text-sm font-bold">ממתינות לתשלום ({overview.stats.pendingPayments})</p>
-                          <button type="button" onClick={() => navigateTab('pending_payments')} className="text-xs underline text-amber-800">הצג הכל</button>
-                        </div>
-                        <div className="space-y-2">
-                          {overview.pendingPayments.slice(0, 3).map(renderPendingPaymentCard)}
-                        </div>
-                      </div>
-                    )}
-                    {overview.stats.pendingRatings > 0 && (
-                      <div>
-                        <div className="flex justify-between mb-2">
-                          <p className="text-sm font-bold">דירוגים על שמלות ({overview.stats.pendingRatings})</p>
-                          <button type="button" onClick={() => navigateTab('ratings')} className="text-xs underline text-amber-800">הצג הכל</button>
-                        </div>
-                        <div className="space-y-2">
-                          {overview.pendingRatings.slice(0, 3).map((rating) => (
-                            <div key={rating.id} className="bg-white rounded-lg p-3 text-xs">
-                              <p className="font-bold">{rating.dress_name} · {rating.customer_name} · {'⭐'.repeat(rating.stars)}</p>
-                              {rating.review_text && <p className="italic mt-1">&quot;{rating.review_text}&quot;</p>}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    {overview.stats.pendingReviews > 0 && (
-                      <div>
-                        <div className="flex justify-between mb-2">
-                          <p className="text-sm font-bold">תגובות אתר ({overview.stats.pendingReviews})</p>
-                          <button type="button" onClick={() => navigateTab('reviews')} className="text-xs underline text-amber-800">הצג הכל</button>
-                        </div>
-                        <div className="space-y-2">
-                          {overview.pendingReviews.slice(0, 3).map((r) => renderReviewCard(r))}
-                        </div>
-                      </div>
-                    )}
-                  </section>
-                )}
-
-                <section className="bg-white rounded-2xl border border-[#eadaaf] p-5">
-                  <h2 className="font-bold text-lg mb-4">הזמנות מאושרות אחרונות</h2>
+                <AdminCollapsibleSection title="הזמנות מאושרות אחרונות">
                   {overview.recentBookings.length === 0 ? (
                     <p className="text-xs text-[#6e634c]">אין הזמנות אחרונות</p>
                   ) : (
@@ -639,30 +518,32 @@ export default function AdminPage() {
                   >
                     הזמנות מאושרות →
                   </button>
-                </section>
+                </AdminCollapsibleSection>
 
-                <section className="grid sm:grid-cols-2 gap-4">
-                  <button
-                    type="button"
-                    onClick={() => navigateTab('catalog')}
-                    className="text-right bg-[#fffdf8] border border-[#e6c687] rounded-2xl p-5 hover:shadow-md transition-shadow"
-                  >
-                    <h3 className="font-black text-[#8b6508] mb-1">קטלוג שמלות</h3>
-                    <p className="text-xs text-[#6e634c]">
-                      חיפוש, סינון לפי עיר וחשיפה, עימוד — לניהול {overview.stats.published} שמלות
-                    </p>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => navigateTab('catalog', 'yes')}
-                    className="text-right bg-[#fffdf8] border border-[#e6c687] rounded-2xl p-5 hover:shadow-md transition-shadow"
-                  >
-                    <h3 className="font-black text-[#8b6508] mb-1">חשיפה מועדפת</h3>
-                    <p className="text-xs text-[#6e634c]">
-                      {overview.stats.featured} שמלות עם חשיפה מוגברת בקטלוג
-                    </p>
-                  </button>
-                </section>
+                <AdminCollapsibleSection title="קיצורי דרך">
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <button
+                      type="button"
+                      onClick={() => navigateTab('catalog')}
+                      className="text-right bg-[#fffdf8] border border-[#e6c687] rounded-2xl p-5 hover:shadow-md transition-shadow w-full"
+                    >
+                      <h3 className="font-black text-[#8b6508] mb-1">קטלוג שמלות</h3>
+                      <p className="text-xs text-[#6e634c]">
+                        חיפוש, סינון לפי עיר וחשיפה, עימוד — לניהול {overview.stats.published} שמלות
+                      </p>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => navigateTab('catalog', 'yes')}
+                      className="text-right bg-[#fffdf8] border border-[#e6c687] rounded-2xl p-5 hover:shadow-md transition-shadow w-full"
+                    >
+                      <h3 className="font-black text-[#8b6508] mb-1">חשיפה מועדפת</h3>
+                      <p className="text-xs text-[#6e634c]">
+                        {overview.stats.featured} שמלות עם חשיפה מוגברת בקטלוג
+                      </p>
+                    </button>
+                  </div>
+                </AdminCollapsibleSection>
               </div>
             )}
 
@@ -681,13 +562,10 @@ export default function AdminPage() {
                 <h2 className="font-bold text-lg">
                   שמלות ממתינות לאישור ({overview.stats.pendingDresses})
                 </h2>
-                {overview.pendingDresses.length === 0 ? (
-                  <p className="text-xs text-[#6e634c]">אין שמלות ממתינות 🎉</p>
-                ) : (
-                  <div className="space-y-2">
-                    {overview.pendingDresses.map(renderPendingDressCard)}
-                  </div>
-                )}
+                <AdminPendingDressesGrid
+                  dresses={overview.pendingDresses}
+                  onAction={(id, action) => handleAction('dress', id, action)}
+                />
               </section>
             )}
 
@@ -718,167 +596,12 @@ export default function AdminPage() {
               </section>
             )}
 
-            {tab === 'reviews' && (
-              <section className="space-y-4">
-                <h2 className="font-bold text-lg">
-                  תגובות כלליות של האתר
-                  {overview && (
-                    <span className="text-sm font-normal text-[#6e634c] mr-2">
-                      ({overview.stats.approvedReviews} באתר · {overview.stats.pendingReviews} ממתינות)
-                    </span>
-                  )}
-                </h2>
-                <p className="text-xs text-[#6e634c]">
-                  תגובות שמופיעות בדף הבית — לחצי על כל תגובה לפתיחה/סגירה
-                </p>
-                <div className="bg-white rounded-2xl border border-[#eadaaf] p-4 flex flex-col sm:flex-row gap-2">
-                  <form
-                    className="flex flex-1 gap-2"
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      setReviewsPage(1);
-                      setReviewsSearch(reviewsSearchInput.trim());
-                    }}
-                  >
-                    <input
-                      value={reviewsSearchInput}
-                      onChange={(e) => setReviewsSearchInput(e.target.value)}
-                      placeholder="חיפוש לפי שם, תפקיד או טקסט..."
-                      className="flex-1 p-2.5 border border-[#decfa8] rounded-xl text-sm"
-                    />
-                    <button type="submit" className="px-4 py-2 bg-[#2c261a] text-white rounded-xl text-sm font-bold">
-                      חפשי
-                    </button>
-                  </form>
-                  <select
-                    value={reviewsStatus}
-                    onChange={(e) => {
-                      setReviewsStatus(e.target.value);
-                      setReviewsPage(1);
-                    }}
-                    className="text-xs border border-[#decfa8] rounded-lg px-2 py-2"
-                  >
-                    <option value="all">הכל (ברירת מחדל)</option>
-                    <option value="approved">מפורסמות באתר</option>
-                    <option value="pending">ממתינות</option>
-                    <option value="rejected">נדחות</option>
-                  </select>
-                </div>
-
-                {loadingReviews ? (
-                  <p className="text-sm">טוען תגובות...</p>
-                ) : reviews.length === 0 ? (
-                  <p className="text-xs text-[#6e634c]">לא נמצאו תגובות</p>
-                ) : (
-                  <div className="space-y-2">
-                    {reviews.map((r) => renderReviewCard(r, true))}
-                    <AdminPagination
-                      page={reviewsPage}
-                      totalPages={reviewsTotalPages}
-                      total={reviewsTotal}
-                      limit={20}
-                      onPageChange={setReviewsPage}
-                    />
-                  </div>
-                )}
-              </section>
-            )}
-
-            {tab === 'ratings' && (
-              <section className="space-y-4">
-                <h2 className="font-bold text-lg">דירוגים ותגובות על שמלות</h2>
-                <p className="text-xs text-[#6e634c]">
-                  ביקורות ששוכרות כותבות על שמלה ספציפית — ברירת מחדל: ממתינים לאישור
-                </p>
-                <div className="bg-white rounded-2xl border border-[#eadaaf] p-4 flex flex-col sm:flex-row gap-2">
-                  <form
-                    className="flex flex-1 gap-2"
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      setRatingsPage(1);
-                      setRatingsSearch(ratingsSearchInput.trim());
-                    }}
-                  >
-                    <input
-                      value={ratingsSearchInput}
-                      onChange={(e) => setRatingsSearchInput(e.target.value)}
-                      placeholder="חיפוש לפי שמלה, שם או טקסט..."
-                      className="flex-1 p-2.5 border border-[#decfa8] rounded-xl text-sm"
-                    />
-                    <button type="submit" className="px-4 py-2 bg-[#2c261a] text-white rounded-xl text-sm font-bold">
-                      חפשי
-                    </button>
-                  </form>
-                  <select
-                    value={ratingsStatus}
-                    onChange={(e) => {
-                      setRatingsStatus(e.target.value);
-                      setRatingsPage(1);
-                    }}
-                    className="text-xs border border-[#decfa8] rounded-lg px-2 py-2"
-                  >
-                    <option value="pending">ממתינים לאישור</option>
-                    <option value="approved">מפורסמים</option>
-                    <option value="all">הכל</option>
-                  </select>
-                </div>
-
-                {loadingRatings ? (
-                  <p className="text-sm">טוען דירוגים...</p>
-                ) : ratings.length === 0 ? (
-                  <p className="text-xs text-[#6e634c]">לא נמצאו דירוגים</p>
-                ) : (
-                  <div className="space-y-2">
-                    {ratings.map((rating) => (
-                      <AdminCollapsibleItem
-                        key={rating.id}
-                        title={rating.dress_name}
-                        subtitle={`${rating.customer_name} · ${'⭐'.repeat(rating.stars)} · ${
-                          rating.status === 'approved' ? 'מפורסם' : 'ממתין'
-                        }`}
-                        badge={
-                          rating.status === 'pending' ? (
-                            <span className="text-[9px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full">
-                              ממתין
-                            </span>
-                          ) : null
-                        }
-                      >
-                        {rating.review_text ? (
-                          <p className="text-xs italic mb-3">&quot;{rating.review_text}&quot;</p>
-                        ) : (
-                          <p className="text-xs text-[#9a7b4f] mb-3">(ללא טקסט)</p>
-                        )}
-                        <div className="flex flex-wrap gap-2">
-                          {rating.status === 'pending' && (
-                            <button
-                              type="button"
-                              onClick={() => handleAction('dress_rating', rating.id, 'approve')}
-                              className="px-3 py-1.5 bg-[#b8860b] text-white text-xs rounded-lg font-bold"
-                            >
-                              אשרי ופרסמי
-                            </button>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => handleAction('dress_rating', rating.id, 'delete')}
-                            className="px-3 py-1.5 border border-red-300 text-red-600 text-xs rounded-lg font-bold"
-                          >
-                            מחקי
-                          </button>
-                        </div>
-                      </AdminCollapsibleItem>
-                    ))}
-                    <AdminPagination
-                        page={ratingsPage}
-                        totalPages={ratingsTotalPages}
-                        total={ratingsTotal}
-                        limit={20}
-                        onPageChange={setRatingsPage}
-                    />
-                  </div>
-                )}
-              </section>
+            {tab === 'pending_comments' && savedToken && (
+              <AdminPendingComments
+                token={savedToken}
+                refreshKey={refreshKey}
+                onAction={(type, id, action) => handleAction(type, id, action)}
+              />
             )}
 
             {tab === 'bookings' && (

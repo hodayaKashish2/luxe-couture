@@ -474,6 +474,12 @@ export async function POST(request: Request) {
       });
     }
 
+    if (type === 'review' && action === 'delete') {
+      const { error } = await supabase.from('reviews').delete().eq('id', id);
+      if (error) throw error;
+      return NextResponse.json({ success: true });
+    }
+
     if (type === 'dress_rating' && action === 'approve') {
       const result = await approveDressRating(supabase, id);
       if ('error' in result && result.error) {

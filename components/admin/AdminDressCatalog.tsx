@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import DressImageFill from '@/components/DressImageFill';
+import AdminCollapsibleSection, { ADMIN_DRESS_GRID_CLASS } from '@/components/admin/AdminCollapsibleSection';
+import AdminDressGridCard from '@/components/admin/AdminDressGridCard';
 import AdminPagination from '@/components/admin/AdminPagination';
 import type { AdminDressRow, AdminDressSort } from '@/lib/admin-types';
 
@@ -27,7 +28,7 @@ export default function AdminDressCatalog({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(40);
+  const [limit, setLimit] = useState(48);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState('');
@@ -91,9 +92,7 @@ export default function AdminDressCatalog({
     const ok = await onAction(id, action);
     setBusyId(null);
     if (ok) {
-      if (action === 'delete') {
-        setExpandedId((prev) => (prev === id ? null : prev));
-      }
+      if (action === 'delete') setExpandedId((prev) => (prev === id ? null : prev));
       setItems((prev) =>
         action === 'delete'
           ? prev.filter((d) => d.id !== id)
@@ -203,90 +202,61 @@ export default function AdminDressCatalog({
           <p className="p-6 text-sm text-[#6e634c]">לא נמצאו שמלות לפי הסינון</p>
         ) : (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 p-4">
+            <div className={ADMIN_DRESS_GRID_CLASS}>
               {items.map((dress) => {
                 const isFeatured = (dress.featured_boost || 0) > 0;
                 const isOpen = expandedId === dress.id;
                 const disabled = busyId === dress.id;
 
                 return (
-                  <div
+                  <AdminDressGridCard
                     key={dress.id}
-                    className={`border rounded-xl overflow-hidden transition-shadow ${
-                      isOpen ? 'border-[#d4af37] shadow-md' : 'border-[#eadaaf]'
-                    }`}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => setExpandedId(isOpen ? null : dress.id)}
-                      className="w-full p-3 text-right hover:bg-[#fffdf8] transition-colors"
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <span className="text-[10px] text-[#9a7b4f] shrink-0 mt-0.5">
-                          {isOpen ? '▲' : '▼'}
+                    dress={dress}
+                    isOpen={isOpen}
+                    disabled={disabled}
+                    onToggle={() => setExpandedId(isOpen ? null : dress.id)}
+                    badge={
+                      isFeatured ? (
+                        <span className="text-[8px] font-bold text-[#8b6508] bg-[#fff8e8] px-1 py-0.5 rounded-full shrink-0">
+                          ★
                         </span>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-bold text-sm text-[#3d2f24] line-clamp-2 leading-snug">
-                            {dress.name}
-                          </p>
-                          <p className="text-xs font-black text-[#8b6508] mt-1">₪{dress.price}</p>
-                          <p className="text-[11px] text-[#6e634c] mt-0.5" dir="ltr">
-                            {dress.owner_phone || '—'}
-                          </p>
-                        </div>
-                        {isFeatured && (
-                          <span className="text-[9px] font-bold text-[#8b6508] bg-[#fff8e8] px-1.5 py-0.5 rounded-full shrink-0">
-                            ★
-                          </span>
-                        )}
-                      </div>
-                    </button>
-
-                    {isOpen && (
-                      <div className="px-3 pb-3 pt-0 border-t border-[#f0e8d0] bg-[#fffdf8] space-y-2">
-                        {dress.images?.[0] && (
-                          <DressImageFill
-                            src={dress.images[0]}
-                            alt=""
-                            className="w-full h-28 rounded-lg mt-2"
-                          />
-                        )}
-                        <p className="text-[10px] text-[#6e634c]">
-                          #{dress.id} · {dress.size || '—'} · {dress.city || '—'}
-                        </p>
-                        <p className="text-[10px] text-[#6e634c]">משכירה: {dress.owner_name || '—'}</p>
-                        <p className="text-[10px] text-[#8b6508]">
-                          {isFeatured ? 'חשיפה מועדפת פעילה' : 'ללא חשיפה מועדפת'}
-                        </p>
-                        <div className="flex flex-wrap gap-1.5 pt-1">
-                          <button
-                            type="button"
-                            disabled={disabled}
-                            onClick={() => runAction(dress.id, 'toggle_featured')}
-                            className="px-2 py-1.5 text-[10px] rounded-lg border border-[#decfa8] font-bold disabled:opacity-50"
-                          >
-                            {isFeatured ? 'בטלי חשיפה' : 'הפעילי חשיפה'}
-                          </button>
-                          <button
-                            type="button"
-                            disabled={disabled}
-                            onClick={() => runAction(dress.id, 'extend_featured')}
-                            className="px-2 py-1.5 text-[10px] rounded-lg border border-[#decfa8] disabled:opacity-50"
-                          >
-                            +30 יום
-                          </button>
-                          <button
-                            type="button"
-                            disabled={disabled}
-                            onClick={() => runAction(dress.id, 'delete')}
-                            className="px-2 py-1.5 text-[10px] rounded-lg bg-red-600 text-white font-bold disabled:opacity-50"
-                          >
-                            הסרי מהאתר
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                      ) : undefined
+                    }
+                  >
+                    <p className="text-[9px] text-[#6e634c]">
+                      #{dress.id} · {dress.size || '—'} · {dress.city || '—'}
+                    </p>
+                    <p className="text-[9px] text-[#6e634c]">משכירה: {dress.owner_name || '—'}</p>
+                    <p className="text-[9px] text-[#8b6508]">
+                      {isFeatured ? 'חשיפה מועדפת' : 'רגילה'}
+                    </p>
+                    <div className="flex flex-wrap gap-1 pt-1">
+                      <button
+                        type="button"
+                        disabled={disabled}
+                        onClick={() => runAction(dress.id, 'toggle_featured')}
+                        className="px-1.5 py-1 text-[9px] rounded-lg border border-[#decfa8] font-bold disabled:opacity-50"
+                      >
+                        {isFeatured ? 'בטל' : 'חשיפה'}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={disabled}
+                        onClick={() => runAction(dress.id, 'extend_featured')}
+                        className="px-1.5 py-1 text-[9px] rounded-lg border border-[#decfa8] disabled:opacity-50"
+                      >
+                        +30
+                      </button>
+                      <button
+                        type="button"
+                        disabled={disabled}
+                        onClick={() => runAction(dress.id, 'delete')}
+                        className="px-1.5 py-1 text-[9px] rounded-lg bg-red-600 text-white font-bold disabled:opacity-50"
+                      >
+                        הסר
+                      </button>
+                    </div>
+                  </AdminDressGridCard>
                 );
               })}
             </div>
