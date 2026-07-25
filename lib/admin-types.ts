@@ -13,14 +13,17 @@ export type AdminDressRow = {
   rating_count?: number;
 };
 
-export type AdminPendingReview = {
+export type AdminSiteReview = {
   id: number;
   name: string;
   role: string;
   text: string;
   stars: number;
+  status: string;
   created_at: string;
 };
+
+export type AdminPendingReview = AdminSiteReview;
 
 export type AdminDressRatingRow = {
   id: number;
@@ -36,11 +39,14 @@ export type AdminDressRatingRow = {
 export type AdminBookingRow = {
   id: number;
   dress_id: number;
+  dress_name?: string;
   customer_name: string;
   customer_phone: string;
   customer_email: string;
   event_date: string;
   status: string;
+  amount_total?: number;
+  payment_method?: string | null;
   created_at: string;
 };
 
@@ -51,10 +57,13 @@ export type AdminOverview = {
     featured: number;
     pendingReviews: number;
     pendingRatings: number;
-    recentBookings: number;
+    pendingPayments: number;
+    confirmedBookings: number;
   };
   pendingDresses: AdminDressRow[];
   pendingReviews: AdminPendingReview[];
+  pendingRatings: AdminDressRatingRow[];
+  pendingPayments: AdminBookingRow[];
   recentBookings: AdminBookingRow[];
   cities: string[];
 };
@@ -79,6 +88,7 @@ export type AdminTab =
   | 'overview'
   | 'catalog'
   | 'pending'
+  | 'pending_payments'
   | 'ratings'
   | 'reviews'
   | 'bookings';
@@ -89,3 +99,17 @@ export type AdminDressAction =
   | 'delete'
   | 'toggle_featured'
   | 'extend_featured';
+
+export const BOOKING_STATUS_LABELS: Record<string, string> = {
+  pending_payment: 'ממתין לתשלום',
+  awaiting_admin_approval: 'ממתין לאישור תשלום',
+  confirmed: 'אושר',
+  cancelled: 'בוטל',
+  failed: 'נכשל',
+};
+
+export const PAYMENT_METHOD_LABELS: Record<string, string> = {
+  bit: 'ביט',
+  credit: 'אשראי',
+  bank: 'העברה בנקאית',
+};

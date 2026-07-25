@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { fetchDressForNotify, notifyDressApproved } from '@/lib/dress-approval-notify';
-import { recalculateDressRatingStats } from '@/lib/dress-rating-stats';
+import { approveDressRating, recalculateDressRatingStats } from '@/lib/dress-rating-stats';
 import { extendFeaturedUntil, FEATURED_REWARD_DAYS } from '@/lib/dress-ranking';
+import { confirmBookingPayment } from '@/lib/payment-confirmation';
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server';
 
 function verifyToken(request: Request) {
@@ -21,6 +22,61 @@ function escapeIlike(value: string) {
   return value.replace(/[%_,]/g, ' ');
 }
 
+function mapDressNameJoin(dressJoin: { name?: string } | { name?: string }[] | null) {
+  if (Array.isArray(dressJoin)) return dressJoin[0]?.name;
+  return dressJoin?.name;
+}
+
+function mapBookingRow(row: {
+  id: number;
+  dress_id: number;
+  customer_name: string;
+  customer_phone: string;
+  customer_email: string;
+  event_date: string;
+  status: string;
+  created_at: string;
+  amount_total?: number | null;
+  payment_method?: string | null;
+  dresses?: { name?: string } | { name?: string }[] | null;
+}) {
+  return {
+    id: row.id,
+    dress_id: row.dress_id,
+    dress_name: mapDressNameJoin(row.dresses ?? null) || undefined,
+    customer_name: row.customer_name,
+    customer_phone: row.customer_phone,
+    customer_email: row.customer_email,
+    event_date: row.event_date,
+    status: row.status,
+    amount_total: row.amount_total != null ? Number(row.amount_total) : undefined,
+    payment_method: row.payment_method,
+    created_at: row.created_at,
+  };
+}
+
+function mapDressRatingRow(row: {
+  id: number;
+  dress_id: number;
+  customer_name: string;
+  stars: number;
+  review_text: string;
+  status: string;
+  created_at: string;
+  dresses?: { name?: string } | { name?: string }[] | null;
+}) {
+  return {
+    id: row.id,
+    dress_id: row.dress_id,
+    dress_name: mapDressNameJoin(row.dresses ?? null) || 'שמלה',
+    customer_name: row.customer_name,
+    stars: row.stars,
+    review_text: row.review_text,
+    status: row.status,
+    created_at: row.created_at,
+  };
+}
+
 async function loadOverview(supabase: ReturnType<typeof getSupabaseAdmin>) {
   const [
     publishedRes,
@@ -28,9 +84,13 @@ async function loadOverview(supabase: ReturnType<typeof getSupabaseAdmin>) {
     featuredRes,
     pendingReviewsRes,
     pendingRatingsRes,
+    pendingPaymentsRes,
+    confirmedBookingsRes,
     pendingDressesListRes,
     pendingReviewsListRes,
-    bookingsRes,
+    pendingRatingsListRes,
+    pendingPaymentsListRes,
+    confirmedBookingsListRes,
     citiesRes,
   ] = await Promise.all([
     supabase.from('dresses').select('*', { count: 'exact', head: true }).eq('status', 'approved'),
@@ -38,6 +98,11 @@ async function loadOverview(supabase: ReturnType<typeof getSupabaseAdmin>) {
     supabase.from('dresses').select('*', { count: 'exact', head: true }).eq('status', 'approved').gt('featured_boost', 0),
     supabase.from('reviews').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
     supabase.from('dress_ratings').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+    supabase
+      .from('bookings')
+      .select('*', { count: 'exact', head: true })
+      .in('status', ['pending_payment', 'awaiting_admin_approval']),
+    supabase.from('bookings').select('*', { count: 'exact', head: true }).eq('status', 'confirmed'),
     supabase
       .from('dresses')
       .select('id, name, price, size, city, owner_name, status, created_at, images')
@@ -49,17 +114,44 @@ async function loadOverview(supabase: ReturnType<typeof getSupabaseAdmin>) {
       .select('id, name, role, review_text, stars, status, created_at')
       .eq('status', 'pending')
       .order('created_at', { ascending: false })
-      .limit(10),
+      .limit(50),
+    supabase
+      .from('dress_ratings')
+      .select('id, dress_id, customer_name, stars, review_text, status, created_at, dresses(name)')
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false })
+      .limit(50),
     supabase
       .from('bookings')
-      .select('id, dress_id, customer_name, customer_phone, customer_email, event_date, status, created_at')
+      .select(
+        'id, dress_id, customer_name, customer_phone, customer_email, event_date, status, amount_total, payment_method, created_at, dresses(name)'
+      )
+      .in('status', ['pending_payment', 'awaiting_admin_approval'])
       .order('created_at', { ascending: false })
-      .limit(15),
+      .limit(50),
+    supabase
+      .from('bookings')
+      .select(
+        'id, dress_id, customer_name, customer_phone, customer_email, event_date, status, amount_total, payment_method, created_at, dresses(name)'
+      )
+      .eq('status', 'confirmed')
+      .order('created_at', { ascending: false })
+      .limit(10),
     supabase.from('dresses').select('city').eq('status', 'approved').not('city', 'is', null),
   ]);
 
   if (pendingDressesListRes.error) throw pendingDressesListRes.error;
   if (pendingReviewsListRes.error) throw pendingReviewsListRes.error;
+
+  let pendingRatings: ReturnType<typeof mapDressRatingRow>[] = [];
+  if (!pendingRatingsListRes.error) {
+    pendingRatings = (pendingRatingsListRes.data ?? []).map(mapDressRatingRow);
+  }
+
+  let pendingPayments: ReturnType<typeof mapBookingRow>[] = [];
+  if (!pendingPaymentsListRes.error) {
+    pendingPayments = (pendingPaymentsListRes.data ?? []).map(mapBookingRow);
+  }
 
   const citySet = new Set<string>();
   for (const row of citiesRes.data ?? []) {
@@ -73,15 +165,25 @@ async function loadOverview(supabase: ReturnType<typeof getSupabaseAdmin>) {
       pendingDresses: pendingDressesRes.count ?? 0,
       featured: featuredRes.count ?? 0,
       pendingReviews: pendingReviewsRes.count ?? 0,
-      pendingRatings: pendingRatingsRes.count ?? 0,
-      recentBookings: bookingsRes.data?.length ?? 0,
+      pendingRatings: pendingRatingsRes.error ? pendingRatings.length : (pendingRatingsRes.count ?? 0),
+      pendingPayments: pendingPaymentsRes.error ? pendingPayments.length : (pendingPaymentsRes.count ?? 0),
+      confirmedBookings: confirmedBookingsRes.count ?? 0,
     },
     pendingDresses: pendingDressesListRes.data ?? [],
     pendingReviews: (pendingReviewsListRes.data ?? []).map((r) => ({
-      ...r,
+      id: r.id,
+      name: r.name,
+      role: r.role,
       text: r.review_text,
+      stars: r.stars,
+      status: r.status,
+      created_at: r.created_at,
     })),
-    recentBookings: bookingsRes.error ? [] : (bookingsRes.data ?? []),
+    pendingRatings,
+    pendingPayments,
+    recentBookings: confirmedBookingsListRes.error
+      ? []
+      : (confirmedBookingsListRes.data ?? []).map(mapBookingRow),
     cities: [...citySet].sort((a, b) => a.localeCompare(b, 'he')),
   };
 }
@@ -192,20 +294,53 @@ async function loadRatingsPage(
   const { data, count, error } = await query.range(from, to);
   if (error) throw error;
 
-  const items = (data ?? []).map((row) => {
-    const dressJoin = row.dresses as { name?: string } | { name?: string }[] | null;
-    const dressName = Array.isArray(dressJoin) ? dressJoin[0]?.name : dressJoin?.name;
-    return {
-      id: row.id,
-      dress_id: row.dress_id,
-      dress_name: dressName || 'שמלה',
-      customer_name: row.customer_name,
-      stars: row.stars,
-      review_text: row.review_text,
-      status: row.status,
-      created_at: row.created_at,
-    };
-  });
+  const items = (data ?? []).map(mapDressRatingRow);
+
+  const total = count ?? 0;
+  return {
+    items,
+    total,
+    page,
+    limit,
+    totalPages: Math.max(1, Math.ceil(total / limit)),
+  };
+}
+
+async function loadReviewsPage(
+  supabase: ReturnType<typeof getSupabaseAdmin>,
+  searchParams: URLSearchParams
+) {
+  const { page, limit, from, to } = parsePageParams(searchParams);
+  const search = searchParams.get('search')?.trim() || '';
+  const status = searchParams.get('status') || 'all';
+
+  let query = supabase
+    .from('reviews')
+    .select('id, name, role, review_text, stars, status, created_at', { count: 'exact' })
+    .order('created_at', { ascending: false });
+
+  if (status === 'approved') query = query.eq('status', 'approved');
+  else if (status === 'pending') query = query.eq('status', 'pending');
+  else if (status === 'rejected') query = query.eq('status', 'rejected');
+  else query = query.in('status', ['approved', 'pending', 'rejected']);
+
+  if (search) {
+    const safe = escapeIlike(search);
+    query = query.or(`name.ilike.%${safe}%,role.ilike.%${safe}%,review_text.ilike.%${safe}%`);
+  }
+
+  const { data, count, error } = await query.range(from, to);
+  if (error) throw error;
+
+  const items = (data ?? []).map((r) => ({
+    id: r.id,
+    name: r.name,
+    role: r.role,
+    text: r.review_text,
+    stars: r.stars,
+    status: r.status,
+    created_at: r.created_at,
+  }));
 
   const total = count ?? 0;
   return {
@@ -223,14 +358,23 @@ async function loadBookingsPage(
 ) {
   const { page, limit, from, to } = parsePageParams(searchParams);
   const search = searchParams.get('search')?.trim() || '';
+  const scope = searchParams.get('scope') || 'confirmed';
 
   let query = supabase
     .from('bookings')
     .select(
-      'id, dress_id, customer_name, customer_phone, customer_email, event_date, status, created_at',
+      'id, dress_id, customer_name, customer_phone, customer_email, event_date, status, amount_total, payment_method, created_at, dresses(name)',
       { count: 'exact' }
     )
     .order('created_at', { ascending: false });
+
+  if (scope === 'pending') {
+    query = query.in('status', ['pending_payment', 'awaiting_admin_approval']);
+  } else if (scope === 'confirmed') {
+    query = query.eq('status', 'confirmed');
+  } else if (scope === 'all') {
+    query = query.in('status', ['pending_payment', 'awaiting_admin_approval', 'confirmed', 'cancelled', 'failed']);
+  }
 
   if (search) {
     const safe = escapeIlike(search);
@@ -244,7 +388,7 @@ async function loadBookingsPage(
 
   const total = count ?? 0;
   return {
-    items: data ?? [],
+    items: (data ?? []).map(mapBookingRow),
     total,
     page,
     limit,
@@ -272,6 +416,9 @@ export async function GET(request: Request) {
     if (view === 'ratings') {
       return NextResponse.json(await loadRatingsPage(supabase, searchParams));
     }
+    if (view === 'reviews') {
+      return NextResponse.json(await loadReviewsPage(supabase, searchParams));
+    }
     if (view === 'bookings') {
       return NextResponse.json(await loadBookingsPage(supabase, searchParams));
     }
@@ -295,9 +442,15 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { type, id, action } = body as {
-      type: 'dress' | 'review' | 'dress_rating';
+      type: 'dress' | 'review' | 'dress_rating' | 'booking';
       id: string | number;
-      action: 'approve' | 'reject' | 'delete' | 'toggle_featured' | 'extend_featured';
+      action:
+        | 'approve'
+        | 'reject'
+        | 'delete'
+        | 'toggle_featured'
+        | 'extend_featured'
+        | 'approve_payment';
     };
 
     if (!type || !id || !action) {
@@ -305,6 +458,26 @@ export async function POST(request: Request) {
     }
 
     const supabase = getSupabaseAdmin();
+
+    if (type === 'booking' && action === 'approve_payment') {
+      const result = await confirmBookingPayment(supabase, Number(id), { notifyAdmin: false });
+      if ('error' in result && result.error) {
+        return NextResponse.json({ error: result.error }, { status: result.status || 400 });
+      }
+      return NextResponse.json({
+        success: true,
+        alreadyConfirmed: 'alreadyConfirmed' in result ? result.alreadyConfirmed : false,
+        dressName: 'dressName' in result ? result.dressName : undefined,
+      });
+    }
+
+    if (type === 'dress_rating' && action === 'approve') {
+      const result = await approveDressRating(supabase, id);
+      if ('error' in result && result.error) {
+        return NextResponse.json({ error: result.error }, { status: result.status || 400 });
+      }
+      return NextResponse.json({ success: true, alreadyApproved: result.alreadyApproved });
+    }
 
     if (type === 'dress_rating' && action === 'delete') {
       const { data: rating, error: fetchError } = await supabase

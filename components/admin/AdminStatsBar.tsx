@@ -7,8 +7,8 @@ type AdminStatsBarProps = {
 
 const cards = [
   { key: 'published', label: 'שמלות בקטלוג', tab: 'catalog', featured: 'all' as const },
-  { key: 'pendingDresses', label: 'ממתינות לאישור', tab: 'pending', featured: 'all' as const },
-  { key: 'featured', label: 'חשיפה מועדפת', tab: 'catalog', featured: 'yes' as const },
+  { key: 'pendingDresses', label: 'שמלות ממתינות', tab: 'pending', featured: 'all' as const },
+  { key: 'pendingPayments', label: 'ממתינות לתשלום', tab: 'pending_payments', featured: 'all' as const },
   { key: 'pendingRatings', label: 'דירוגים ממתינים', tab: 'ratings', featured: 'all' as const },
   { key: 'pendingReviews', label: 'תגובות ממתינות', tab: 'reviews', featured: 'all' as const },
 ] as const;
