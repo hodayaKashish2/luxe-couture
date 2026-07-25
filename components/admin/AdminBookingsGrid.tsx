@@ -54,8 +54,8 @@ export default function AdminBookingsGrid({
               title={dressLabel}
               line2={
                 <>
-                  העברה מ:{' '}
-                  <span dir="ltr" className="font-bold text-[#3d2f24]">
+                  <span className="block">העברה מ:</span>
+                  <span dir="ltr" className="block font-bold text-[#3d2f24] break-all">
                     {booking.customer_phone}
                   </span>
                 </>

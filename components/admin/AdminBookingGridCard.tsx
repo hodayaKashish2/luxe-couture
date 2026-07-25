@@ -41,7 +41,7 @@ export default function AdminBookingGridCard({
           <span className="text-[9px] text-[#9a7b4f] shrink-0">{isOpen ? '▲' : '▼'}</span>
           <div className="flex-1 min-w-0">
             <p className="font-bold text-[11px] text-[#3d2f24] line-clamp-2 leading-tight">{title}</p>
-            <p className="text-[9px] text-[#6e634c] mt-0.5 truncate">{line2}</p>
+            <div className="text-[9px] text-[#6e634c] mt-0.5 leading-snug">{line2}</div>
             {line3 && <p className="text-[9px] text-[#9a7b4f] mt-0.5 truncate">{line3}</p>}
           </div>
           {badge}
