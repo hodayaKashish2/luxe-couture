@@ -1,10 +1,10 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import AdminBookingsGrid from '@/components/admin/AdminBookingsGrid';
 import AdminDressCatalog from '@/components/admin/AdminDressCatalog';
 import AdminPendingComments from '@/components/admin/AdminPendingComments';
 import AdminPendingDressesGrid from '@/components/admin/AdminPendingDressesGrid';
-import AdminCollapsibleItem from '@/components/admin/AdminCollapsibleItem';
 import AdminCollapsibleSection from '@/components/admin/AdminCollapsibleSection';
 import AdminPagination from '@/components/admin/AdminPagination';
 import AdminStatsBar from '@/components/admin/AdminStatsBar';
@@ -15,7 +15,7 @@ import type {
   AdminOverview,
   AdminTab,
 } from '@/lib/admin-types';
-import { BOOKING_STATUS_LABELS, PAYMENT_METHOD_LABELS } from '@/lib/admin-types';
+import { BOOKING_STATUS_LABELS } from '@/lib/admin-types';
 
 const TABS: { id: AdminTab; label: string }[] = [
   { id: 'overview', label: 'סקירה' },
@@ -81,7 +81,7 @@ export default function AdminPage() {
         view: 'bookings',
         scope: 'confirmed',
         page: String(bookingsPage),
-        limit: '20',
+        limit: '48',
       });
       if (bookingsSearch) params.set('search', bookingsSearch);
       const response = await fetch(`/api/admin?${params}`, {
@@ -107,7 +107,7 @@ export default function AdminPage() {
         view: 'bookings',
         scope: 'pending',
         page: String(pendingPaymentsPage),
-        limit: '20',
+        limit: '48',
       });
       const response = await fetch(`/api/admin?${params}`, {
         headers: { 'x-admin-token': savedToken },
@@ -199,72 +199,8 @@ export default function AdminPage() {
     setTab(next);
   }
 
-  function renderPendingPaymentCard(booking: AdminBookingRow) {
-    return (
-      <AdminCollapsibleItem
-        key={booking.id}
-        title={booking.dress_name || `שמלה #${booking.dress_id}`}
-        subtitle={
-          <>
-            העברה מ:{' '}
-            <span dir="ltr" className="font-bold text-[#3d2f24]">
-              {booking.customer_phone}
-            </span>
-            {' · '}
-            {booking.customer_name} · {booking.event_date}
-          </>
-        }
-        badge={
-          <span className="text-[9px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full">
-            לאישור
-          </span>
-        }
-      >
-        <p className="text-xs text-[#6e634c]" dir="ltr">
-          {booking.customer_email}
-        </p>
-        {booking.amount_total != null && (
-          <p className="text-xs font-bold text-[#8b6508] mt-1">₪{booking.amount_total}</p>
-        )}
-        {booking.payment_method && (
-          <p className="text-xs text-[#6e634c] mt-1">
-            אמצעי תשלום: {PAYMENT_METHOD_LABELS[booking.payment_method] || booking.payment_method}
-          </p>
-        )}
-        <button
-          type="button"
-          onClick={() => handleAction('booking', booking.id, 'approve_payment')}
-          className="mt-3 px-4 py-2 bg-[#b8860b] text-white text-xs rounded-xl font-black"
-        >
-          אשרי תשלום
-        </button>
-      </AdminCollapsibleItem>
-    );
-  }
-
-  function renderBookingCard(booking: AdminBookingRow) {
-    return (
-      <AdminCollapsibleItem
-        key={booking.id}
-        title={booking.customer_name}
-        subtitle={`${booking.dress_name || `#${booking.dress_id}`} · ${booking.event_date}`}
-        badge={
-          <span className="text-[9px] font-bold text-green-800 bg-green-50 px-2 py-0.5 rounded-full">
-            אושר
-          </span>
-        }
-      >
-        <p className="text-xs text-[#6e634c]" dir="ltr">
-          {booking.customer_phone} · {booking.customer_email}
-        </p>
-        {booking.amount_total != null && (
-          <p className="text-xs font-bold text-[#8b6508] mt-1">₪{booking.amount_total}</p>
-        )}
-        <p className="text-[10px] text-[#9a7b4f] mt-1">
-          נוצר: {new Date(booking.created_at).toLocaleDateString('he-IL')}
-        </p>
-      </AdminCollapsibleItem>
-    );
+  async function approvePayment(id: number) {
+    return handleAction('booking', id, 'approve_payment');
   }
 
   return (
@@ -435,9 +371,11 @@ export default function AdminPage() {
                             </button>
                           }
                         >
-                          <div className="space-y-2">
-                            {overview.pendingPayments.slice(0, 5).map(renderPendingPaymentCard)}
-                          </div>
+                          <AdminBookingsGrid
+                            bookings={overview.pendingPayments.slice(0, 16)}
+                            variant="pending_payment"
+                            onApprovePayment={approvePayment}
+                          />
                         </AdminCollapsibleSection>
                       )}
 
@@ -582,16 +520,20 @@ export default function AdminPage() {
                 ) : pendingPayments.length === 0 ? (
                   <p className="text-xs text-[#6e634c]">אין הזמנות ממתינות לתשלום 🎉</p>
                 ) : (
-                  <div className="space-y-2">
-                    {pendingPayments.map(renderPendingPaymentCard)}
+                  <>
+                    <AdminBookingsGrid
+                      bookings={pendingPayments}
+                      variant="pending_payment"
+                      onApprovePayment={approvePayment}
+                    />
                     <AdminPagination
                       page={pendingPaymentsPage}
                       totalPages={pendingPaymentsTotalPages}
                       total={pendingPaymentsTotal}
-                      limit={20}
+                      limit={48}
                       onPageChange={setPendingPaymentsPage}
                     />
-                  </div>
+                  </>
                 )}
               </section>
             )}
@@ -632,16 +574,16 @@ export default function AdminPage() {
                 ) : bookings.length === 0 ? (
                   <p className="text-xs text-[#6e634c]">לא נמצאו הזמנות</p>
                 ) : (
-                  <div className="space-y-2">
-                    {bookings.map(renderBookingCard)}
+                  <>
+                    <AdminBookingsGrid bookings={bookings} variant="confirmed" />
                     <AdminPagination
                       page={bookingsPage}
                       totalPages={bookingsTotalPages}
                       total={bookingsTotal}
-                      limit={20}
+                      limit={48}
                       onPageChange={setBookingsPage}
                     />
-                  </div>
+                  </>
                 )}
               </section>
             )}
