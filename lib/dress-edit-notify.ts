@@ -1,7 +1,6 @@
+import { notifyDressSubmitted, type DressNotifyResult } from '@/lib/dress-submit-notify';
 import { resolveOwnerContact } from '@/lib/dress-approval-notify';
 import {
-  sendDressPendingAdminEmail,
-  sendDressPendingOwnerEmail,
   sendDressUpdatePendingAdminEmail,
   sendDressUpdatePendingOwnerEmail,
 } from '@/lib/email';
@@ -57,79 +56,78 @@ export async function resolveUpdateNotifyContact(
   return { email, name, phone };
 }
 
-/** Uses the same senders as new-dress submit, with update templates and submit fallback. */
+/** Same delivery path as new-dress submit, with update-specific templates first. */
 export async function sendDressUpdateEmails(
   supabase: SupabaseClient,
   user: SiteUser,
   dressRow: Record<string, unknown>,
   update: DressUpdateEmailParams
-) {
+): Promise<DressNotifyResult & { ownerEmail: string }> {
   const { email: ownerEmail, name: ownerName, phone: ownerPhone } =
     await resolveUpdateNotifyContact(supabase, user, dressRow);
 
   const resolvedOwnerEmail = (ownerEmail || user.email || String(dressRow.owner_email || '')).trim().toLowerCase();
 
-  let adminResult = await sendDressUpdatePendingAdminEmail({
+  const submitParams = {
     dressId: update.dressId,
     name: update.name,
     price: update.price,
     size: update.size,
     city: update.city,
-    color: update.color,
     ownerName,
     ownerPhone,
     ownerEmail: resolvedOwnerEmail,
     images: update.images,
-  });
-
-  if (!adminResult.success) {
-    adminResult = await sendDressPendingAdminEmail({
-      dressId: update.dressId,
-      name: `${update.name} (עדכון)`,
-      price: update.price,
-      size: update.size,
-      city: update.city,
-      ownerName,
-      ownerPhone,
-      ownerEmail: resolvedOwnerEmail,
-      images: update.images,
-    });
-  }
-
-  let ownerResult: { success: boolean; error?: string } = {
-    success: false,
-    error: 'אין כתובת מייל למשכירה',
   };
 
+  let adminOk = false;
+  let adminError: string | undefined;
+
+  const adminUpdate = await sendDressUpdatePendingAdminEmail({
+    ...submitParams,
+    color: update.color,
+  });
+
+  if (adminUpdate.success) {
+    adminOk = true;
+  } else {
+    const fallback = await notifyDressSubmitted({
+      ...submitParams,
+      name: `${update.name} (עדכון)`,
+    });
+    adminOk = fallback.adminOk;
+    adminError = adminUpdate.error || fallback.adminError;
+  }
+
+  let ownerOk = false;
+  let ownerError: string | undefined;
+
   if (resolvedOwnerEmail) {
-    ownerResult = await sendDressUpdatePendingOwnerEmail({
+    const ownerUpdate = await sendDressUpdatePendingOwnerEmail({
       to: resolvedOwnerEmail,
       ownerName,
       dressName: update.name,
     });
 
-    if (!ownerResult.success) {
-      ownerResult = await sendDressPendingOwnerEmail({
-        to: resolvedOwnerEmail,
-        ownerName,
-        dressName: update.name,
-      });
+    if (ownerUpdate.success) {
+      ownerOk = true;
+    } else {
+      const fallback = await notifyDressSubmitted(submitParams);
+      ownerOk = fallback.ownerOk;
+      ownerError = ownerUpdate.error || fallback.ownerError;
     }
+  } else {
+    ownerError = 'אין כתובת מייל למשכירה';
   }
 
-  if (!adminResult.success) {
-    console.error('Dress update admin email failed:', adminResult.error);
-  }
-  if (!ownerResult.success) {
-    console.error('Dress update owner email failed:', ownerResult.error);
-  }
+  if (!adminOk) console.error('Dress update admin email failed:', adminError);
+  if (!ownerOk) console.error('Dress update owner email failed:', ownerError);
 
   return {
     ownerEmail: resolvedOwnerEmail,
-    adminOk: adminResult.success,
-    ownerOk: ownerResult.success,
-    ok: adminResult.success || ownerResult.success,
-    adminError: adminResult.success ? undefined : adminResult.error,
-    ownerError: ownerResult.success ? undefined : ownerResult.error,
+    adminOk,
+    ownerOk,
+    adminError,
+    ownerError,
   };
 }

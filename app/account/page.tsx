@@ -150,7 +150,11 @@ function AccountPageContent() {
   const [profileSaving, setProfileSaving] = useState(false);
   const [cancellingId, setCancellingId] = useState<number | null>(null);
   const [toast, setToast] = useState<{ message: string; variant: SiteToastVariant } | null>(null);
-  const [editSuccessNotice, setEditSuccessNotice] = useState<{ dressName: string } | null>(null);
+  const [editSuccessNotice, setEditSuccessNotice] = useState<{
+    dressName: string;
+    pendingApproval?: boolean;
+    emailWarning?: string;
+  } | null>(null);
   const [editLoading, setEditLoading] = useState(false);
   const [editLoadError, setEditLoadError] = useState('');
   const editDressLoadRef = useRef<string | null>(null);
@@ -648,7 +652,14 @@ function AccountPageContent() {
       navigateToSection('rentals', { replace: true });
       void load();
 
-      setEditSuccessNotice({ dressName: editForm.name.trim() || editingDress.name });
+      setEditSuccessNotice({
+        dressName: editForm.name.trim() || editingDress.name,
+        pendingApproval: Boolean(data.pendingApproval),
+        emailWarning:
+          data.emailStatus && (!data.emailStatus.adminOk || !data.emailStatus.ownerOk)
+            ? 'שמרנו את העדכון, אבל לא הצלחנו לשלוח מייל. בדקי ספאם או פני להנהלה.'
+            : undefined,
+      });
     } else {
       setToast({ message: data.error || 'שגיאה בעדכון', variant: 'error' });
     }
@@ -1344,11 +1355,20 @@ function AccountPageContent() {
             dir="rtl"
           >
             <span className="text-4xl block mb-3">✨</span>
-            <h3 className="text-xl font-black text-[#3d2f24] mb-2">השמלה עודכנה!</h3>
+            <h3 className="text-xl font-black text-[#3d2f24] mb-2">
+              {editSuccessNotice.pendingApproval !== false ? 'העדכון נשלח לאישור!' : 'השמלה עודכנה!'}
+            </h3>
             <p className="text-sm text-[#6e634c] font-bold mb-1">{editSuccessNotice.dressName}</p>
-            <p className="text-sm text-[#5c5037] leading-relaxed mb-6">
-              השינויים נשמרו ומופיעים עכשיו בקטלוג. נשלח אלייך ואל ההנהלה מייל על העדכון.
+            <p className="text-sm text-[#5c5037] leading-relaxed mb-4">
+              {editSuccessNotice.pendingApproval !== false
+                ? 'העדכון נשלח לאישור ההנהלה. עד לאישור — בקטלוג תמשיך להופיע הגרסה הנוכחית. נעדכן אותך במייל כשיאושר.'
+                : 'השינויים נשמרו בהצלחה.'}
             </p>
+            {editSuccessNotice.emailWarning && (
+              <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-4">
+                {editSuccessNotice.emailWarning}
+              </p>
+            )}
             <button
               type="button"
               onClick={() => setEditSuccessNotice(null)}

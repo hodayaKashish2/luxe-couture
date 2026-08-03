@@ -3,7 +3,7 @@ import {
   sendDressPendingOwnerEmail,
 } from '@/lib/email';
 
-type DressSubmitNotifyParams = {
+export type DressSubmitNotifyParams = {
   dressId: string | number;
   name: string;
   price: number;
@@ -15,14 +15,26 @@ type DressSubmitNotifyParams = {
   images: string[];
 };
 
-export async function notifyDressSubmitted(params: DressSubmitNotifyParams) {
+export type DressNotifyResult = {
+  adminOk: boolean;
+  ownerOk: boolean;
+  adminError?: string;
+  ownerError?: string;
+};
+
+export async function notifyDressSubmitted(params: DressSubmitNotifyParams): Promise<DressNotifyResult> {
   const adminMail = await sendDressPendingAdminEmail(params);
   if (!adminMail.success) {
     console.error('Dress pending admin email failed:', adminMail.error);
   }
 
+  let ownerMail: { success: boolean; error?: string } = {
+    success: false,
+    error: params.ownerEmail?.trim() ? undefined : 'אין כתובת מייל למשכירה',
+  };
+
   if (params.ownerEmail?.trim()) {
-    const ownerMail = await sendDressPendingOwnerEmail({
+    ownerMail = await sendDressPendingOwnerEmail({
       to: params.ownerEmail,
       ownerName: params.ownerName,
       dressName: params.name,
@@ -31,4 +43,11 @@ export async function notifyDressSubmitted(params: DressSubmitNotifyParams) {
       console.error('Dress pending owner email failed:', ownerMail.error);
     }
   }
+
+  return {
+    adminOk: adminMail.success,
+    ownerOk: ownerMail.success,
+    adminError: adminMail.success ? undefined : adminMail.error,
+    ownerError: ownerMail.success ? undefined : ownerMail.error,
+  };
 }

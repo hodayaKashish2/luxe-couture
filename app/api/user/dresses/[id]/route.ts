@@ -4,8 +4,10 @@ import { userOwnsDress } from '@/lib/dress-ownership';
 import { sendDressUpdateEmails } from '@/lib/dress-edit-notify';
 import {
   buildEditFormFromDress,
+  buildPendingUpdatePayload,
   getDressColorFromRow,
   getLiveDressSnapshot,
+  isSchemaMissingPendingUpdate,
   mapOwnedDressForEdit,
   normalizeDressImages,
 } from '@/lib/dress-pending-update';
@@ -112,10 +114,14 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
     const condition = String(dressRow.condition || 'new');
     const descriptionInput = body.description !== undefined ? String(body.description).trim() : '';
-    const existingParts = String(dressRow.description || '').split('|').map((p: string) => p.trim());
+    const existingParts = String(dressRow.description || '')
+      .split('|')
+      .map((p: string) => p.trim())
+      .filter((p) => p && !p.startsWith('צבע:') && !p.startsWith('מצב:') && !p.includes('ניקוי יבש'));
+
     const baseDescription =
       descriptionInput ||
-      existingParts.find((p: string) => p && !p.startsWith('צבע:') && !p.startsWith('מצב:') && !p.includes('ניקוי יבש')) ||
+      existingParts[0] ||
       buildEditFormFromDress(live).description ||
       'אין תיאור זמין.';
 
@@ -138,33 +144,83 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     }
 
     updates.images = mergedImages;
-    updates.pending_update = null;
-    updates.pending_update_submitted_at = null;
 
     const supabase = getSupabaseAdmin();
-    let updateResult = await supabase.from('dresses').update(updates).eq('id', id);
+    const dressStatus = String(dressRow.status || '');
+    const pendingSnapshot = buildPendingUpdatePayload(dressRow, updates);
 
-    if (updateResult.error?.message?.includes('pending_update')) {
-      const { pending_update: _p, pending_update_submitted_at: _t, ...safeUpdates } = updates;
-      updateResult = await supabase.from('dresses').update(safeUpdates).eq('id', id);
+    if (dressStatus === 'approved') {
+      const pendingPayload = {
+        pending_update: pendingSnapshot,
+        pending_update_submitted_at: new Date().toISOString(),
+      };
+
+      const updateResult = await supabase.from('dresses').update(pendingPayload).eq('id', id);
+
+      if (updateResult.error?.message && isSchemaMissingPendingUpdate(updateResult.error.message)) {
+        return NextResponse.json(
+          {
+            error:
+              'חסרה עמודת pending_update ב-Supabase. הריצי את הקובץ supabase/upgrade-v9.sql ואז נסי שוב.',
+          },
+          { status: 503 }
+        );
+      }
+
+      if (updateResult.error) throw updateResult.error;
+
+      let emailStatus: Awaited<ReturnType<typeof sendDressUpdateEmails>> = {
+        ownerEmail: '',
+        adminOk: false,
+        ownerOk: false,
+      };
+      try {
+        emailStatus = await sendDressUpdateEmails(supabase, user, dressRow, {
+          dressId: id,
+          name: pendingSnapshot.name,
+          price: pendingSnapshot.price,
+          size: pendingSnapshot.size,
+          city: pendingSnapshot.city,
+          color: pendingSnapshot.color,
+          images: pendingSnapshot.images,
+        });
+      } catch (mailError) {
+        console.error('Dress update email error:', mailError);
+      }
+
+      return NextResponse.json({
+        success: true,
+        pendingApproval: true,
+        message: 'העדכון נשלח לאישור ההנהלה! בקטלוג תמשיך להופיע הגרסה הנוכחית עד האישור.',
+        emailStatus,
+      });
     }
 
-    if (updateResult.error) throw updateResult.error;
+    const { error } = await supabase.from('dresses').update(updates).eq('id', id);
+    if (error) throw error;
 
-    const emailStatus = await sendDressUpdateEmails(supabase, user, dressRow, {
-      dressId: id,
-      name: String(updates.name),
-      price: Number(updates.price),
-      size: String(updates.size),
-      city: String(updates.city),
-      color: resolvedColor,
-      images: mergedImages,
-    });
+    let emailStatus = { adminOk: false, ownerOk: false };
+    try {
+      emailStatus = await sendDressUpdateEmails(supabase, user, dressRow, {
+        dressId: id,
+        name: pendingSnapshot.name,
+        price: pendingSnapshot.price,
+        size: pendingSnapshot.size,
+        city: pendingSnapshot.city,
+        color: pendingSnapshot.color,
+        images: pendingSnapshot.images,
+      });
+    } catch (mailError) {
+      console.error('Dress update email error:', mailError);
+    }
 
     return NextResponse.json({
       success: true,
-      message: 'השמלה עודכנה בהצלחה!',
-      emailStatus: { ...emailStatus, ok: emailStatus.adminOk || emailStatus.ownerOk },
+      message:
+        dressStatus === 'pending'
+          ? 'השמלה עודכנה וממתינה לאישור ההנהלה'
+          : 'השמלה עודכנה בהצלחה',
+      emailStatus,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'שגיאה';
