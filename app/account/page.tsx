@@ -26,10 +26,10 @@ import { notifySiteAuthChange } from '@/lib/site-auth-events';
 import { accountSectionUrl, parseAccountSection } from '@/lib/account-section-url';
 import { navigateAccountHub } from '@/lib/account-hub-nav';
 import { dressPageUrl, ownerWhatsAppLink } from '@/lib/site-config';
-import { buildEditFormFromDress } from '@/lib/dress-pending-update';
+import { buildEditFormFromDress, normalizeDressImages } from '@/lib/dress-pending-update';
 import { formatAccountPhone } from '@/lib/dress-ownership';
 import { splitBookingsByEventDate } from '@/lib/booking-dates';
-import { fetchDressById, findDressInList, preloadDressesCatalog } from '@/lib/dress-api';
+import { fetchDressById, findDressInList, invalidateDressesCatalog, preloadDressesCatalog } from '@/lib/dress-api';
 import { useScrollToError } from '@/hooks/use-scroll-to-error';
 import type { Dress } from '@/lib/types';
 import type { SavedDress } from '@/lib/luxe-storage';
@@ -56,6 +56,14 @@ type RentalDress = {
   rental_count: number;
   booked_dates: string[];
   has_pending_update?: boolean;
+  form?: {
+    name: string;
+    price: string;
+    size: string;
+    city: string;
+    color: string;
+    description: string;
+  };
 };
 
 type BookingRow = {
@@ -143,6 +151,8 @@ function AccountPageContent() {
   const [cancellingId, setCancellingId] = useState<number | null>(null);
   const [toast, setToast] = useState<{ message: string; variant: SiteToastVariant } | null>(null);
   const [editSuccessNotice, setEditSuccessNotice] = useState<{ dressName: string } | null>(null);
+  const [editLoading, setEditLoading] = useState(false);
+  const [editLoadError, setEditLoadError] = useState('');
   const editDressLoadRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -318,31 +328,38 @@ function AccountPageContent() {
 
   const loadEditDress = useCallback(async (id: string) => {
     editDressLoadRef.current = id;
+    setEditLoading(true);
+    setEditLoadError('');
     setEditImages([]);
+    setEditingDress(null);
+
     const token = sessionStorage.getItem('site_token');
     try {
       const res = await fetch(`/api/user/dresses/${id}`, {
         headers: { 'x-user-token': token || '' },
+        cache: 'no-store',
       });
-      if (res.ok) {
-        const dress = (await res.json()) as RentalDress;
-        if (editDressLoadRef.current !== id) return;
-        setEditingDress(dress);
-        setEditForm(buildEditFormFromDress(dress));
-        setEditImages(Array.isArray(dress.images) ? [...dress.images] : []);
+      const dress = (await res.json()) as RentalDress & { error?: string };
+      if (editDressLoadRef.current !== id) return;
+
+      if (!res.ok) {
+        setEditLoadError(dress.error || 'לא הצלחנו לטעון את השמלה לעריכה');
         return;
       }
-    } catch {
-      // fallback below
-    }
 
-    const fallback = dresses.find((d) => d.id === id);
-    if (fallback && editDressLoadRef.current === id) {
-      setEditingDress(fallback);
-      setEditForm(buildEditFormFromDress(fallback));
-      setEditImages(Array.isArray(fallback.images) ? [...fallback.images] : []);
+      setEditingDress(dress);
+      setEditForm(dress.form ?? buildEditFormFromDress(dress));
+      setEditImages(normalizeDressImages(dress.images));
+    } catch {
+      if (editDressLoadRef.current === id) {
+        setEditLoadError('שגיאת רשת בטעינת השמלה');
+      }
+    } finally {
+      if (editDressLoadRef.current === id) {
+        setEditLoading(false);
+      }
     }
-  }, [dresses]);
+  }, []);
 
   useEffect(() => {
     if (!searchParams.get('rentalDress')) return;
@@ -355,6 +372,8 @@ function AccountPageContent() {
     } else if (section !== 'edit') {
       editDressLoadRef.current = null;
       setEditingDress(null);
+      setEditLoading(false);
+      setEditLoadError('');
     }
 
     if (viewDressId && (section === 'cart' || section === 'favorites' || section === 'rentals')) {
@@ -393,7 +412,7 @@ function AccountPageContent() {
       setDetailsDress(null);
       loadedViewDressRef.current = null;
     }
-  }, [section, dressId, viewDressId, dresses, detailsDress?.id, loadEditDress]);
+  }, [section, dressId, viewDressId, detailsDress?.id, loadEditDress]);
 
   async function cancelReservation(bookingId: number) {
     if (!confirm('לבטל את ההזמנה? התאריך ישוחרר לשוכרות אחרות.')) return;
@@ -605,6 +624,7 @@ function AccountPageContent() {
     });
     const data = await res.json();
     if (res.ok) {
+      invalidateDressesCatalog();
       editNewPreviews.forEach((url) => URL.revokeObjectURL(url));
       setEditNewFiles([]);
       setEditNewPreviews([]);
@@ -612,8 +632,19 @@ function AccountPageContent() {
       navigateToSection('rentals', { replace: true });
       void load();
 
+      const emailStatus = data.emailStatus as
+        | { adminOk?: boolean; ownerOk?: boolean; adminError?: string; ownerError?: string }
+        | undefined;
+
       if (data.pendingApproval) {
         setEditSuccessNotice({ dressName: editForm.name.trim() || editingDress.name });
+        if (emailStatus && (!emailStatus.adminOk || !emailStatus.ownerOk)) {
+          setToast({
+            message:
+              'העדכון נשמר, אבל ייתכן שלא נשלח מייל. בדקי גם בתיקיית הספאם או פני להנהלה.',
+            variant: 'error',
+          });
+        }
         return;
       }
 
@@ -621,6 +652,12 @@ function AccountPageContent() {
         message: data.message || 'השמלה עודכנה בהצלחה',
         variant: 'success',
       });
+      if (emailStatus && (!emailStatus.adminOk || !emailStatus.ownerOk)) {
+        setToast({
+          message: 'השמלה עודכנה, אבל שליחת המייל נכשלה. פני להנהלה אם לא קיבלת אישור.',
+          variant: 'error',
+        });
+      }
     } else {
       setToast({ message: data.error || 'שגיאה בעדכון', variant: 'error' });
     }
@@ -980,7 +1017,26 @@ function AccountPageContent() {
           </div>
         )}
 
-        {section === 'edit' && editingDress && (
+        {section === 'edit' && editLoading && (
+          <div className="bg-white rounded-2xl border border-[#eadaaf] p-8 text-center">
+            <p className="text-sm text-[#6e634c] animate-pulse">טוען פרטי שמלה לעריכה...</p>
+          </div>
+        )}
+
+        {section === 'edit' && !editLoading && editLoadError && (
+          <div className="bg-white rounded-2xl border border-red-200 p-6 text-center space-y-3">
+            <p className="text-sm text-red-700 font-bold">{editLoadError}</p>
+            <button
+              type="button"
+              onClick={() => dressId && void loadEditDress(dressId)}
+              className="px-4 py-2 bg-[#b8860b] text-white rounded-xl text-xs font-bold"
+            >
+              נסי שוב
+            </button>
+          </div>
+        )}
+
+        {section === 'edit' && editingDress && !editLoading && (
           <form onSubmit={submitEditDress} className="bg-white rounded-2xl border border-[#eadaaf] p-4 sm:p-6 space-y-4">
             <button
               type="button"

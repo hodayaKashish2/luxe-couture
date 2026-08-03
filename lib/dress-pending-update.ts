@@ -15,21 +15,62 @@ export type PendingUpdatePayload = {
   includes_dry_cleaning?: boolean;
 };
 
+export function normalizeDressImages(raw: unknown): string[] {
+  let list: string[] = [];
+
+  if (Array.isArray(raw)) {
+    list = raw.map(String);
+  } else if (typeof raw === 'string') {
+    const trimmed = raw.trim();
+    if (!trimmed) {
+      return [];
+    }
+    if (trimmed.startsWith('[')) {
+      try {
+        const parsed = JSON.parse(trimmed) as unknown;
+        if (Array.isArray(parsed)) list = parsed.map(String);
+      } catch {
+        list = [trimmed];
+      }
+    } else {
+      list = [trimmed];
+    }
+  }
+
+  const seen = new Set<string>();
+  return list
+    .map((url) => url.trim())
+    .filter((url) => {
+      if (!url || seen.has(url)) return false;
+      seen.add(url);
+      return true;
+    });
+}
+
 export function getDressColorFromRow(dress: { color?: string | null; description?: string | null }) {
   const direct = String(dress.color || '').trim();
   if (direct) return direct;
 
-  const part = String(dress.description || '')
+  const description = String(dress.description || '');
+
+  const pipePart = description
     .split('|')
     .map((p) => p.trim())
-    .find((p) => /^צבע\s*:/i.test(p));
+    .find((p) => /^צבע\s*:/i.test(p) || /^color\s*:/i.test(p));
 
-  return part ? part.replace(/^צבע\s*:\s*/i, '').trim() : '';
+  if (pipePart) {
+    return pipePart.replace(/^(?:צבע|color)\s*:\s*/i, '').trim();
+  }
+
+  const inlineMatch = description.match(/(?:צבע|color)\s*[:\-–]\s*([^|]+)/i);
+  if (inlineMatch?.[1]) return inlineMatch[1].trim();
+
+  return '';
 }
 
 /** Published row as shown in the catalog (ignores pending_update drafts). */
 export function getLiveDressSnapshot(dress: Record<string, unknown>) {
-  const liveImages = Array.isArray(dress.images) ? dress.images.map(String) : [];
+  const liveImages = normalizeDressImages(dress.images);
   const liveColor = getDressColorFromRow({
     color: dress.color as string | null,
     description: dress.description as string | null,
@@ -67,7 +108,7 @@ export function buildEditFormFromDress(dress: {
 
 export function getEffectiveDressSnapshot(dress: Record<string, unknown>) {
   const pending = dress.pending_update as PendingUpdatePayload | null | undefined;
-  const liveImages = Array.isArray(dress.images) ? dress.images.map(String) : [];
+  const liveImages = normalizeDressImages(dress.images);
   const liveColor = getDressColorFromRow({
     color: dress.color as string | null,
     description: dress.description as string | null,
@@ -96,13 +137,14 @@ export function getEffectiveDressSnapshot(dress: Record<string, unknown>) {
     city: pending.city || String(dress.city ?? ''),
     color: pendingColor || liveColor,
     description: pending.description || String(dress.description ?? ''),
-    images: pending.images?.length ? pending.images.map(String) : liveImages,
+    images: pending.images?.length ? normalizeDressImages(pending.images) : liveImages,
   };
 }
 
 export function mapOwnedDressForEdit(row: Record<string, unknown>) {
   const pending = row.pending_update as PendingUpdatePayload | null | undefined;
   const snapshot = getLiveDressSnapshot(row);
+  const form = buildEditFormFromDress(snapshot);
 
   return {
     id: String(row.id),
@@ -110,13 +152,14 @@ export function mapOwnedDressForEdit(row: Record<string, unknown>) {
     price: snapshot.price,
     size: snapshot.size,
     city: snapshot.city,
-    color: snapshot.color,
+    color: form.color,
     description: snapshot.description,
     status: String(row.status),
     images: snapshot.images,
     rental_count: Number(row.rental_count || 0),
     has_pending_update: Boolean(pending),
     booked_dates: [] as string[],
+    form,
   };
 }
 
@@ -164,7 +207,7 @@ export function buildPendingUpdatePayload(
     color: submittedColor || base.color || '',
     description: String(updates.description ?? base.description ?? '').trim(),
     images: Array.isArray(updates.images)
-      ? updates.images.map(String)
+      ? normalizeDressImages(updates.images)
       : base.images,
     event_type: String(updates.event_type ?? dress.event_type ?? '').trim() || undefined,
     condition: String(updates.condition ?? dress.condition ?? 'new').trim(),

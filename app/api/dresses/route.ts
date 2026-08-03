@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getDressColorFromRow } from '@/lib/dress-pending-update';
+import { getDressColorFromRow, normalizeDressImages } from '@/lib/dress-pending-update';
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server';
 
 function mapDress(row: Record<string, unknown>, bookedDates: string[] = []) {
@@ -18,7 +18,7 @@ function mapDress(row: Record<string, unknown>, bookedDates: string[] = []) {
     size: row.size,
     condition: row.condition,
     description: row.description,
-    images: Array.isArray(row.images) ? row.images : [],
+    images: normalizeDressImages(row.images),
     city: row.city || '',
     color,
     event_type: row.event_type || '',
