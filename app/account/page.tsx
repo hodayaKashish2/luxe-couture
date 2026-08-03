@@ -318,6 +318,7 @@ function AccountPageContent() {
 
   const loadEditDress = useCallback(async (id: string) => {
     editDressLoadRef.current = id;
+    setEditImages([]);
     const token = sessionStorage.getItem('site_token');
     try {
       const res = await fetch(`/api/user/dresses/${id}`, {
@@ -550,12 +551,12 @@ function AccountPageContent() {
   }
 
   function startEditDress(dress: RentalDress) {
+    setEditImages([]);
     setEditNewFiles([]);
     editNewPreviews.forEach((url) => URL.revokeObjectURL(url));
     setEditNewPreviews([]);
     if (editFileInputRef.current) editFileInputRef.current.value = '';
     navigateToSection('edit', { dressId: dress.id });
-    void loadEditDress(dress.id);
   }
 
   function handleEditImageUpload(e: React.ChangeEvent<HTMLInputElement>) {

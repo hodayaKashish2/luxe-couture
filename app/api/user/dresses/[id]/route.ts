@@ -4,7 +4,7 @@ import { userOwnsDress } from '@/lib/dress-ownership';
 import {
   buildPendingUpdatePayload,
   getDressColorFromRow,
-  getEffectiveDressSnapshot,
+  getLiveDressSnapshot,
   isSchemaMissingPendingUpdate,
   mapOwnedDressForEdit,
 } from '@/lib/dress-pending-update';
@@ -133,7 +133,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     }
 
     if (keptImages !== null || newFiles.length > 0) {
-      const existing = keptImages ?? getEffectiveDressSnapshot(dress).images;
+      const existing = keptImages ?? getLiveDressSnapshot(dress).images;
       const uploaded = newFiles.length > 0 ? await uploadDressImages(newFiles) : [];
       const merged = [...existing, ...uploaded];
 

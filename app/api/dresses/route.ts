@@ -1,10 +1,15 @@
 import { NextResponse } from 'next/server';
+import { getDressColorFromRow } from '@/lib/dress-pending-update';
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server';
 
 function mapDress(row: Record<string, unknown>, bookedDates: string[] = []) {
   const ratingCount = Number(row.rating_count || 0);
   const ratingSum = Number(row.rating_sum || 0);
   const ratingAvg = ratingCount > 0 ? Math.round((ratingSum / ratingCount) * 10) / 10 : 0;
+  const color = getDressColorFromRow({
+    color: row.color as string | null,
+    description: row.description as string | null,
+  });
 
   return {
     id: String(row.id),
@@ -15,7 +20,7 @@ function mapDress(row: Record<string, unknown>, bookedDates: string[] = []) {
     description: row.description,
     images: Array.isArray(row.images) ? row.images : [],
     city: row.city || '',
-    color: row.color || '',
+    color,
     event_type: row.event_type || '',
     owner_name: row.owner_name || '',
     owner_phone: row.owner_phone || '',

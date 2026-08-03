@@ -22,9 +22,28 @@ export function getDressColorFromRow(dress: { color?: string | null; description
   const part = String(dress.description || '')
     .split('|')
     .map((p) => p.trim())
-    .find((p) => p.startsWith('צבע:'));
+    .find((p) => /^צבע\s*:/i.test(p));
 
-  return part ? part.replace(/^צבע:\s*/, '').trim() : '';
+  return part ? part.replace(/^צבע\s*:\s*/i, '').trim() : '';
+}
+
+/** Published row as shown in the catalog (ignores pending_update drafts). */
+export function getLiveDressSnapshot(dress: Record<string, unknown>) {
+  const liveImages = Array.isArray(dress.images) ? dress.images.map(String) : [];
+  const liveColor = getDressColorFromRow({
+    color: dress.color as string | null,
+    description: dress.description as string | null,
+  });
+
+  return {
+    name: String(dress.name ?? ''),
+    price: Number(dress.price ?? 0),
+    size: String(dress.size ?? ''),
+    city: String(dress.city ?? ''),
+    color: liveColor,
+    description: String(dress.description ?? ''),
+    images: liveImages,
+  };
 }
 
 export function buildEditFormFromDress(dress: {
@@ -83,7 +102,7 @@ export function getEffectiveDressSnapshot(dress: Record<string, unknown>) {
 
 export function mapOwnedDressForEdit(row: Record<string, unknown>) {
   const pending = row.pending_update as PendingUpdatePayload | null | undefined;
-  const snapshot = getEffectiveDressSnapshot(row);
+  const snapshot = getLiveDressSnapshot(row);
 
   return {
     id: String(row.id),
@@ -132,7 +151,8 @@ export function buildPendingUpdatePayload(
   dress: Record<string, unknown>,
   updates: Record<string, unknown>
 ): PendingUpdatePayload {
-  const base = getEffectiveDressSnapshot(dress);
+  const isApprovedLive = String(dress.status || '') === 'approved';
+  const base = isApprovedLive ? getLiveDressSnapshot(dress) : getEffectiveDressSnapshot(dress);
   const submittedColor =
     updates.color !== undefined ? String(updates.color).trim() : undefined;
 
