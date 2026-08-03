@@ -562,38 +562,23 @@ export async function sendDressApprovedOwnerEmail(params: {
 
 export async function sendDressUpdatePendingAdminEmail(params: {
   dressId: string | number;
-  name: string;
-  price: number;
-  size: string;
-  city: string;
-  color?: string;
+  dressName: string;
   ownerName: string;
-  ownerPhone: string;
   ownerEmail: string;
-  images: string[];
+  diff: import('@/lib/dress-pending-update').DressUpdateDiff;
 }) {
   const adminUrl = `${getAppUrl()}/admin`;
-  const imagesHtml = params.images
-    .slice(0, 4)
-    .map(
-      (url) =>
-        `<img src="${url}" alt="" style="width:120px;height:160px;object-fit:contain;border-radius:8px;border:1px solid #eadaaf;margin:4px;" />`
-    )
-    .join('');
+  const diffHtml = buildDressUpdateDiffHtml(params.diff);
 
   return sendAdminEmail(
-    `✏️ עדכון שמלה לאישור: ${params.name}`,
+    `✏️ עדכון שמלה לאישור: ${params.dressName}`,
     `
       <div dir="rtl" style="font-family:sans-serif;max-width:640px;margin:0 auto;padding:24px;border:1px solid #eadaaf;border-radius:16px;background:#fffdf8;">
         <h2 style="color:#3d2f24;margin-top:0;">עדכון שמלה ממתין לאישור</h2>
-        <p style="line-height:1.7;color:#554a33;">משכירה עדכנה שמלה שכבר מפורסמת באתר. לאחר האישור — הפרטים החדשים יחליפו את הגרסה הנוכחית.</p>
-        <p><strong>שם:</strong> ${params.name}</p>
-        <p><strong>מחיר:</strong> ₪${params.price}</p>
-        <p><strong>מידה:</strong> ${params.size}</p>
-        <p><strong>עיר:</strong> ${params.city}</p>
-        ${params.color ? `<p><strong>צבע:</strong> ${params.color}</p>` : ''}
-        <p><strong>משכירה:</strong> ${params.ownerName} · ${params.ownerPhone}${params.ownerEmail ? ` · ${params.ownerEmail}` : ''}</p>
-        ${imagesHtml ? `<div style="margin:16px 0;">${imagesHtml}</div>` : ''}
+        <p style="line-height:1.7;color:#554a33;">משכירה <strong>${escapeHtml(params.ownerName)}</strong> עדכנה את השמלה <strong>${escapeHtml(params.dressName)}</strong>.</p>
+        <p style="line-height:1.7;color:#554a33;">להלן <strong>רק השינויים</strong> שביקשה (בקטלוג עדיין מופיעה הגרסה הנוכחית):</p>
+        ${diffHtml}
+        <p style="line-height:1.7;color:#554a33;margin-top:16px;"><strong>משכירה:</strong> ${escapeHtml(params.ownerName)}${params.ownerEmail ? ` · ${escapeHtml(params.ownerEmail)}` : ''}</p>
         <p style="margin-top:24px;">
           <a href="${adminUrl}" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
             לאישור בדף הניהול →
@@ -608,19 +593,24 @@ export async function sendDressUpdatePendingOwnerEmail(params: {
   to: string;
   ownerName: string;
   dressName: string;
+  diff: import('@/lib/dress-pending-update').DressUpdateDiff;
 }) {
   if (!params.to?.trim()) {
     return { success: false as const, error: 'אין כתובת מייל למשכירה' };
   }
+
+  const diffHtml = buildDressUpdateDiffHtml(params.diff);
 
   return sendEmailTo(
     params.to,
     `✏️ העדכון התקבל: ${params.dressName}`,
     `
       <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #eadaaf;border-radius:16px;background:#fffdf8;">
-        <h2 style="color:#3d2f24;margin-top:0;">שלום ${params.ownerName}!</h2>
-        <p style="line-height:1.7;color:#554a33;">קיבלנו את העדכון לשמלה <strong>${params.dressName}</strong> והוא ממתין לאישור ההנהלה.</p>
-        <p style="line-height:1.7;color:#554a33;">עד לאישור — בקטלוג תמשיך להופיע הגרסה הקודמת. נעדכן אותך במייל ברגע שהעדכון יאושר.</p>
+        <h2 style="color:#3d2f24;margin-top:0;">שלום ${escapeHtml(params.ownerName)}!</h2>
+        <p style="line-height:1.7;color:#554a33;">קיבלנו את העדכון לשמלה <strong>${escapeHtml(params.dressName)}</strong> והוא ממתין לאישור ההנהלה.</p>
+        <p style="line-height:1.7;color:#554a33;">זה מה שביקשת לשנות:</p>
+        ${diffHtml}
+        <p style="line-height:1.7;color:#554a33;margin-top:16px;">עד לאישור — בקטלוג תמשיך להופיע הגרסה הקודמת. נעדכן אותך במייל ברגע שהעדכון יאושר.</p>
         <p style="margin-top:24px;">
           <a href="${getAppUrl()}/account?section=rentals" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
             לאזור האישי →
@@ -629,6 +619,69 @@ export async function sendDressUpdatePendingOwnerEmail(params: {
       </div>
     `
   );
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function dressUpdateImageTag(url: string, label?: string) {
+  const caption = label ? `<p style="font-size:11px;color:#8b6508;margin:4px 0 0;">${escapeHtml(label)}</p>` : '';
+  return `<div style="display:inline-block;text-align:center;margin:4px;">
+    <img src="${url}" alt="" style="width:100px;height:130px;object-fit:contain;border-radius:8px;border:1px solid #eadaaf;background:#fff;" />
+    ${caption}
+  </div>`;
+}
+
+function buildDressUpdateDiffHtml(diff: import('@/lib/dress-pending-update').DressUpdateDiff) {
+  const { changes, imageChanges } = diff;
+  const hasFieldChanges = changes.length > 0;
+  const hasImageChanges = imageChanges.removed.length > 0 || imageChanges.added.length > 0;
+
+  if (!hasFieldChanges && !hasImageChanges) {
+    return '<p style="line-height:1.7;color:#554a33;">לא זוהו שינויים בפרטים.</p>';
+  }
+
+  let html = '<div style="margin:16px 0;padding:16px;border:1px solid #eadaaf;border-radius:12px;background:#fff;">';
+
+  if (hasFieldChanges) {
+    html += '<p style="margin:0 0 8px;font-weight:bold;color:#3d2f24;">שינויים בפרטים:</p><ul style="margin:0;padding-right:20px;line-height:1.8;color:#554a33;">';
+    for (const change of changes) {
+      html += `<li><strong>${escapeHtml(change.label)}:</strong> ${escapeHtml(change.before)} → <strong>${escapeHtml(change.after)}</strong></li>`;
+    }
+    html += '</ul>';
+  }
+
+  if (hasImageChanges) {
+    html += '<p style="margin:16px 0 8px;font-weight:bold;color:#3d2f24;">שינויים בתמונות:</p>';
+
+    const isSingleSwap =
+      imageChanges.removed.length === 1 &&
+      imageChanges.added.length === 1;
+
+    if (isSingleSwap) {
+      html += `<p style="line-height:1.7;color:#554a33;margin:0 0 8px;">הוחלפה תמונה:</p>
+        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;">
+          ${dressUpdateImageTag(imageChanges.removed[0], 'לפני')}
+          <span style="font-size:20px;color:#b8860b;">←</span>
+          ${dressUpdateImageTag(imageChanges.added[0], 'אחרי')}
+        </div>`;
+    } else {
+      if (imageChanges.removed.length > 0) {
+        html += `<p style="line-height:1.7;color:#554a33;margin:8px 0 4px;">תמונות שהוסרו:</p><div>${imageChanges.removed.map((url) => dressUpdateImageTag(url)).join('')}</div>`;
+      }
+      if (imageChanges.added.length > 0) {
+        html += `<p style="line-height:1.7;color:#554a33;margin:8px 0 4px;">תמונות חדשות:</p><div>${imageChanges.added.map((url) => dressUpdateImageTag(url)).join('')}</div>`;
+      }
+    }
+  }
+
+  html += '</div>';
+  return html;
 }
 
 export async function sendDressUpdateApprovedOwnerEmail(params: {

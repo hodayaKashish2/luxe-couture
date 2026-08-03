@@ -5,6 +5,8 @@ import { sendDressUpdateEmails } from '@/lib/dress-edit-notify';
 import {
   buildEditFormFromDress,
   buildPendingUpdatePayload,
+  computeDressUpdateDiff,
+  filterKeptLiveImages,
   getDressColorFromRow,
   getLiveDressSnapshot,
   isSchemaMissingPendingUpdate,
@@ -134,7 +136,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       .join(' | ');
 
     const uploaded = newFiles.length > 0 ? await uploadDressImages(newFiles) : [];
-    const mergedImages = normalizeDressImages([...keptImages, ...uploaded]);
+    const validatedKept = filterKeptLiveImages(keptImages, live.images);
+    const mergedImages = normalizeDressImages([...validatedKept, ...uploaded]);
 
     if (mergedImages.length === 0) {
       return NextResponse.json({ error: 'חייבת להישאר לפחות תמונה אחת' }, { status: 400 });
@@ -148,6 +151,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const supabase = getSupabaseAdmin();
     const dressStatus = String(dressRow.status || '');
     const pendingSnapshot = buildPendingUpdatePayload(dressRow, updates);
+    const updateDiff = computeDressUpdateDiff(live, pendingSnapshot);
 
     if (dressStatus === 'approved') {
       const pendingPayload = {
@@ -178,11 +182,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         emailStatus = await sendDressUpdateEmails(supabase, user, dressRow, {
           dressId: id,
           name: pendingSnapshot.name,
-          price: pendingSnapshot.price,
-          size: pendingSnapshot.size,
-          city: pendingSnapshot.city,
-          color: pendingSnapshot.color,
-          images: pendingSnapshot.images,
+          ownerName: String(dressRow.owner_name || user.displayName || 'משכירה'),
+          diff: updateDiff,
         });
       } catch (mailError) {
         console.error('Dress update email error:', mailError);
@@ -204,11 +205,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       emailStatus = await sendDressUpdateEmails(supabase, user, dressRow, {
         dressId: id,
         name: pendingSnapshot.name,
-        price: pendingSnapshot.price,
-        size: pendingSnapshot.size,
-        city: pendingSnapshot.city,
-        color: pendingSnapshot.color,
-        images: pendingSnapshot.images,
+        ownerName: String(dressRow.owner_name || user.displayName || 'משכירה'),
+        diff: updateDiff,
       });
     } catch (mailError) {
       console.error('Dress update email error:', mailError);

@@ -158,6 +158,7 @@ function AccountPageContent() {
   const [editLoading, setEditLoading] = useState(false);
   const [editLoadError, setEditLoadError] = useState('');
   const editDressLoadRef = useRef<string | null>(null);
+  const editImagesTouchedRef = useRef(false);
 
   useEffect(() => {
     async function loadRatedDressIds() {
@@ -361,7 +362,9 @@ function AccountPageContent() {
 
       setEditingDress(dress);
       setEditForm(dress.form ?? buildEditFormFromDress(dress));
-      setEditImages(normalizeDressImages(dress.images));
+      if (!editImagesTouchedRef.current) {
+        setEditImages(normalizeDressImages(dress.images));
+      }
     } catch {
       if (editDressLoadRef.current === id && !seed) {
         setEditLoadError('שגיאת רשת בטעינת השמלה');
@@ -583,6 +586,7 @@ function AccountPageContent() {
   }
 
   function startEditDress(dress: RentalDress) {
+    editImagesTouchedRef.current = false;
     setEditNewFiles([]);
     editNewPreviews.forEach((url) => URL.revokeObjectURL(url));
     setEditNewPreviews([]);
@@ -600,6 +604,7 @@ function AccountPageContent() {
 
   function handleEditImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     if (!e.target.files) return;
+    editImagesTouchedRef.current = true;
     const files = Array.from(e.target.files);
     const previews = files.map((file) => URL.createObjectURL(file));
     setEditNewFiles((prev) => [...prev, ...files]);
@@ -607,10 +612,12 @@ function AccountPageContent() {
   }
 
   function removeEditExistingImage(url: string) {
+    editImagesTouchedRef.current = true;
     setEditImages((prev) => prev.filter((img) => img !== url));
   }
 
   function removeEditNewImage(index: number) {
+    editImagesTouchedRef.current = true;
     URL.revokeObjectURL(editNewPreviews[index]);
     setEditNewFiles((prev) => prev.filter((_, i) => i !== index));
     setEditNewPreviews((prev) => prev.filter((_, i) => i !== index));
@@ -655,10 +662,20 @@ function AccountPageContent() {
       setEditSuccessNotice({
         dressName: editForm.name.trim() || editingDress.name,
         pendingApproval: Boolean(data.pendingApproval),
-        emailWarning:
-          data.emailStatus && (!data.emailStatus.adminOk || !data.emailStatus.ownerOk)
-            ? 'שמרנו את העדכון, אבל לא הצלחנו לשלוח מייל. בדקי ספאם או פני להנהלה.'
-            : undefined,
+        emailWarning: (() => {
+          const status = data.emailStatus;
+          if (!status) return undefined;
+          const parts: string[] = [];
+          if (!status.adminOk) parts.push('מייל להנהלה לא נשלח');
+          if (!status.ownerOk) {
+            parts.push(
+              status.ownerError?.includes('אין כתובת')
+                ? 'חסר מייל בפרופיל — עדכני באזור האישי'
+                : 'מייל אליך (משכירה) לא נשלח — בדקי ספאם'
+            );
+          }
+          return parts.length ? `${parts.join('. ')}. השמירה הצליחה.` : undefined;
+        })(),
       });
     } else {
       setToast({ message: data.error || 'שגיאה בעדכון', variant: 'error' });

@@ -47,6 +47,91 @@ export function normalizeDressImages(raw: unknown): string[] {
     });
 }
 
+export function normalizeImageUrl(url: string) {
+  try {
+    return decodeURIComponent(url.trim()).replace(/\/$/, '');
+  } catch {
+    return url.trim().replace(/\/$/, '');
+  }
+}
+
+/** Only keep image URLs that exist on the live published dress row. */
+export function filterKeptLiveImages(kept: string[], liveImages: string[]) {
+  const liveSet = new Set(liveImages.map(normalizeImageUrl));
+  return normalizeDressImages(kept).filter((url) => liveSet.has(normalizeImageUrl(url)));
+}
+
+export type DressFieldChange = {
+  field: string;
+  label: string;
+  before: string;
+  after: string;
+};
+
+export type DressUpdateDiff = {
+  changes: DressFieldChange[];
+  imageChanges: {
+    removed: string[];
+    added: string[];
+  };
+};
+
+export function computeDressUpdateDiff(
+  before: ReturnType<typeof getLiveDressSnapshot>,
+  after: PendingUpdatePayload
+): DressUpdateDiff {
+  const changes: DressFieldChange[] = [];
+  const labels: Record<string, string> = {
+    name: 'שם',
+    price: 'מחיר',
+    size: 'מידה',
+    city: 'עיר',
+    color: 'צבע',
+    description: 'תיאור',
+  };
+
+  for (const key of ['name', 'size', 'city', 'color'] as const) {
+    const prev = String(before[key] ?? '').trim();
+    const next = String(after[key] ?? '').trim();
+    if (prev !== next) {
+      changes.push({ field: key, label: labels[key], before: prev || '—', after: next || '—' });
+    }
+  }
+
+  if (Number(before.price) !== Number(after.price)) {
+    changes.push({
+      field: 'price',
+      label: labels.price,
+      before: `₪${before.price}`,
+      after: `₪${after.price}`,
+    });
+  }
+
+  const beforeDesc = getCleanDescription(String(before.description || ''));
+  const afterDesc = getCleanDescription(String(after.description || ''));
+  if (beforeDesc !== afterDesc) {
+    changes.push({
+      field: 'description',
+      label: labels.description,
+      before: beforeDesc || '—',
+      after: afterDesc || '—',
+    });
+  }
+
+  const beforeImages = normalizeDressImages(before.images);
+  const afterImages = normalizeDressImages(after.images);
+  const afterSet = new Set(afterImages.map(normalizeImageUrl));
+  const beforeSet = new Set(beforeImages.map(normalizeImageUrl));
+
+  return {
+    changes,
+    imageChanges: {
+      removed: beforeImages.filter((url) => !afterSet.has(normalizeImageUrl(url))),
+      added: afterImages.filter((url) => !beforeSet.has(normalizeImageUrl(url))),
+    },
+  };
+}
+
 export function getDressColorFromRow(dress: { color?: string | null; description?: string | null }) {
   const direct = String(dress.color || '').trim();
   if (direct) return direct;

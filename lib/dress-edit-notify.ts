@@ -1,5 +1,6 @@
-import { notifyDressSubmitted, type DressNotifyResult } from '@/lib/dress-submit-notify';
 import { resolveOwnerContact } from '@/lib/dress-approval-notify';
+import type { DressNotifyResult } from '@/lib/dress-submit-notify';
+import type { DressUpdateDiff } from '@/lib/dress-pending-update';
 import {
   sendDressUpdatePendingAdminEmail,
   sendDressUpdatePendingOwnerEmail,
@@ -10,12 +11,13 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 export type DressUpdateEmailParams = {
   dressId: string | number;
   name: string;
-  price: number;
-  size: string;
-  city: string;
-  color?: string;
-  images: string[];
+  ownerName: string;
+  diff: DressUpdateDiff;
 };
+
+function isValidEmail(email: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+}
 
 export async function resolveUpdateNotifyContact(
   supabase: SupabaseClient,
@@ -33,9 +35,16 @@ export async function resolveUpdateNotifyContact(
       .eq('id', user.userId)
       .maybeSingle();
 
-    if (dbUser?.email?.trim()) email = dbUser.email.trim().toLowerCase();
+    if (dbUser?.email?.trim() && isValidEmail(dbUser.email)) {
+      email = dbUser.email.trim().toLowerCase();
+    }
     if (dbUser?.display_name) name = dbUser.display_name;
     if (dbUser?.phone) phone = String(dbUser.phone);
+  }
+
+  const directOwnerEmail = String(dressRow.owner_email || '').trim().toLowerCase();
+  if (!email && directOwnerEmail && isValidEmail(directOwnerEmail)) {
+    email = directOwnerEmail;
   }
 
   if (!email) {
@@ -56,78 +65,52 @@ export async function resolveUpdateNotifyContact(
   return { email, name, phone };
 }
 
-/** Same delivery path as new-dress submit, with update-specific templates first. */
 export async function sendDressUpdateEmails(
   supabase: SupabaseClient,
   user: SiteUser,
   dressRow: Record<string, unknown>,
   update: DressUpdateEmailParams
 ): Promise<DressNotifyResult & { ownerEmail: string }> {
-  const { email: ownerEmail, name: ownerName, phone: ownerPhone } =
-    await resolveUpdateNotifyContact(supabase, user, dressRow);
+  const { email: ownerEmail, name: ownerName } = await resolveUpdateNotifyContact(
+    supabase,
+    user,
+    dressRow
+  );
 
-  const resolvedOwnerEmail = (ownerEmail || user.email || String(dressRow.owner_email || '')).trim().toLowerCase();
+  const resolvedOwnerEmail = ownerEmail.trim().toLowerCase();
 
-  const submitParams = {
+  const adminMail = await sendDressUpdatePendingAdminEmail({
     dressId: update.dressId,
-    name: update.name,
-    price: update.price,
-    size: update.size,
-    city: update.city,
+    dressName: update.name,
     ownerName,
-    ownerPhone,
     ownerEmail: resolvedOwnerEmail,
-    images: update.images,
-  };
-
-  let adminOk = false;
-  let adminError: string | undefined;
-
-  const adminUpdate = await sendDressUpdatePendingAdminEmail({
-    ...submitParams,
-    color: update.color,
+    diff: update.diff,
   });
-
-  if (adminUpdate.success) {
-    adminOk = true;
-  } else {
-    const fallback = await notifyDressSubmitted({
-      ...submitParams,
-      name: `${update.name} (עדכון)`,
-    });
-    adminOk = fallback.adminOk;
-    adminError = adminUpdate.error || fallback.adminError;
-  }
 
   let ownerOk = false;
   let ownerError: string | undefined;
 
-  if (resolvedOwnerEmail) {
-    const ownerUpdate = await sendDressUpdatePendingOwnerEmail({
+  if (resolvedOwnerEmail && isValidEmail(resolvedOwnerEmail)) {
+    const ownerMail = await sendDressUpdatePendingOwnerEmail({
       to: resolvedOwnerEmail,
       ownerName,
       dressName: update.name,
+      diff: update.diff,
     });
-
-    if (ownerUpdate.success) {
-      ownerOk = true;
-    } else {
-      const fallback = await notifyDressSubmitted(submitParams);
-      ownerOk = fallback.ownerOk;
-      ownerError = ownerUpdate.error || fallback.ownerError;
-    }
+    ownerOk = ownerMail.success;
+    ownerError = ownerMail.success ? undefined : ownerMail.error;
   } else {
-    ownerError = 'אין כתובת מייל למשכירה';
+    ownerError = 'אין כתובת מייל תקינה למשכירה — עדכני מייל בפרופיל';
   }
 
-  if (!adminOk) console.error('Dress update admin email failed:', adminError);
+  if (!adminMail.success) console.error('Dress update admin email failed:', adminMail.error);
   if (!ownerOk) console.error('Dress update owner email failed:', ownerError);
 
   return {
     ownerEmail: resolvedOwnerEmail,
-    adminOk,
+    adminOk: adminMail.success,
     ownerOk,
-    adminError,
+    adminError: adminMail.success ? undefined : adminMail.error,
     ownerError,
   };
 }
