@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import AdminCollapsibleSection, { ADMIN_DRESS_GRID_CLASS } from '@/components/admin/AdminCollapsibleSection';
+import AdminDressDetailPanel from '@/components/admin/AdminDressDetailPanel';
 import AdminDressGridCard from '@/components/admin/AdminDressGridCard';
 import AdminPagination from '@/components/admin/AdminPagination';
 import type { AdminDressRow, AdminDressSort } from '@/lib/admin-types';
@@ -223,39 +224,37 @@ export default function AdminDressCatalog({
                       ) : undefined
                     }
                   >
-                    <p className="text-[9px] text-[#6e634c]">
-                      #{dress.id} · {dress.size || '—'} · {dress.city || '—'}
-                    </p>
-                    <p className="text-[9px] text-[#6e634c]">משכירה: {dress.owner_name || '—'}</p>
-                    <p className="text-[9px] text-[#8b6508]">
-                      {isFeatured ? 'חשיפה מועדפת' : 'רגילה'}
-                    </p>
-                    <div className="flex flex-wrap gap-1 pt-1">
-                      <button
-                        type="button"
-                        disabled={disabled}
-                        onClick={() => runAction(dress.id, 'toggle_featured')}
-                        className="px-1.5 py-1 text-[9px] rounded-lg border border-[#decfa8] font-bold disabled:opacity-50"
-                      >
-                        {isFeatured ? 'בטל' : 'חשיפה'}
-                      </button>
-                      <button
-                        type="button"
-                        disabled={disabled}
-                        onClick={() => runAction(dress.id, 'extend_featured')}
-                        className="px-1.5 py-1 text-[9px] rounded-lg border border-[#decfa8] disabled:opacity-50"
-                      >
-                        +30
-                      </button>
-                      <button
-                        type="button"
-                        disabled={disabled}
-                        onClick={() => runAction(dress.id, 'delete')}
-                        className="px-1.5 py-1 text-[9px] rounded-lg bg-red-600 text-white font-bold disabled:opacity-50"
-                      >
-                        הסר
-                      </button>
-                    </div>
+                    <AdminDressDetailPanel dress={dress}>
+                      <p className="text-[9px] text-[#8b6508]">
+                        {isFeatured ? 'חשיפה מועדפת' : 'רגילה'}
+                      </p>
+                      <div className="flex flex-wrap gap-1 pt-1">
+                        <button
+                          type="button"
+                          disabled={disabled}
+                          onClick={() => runAction(dress.id, 'toggle_featured')}
+                          className="px-1.5 py-1 text-[9px] rounded-lg border border-[#decfa8] font-bold disabled:opacity-50"
+                        >
+                          {isFeatured ? 'בטל' : 'חשיפה'}
+                        </button>
+                        <button
+                          type="button"
+                          disabled={disabled}
+                          onClick={() => runAction(dress.id, 'extend_featured')}
+                          className="px-1.5 py-1 text-[9px] rounded-lg border border-[#decfa8] disabled:opacity-50"
+                        >
+                          +30
+                        </button>
+                        <button
+                          type="button"
+                          disabled={disabled}
+                          onClick={() => runAction(dress.id, 'delete')}
+                          className="px-1.5 py-1 text-[9px] rounded-lg bg-red-600 text-white font-bold disabled:opacity-50"
+                        >
+                          הסר
+                        </button>
+                      </div>
+                    </AdminDressDetailPanel>
                   </AdminDressGridCard>
                 );
               })}

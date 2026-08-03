@@ -4,8 +4,16 @@ export type AdminDressRow = {
   price: number;
   size: string;
   city: string;
+  color?: string;
+  description?: string;
+  condition?: string;
+  event_type?: string;
+  deposit?: number;
+  pickup_method?: string;
+  includes_dry_cleaning?: boolean;
   owner_name: string;
   owner_phone?: string;
+  owner_email?: string;
   images: string[];
   created_at: string;
   featured_boost?: number;

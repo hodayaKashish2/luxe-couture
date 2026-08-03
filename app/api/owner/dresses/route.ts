@@ -1,11 +1,15 @@
 import { NextResponse } from 'next/server';
-import { sendDressPendingAdminEmail } from '@/lib/email';
+import { notifyDressSubmitted } from '@/lib/dress-submit-notify';
 import { appendContactEmailToDescription } from '@/lib/dress-contact';
 import { getUserFromRequest } from '@/lib/user-auth';
 import { formatAccountPhone } from '@/lib/dress-ownership';
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server';
+import {
+  MAX_DRESS_IMAGES,
+  validateAddDressImageMeta,
+  validateAddDressServerInput,
+} from '@/lib/validate-add-dress-server';
 
-const MAX_IMAGES = 6;
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
 function conditionLabel(condition: string) {
@@ -62,32 +66,34 @@ export async function POST(request: Request) {
     const files = formData.getAll('images').filter((item): item is File => item instanceof File && item.size > 0);
 
     const ownerPhone = formatAccountPhone(owner.phone);
-
-    if (!name || !size || Number.isNaN(price) || !city) {
-      return NextResponse.json({ error: 'חסרים שדות חובה' }, { status: 400 });
-    }
-
     if (!ownerPhone) {
-      return NextResponse.json({ error: 'יש להזין מספר טלפון' }, { status: 400 });
-    }
-
-    if (files.length === 0) {
-      return NextResponse.json({ error: 'יש להעלות לפחות תמונה אחת' }, { status: 400 });
-    }
-
-    for (const file of files) {
-      if (!file.type.startsWith('image/')) {
-        return NextResponse.json({ error: `הקובץ ${file.name} אינו תמונה` }, { status: 400 });
-      }
-      if (file.size > MAX_FILE_SIZE) {
-        return NextResponse.json(
-          { error: `הקובץ ${file.name} כבד מדי — מקסימום 5MB לתמונה` },
-          { status: 400 }
-        );
-      }
+      return NextResponse.json({ error: 'יש להשלים מספר טלפון בפרופיל לפני הוספת שמלה' }, { status: 400 });
     }
 
     const contactEmail = (ownerEmail || owner.email || '').trim().toLowerCase();
+    const validationError = validateAddDressServerInput({
+      name,
+      price: String(price),
+      size,
+      city,
+      color,
+      owner_phone: ownerPhone,
+      owner_email: contactEmail,
+      requireEmail: true,
+      imageCount: files.length,
+      maxImages: MAX_DRESS_IMAGES,
+    });
+    if (validationError) {
+      return NextResponse.json({ error: validationError }, { status: 400 });
+    }
+
+    for (const file of files) {
+      const imageError = validateAddDressImageMeta(file);
+      if (imageError) {
+        return NextResponse.json({ error: imageError }, { status: 400 });
+      }
+    }
+
     const descriptionParts = [
       descriptionInput || 'אין תיאור זמין.',
       color ? `צבע: ${color}` : '',
@@ -140,7 +146,7 @@ export async function POST(request: Request) {
 
     if (error) throw error;
 
-    const mail = await sendDressPendingAdminEmail({
+    await notifyDressSubmitted({
       dressId: data!.id,
       name,
       price,
@@ -151,9 +157,6 @@ export async function POST(request: Request) {
       ownerEmail: contactEmail,
       images: imageUrls,
     });
-    if (!mail.success) {
-      console.error('Dress pending admin email failed:', mail.error);
-    }
 
     return NextResponse.json({
       success: true,

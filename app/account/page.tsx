@@ -302,22 +302,34 @@ function AccountPageContent() {
       setEditingDress(null);
     }
 
-    if (viewDressId && (section === 'cart' || section === 'favorites')) {
+    if (viewDressId && (section === 'cart' || section === 'favorites' || section === 'rentals')) {
       pendingViewDressRef.current = null;
-      preloadDressesCatalog().then((list) => {
-        const cached = findDressInList(list, viewDressId);
-        if (cached) {
-          setDetailsDress(cached);
-          return;
-        }
-        fetchDressById(viewDressId).then((dress) => {
-          if (dress) setDetailsDress(dress);
+      const openFromCatalog = () =>
+        preloadDressesCatalog().then((list) => {
+          const cached = findDressInList(list, viewDressId);
+          if (cached) {
+            setDetailsDress(cached);
+            return;
+          }
+          fetchDressById(viewDressId).then((dress) => {
+            if (dress) setDetailsDress(dress);
+          });
         });
-      });
-    } else if (section !== 'cart' && section !== 'favorites') {
+
+      if (section === 'rentals') {
+        const owned = dresses.find((d) => d.id === viewDressId);
+        if (owned) {
+          setDetailsDress(owned as unknown as Dress);
+        } else {
+          void openFromCatalog();
+        }
+      } else {
+        void openFromCatalog();
+      }
+    } else if (section !== 'cart' && section !== 'favorites' && section !== 'rentals') {
       setDetailsDress(null);
       pendingViewDressRef.current = null;
-    } else if (!viewDressId && !pendingViewDressRef.current) {
+    } else if (!viewDressId && !pendingViewDressRef.current && section !== 'rentals') {
       setDetailsDress(null);
     }
   }, [section, dressId, viewDressId, dresses]);
@@ -415,6 +427,8 @@ function AccountPageContent() {
         city: addForm.city,
         color: addForm.color,
         owner_phone: addForm.owner_phone,
+        owner_email: user?.email || profileForm.email,
+        requireEmail: true,
       },
       addFiles.length
     );
@@ -1140,13 +1154,13 @@ function AccountPageContent() {
           onToggleFavorite={() => toggleFavorite(detailsDress)}
           onReserve={() => {
             const dressId = detailsDress.id;
-            setDetailsReturnDressId(dressId);
+            setDetailsReturnDressId(dressId, 'account');
             closeDetailsDress();
             router.push(`/?reserve=${encodeURIComponent(dressId)}`);
           }}
           onCoordinate={() => {
             const dressId = detailsDress.id;
-            setDetailsReturnDressId(dressId);
+            setDetailsReturnDressId(dressId, 'account');
             closeDetailsDress();
             router.push(`/?coordinate=${encodeURIComponent(dressId)}`);
           }}

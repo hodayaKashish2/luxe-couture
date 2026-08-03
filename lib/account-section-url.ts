@@ -31,7 +31,7 @@ export function accountSectionUrl(
   if (section === 'hub') return '/account';
   const params = new URLSearchParams({ section });
   if (section === 'edit' && options?.dressId) params.set('dressId', options.dressId);
-  if (options?.viewDress && (section === 'cart' || section === 'favorites')) {
+  if (options?.viewDress && (section === 'cart' || section === 'favorites' || section === 'rentals')) {
     params.set('viewDress', options.viewDress);
   }
   return `/account?${params.toString()}`;

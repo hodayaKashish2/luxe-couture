@@ -457,6 +457,33 @@ export async function sendDressPendingAdminEmail(params: {
   );
 }
 
+export async function sendDressPendingOwnerEmail(params: {
+  to: string;
+  ownerName: string;
+  dressName: string;
+}) {
+  if (!params.to?.trim()) {
+    return { success: false as const, error: 'אין כתובת מייל למשכירה' };
+  }
+
+  return sendEmailTo(
+    params.to,
+    `👗 השמלה התקבלה: ${params.dressName}`,
+    `
+      <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #eadaaf;border-radius:16px;background:#fffdf8;">
+        <h2 style="color:#3d2f24;margin-top:0;">שלום ${params.ownerName}!</h2>
+        <p style="line-height:1.7;color:#554a33;">קיבלנו את השמלה <strong>${params.dressName}</strong> והיא ממתינה לאישור ההנהלה.</p>
+        <p style="line-height:1.7;color:#554a33;">נעדכן אותך במייל ברגע שהשמלה תאושר ותופיע בקטלוג האתר.</p>
+        <p style="margin-top:24px;">
+          <a href="${getAppUrl()}/account?section=rentals" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
+            לאזור האישי →
+          </a>
+        </p>
+      </div>
+    `
+  );
+}
+
 export async function sendDressApprovedOwnerEmail(params: {
   to: string;
   ownerName: string;

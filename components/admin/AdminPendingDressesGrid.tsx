@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { ADMIN_DRESS_GRID_CLASS } from '@/components/admin/AdminCollapsibleSection';
+import AdminDressDetailPanel from '@/components/admin/AdminDressDetailPanel';
 import AdminDressGridCard from '@/components/admin/AdminDressGridCard';
 import type { AdminDressRow } from '@/lib/admin-types';
 
@@ -43,28 +44,26 @@ export default function AdminPendingDressesGrid({ dresses, onAction }: AdminPend
               </span>
             }
           >
-            <p className="text-[9px] text-[#6e634c]">
-              #{dress.id} · {dress.size} · {dress.city}
-            </p>
-            <p className="text-[9px] text-[#6e634c]">משכירה: {dress.owner_name}</p>
-            <div className="flex flex-wrap gap-1 pt-1">
-              <button
-                type="button"
-                disabled={disabled}
-                onClick={() => run(dress.id, 'approve')}
-                className="px-2 py-1 text-[9px] rounded-lg bg-[#b8860b] text-white font-bold disabled:opacity-50"
-              >
-                אשר
-              </button>
-              <button
-                type="button"
-                disabled={disabled}
-                onClick={() => run(dress.id, 'reject')}
-                className="px-2 py-1 text-[9px] rounded-lg border border-red-300 text-red-600 disabled:opacity-50"
-              >
-                דחה
-              </button>
-            </div>
+            <AdminDressDetailPanel dress={dress}>
+              <div className="flex flex-wrap gap-1 pt-1">
+                <button
+                  type="button"
+                  disabled={disabled}
+                  onClick={() => run(dress.id, 'approve')}
+                  className="px-2 py-1 text-[9px] rounded-lg bg-[#b8860b] text-white font-bold disabled:opacity-50"
+                >
+                  אשר
+                </button>
+                <button
+                  type="button"
+                  disabled={disabled}
+                  onClick={() => run(dress.id, 'reject')}
+                  className="px-2 py-1 text-[9px] rounded-lg border border-red-300 text-red-600 disabled:opacity-50"
+                >
+                  דחה
+                </button>
+              </div>
+            </AdminDressDetailPanel>
           </AdminDressGridCard>
         );
       })}

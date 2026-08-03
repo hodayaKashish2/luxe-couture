@@ -36,7 +36,7 @@ import { OFF_PLATFORM_COORDINATE_NOTICE } from '@/lib/commission';
 import { fetchDressById, findDressInList } from '@/lib/dress-api';
 import { dressBelongsToCustomer } from '@/lib/self-dress-guard';
 import { dressPageUrl, ownerWhatsAppLink, WHATSAPP_LINK } from '@/lib/site-config';
-import { consumeDetailsReturnDressId, setDetailsReturnDressId } from '@/lib/details-return';
+import { consumeDetailsReturnDressId, peekDetailsReturnSource, setDetailsReturnDressId } from '@/lib/details-return';
 import { Dress, Review, SortOption, EVENT_TYPES, PICKUP_METHODS } from '@/lib/types';
 import type { SavedDress } from '@/lib/luxe-storage';
 
@@ -865,6 +865,20 @@ export default function Home() {
     setCoordinateChecked(false);
     setCoordinateDisclaimerAccepted(false);
   };
+
+  const closeOwnDressNotice = useCallback(() => {
+    setOwnDressNotice(null);
+    const source = peekDetailsReturnSource();
+    const returnId = consumeDetailsReturnDressId();
+    if (source === 'account' && returnId) {
+      window.location.href = `/account?section=rentals&viewDress=${encodeURIComponent(returnId)}`;
+      return;
+    }
+    if (returnId) {
+      const dress = findDressById(returnId);
+      if (dress) setDetailsDress(dress);
+    }
+  }, [findDressById]);
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-[#fbf8f0] via-[#f3ebd6] to-[#e8dcbd] text-[#332c1e] pb-24 relative w-full max-w-[100vw]" dir="rtl">
@@ -1842,7 +1856,7 @@ export default function Home() {
         <OwnDressNoticeModal
           dressName={ownDressNotice.dressName}
           variant={ownDressNotice.variant}
-          onClose={() => setOwnDressNotice(null)}
+          onClose={closeOwnDressNotice}
         />
       )}
 

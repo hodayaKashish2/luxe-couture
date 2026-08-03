@@ -113,7 +113,9 @@ async function loadOverview(supabase: ReturnType<typeof getSupabaseAdmin>) {
       .gte('event_date', retentionCutoffDateString()),
     supabase
       .from('dresses')
-      .select('id, name, price, size, city, owner_name, status, created_at, images')
+      .select(
+        'id, name, price, size, city, color, description, condition, event_type, deposit, pickup_method, includes_dry_cleaning, owner_name, owner_phone, owner_email, status, created_at, images'
+      )
       .eq('status', 'pending')
       .order('created_at', { ascending: false })
       .limit(100),
@@ -211,7 +213,7 @@ async function loadDressesPage(
   let query = supabase
     .from('dresses')
     .select(
-      'id, name, price, size, city, owner_name, owner_phone, created_at, images, featured_boost, featured_until, rental_count, rating_count',
+      'id, name, price, size, city, color, description, condition, event_type, deposit, pickup_method, includes_dry_cleaning, owner_name, owner_phone, owner_email, created_at, images, featured_boost, featured_until, rental_count, rating_count',
       { count: 'exact' }
     )
     .eq('status', 'approved');
