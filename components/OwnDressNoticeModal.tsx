@@ -6,7 +6,7 @@ import { OWN_DRESS_MESSAGES } from '@/lib/self-dress-guard';
 
 type OwnDressNoticeModalProps = {
   dressName: string;
-  variant: 'booking' | 'coordinate';
+  variant: 'booking' | 'coordinate' | 'rating';
   onClose: () => void;
 };
 
@@ -35,12 +35,22 @@ export default function OwnDressNoticeModal({
           <h3 className="text-lg font-black text-neutral-900">{copy.title}</h3>
           <p className="text-xs text-[#6e634c] font-bold">{dressName}</p>
           <p className="text-sm text-[#5c5037] leading-relaxed">{copy.body}</p>
-          <Link
-            href="/account?section=rentals"
-            className="inline-block mt-2 px-5 py-3 bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white text-xs font-black rounded-xl"
-          >
-            לשמלות שלי →
-          </Link>
+          {variant === 'rating' ? (
+            <button
+              type="button"
+              onClick={onClose}
+              className="inline-block mt-2 px-5 py-3 bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white text-xs font-black rounded-xl"
+            >
+              הבנתי, תודה
+            </button>
+          ) : (
+            <Link
+              href="/account?section=rentals"
+              className="inline-block mt-2 px-5 py-3 bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white text-xs font-black rounded-xl"
+            >
+              לשמלות שלי →
+            </Link>
+          )}
         </div>
       </div>
     </div>

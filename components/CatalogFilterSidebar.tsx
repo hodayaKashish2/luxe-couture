@@ -10,7 +10,7 @@ type CatalogFilterSidebarProps = CatalogFilterPanelProps & {
 };
 
 const STICKY_PANEL =
-  'sticky top-3 z-20 w-full flex flex-col bg-white border border-[#eadaaf] rounded-xl shadow-sm overflow-hidden self-start';
+  'sticky top-3 z-20 w-full flex flex-col bg-white border border-[#eadaaf] rounded-xl shadow-sm overflow-hidden h-full min-h-[calc(100dvh-1.5rem)] max-h-[calc(100dvh-1.5rem)]';
 
 export default function CatalogFilterSidebar({
   collapsed,
@@ -21,12 +21,12 @@ export default function CatalogFilterSidebar({
 }: CatalogFilterSidebarProps) {
   if (collapsed) {
     return (
-      <div className="hidden lg:block self-start w-11 shrink-0">
+      <div className="hidden lg:block self-stretch w-11 shrink-0">
         <aside className={STICKY_PANEL}>
           <button
             type="button"
             onClick={onToggleCollapse}
-            className="w-full min-h-[12rem] flex flex-col items-center justify-center gap-3 py-6 bg-[#fffdf8] text-[#8b6508] hover:bg-[#f4ebd4] transition-colors"
+            className="h-full w-full flex flex-col items-center justify-center gap-3 py-6 bg-[#fffdf8] text-[#8b6508] hover:bg-[#f4ebd4] transition-colors"
             aria-label="פתח סינון"
             title="פתח סינון"
           >
@@ -51,7 +51,7 @@ export default function CatalogFilterSidebar({
   }
 
   return (
-    <div className="hidden lg:block self-start w-56 xl:w-60 shrink-0">
+    <div className="hidden lg:block self-stretch w-56 xl:w-60 shrink-0">
       <aside className={STICKY_PANEL}>
         <div className="shrink-0 flex items-center justify-between gap-2 px-3 py-2.5 border-b border-[#f0e6cc] bg-[#fffdf8]">
           <div className="min-w-0">
@@ -71,7 +71,7 @@ export default function CatalogFilterSidebar({
           </button>
         </div>
 
-        <div className="px-3 pb-3">
+        <div className="flex-1 min-h-0 px-3 pb-3">
           <CatalogFilterPanel {...filterProps} showSort={false} compact />
         </div>
 

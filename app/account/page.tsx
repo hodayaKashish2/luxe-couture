@@ -87,7 +87,7 @@ function AccountPageContent() {
   const [ratedDressIds, setRatedDressIds] = useState<Set<string>>(() => new Set());
   const [ownDressNotice, setOwnDressNotice] = useState<{
     dressName: string;
-    variant: 'booking' | 'coordinate';
+    variant: 'booking' | 'coordinate' | 'rating';
   } | null>(null);
   const [user, setUser] = useState<AccountUser | null>(() => {
     const stored = getStoredSiteUser();
@@ -623,17 +623,13 @@ function AccountPageContent() {
     });
   }
 
-  function canRateDress(dress: Dress) {
-    return !isOwnDressForUser(dress) && !ratedDressIds.has(dress.id);
-  }
-
   function tryRateDress(dress: Dress) {
     if (isOwnDressForUser(dress)) {
-      setToast({ message: 'לא ניתן לדרג שמלה שפרסמת בעצמך', variant: 'error' });
+      setOwnDressNotice({ dressName: dress.name, variant: 'rating' });
       return;
     }
     if (ratedDressIds.has(dress.id)) {
-      setToast({ message: 'כבר דירגת את השמלה הזו', variant: 'error' });
+      setToast({ message: 'כבר דירגת את השמלה הזו — תודה על המשוב!', variant: 'error' });
       return;
     }
     setRateDress(dress);
@@ -1234,7 +1230,7 @@ function AccountPageContent() {
             closeDetailsDress();
             router.push(`/?coordinate=${encodeURIComponent(dressId)}`);
           }}
-          onRate={canRateDress(detailsDress) ? () => tryRateDress(detailsDress) : undefined}
+          onRate={() => tryRateDress(detailsDress)}
           onShare={() => {
             void shareDress(detailsDress);
           }}

@@ -20,6 +20,7 @@ import SavedDressList from '@/components/SavedDressList';
 import DressSizeInput from '@/components/DressSizeInput';
 import BookingPaymentStep from '@/components/BookingPaymentStep';
 import OwnDressNoticeModal from '@/components/OwnDressNoticeModal';
+import LoginRequiredNoticeModal from '@/components/LoginRequiredNoticeModal';
 import type { PaymentMethod } from '@/lib/payment-methods';
 import { FAQS } from '@/lib/constants';
 import { validateAddDressForm, validateDressImageFiles } from '@/lib/form-validation';
@@ -149,8 +150,10 @@ export default function Home() {
   const [orderOutcome, setOrderOutcome] = useState<'confirmed' | 'payment_reported' | null>(null);
   const [ownDressNotice, setOwnDressNotice] = useState<{
     dressName: string;
-    variant: 'booking' | 'coordinate';
+    variant: 'booking' | 'coordinate' | 'rating';
   } | null>(null);
+  const [loginRequiredNotice, setLoginRequiredNotice] = useState<'rate' | 'review' | null>(null);
+  const [loginRequiredNext, setLoginRequiredNext] = useState('/');
 
   useEffect(() => {
     if (!isLoggedIn()) {
@@ -479,6 +482,11 @@ export default function Home() {
 
   const handleReviewSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isLoggedIn()) {
+      setLoginRequiredNext(typeof window !== 'undefined' ? `${window.location.pathname}${window.location.search}` : '/');
+      setLoginRequiredNotice('review');
+      return;
+    }
     if (!newReview.name.trim() || !newReview.text.trim()) {
       alert('אנא מלאי שם ותוכן תגובה');
       return;
@@ -609,30 +617,35 @@ export default function Home() {
     });
   }, []);
 
-  const canRateDress = useCallback(
-    (dress: Dress) => !isOwnDress(dress) && !ratedDressIds.has(dress.id),
-    [isOwnDress, ratedDressIds]
-  );
-
   const tryRateDress = useCallback(
     (dress: Dress) => {
       if (!isLoggedIn()) {
-        openAuthModal({ reason: 'rate', next: `/?dress=${dress.id}` });
+        setLoginRequiredNext(`/?dress=${dress.id}`);
+        setLoginRequiredNotice('rate');
         return;
       }
       if (isOwnDress(dress)) {
-        showToast('לא ניתן לדרג שמלה שפרסמת בעצמך', 'error');
+        setOwnDressNotice({ dressName: dress.name, variant: 'rating' });
         return;
       }
       if (ratedDressIds.has(dress.id)) {
-        showToast('כבר דירגת את השמלה הזו', 'error');
+        showToast('כבר דירגת את השמלה הזו — תודה על המשוב!', 'error');
         return;
       }
       setDetailsReturnDressId(dress.id);
       setRateDress(dress);
     },
-    [isOwnDress, openAuthModal, ratedDressIds, showToast]
+    [isOwnDress, ratedDressIds, showToast]
   );
+
+  const openAddReviewForm = useCallback(() => {
+    if (!isLoggedIn()) {
+      setLoginRequiredNext(typeof window !== 'undefined' ? `${window.location.pathname}${window.location.search}` : '/');
+      setLoginRequiredNotice('review');
+      return;
+    }
+    setIsAddReviewOpen(true);
+  }, []);
 
   const tryReserveDress = (dress: Dress, imageIndex?: number) => {
     if (isOwnDress(dress)) {
@@ -1049,7 +1062,7 @@ export default function Home() {
           </div>
         )}
 
-        <div className="lg:grid lg:grid-cols-[auto_minmax(0,1fr)] lg:gap-4 lg:items-start">
+        <div className="lg:grid lg:grid-cols-[auto_minmax(0,1fr)] lg:gap-4 lg:items-stretch">
           <CatalogFilterSidebar
             collapsed={filtersSidebarCollapsed}
             onToggleCollapse={() => setFiltersSidebarCollapsed((v) => !v)}
@@ -1448,7 +1461,7 @@ export default function Home() {
           <h2 className="text-3xl font-serif italic text-neutral-900 mt-1">מה המשתמשות מספרות</h2>
           <div className="w-12 h-[1.5px] bg-[#d4af37] mx-auto mt-3"></div>
           <button
-            onClick={() => setIsAddReviewOpen(true)}
+            onClick={openAddReviewForm}
             className="mt-5 px-5 py-2.5 bg-gradient-to-r from-[#d4af37] to-[#b8860b] hover:from-[#b8860b] hover:to-[#8b6508] text-white rounded-xl text-xs font-bold transition-all shadow-md"
           >
             ✍️ הוסיפי תגובה
@@ -1811,7 +1824,7 @@ export default function Home() {
             openCoordinate(detailsDress);
             setDetailsDress(null);
           }}
-          onRate={canRateDress(detailsDress) ? () => tryRateDress(detailsDress) : undefined}
+          onRate={() => tryRateDress(detailsDress)}
           onShare={() => {
             void shareDress(detailsDress);
           }}
@@ -1941,6 +1954,14 @@ export default function Home() {
           dressName={ownDressNotice.dressName}
           variant={ownDressNotice.variant}
           onClose={closeOwnDressNotice}
+        />
+      )}
+
+      {loginRequiredNotice && (
+        <LoginRequiredNoticeModal
+          context={loginRequiredNotice}
+          nextPath={loginRequiredNext}
+          onClose={() => setLoginRequiredNotice(null)}
         />
       )}
 
