@@ -648,18 +648,7 @@ function AccountPageContent() {
       navigateToSection('rentals', { replace: true });
       void load();
 
-      const emailStatus = data.emailStatus as
-        | { adminOk?: boolean; ownerOk?: boolean; adminError?: string; ownerError?: string }
-        | undefined;
-
       setEditSuccessNotice({ dressName: editForm.name.trim() || editingDress.name });
-
-      if (emailStatus && (!emailStatus.adminOk || !emailStatus.ownerOk)) {
-        setToast({
-          message: 'השמלה עודכנה, אבל שליחת המייל נכשלה. פני להנהלה אם לא קיבלת אישור.',
-          variant: 'error',
-        });
-      }
     } else {
       setToast({ message: data.error || 'שגיאה בעדכון', variant: 'error' });
     }

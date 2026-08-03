@@ -164,7 +164,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     return NextResponse.json({
       success: true,
       message: 'השמלה עודכנה בהצלחה!',
-      emailStatus,
+      emailStatus: { ...emailStatus, ok: emailStatus.adminOk || emailStatus.ownerOk },
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'שגיאה';

@@ -128,6 +128,7 @@ export async function sendDressUpdateEmails(
     ownerEmail: resolvedOwnerEmail,
     adminOk: adminResult.success,
     ownerOk: ownerResult.success,
+    ok: adminResult.success || ownerResult.success,
     adminError: adminResult.success ? undefined : adminResult.error,
     ownerError: ownerResult.success ? undefined : ownerResult.error,
   };
