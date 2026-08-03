@@ -52,17 +52,18 @@ export function getDressColorFromRow(dress: { color?: string | null; description
   if (direct) return direct;
 
   const description = String(dress.description || '');
-
-  const pipePart = description
-    .split('|')
+  const parts = description
+    .split(/[|·\n]/)
     .map((p) => p.trim())
-    .find((p) => /^צבע\s*:/i.test(p) || /^color\s*:/i.test(p));
+    .filter(Boolean);
+
+  const pipePart = parts.find((p) => /^צבע\s*:/i.test(p) || /^color\s*:/i.test(p));
 
   if (pipePart) {
     return pipePart.replace(/^(?:צבע|color)\s*:\s*/i, '').trim();
   }
 
-  const inlineMatch = description.match(/(?:צבע|color)\s*[:\-–]\s*([^|]+)/i);
+  const inlineMatch = description.match(/(?:צבע|color)\s*[:\-–]\s*([^|·\n]+)/i);
   if (inlineMatch?.[1]) return inlineMatch[1].trim();
 
   return '';
@@ -144,7 +145,14 @@ export function getEffectiveDressSnapshot(dress: Record<string, unknown>) {
 export function mapOwnedDressForEdit(row: Record<string, unknown>) {
   const pending = row.pending_update as PendingUpdatePayload | null | undefined;
   const snapshot = getLiveDressSnapshot(row);
-  const form = buildEditFormFromDress(snapshot);
+  const form = buildEditFormFromDress({
+    name: String(row.name ?? snapshot.name),
+    price: Number(row.price ?? snapshot.price),
+    size: String(row.size ?? snapshot.size),
+    city: String(row.city ?? snapshot.city),
+    color: row.color as string | null,
+    description: row.description as string | null,
+  });
 
   return {
     id: String(row.id),

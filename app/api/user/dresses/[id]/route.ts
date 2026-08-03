@@ -3,11 +3,9 @@ import { getUserFromRequest, type SiteUser } from '@/lib/user-auth';
 import { userOwnsDress } from '@/lib/dress-ownership';
 import { sendDressUpdateEmails } from '@/lib/dress-edit-notify';
 import {
-  buildPendingUpdatePayload,
   buildEditFormFromDress,
   getDressColorFromRow,
   getLiveDressSnapshot,
-  isSchemaMissingPendingUpdate,
   mapOwnedDressForEdit,
   normalizeDressImages,
 } from '@/lib/dress-pending-update';
@@ -36,24 +34,6 @@ async function getOwnedDress(id: string, user: Pick<SiteUser, 'userId' | 'phone'
   if (error) throw error;
   if (!dress || !userOwnsDress(dress, user)) return null;
   return dress;
-}
-
-async function sendUpdateNotification(
-  supabase: ReturnType<typeof getSupabaseAdmin>,
-  user: SiteUser,
-  dress: Record<string, unknown>,
-  snapshot: ReturnType<typeof buildPendingUpdatePayload>,
-  dressId: string
-) {
-  return sendDressUpdateEmails(supabase, user, dress, {
-    dressId,
-    name: snapshot.name,
-    price: snapshot.price,
-    size: snapshot.size,
-    city: snapshot.city,
-    color: snapshot.color,
-    images: snapshot.images,
-  });
 }
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -92,7 +72,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const isMultipart = contentType.includes('multipart/form-data');
 
     let body: Record<string, unknown> = {};
-    let keptImages: string[] | null = null;
+    let keptImages: string[] = [];
     let newFiles: File[] = [];
 
     if (isMultipart) {
@@ -114,120 +94,76 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       }
     }
 
-    const updates: Record<string, unknown> = {};
     const liveColor = getDressColorFromRow({
       color: dressRow.color as string | null,
       description: dressRow.description as string | null,
     });
 
-    if (body.name !== undefined) updates.name = String(body.name).trim();
-    if (body.price !== undefined) updates.price = Number(body.price);
-    if (body.size !== undefined) updates.size = String(body.size).trim();
-    if (body.city !== undefined) updates.city = String(body.city).trim();
-    if (body.color !== undefined) {
-      const submittedColor = String(body.color).trim();
-      updates.color = submittedColor || liveColor;
+    const submittedColor = body.color !== undefined ? String(body.color).trim() : '';
+    const resolvedColor = submittedColor || liveColor;
+
+    const updates: Record<string, unknown> = {
+      name: String(body.name ?? live.name).trim(),
+      price: Number(body.price ?? live.price),
+      size: String(body.size ?? live.size).trim(),
+      city: String(body.city ?? live.city).trim(),
+      color: resolvedColor,
+    };
+
+    const condition = String(dressRow.condition || 'new');
+    const descriptionInput = body.description !== undefined ? String(body.description).trim() : '';
+    const existingParts = String(dressRow.description || '').split('|').map((p: string) => p.trim());
+    const baseDescription =
+      descriptionInput ||
+      existingParts.find((p: string) => p && !p.startsWith('צבע:') && !p.startsWith('מצב:') && !p.includes('ניקוי יבש')) ||
+      buildEditFormFromDress(live).description ||
+      'אין תיאור זמין.';
+
+    updates.description = [
+      baseDescription,
+      resolvedColor ? `צבע: ${resolvedColor}` : '',
+      `מצב: ${conditionLabel(condition)}`,
+    ]
+      .filter(Boolean)
+      .join(' | ');
+
+    const uploaded = newFiles.length > 0 ? await uploadDressImages(newFiles) : [];
+    const mergedImages = normalizeDressImages([...keptImages, ...uploaded]);
+
+    if (mergedImages.length === 0) {
+      return NextResponse.json({ error: 'חייבת להישאר לפחות תמונה אחת' }, { status: 400 });
     }
-    if (body.event_type !== undefined) updates.event_type = String(body.event_type).trim();
-    if (body.deposit !== undefined) updates.deposit = Number(body.deposit) || 0;
-    if (body.pickup_method !== undefined) updates.pickup_method = String(body.pickup_method);
-    if (body.condition !== undefined) updates.condition = String(body.condition);
-    if (body.includes_dry_cleaning !== undefined) {
-      updates.includes_dry_cleaning = body.includes_dry_cleaning === true || body.includes_dry_cleaning === 'yes';
-    }
-
-    const resolvedColor =
-      (updates.color as string | undefined) ||
-      (body.color !== undefined ? String(body.color).trim() : '') ||
-      liveColor;
-
-    if (body.description !== undefined || body.color !== undefined || body.condition !== undefined) {
-      const descriptionInput = body.description !== undefined ? String(body.description).trim() : '';
-      const condition = body.condition !== undefined ? String(body.condition) : String(dressRow.condition || 'new');
-      const existingParts = String(dressRow.description || '').split('|').map((p: string) => p.trim());
-      const baseDescription =
-        descriptionInput ||
-        existingParts.find((p: string) => p && !p.startsWith('צבע:') && !p.startsWith('מצב:') && !p.includes('ניקוי יבש')) ||
-        buildEditFormFromDress(live).description ||
-        'אין תיאור זמין.';
-
-      updates.description = [
-        baseDescription,
-        resolvedColor ? `צבע: ${resolvedColor}` : '',
-        `מצב: ${conditionLabel(condition)}`,
-      ]
-        .filter(Boolean)
-        .join(' | ');
+    if (mergedImages.length > MAX_DRESS_IMAGES) {
+      return NextResponse.json({ error: `ניתן לשמור עד ${MAX_DRESS_IMAGES} תמונות` }, { status: 400 });
     }
 
-    if (isMultipart || keptImages !== null || newFiles.length > 0) {
-      const existing = normalizeDressImages(keptImages ?? []);
-      const uploaded = newFiles.length > 0 ? await uploadDressImages(newFiles) : [];
-      const merged = normalizeDressImages([...existing, ...uploaded]);
-
-      if (merged.length === 0) {
-        return NextResponse.json({ error: 'חייבת להישאר לפחות תמונה אחת' }, { status: 400 });
-      }
-      if (merged.length > MAX_DRESS_IMAGES) {
-        return NextResponse.json({ error: `ניתן לשמור עד ${MAX_DRESS_IMAGES} תמונות` }, { status: 400 });
-      }
-
-      updates.images = merged;
-    }
-
-    if (Object.keys(updates).length === 0) {
-      return NextResponse.json({ error: 'אין שדות לעדכון' }, { status: 400 });
-    }
+    updates.images = mergedImages;
+    updates.pending_update = null;
+    updates.pending_update_submitted_at = null;
 
     const supabase = getSupabaseAdmin();
-    const dressStatus = String(dressRow.status || '');
+    let updateResult = await supabase.from('dresses').update(updates).eq('id', id);
 
-    if (dressStatus === 'approved') {
-      const pendingUpdate = buildPendingUpdatePayload(dressRow, updates);
-      const pendingPayload = {
-        pending_update: pendingUpdate,
-        pending_update_submitted_at: new Date().toISOString(),
-      };
-
-      let updateResult = await supabase.from('dresses').update(pendingPayload).eq('id', id);
-      if (updateResult.error?.message && isSchemaMissingPendingUpdate(updateResult.error.message)) {
-        updateResult = await supabase.from('dresses').update(updates).eq('id', id);
-        if (updateResult.error) throw updateResult.error;
-
-        const directSnapshot = buildPendingUpdatePayload(dressRow, updates);
-        const emailStatus = await sendUpdateNotification(supabase, user, dressRow, directSnapshot, id);
-
-        return NextResponse.json({
-          success: true,
-          message: 'השמלה עודכנה בהצלחה',
-          directUpdate: true,
-          emailStatus,
-        });
-      }
-      if (updateResult.error) throw updateResult.error;
-
-      const emailStatus = await sendUpdateNotification(supabase, user, dressRow, pendingUpdate, id);
-
-      return NextResponse.json({
-        success: true,
-        pendingApproval: true,
-        message: 'העדכון נשלח לאישור ההנהלה! נעדכן אותך במייל כשיאושר.',
-        emailStatus,
-      });
+    if (updateResult.error?.message?.includes('pending_update')) {
+      const { pending_update: _p, pending_update_submitted_at: _t, ...safeUpdates } = updates;
+      updateResult = await supabase.from('dresses').update(safeUpdates).eq('id', id);
     }
 
-    const { error } = await supabase.from('dresses').update(updates).eq('id', id);
-    if (error) throw error;
+    if (updateResult.error) throw updateResult.error;
 
-    const pendingSnapshot = buildPendingUpdatePayload(dressRow, updates);
-    const emailStatus = await sendUpdateNotification(supabase, user, dressRow, pendingSnapshot, id);
+    const emailStatus = await sendDressUpdateEmails(supabase, user, dressRow, {
+      dressId: id,
+      name: String(updates.name),
+      price: Number(updates.price),
+      size: String(updates.size),
+      city: String(updates.city),
+      color: resolvedColor,
+      images: mergedImages,
+    });
 
     return NextResponse.json({
       success: true,
-      message:
-        dressStatus === 'pending'
-          ? 'השמלה עודכנה וממתינה לאישור ההנהלה'
-          : 'השמלה עודכנה בהצלחה',
+      message: 'השמלה עודכנה בהצלחה!',
       emailStatus,
     });
   } catch (error) {

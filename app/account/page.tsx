@@ -326,12 +326,18 @@ function AccountPageContent() {
     }
   }, [section, load]);
 
-  const loadEditDress = useCallback(async (id: string) => {
+  const loadEditDress = useCallback(async (id: string, seed?: RentalDress) => {
     editDressLoadRef.current = id;
-    setEditLoading(true);
     setEditLoadError('');
-    setEditImages([]);
-    setEditingDress(null);
+
+    if (seed) {
+      const form = seed.form ?? buildEditFormFromDress(seed);
+      setEditingDress(seed);
+      setEditForm(form);
+      setEditImages(normalizeDressImages(seed.images));
+    }
+
+    setEditLoading(true);
 
     const token = sessionStorage.getItem('site_token');
     try {
@@ -343,7 +349,9 @@ function AccountPageContent() {
       if (editDressLoadRef.current !== id) return;
 
       if (!res.ok) {
-        setEditLoadError(dress.error || 'לא הצלחנו לטעון את השמלה לעריכה');
+        if (!seed) {
+          setEditLoadError(dress.error || 'לא הצלחנו לטעון את השמלה לעריכה');
+        }
         return;
       }
 
@@ -351,7 +359,7 @@ function AccountPageContent() {
       setEditForm(dress.form ?? buildEditFormFromDress(dress));
       setEditImages(normalizeDressImages(dress.images));
     } catch {
-      if (editDressLoadRef.current === id) {
+      if (editDressLoadRef.current === id && !seed) {
         setEditLoadError('שגיאת רשת בטעינת השמלה');
       }
     } finally {
@@ -368,7 +376,8 @@ function AccountPageContent() {
 
   useEffect(() => {
     if (section === 'edit' && dressId) {
-      void loadEditDress(dressId);
+      const seed = dresses.find((d) => d.id === dressId);
+      void loadEditDress(dressId, seed);
     } else if (section !== 'edit') {
       editDressLoadRef.current = null;
       setEditingDress(null);
@@ -412,7 +421,7 @@ function AccountPageContent() {
       setDetailsDress(null);
       loadedViewDressRef.current = null;
     }
-  }, [section, dressId, viewDressId, detailsDress?.id, loadEditDress]);
+  }, [section, dressId, viewDressId, dresses, detailsDress?.id, loadEditDress]);
 
   async function cancelReservation(bookingId: number) {
     if (!confirm('לבטל את ההזמנה? התאריך ישוחרר לשוכרות אחרות.')) return;
@@ -570,11 +579,18 @@ function AccountPageContent() {
   }
 
   function startEditDress(dress: RentalDress) {
-    setEditImages([]);
     setEditNewFiles([]);
     editNewPreviews.forEach((url) => URL.revokeObjectURL(url));
     setEditNewPreviews([]);
     if (editFileInputRef.current) editFileInputRef.current.value = '';
+
+    const form = dress.form ?? buildEditFormFromDress(dress);
+    setEditingDress(dress);
+    setEditForm(form);
+    setEditImages(normalizeDressImages(dress.images));
+    setEditLoadError('');
+    setEditLoading(false);
+
     navigateToSection('edit', { dressId: dress.id });
   }
 
@@ -636,22 +652,8 @@ function AccountPageContent() {
         | { adminOk?: boolean; ownerOk?: boolean; adminError?: string; ownerError?: string }
         | undefined;
 
-      if (data.pendingApproval) {
-        setEditSuccessNotice({ dressName: editForm.name.trim() || editingDress.name });
-        if (emailStatus && (!emailStatus.adminOk || !emailStatus.ownerOk)) {
-          setToast({
-            message:
-              'העדכון נשמר, אבל ייתכן שלא נשלח מייל. בדקי גם בתיקיית הספאם או פני להנהלה.',
-            variant: 'error',
-          });
-        }
-        return;
-      }
+      setEditSuccessNotice({ dressName: editForm.name.trim() || editingDress.name });
 
-      setToast({
-        message: data.message || 'השמלה עודכנה בהצלחה',
-        variant: 'success',
-      });
       if (emailStatus && (!emailStatus.adminOk || !emailStatus.ownerOk)) {
         setToast({
           message: 'השמלה עודכנה, אבל שליחת המייל נכשלה. פני להנהלה אם לא קיבלת אישור.',
@@ -1353,11 +1355,10 @@ function AccountPageContent() {
             dir="rtl"
           >
             <span className="text-4xl block mb-3">✨</span>
-            <h3 className="text-xl font-black text-[#3d2f24] mb-2">העדכון נשלח לאישור!</h3>
+            <h3 className="text-xl font-black text-[#3d2f24] mb-2">השמלה עודכנה!</h3>
             <p className="text-sm text-[#6e634c] font-bold mb-1">{editSuccessNotice.dressName}</p>
             <p className="text-sm text-[#5c5037] leading-relaxed mb-6">
-              העדכון נשלח לאישור ההנהלה. עד לאישור — בקטלוג תמשיך להופיע הגרסה הקודמת.
-              נעדכן אותך במייל ברגע שהעדכון יאושר.
+              השינויים נשמרו ומופיעים עכשיו בקטלוג. נשלח אלייך ואל ההנהלה מייל על העדכון.
             </p>
             <button
               type="button"
