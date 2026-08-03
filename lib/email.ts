@@ -1,6 +1,6 @@
 import { Resend } from 'resend';
 import nodemailer from 'nodemailer';
-import { DEFAULT_ADMIN_EMAIL, getSiteAdminEmail } from '@/lib/site-config';
+import { DEFAULT_ADMIN_EMAIL, getSiteAdminEmail, resolveSiteEmail } from '@/lib/site-config';
 
 let resendClient: Resend | null = null;
 let smtpTransport: nodemailer.Transporter | null = null;
@@ -20,7 +20,12 @@ function getResendClient(): Resend | null {
 }
 
 function getSmtpCredentials() {
-  const user = getSiteAdminEmail();
+  const user = resolveSiteEmail(
+    process.env.SMTP_USER ||
+      process.env.SMTP_EMAIL ||
+      process.env.ADMIN_EMAIL ||
+      DEFAULT_ADMIN_EMAIL
+  );
 
   const pass = (
     process.env.SMTP_PASSWORD ||
@@ -72,17 +77,30 @@ function getFromAddress() {
     return `${fromName} <${smtpUser}>`;
   }
 
-  return process.env.RESEND_FROM || 'DressRental <onboarding@resend.dev>';
+  const configured = process.env.RESEND_FROM?.trim();
+  if (configured && !isInvalidResendFrom(configured)) {
+    return configured;
+  }
+
+  return `${fromName} <onboarding@resend.dev>`;
 }
 
-function isPlaceholderFrom(from: string) {
+function isInvalidResendFrom(from: string) {
   const lower = from.toLowerCase();
   return (
-    lower.includes('@resend.dev') ||
     lower.includes('yourdomain.com') ||
+    lower.includes('your-domain.com') ||
     lower.includes('your_') ||
     lower.includes('example.com')
   );
+}
+
+function isResendSandboxFrom(from: string) {
+  return from.toLowerCase().includes('@resend.dev');
+}
+
+function isPlaceholderFrom(from: string) {
+  return isResendSandboxFrom(from) || isInvalidResendFrom(from);
 }
 
 function formatResendError(message: string) {
@@ -239,10 +257,10 @@ export async function sendEmailTo(to: string, subject: string, html: string) {
     if (result && !resend) return result;
   }
 
-  // Resend — רק עם דומיין מאומת (לא onboarding@resend.dev)
+  // Resend sandbox — רק עם דומיין מאומת (לא onboarding@resend.dev)
   if (resend) {
     const from = getFromAddress();
-    if (isPlaceholderFrom(from) && recipient !== getAdminEmail()) {
+    if (isResendSandboxFrom(from) && recipient !== getAdminEmail()) {
       return {
         success: false as const,
         error:
