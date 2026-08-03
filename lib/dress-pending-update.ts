@@ -35,13 +35,69 @@ export function buildEditFormFromDress(dress: {
   color?: string | null;
   description?: string | null;
 }) {
+  const resolvedColor = String(dress.color || '').trim() || getDressColorFromRow(dress);
   return {
     name: dress.name,
     price: String(dress.price),
     size: dress.size,
     city: dress.city,
-    color: getDressColorFromRow(dress),
+    color: resolvedColor,
     description: getCleanDescription(String(dress.description || '')),
+  };
+}
+
+export function getEffectiveDressSnapshot(dress: Record<string, unknown>) {
+  const pending = dress.pending_update as PendingUpdatePayload | null | undefined;
+  const liveImages = Array.isArray(dress.images) ? dress.images.map(String) : [];
+  const liveColor = getDressColorFromRow({
+    color: dress.color as string | null,
+    description: dress.description as string | null,
+  });
+
+  if (!pending || typeof pending !== 'object') {
+    return {
+      name: String(dress.name ?? ''),
+      price: Number(dress.price ?? 0),
+      size: String(dress.size ?? ''),
+      city: String(dress.city ?? ''),
+      color: liveColor,
+      description: String(dress.description ?? ''),
+      images: liveImages,
+    };
+  }
+
+  const pendingColor =
+    String(pending.color || '').trim() ||
+    getDressColorFromRow({ color: pending.color, description: pending.description });
+
+  return {
+    name: pending.name || String(dress.name ?? ''),
+    price: pending.price ?? Number(dress.price ?? 0),
+    size: pending.size || String(dress.size ?? ''),
+    city: pending.city || String(dress.city ?? ''),
+    color: pendingColor || liveColor,
+    description: pending.description || String(dress.description ?? ''),
+    images: pending.images?.length ? pending.images.map(String) : liveImages,
+  };
+}
+
+export function mapOwnedDressForEdit(row: Record<string, unknown>) {
+  const pending = row.pending_update as PendingUpdatePayload | null | undefined;
+  const snapshot = getEffectiveDressSnapshot(row);
+
+  return {
+    id: String(row.id),
+    name: snapshot.name,
+    price: snapshot.price,
+    size: snapshot.size,
+    city: snapshot.city,
+    color: snapshot.color,
+    description: snapshot.description,
+    status: String(row.status),
+    images: snapshot.images,
+    rental_count: Number(row.rental_count || 0),
+    has_pending_update: Boolean(pending),
+    booked_dates: [] as string[],
   };
 }
 
@@ -59,7 +115,13 @@ export function mergeDressWithPendingUpdate<T extends Record<string, unknown>>(
     price: pendingUpdate.price ?? Number(dress.price ?? 0),
     size: pendingUpdate.size ?? String(dress.size ?? ''),
     city: pendingUpdate.city ?? String(dress.city ?? ''),
-    color: pendingUpdate.color ?? String(dress.color ?? ''),
+    color: pendingUpdate.color?.trim() || getDressColorFromRow({
+      color: pendingUpdate.color,
+      description: pendingUpdate.description,
+    }) || getDressColorFromRow({
+      color: dress.color as string | null,
+      description: dress.description as string | null,
+    }),
     description: pendingUpdate.description ?? String(dress.description ?? ''),
     images: pendingUpdate.images?.length ? pendingUpdate.images : Array.isArray(dress.images) ? dress.images.map(String) : [],
     isPendingUpdate: true as const,
@@ -70,18 +132,20 @@ export function buildPendingUpdatePayload(
   dress: Record<string, unknown>,
   updates: Record<string, unknown>
 ): PendingUpdatePayload {
+  const base = getEffectiveDressSnapshot(dress);
+  const submittedColor =
+    updates.color !== undefined ? String(updates.color).trim() : undefined;
+
   return {
-    name: String(updates.name ?? dress.name ?? '').trim(),
-    price: Number(updates.price ?? dress.price ?? 0),
-    size: String(updates.size ?? dress.size ?? '').trim(),
-    city: String(updates.city ?? dress.city ?? '').trim(),
-    color: String(updates.color ?? dress.color ?? '').trim(),
-    description: String(updates.description ?? dress.description ?? '').trim(),
+    name: String(updates.name ?? base.name ?? '').trim(),
+    price: Number(updates.price ?? base.price ?? 0),
+    size: String(updates.size ?? base.size ?? '').trim(),
+    city: String(updates.city ?? base.city ?? '').trim(),
+    color: submittedColor || base.color || '',
+    description: String(updates.description ?? base.description ?? '').trim(),
     images: Array.isArray(updates.images)
       ? updates.images.map(String)
-      : Array.isArray(dress.images)
-        ? dress.images.map(String)
-        : [],
+      : base.images,
     event_type: String(updates.event_type ?? dress.event_type ?? '').trim() || undefined,
     condition: String(updates.condition ?? dress.condition ?? 'new').trim(),
     deposit: Number(updates.deposit ?? dress.deposit ?? 0) || 0,

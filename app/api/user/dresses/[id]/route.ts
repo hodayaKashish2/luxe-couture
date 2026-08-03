@@ -3,7 +3,10 @@ import { getUserFromRequest, type SiteUser } from '@/lib/user-auth';
 import { userOwnsDress } from '@/lib/dress-ownership';
 import {
   buildPendingUpdatePayload,
+  getDressColorFromRow,
+  getEffectiveDressSnapshot,
   isSchemaMissingPendingUpdate,
+  mapOwnedDressForEdit,
 } from '@/lib/dress-pending-update';
 import { notifyDressUpdateSubmitted } from '@/lib/dress-update-notify';
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server';
@@ -34,20 +37,7 @@ async function getOwnedDress(id: string, user: Pick<SiteUser, 'userId' | 'phone'
 }
 
 function mapOwnedDressForClient(row: Record<string, unknown>) {
-  return {
-    id: String(row.id),
-    name: String(row.name),
-    price: Number(row.price),
-    size: String(row.size),
-    city: String(row.city || ''),
-    color: String(row.color || ''),
-    description: String(row.description || ''),
-    status: String(row.status),
-    images: Array.isArray(row.images) ? row.images.map(String) : [],
-    rental_count: Number(row.rental_count || 0),
-    has_pending_update: Boolean(row.pending_update),
-    booked_dates: [] as string[],
-  };
+  return mapOwnedDressForEdit(row);
 }
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -119,7 +109,13 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
     if (body.description !== undefined || body.color !== undefined || body.condition !== undefined) {
       const descriptionInput = body.description !== undefined ? String(body.description).trim() : '';
-      const color = body.color !== undefined ? String(body.color).trim() : String(dress.color || '').trim();
+      const submittedColor = body.color !== undefined ? String(body.color).trim() : undefined;
+      const color =
+        submittedColor ||
+        getDressColorFromRow({
+          color: dress.color as string | null,
+          description: dress.description as string | null,
+        });
       const condition = body.condition !== undefined ? String(body.condition) : String(dress.condition || 'new');
       const existingParts = String(dress.description || '').split('|').map((p: string) => p.trim());
       const baseDescription =
@@ -137,7 +133,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     }
 
     if (keptImages !== null || newFiles.length > 0) {
-      const existing = keptImages ?? (Array.isArray(dress.images) ? dress.images.map(String) : []);
+      const existing = keptImages ?? getEffectiveDressSnapshot(dress).images;
       const uploaded = newFiles.length > 0 ? await uploadDressImages(newFiles) : [];
       const merged = [...existing, ...uploaded];
 
@@ -170,6 +166,17 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         updateResult = await supabase.from('dresses').update(updates).eq('id', id);
         if (updateResult.error) throw updateResult.error;
 
+        const directSnapshot = buildPendingUpdatePayload(dress, updates);
+        await notifyDressUpdateSubmitted(supabase, dress as Record<string, unknown>, user, {
+          dressId: id,
+          name: directSnapshot.name,
+          price: directSnapshot.price,
+          size: directSnapshot.size,
+          city: directSnapshot.city,
+          color: directSnapshot.color,
+          images: directSnapshot.images,
+        });
+
         return NextResponse.json({
           success: true,
           message: 'השמלה עודכנה בהצלחה',
@@ -178,16 +185,13 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       }
       if (updateResult.error) throw updateResult.error;
 
-      await notifyDressUpdateSubmitted({
+      await notifyDressUpdateSubmitted(supabase, dress as Record<string, unknown>, user, {
         dressId: id,
         name: pendingUpdate.name,
         price: pendingUpdate.price,
         size: pendingUpdate.size,
         city: pendingUpdate.city,
         color: pendingUpdate.color,
-        ownerName: String(dress.owner_name || user.displayName || 'משכירה'),
-        ownerPhone: String(dress.owner_phone || user.phone || ''),
-        ownerEmail: String(dress.owner_email || user.email || ''),
         images: pendingUpdate.images,
       });
 

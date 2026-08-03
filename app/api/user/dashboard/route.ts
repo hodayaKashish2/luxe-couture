@@ -8,6 +8,7 @@ import {
   shouldShowBookingByEventDate,
   shouldShowRemovedDress,
 } from '@/lib/retention';
+import { mapOwnedDressForEdit } from '@/lib/dress-pending-update';
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server';
 
 function emailsMatch(a: string, b: string) {
@@ -211,24 +212,17 @@ export async function GET(request: Request) {
     return NextResponse.json({
       user,
       rentals: {
-        dresses: myDresses.map((d) => ({
-          id: String(d.id),
-          name: d.name,
-          price: Number(d.price),
-          size: d.size,
-          city: d.city || '',
-          color: d.color || '',
-          description: d.description || '',
-          status: d.status,
-          images: Array.isArray(d.images) ? d.images : [],
-          rental_count: Number(d.rental_count || 0),
-          featured_boost: Number(d.featured_boost || 0),
-          featured_until: d.featured_until || null,
-          has_pending_update: Boolean(d.pending_update),
-          booked_dates: ownerBookings
-            .filter((b) => String(b.dress_id) === String(d.id) && b.status === 'confirmed')
-            .map((b) => b.event_date),
-        })),
+        dresses: myDresses.map((d) => {
+          const mapped = mapOwnedDressForEdit(d as Record<string, unknown>);
+          return {
+            ...mapped,
+            featured_boost: Number(d.featured_boost || 0),
+            featured_until: d.featured_until || null,
+            booked_dates: ownerBookings
+              .filter((b) => String(b.dress_id) === String(d.id) && b.status === 'confirmed')
+              .map((b) => b.event_date),
+          };
+        }),
         bookings: ownerBookings,
       },
       reservations: myReservations,
