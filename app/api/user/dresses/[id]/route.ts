@@ -33,6 +33,39 @@ async function getOwnedDress(id: string, user: Pick<SiteUser, 'userId' | 'phone'
   return dress;
 }
 
+function mapOwnedDressForClient(row: Record<string, unknown>) {
+  return {
+    id: String(row.id),
+    name: String(row.name),
+    price: Number(row.price),
+    size: String(row.size),
+    city: String(row.city || ''),
+    color: String(row.color || ''),
+    description: String(row.description || ''),
+    status: String(row.status),
+    images: Array.isArray(row.images) ? row.images.map(String) : [],
+    rental_count: Number(row.rental_count || 0),
+    has_pending_update: Boolean(row.pending_update),
+    booked_dates: [] as string[],
+  };
+}
+
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const user = getUserFromRequest(request);
+  if (!user) return NextResponse.json({ error: 'יש להתחבר' }, { status: 401 });
+  if (!isSupabaseConfigured()) return NextResponse.json({ error: 'Supabase לא מוגדר' }, { status: 503 });
+
+  try {
+    const { id } = await params;
+    const dress = await getOwnedDress(id, user);
+    if (!dress) return NextResponse.json({ error: 'שמלה לא נמצאה' }, { status: 404 });
+    return NextResponse.json(mapOwnedDressForClient(dress as Record<string, unknown>));
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'שגיאה';
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const user = getUserFromRequest(request);
   if (!user) return NextResponse.json({ error: 'יש להתחבר' }, { status: 401 });

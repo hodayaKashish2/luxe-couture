@@ -142,6 +142,8 @@ function AccountPageContent() {
   const [profileSaving, setProfileSaving] = useState(false);
   const [cancellingId, setCancellingId] = useState<number | null>(null);
   const [toast, setToast] = useState<{ message: string; variant: SiteToastVariant } | null>(null);
+  const [editSuccessNotice, setEditSuccessNotice] = useState<{ dressName: string } | null>(null);
+  const editDressLoadRef = useRef<string | null>(null);
 
   useEffect(() => {
     async function loadRatedDressIds() {
@@ -314,6 +316,33 @@ function AccountPageContent() {
     }
   }, [section, load]);
 
+  const loadEditDress = useCallback(async (id: string) => {
+    editDressLoadRef.current = id;
+    const token = sessionStorage.getItem('site_token');
+    try {
+      const res = await fetch(`/api/user/dresses/${id}`, {
+        headers: { 'x-user-token': token || '' },
+      });
+      if (res.ok) {
+        const dress = (await res.json()) as RentalDress;
+        if (editDressLoadRef.current !== id) return;
+        setEditingDress(dress);
+        setEditForm(buildEditFormFromDress(dress));
+        setEditImages(Array.isArray(dress.images) ? [...dress.images] : []);
+        return;
+      }
+    } catch {
+      // fallback below
+    }
+
+    const fallback = dresses.find((d) => d.id === id);
+    if (fallback && editDressLoadRef.current === id) {
+      setEditingDress(fallback);
+      setEditForm(buildEditFormFromDress(fallback));
+      setEditImages(Array.isArray(fallback.images) ? [...fallback.images] : []);
+    }
+  }, [dresses]);
+
   useEffect(() => {
     if (!searchParams.get('rentalDress')) return;
     navigateAccountHub();
@@ -321,13 +350,9 @@ function AccountPageContent() {
 
   useEffect(() => {
     if (section === 'edit' && dressId) {
-      const dress = dresses.find((d) => d.id === dressId);
-      if (dress) {
-        setEditingDress(dress);
-        setEditForm(buildEditFormFromDress(dress));
-        setEditImages(Array.isArray(dress.images) ? [...dress.images] : []);
-      }
+      void loadEditDress(dressId);
     } else if (section !== 'edit') {
+      editDressLoadRef.current = null;
       setEditingDress(null);
     }
 
@@ -367,7 +392,7 @@ function AccountPageContent() {
       setDetailsDress(null);
       loadedViewDressRef.current = null;
     }
-  }, [section, dressId, viewDressId, dresses, detailsDress?.id]);
+  }, [section, dressId, viewDressId, dresses, detailsDress?.id, loadEditDress]);
 
   async function cancelReservation(bookingId: number) {
     if (!confirm('לבטל את ההזמנה? התאריך ישוחרר לשוכרות אחרות.')) return;
@@ -525,14 +550,12 @@ function AccountPageContent() {
   }
 
   function startEditDress(dress: RentalDress) {
-    setEditingDress(dress);
-    setEditForm(buildEditFormFromDress(dress));
-    setEditImages(Array.isArray(dress.images) ? [...dress.images] : []);
     setEditNewFiles([]);
     editNewPreviews.forEach((url) => URL.revokeObjectURL(url));
     setEditNewPreviews([]);
     if (editFileInputRef.current) editFileInputRef.current.value = '';
     navigateToSection('edit', { dressId: dress.id });
+    void loadEditDress(dress.id);
   }
 
   function handleEditImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -581,20 +604,22 @@ function AccountPageContent() {
     });
     const data = await res.json();
     if (res.ok) {
-      setToast({
-        message:
-          data.message ||
-          (data.pendingApproval
-            ? 'העדכון נשלח לאישור ההנהלה! נעדכן אותך במייל כשיאושר.'
-            : 'השמלה עודכנה בהצלחה'),
-        variant: 'success',
-      });
       editNewPreviews.forEach((url) => URL.revokeObjectURL(url));
       setEditNewFiles([]);
       setEditNewPreviews([]);
       setEditingDress(null);
       navigateToSection('rentals', { replace: true });
-      load();
+      void load();
+
+      if (data.pendingApproval) {
+        setEditSuccessNotice({ dressName: editForm.name.trim() || editingDress.name });
+        return;
+      }
+
+      setToast({
+        message: data.message || 'השמלה עודכנה בהצלחה',
+        variant: 'success',
+      });
     } else {
       setToast({ message: data.error || 'שגיאה בעדכון', variant: 'error' });
     }
@@ -981,7 +1006,15 @@ function AccountPageContent() {
                 />
               </div>
               <input required placeholder="עיר *" value={editForm.city} onChange={(e) => setEditForm({ ...editForm, city: e.target.value })} className="p-2.5 border border-[#decfa8] rounded-xl text-xs" />
-              <input placeholder="צבע" value={editForm.color} onChange={(e) => setEditForm({ ...editForm, color: e.target.value })} className="p-2.5 border border-[#decfa8] rounded-xl text-xs" />
+              <div>
+                <label className="block text-xs font-bold text-[#8b6508] mb-1">צבע</label>
+                <input
+                  placeholder="למשל: לבן, שמפניה, כחול כהה"
+                  value={editForm.color}
+                  onChange={(e) => setEditForm({ ...editForm, color: e.target.value })}
+                  className="p-2.5 border border-[#decfa8] rounded-xl text-xs w-full"
+                />
+              </div>
               <textarea
                 placeholder="תיאור השמלה (אופציונלי)"
                 value={editForm.description}
@@ -1254,6 +1287,30 @@ function AccountPageContent() {
           variant={ownDressNotice.variant}
           onClose={() => setOwnDressNotice(null)}
         />
+      )}
+
+      {editSuccessNotice && section === 'rentals' && (
+        <div className="fixed inset-0 bg-neutral-900/60 backdrop-blur-md z-[85] flex items-center justify-center p-4">
+          <div
+            className="bg-white rounded-2xl max-w-md w-full p-6 sm:p-8 shadow-2xl border-2 border-[#d4af37] relative text-center"
+            dir="rtl"
+          >
+            <span className="text-4xl block mb-3">✨</span>
+            <h3 className="text-xl font-black text-[#3d2f24] mb-2">העדכון נשלח לאישור!</h3>
+            <p className="text-sm text-[#6e634c] font-bold mb-1">{editSuccessNotice.dressName}</p>
+            <p className="text-sm text-[#5c5037] leading-relaxed mb-6">
+              העדכון נשלח לאישור ההנהלה. עד לאישור — בקטלוג תמשיך להופיע הגרסה הקודמת.
+              נעדכן אותך במייל ברגע שהעדכון יאושר.
+            </p>
+            <button
+              type="button"
+              onClick={() => setEditSuccessNotice(null)}
+              className="w-full py-3.5 bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white text-sm font-black rounded-xl shadow-md"
+            >
+              חזרה לשמלות שלי
+            </button>
+          </div>
+        </div>
       )}
 
       <SiteFooter />
