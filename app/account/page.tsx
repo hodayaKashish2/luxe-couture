@@ -84,6 +84,7 @@ function AccountPageContent() {
   const { cart, favorites, cartCount, favCount, removeFromCart, removeFromFavorites, toggleCart, toggleFavorite, isDressInCart, isDressFavorite } = useLuxeStorage();
   const [detailsDress, setDetailsDress] = useState<Dress | null>(null);
   const [rateDress, setRateDress] = useState<Dress | null>(null);
+  const [ratedDressIds, setRatedDressIds] = useState<Set<string>>(() => new Set());
   const [ownDressNotice, setOwnDressNotice] = useState<{
     dressName: string;
     variant: 'booking' | 'coordinate';
@@ -137,6 +138,29 @@ function AccountPageContent() {
   const [profileSaving, setProfileSaving] = useState(false);
   const [cancellingId, setCancellingId] = useState<number | null>(null);
   const [toast, setToast] = useState<{ message: string; variant: SiteToastVariant } | null>(null);
+
+  useEffect(() => {
+    async function loadRatedDressIds() {
+      const token = sessionStorage.getItem('site_token');
+      if (!token) {
+        setRatedDressIds(new Set());
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/user/rated-dresses', {
+          headers: { 'x-user-token': token },
+        });
+        if (!response.ok) return;
+        const data = (await response.json()) as { dressIds?: string[] };
+        setRatedDressIds(new Set(data.dressIds ?? []));
+      } catch {
+        // server validates on submit
+      }
+    }
+
+    void loadRatedDressIds();
+  }, [user]);
 
   const navigateToSection = useCallback(
     (next: Section, opts?: { dressId?: string; viewDress?: string; replace?: boolean }) => {
@@ -597,6 +621,22 @@ function AccountPageContent() {
       phone: user?.phone || profileForm.phone,
       email: user?.email || profileForm.email,
     });
+  }
+
+  function canRateDress(dress: Dress) {
+    return !isOwnDressForUser(dress) && !ratedDressIds.has(dress.id);
+  }
+
+  function tryRateDress(dress: Dress) {
+    if (isOwnDressForUser(dress)) {
+      setToast({ message: 'לא ניתן לדרג שמלה שפרסמת בעצמך', variant: 'error' });
+      return;
+    }
+    if (ratedDressIds.has(dress.id)) {
+      setToast({ message: 'כבר דירגת את השמלה הזו', variant: 'error' });
+      return;
+    }
+    setRateDress(dress);
   }
 
   return (
@@ -1194,7 +1234,7 @@ function AccountPageContent() {
             closeDetailsDress();
             router.push(`/?coordinate=${encodeURIComponent(dressId)}`);
           }}
-          onRate={() => setRateDress(detailsDress)}
+          onRate={canRateDress(detailsDress) ? () => tryRateDress(detailsDress) : undefined}
           onShare={() => {
             void shareDress(detailsDress);
           }}
@@ -1207,6 +1247,7 @@ function AccountPageContent() {
           onClose={() => setRateDress(null)}
           onRated={(dressId, ratingAvg, ratingCount) => {
             const patch = { rating_avg: ratingAvg, rating_count: ratingCount };
+            setRatedDressIds((prev) => new Set([...prev, dressId]));
             setDetailsDress((prev) => (prev?.id === dressId ? { ...prev, ...patch } : prev));
             setRateDress((prev) => (prev?.id === dressId ? { ...prev, ...patch } : prev));
           }}

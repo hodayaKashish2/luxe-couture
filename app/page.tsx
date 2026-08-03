@@ -33,6 +33,7 @@ import { compareDresses } from '@/lib/dress-sort';
 import { getCatalogHighlights } from '@/lib/dress-ranking';
 import { dressSizeMatchesFilter } from '@/lib/dress-size';
 import { isPastDate, todayDateString } from '@/lib/booking-dates';
+import { matchesCatalogTextFilter } from '@/lib/catalog-text-filter';
 import { OFF_PLATFORM_COORDINATE_NOTICE } from '@/lib/commission';
 import { fetchDressById, findDressInList } from '@/lib/dress-api';
 import { dressBelongsToCustomer } from '@/lib/self-dress-guard';
@@ -132,6 +133,7 @@ export default function Home() {
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
 
   const [rateDress, setRateDress] = useState<Dress | null>(null);
+  const [ratedDressIds, setRatedDressIds] = useState<Set<string>>(() => new Set());
   const [toast, setToast] = useState<{ message: string; variant: SiteToastVariant } | null>(null);
   const [paymentStep, setPaymentStep] = useState<{
     bookingId: number;
@@ -149,6 +151,47 @@ export default function Home() {
     dressName: string;
     variant: 'booking' | 'coordinate';
   } | null>(null);
+
+  useEffect(() => {
+    if (!isLoggedIn()) {
+      setRatedDressIds(new Set());
+      return;
+    }
+
+    async function loadRatedDressIds() {
+      const token = sessionStorage.getItem('site_token');
+      if (!token) return;
+
+      try {
+        const response = await fetch('/api/user/rated-dresses', {
+          headers: { 'x-user-token': token },
+        });
+        if (!response.ok) return;
+        const data = (await response.json()) as { dressIds?: string[] };
+        setRatedDressIds(new Set(data.dressIds ?? []));
+      } catch {
+        // ignore — rating guard falls back to server validation
+      }
+    }
+
+    void loadRatedDressIds();
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const dressId = params.get('dress');
+    if (!dressId || isLoadingDresses || dressesList.length === 0) return;
+
+    const dress = findDressInList(dressesList, dressId);
+    if (dress) {
+      setDetailsDress(dress);
+    }
+
+    params.delete('dress');
+    params.delete('text');
+    const next = params.toString() ? `/?${params}` : '/';
+    window.history.replaceState(null, '', next);
+  }, [dressesList, isLoadingDresses]);
 
   useEffect(() => {
     if (!selectedDress) return;
@@ -566,6 +609,31 @@ export default function Home() {
     });
   }, []);
 
+  const canRateDress = useCallback(
+    (dress: Dress) => !isOwnDress(dress) && !ratedDressIds.has(dress.id),
+    [isOwnDress, ratedDressIds]
+  );
+
+  const tryRateDress = useCallback(
+    (dress: Dress) => {
+      if (!isLoggedIn()) {
+        openAuthModal({ reason: 'rate', next: `/?dress=${dress.id}` });
+        return;
+      }
+      if (isOwnDress(dress)) {
+        showToast('לא ניתן לדרג שמלה שפרסמת בעצמך', 'error');
+        return;
+      }
+      if (ratedDressIds.has(dress.id)) {
+        showToast('כבר דירגת את השמלה הזו', 'error');
+        return;
+      }
+      setDetailsReturnDressId(dress.id);
+      setRateDress(dress);
+    },
+    [isOwnDress, openAuthModal, ratedDressIds, showToast]
+  );
+
   const tryReserveDress = (dress: Dress, imageIndex?: number) => {
     if (isOwnDress(dress)) {
       setOwnDressNotice({ dressName: dress.name, variant: 'booking' });
@@ -685,6 +753,7 @@ export default function Home() {
 
   const handleDressRated = (dressId: string, ratingAvg: number, ratingCount: number) => {
     const patch = { rating_avg: ratingAvg, rating_count: ratingCount };
+    setRatedDressIds((prev) => new Set([...prev, dressId]));
     setDressesList((prev) =>
       prev.map((d) => (d.id === dressId ? { ...d, ...patch } : d))
     );
@@ -815,11 +884,11 @@ export default function Home() {
     .filter((dress) => {
       const matchesSearch = dress.name.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesCity =
-        !cityFilter.trim() || dress.city.toLowerCase().includes(cityFilter.trim().toLowerCase());
+        matchesCatalogTextFilter(dress.city, cityFilter);
       const matchesPrice = dress.price <= maxPrice;
       const matchesSize = dressSizeMatchesFilter(dress.size, sizeFilter);
       const matchesColor =
-        !colorFilter.trim() || dress.color.toLowerCase().includes(colorFilter.trim().toLowerCase());
+        matchesCatalogTextFilter(dress.color, colorFilter);
       const matchesEvent = !selectedEventType || dress.event_type === selectedEventType;
       const matchesFav = !showOnlyFavorites || isDressFavorite(dress.id);
       return matchesSearch && matchesCity && matchesPrice && matchesSize && matchesColor && matchesEvent && matchesFav;
@@ -1742,7 +1811,7 @@ export default function Home() {
             openCoordinate(detailsDress);
             setDetailsDress(null);
           }}
-          onRate={() => setRateDress(detailsDress)}
+          onRate={canRateDress(detailsDress) ? () => tryRateDress(detailsDress) : undefined}
           onShare={() => {
             void shareDress(detailsDress);
           }}

@@ -9,6 +9,7 @@ const AUTH_REASONS = new Set<AuthModalReason>([
   'favorites',
   'account',
   'publish',
+  'rate',
   'general',
 ]);
 

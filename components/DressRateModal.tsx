@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import FormError from '@/components/FormError';
+import { getStoredDisplayName } from '@/lib/session-user';
 import type { Dress } from '@/lib/types';
 
 type Props = {
@@ -24,6 +25,11 @@ export default function DressRateModal({
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
+  useEffect(() => {
+    const displayName = getStoredDisplayName();
+    if (displayName) setName(displayName);
+  }, []);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
@@ -34,9 +40,13 @@ export default function DressRateModal({
     }
     setLoading(true);
     try {
+      const token = sessionStorage.getItem('site_token');
       const response = await fetch('/api/dress-ratings', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'x-user-token': token } : {}),
+        },
         body: JSON.stringify({ dressId: dress.id, name: name.trim(), stars, text: text.trim() }),
       });
       const data = await response.json();

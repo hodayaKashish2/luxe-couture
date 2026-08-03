@@ -1,4 +1,4 @@
-export type AuthModalReason = 'cart' | 'favorites' | 'account' | 'publish' | 'general';
+export type AuthModalReason = 'cart' | 'favorites' | 'account' | 'publish' | 'rate' | 'general';
 
 type AuthModalCopy = {
   eyebrow: string;
@@ -26,6 +26,11 @@ export const AUTH_MODAL_COPY: Record<AuthModalReason, AuthModalCopy> = {
     eyebrow: '✦ פרסום שמלה ✦',
     title: 'יש לך שמלה בארון?',
     body: 'כדי לפרסם שמלה באתר ולאפשר לבנות אחרות לשכור ממך — צריך חשבון. ההרשמה מהירה ופשוטה.',
+  },
+  rate: {
+    eyebrow: '✦ דירוג ✦',
+    title: 'רוצה לדרג את השמלה?',
+    body: 'כדי לדרג שמלה ולעזור לבנות אחרות — התחברי או הירשמי. כל משתמשת יכולה לדרג כל שמלה פעם אחת בלבד.',
   },
   general: {
     eyebrow: '✦ ברוכה הבאה ✦',

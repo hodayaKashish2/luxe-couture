@@ -1,10 +1,17 @@
 import { NextResponse } from 'next/server';
 
 import { getAppUrl, getAdminEmail, sendAdminEmail } from '@/lib/email';
+import { userOwnsDress } from '@/lib/dress-ownership';
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server';
+import { getUserFromRequest } from '@/lib/user-auth';
 
 function isSchemaError(message: string) {
-  return message.includes('dress_ratings') || message.includes('status') || message.includes('schema cache');
+  return (
+    message.includes('dress_ratings') ||
+    message.includes('status') ||
+    message.includes('rater_user_id') ||
+    message.includes('schema cache')
+  );
 }
 
 export async function GET(request: Request) {
@@ -71,10 +78,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Supabase לא מוגדר' }, { status: 503 });
   }
 
+  const user = getUserFromRequest(request);
+  if (!user) {
+    return NextResponse.json({ error: 'יש להתחבר כדי לדרג שמלה' }, { status: 401 });
+  }
+
   try {
     const body = await request.json();
     const dressId = body.dressId;
-    const customerName = String(body.name || '').trim();
+    const customerName = String(body.name || user.displayName || '').trim();
     const stars = Number(body.stars);
     const reviewText = String(body.text || '').trim();
 
@@ -89,7 +101,7 @@ export async function POST(request: Request) {
 
     const { data: dress, error: dressError } = await supabase
       .from('dresses')
-      .select('id, name, rating_sum, rating_count, status')
+      .select('id, name, rating_sum, rating_count, status, owner_phone, owner_email, submitter_user_id')
       .eq('id', dressId)
       .eq('status', 'approved')
       .maybeSingle();
@@ -99,15 +111,53 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'שמלה לא נמצאה' }, { status: 404 });
     }
 
+    if (userOwnsDress(dress, user)) {
+      return NextResponse.json({ error: 'לא ניתן לדרג שמלה שפרסמת בעצמך' }, { status: 403 });
+    }
+
+    const existingRating = await supabase
+      .from('dress_ratings')
+      .select('id')
+      .eq('dress_id', dressId)
+      .eq('rater_user_id', user.userId)
+      .maybeSingle();
+
+    if (existingRating.error && !existingRating.error.message.includes('rater_user_id')) {
+      throw existingRating.error;
+    }
+    if (existingRating.data) {
+      return NextResponse.json({ error: 'כבר דירגת את השמלה הזו' }, { status: 403 });
+    }
+
     const payload = {
       dress_id: dressId,
       customer_name: customerName,
       stars,
       review_text: reviewText,
       status: 'pending',
+      rater_user_id: user.userId,
     };
 
     let insert = await supabase.from('dress_ratings').insert([payload]).select('id').single();
+
+    if (insert.error?.code === '23505') {
+      return NextResponse.json({ error: 'כבר דירגת את השמלה הזו' }, { status: 403 });
+    }
+
+    if (insert.error?.message && insert.error.message.includes('rater_user_id')) {
+      const withoutRater = {
+        dress_id: dressId,
+        customer_name: customerName,
+        stars,
+        review_text: reviewText,
+        status: 'pending',
+      };
+      insert = await supabase.from('dress_ratings').insert([withoutRater]).select('id').single();
+    }
+
+    if (insert.error?.code === '23505') {
+      return NextResponse.json({ error: 'כבר דירגת את השמלה הזו' }, { status: 403 });
+    }
 
     if (insert.error?.message && isSchemaError(insert.error.message)) {
       const legacyPayload = {
