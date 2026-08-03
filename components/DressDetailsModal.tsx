@@ -191,7 +191,11 @@ export default function DressDetailsModal({
                   <button
                     type="button"
                     onClick={onToggleFavorite}
-                    className={`py-2.5 rounded-xl text-xs font-bold border border-[#decfa8] bg-white text-[#8b6508] ${actionBtnClass}`}
+                    className={`py-2.5 rounded-xl text-xs font-bold border ${actionBtnClass} ${
+                      isFavorite
+                        ? 'bg-[#f4ebd4] border-[#d4af37] text-[#b8860b]'
+                        : 'bg-white border-[#decfa8] text-[#8b6508]'
+                    }`}
                   >
                     {isFavorite ? '❤️ במועדפים' : '🤍 הוסיפי למועדפים'}
                   </button>

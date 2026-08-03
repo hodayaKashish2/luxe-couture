@@ -881,11 +881,11 @@ export default function Home() {
       router.replace(`/account?${params.toString()}`);
       return;
     }
-    if (returnId) {
+    if (returnId && !detailsDress) {
       const dress = findDressById(returnId);
       if (dress) setDetailsDress(dress);
     }
-  }, [findDressById, router]);
+  }, [findDressById, router, detailsDress]);
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-[#fbf8f0] via-[#f3ebd6] to-[#e8dcbd] text-[#332c1e] pb-24 relative w-full max-w-[100vw]" dir="rtl">
@@ -1070,7 +1070,7 @@ export default function Home() {
                       onClick={(e) => handleToggleFavorite(dress, e)}
                       className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center shadow-md border text-xs ${DRESS_CARD_BTN} ${
                         isFav
-                          ? 'bg-white/95 border-[#f0c0c0] text-red-500'
+                          ? 'bg-[#f4ebd4]/95 border-[#d4af37] text-[#b8860b]'
                           : 'bg-white/95 border-white/80 text-[#8b6508]'
                       }`}
                       title={isFav ? 'הסירי ממועדפים' : 'הוסיפי למועדפים'}
@@ -1724,6 +1724,10 @@ export default function Home() {
           isFavorite={isDressFavorite(detailsDress.id)}
           onReserve={() => {
             setDetailsReturnDressId(detailsDress.id);
+            if (isOwnDress(detailsDress)) {
+              setOwnDressNotice({ dressName: detailsDress.name, variant: 'booking' });
+              return;
+            }
             tryReserveDress(detailsDress, currentImageIndexes[detailsDress.id] || 0);
             setDetailsDress(null);
           }}
@@ -1731,6 +1735,10 @@ export default function Home() {
           onToggleFavorite={() => toggleFavorite(detailsDress)}
           onCoordinate={() => {
             setDetailsReturnDressId(detailsDress.id);
+            if (isOwnDress(detailsDress)) {
+              setOwnDressNotice({ dressName: detailsDress.name, variant: 'coordinate' });
+              return;
+            }
             openCoordinate(detailsDress);
             setDetailsDress(null);
           }}
