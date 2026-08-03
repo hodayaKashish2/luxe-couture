@@ -146,7 +146,7 @@ export async function POST(request: Request) {
 
     if (error) throw error;
 
-    await notifyDressSubmitted({
+    const emailStatus = await notifyDressSubmitted({
       dressId: data!.id,
       name,
       price,
@@ -162,6 +162,7 @@ export async function POST(request: Request) {
       success: true,
       message: 'השמלה נשלחה לאישור! היא תופיע באתר לאחר אישור בדף הניהול.',
       id: data!.id,
+      emailStatus,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'שגיאה';

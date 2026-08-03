@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getEmailConfigStatus, sendEmailTo } from '@/lib/email';
+import { getEmailConfigStatus, sendEmailTo, verifySmtpConnection } from '@/lib/email';
 
 /** בדיקת שליחת מייל — רק עם ADMIN_SECRET */
 export async function POST(request: Request) {
@@ -36,5 +36,7 @@ export async function POST(request: Request) {
 }
 
 export async function GET() {
-  return NextResponse.json(getEmailConfigStatus());
+  const config = getEmailConfigStatus();
+  const smtpVerify = config.smtpConfigured ? await verifySmtpConnection() : { ok: false, error: 'SMTP not configured' };
+  return NextResponse.json({ ...config, smtpVerify });
 }

@@ -1,6 +1,6 @@
 import { Resend } from 'resend';
 import nodemailer from 'nodemailer';
-import { DEFAULT_ADMIN_EMAIL, getSiteAdminEmail, resolveSiteEmail } from '@/lib/site-config';
+import { DEFAULT_ADMIN_EMAIL, getSiteAdminEmail } from '@/lib/site-config';
 
 let resendClient: Resend | null = null;
 let smtpTransport: nodemailer.Transporter | null = null;
@@ -19,21 +19,34 @@ function getResendClient(): Resend | null {
   return resendClient;
 }
 
-function getSmtpCredentials() {
-  const user = resolveSiteEmail(
-    process.env.SMTP_USER ||
-      process.env.SMTP_EMAIL ||
-      process.env.ADMIN_EMAIL ||
-      DEFAULT_ADMIN_EMAIL
-  );
+function normalizeSmtpPassword(value: string) {
+  return value.replace(/\s+/g, '').trim();
+}
 
-  const pass = (
+function getSmtpAuthUser() {
+  const raw = (
+    process.env.SMTP_USER ||
+    process.env.SMTP_EMAIL ||
+    process.env.ADMIN_EMAIL ||
+    DEFAULT_ADMIN_EMAIL
+  )
+    .trim()
+    .toLowerCase();
+
+  // סיסמת אפליקציה קשורה לחשבון Gmail הספציפי — לא ממפים legacy כאן.
+  return raw || DEFAULT_ADMIN_EMAIL;
+}
+
+function getSmtpCredentials() {
+  const user = getSmtpAuthUser();
+
+  const pass = normalizeSmtpPassword(
     process.env.SMTP_PASSWORD ||
-    process.env.SMTP_PASS ||
-    process.env.GMAIL_APP_PASSWORD ||
-    process.env.GMAIL_PASSWORD ||
-    ''
-  ).trim();
+      process.env.SMTP_PASS ||
+      process.env.GMAIL_APP_PASSWORD ||
+      process.env.GMAIL_PASSWORD ||
+      ''
+  );
 
   return { user, pass };
 }
@@ -128,6 +141,7 @@ async function sendViaSmtp(to: string, subject: string, html: string) {
     await transport.sendMail({ from, to, subject, html });
     return { success: true as const, sentTo: to, provider: 'smtp' as const };
   } catch (error) {
+    smtpTransport = null;
     const message = error instanceof Error ? error.message : 'שגיאת SMTP';
     console.error('SMTP error:', message);
     return { success: false as const, error: `שגיאת שליחת מייל (Gmail): ${message}`, provider: 'smtp' as const };
@@ -159,6 +173,7 @@ export type EmailConfigStatus = {
   canSendToCustomers: boolean;
   fromAddress: string;
   hint: string;
+  smtpAuthUser: string;
   smtp: {
     hasUser: boolean;
     hasPassword: boolean;
@@ -167,6 +182,22 @@ export type EmailConfigStatus = {
     fix: string;
   };
 };
+
+export async function verifySmtpConnection(): Promise<{ ok: boolean; error?: string }> {
+  const transport = getSmtpTransport();
+  if (!transport) {
+    return { ok: false, error: 'SMTP לא מוגדר (חסר SMTP_PASSWORD או SMTP_USER)' };
+  }
+
+  try {
+    await transport.verify();
+    return { ok: true };
+  } catch (error) {
+    smtpTransport = null;
+    const message = error instanceof Error ? error.message : 'שגיאת SMTP';
+    return { ok: false, error: message };
+  }
+}
 
 function getSmtpEnvDiagnostics() {
   const smtpUser = Boolean(process.env.SMTP_USER?.trim());
@@ -222,6 +253,7 @@ export function getEmailConfigStatus(): EmailConfigStatus {
     canSendToCustomers: smtpConfigured || (resendConfigured && !resendSandbox),
     fromAddress,
     hint,
+    smtpAuthUser: getSmtpAuthUser(),
     smtp: smtpDiag,
   };
 }

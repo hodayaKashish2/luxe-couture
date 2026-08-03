@@ -152,7 +152,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'שגיאה בשמירת השמלה' }, { status: 500 });
     }
 
-    await notifyDressSubmitted({
+    const emailStatus = await notifyDressSubmitted({
       dressId: data.id,
       name,
       price,
@@ -168,6 +168,7 @@ export async function POST(request: Request) {
       success: true,
       message: 'השמלה נשלחה לאישור! היא תופיע באתר לאחר אישור בדף הניהול.',
       data,
+      emailStatus,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'שגיאה בשליחת השמלה';
