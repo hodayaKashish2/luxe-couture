@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import SiteFooter from '@/components/SiteFooter';
 import SiteHeader from '@/components/SiteHeader';
 import OwnerPlatformNotice from '@/components/OwnerPlatformNotice';
@@ -36,7 +37,7 @@ import { OFF_PLATFORM_COORDINATE_NOTICE } from '@/lib/commission';
 import { fetchDressById, findDressInList } from '@/lib/dress-api';
 import { dressBelongsToCustomer } from '@/lib/self-dress-guard';
 import { dressPageUrl, ownerWhatsAppLink, WHATSAPP_LINK } from '@/lib/site-config';
-import { consumeDetailsReturnDressId, peekDetailsReturnSource, setDetailsReturnDressId } from '@/lib/details-return';
+import { consumeDetailsReturnDressId, peekDetailsReturnAccountSection, peekDetailsReturnSource, setDetailsReturnDressId } from '@/lib/details-return';
 import { Dress, Review, SortOption, EVENT_TYPES, PICKUP_METHODS } from '@/lib/types';
 import type { SavedDress } from '@/lib/luxe-storage';
 
@@ -56,6 +57,7 @@ function formatHebrewDate(date: string) {
 }
 
 export default function Home() {
+  const router = useRouter();
   const { openAuthModal } = useAuthModal();
   const [dressesList, setDressesList] = useState<Dress[]>([]);
   const [isLoadingDresses, setIsLoadingDresses] = useState(true);
@@ -869,16 +871,21 @@ export default function Home() {
   const closeOwnDressNotice = useCallback(() => {
     setOwnDressNotice(null);
     const source = peekDetailsReturnSource();
+    const accountSection = peekDetailsReturnAccountSection();
     const returnId = consumeDetailsReturnDressId();
     if (source === 'account' && returnId) {
-      window.location.href = `/account?section=rentals&viewDress=${encodeURIComponent(returnId)}`;
+      const params = new URLSearchParams({
+        section: accountSection || 'hub',
+        viewDress: returnId,
+      });
+      router.replace(`/account?${params.toString()}`);
       return;
     }
     if (returnId) {
       const dress = findDressById(returnId);
       if (dress) setDetailsDress(dress);
     }
-  }, [findDressById]);
+  }, [findDressById, router]);
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-[#fbf8f0] via-[#f3ebd6] to-[#e8dcbd] text-[#332c1e] pb-24 relative w-full max-w-[100vw]" dir="rtl">

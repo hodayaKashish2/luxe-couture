@@ -11,6 +11,7 @@ import DressRateModal from '@/components/DressRateModal';
 import { useLuxeStorage } from '@/components/LuxeStorageProvider';
 import DressCalendar from '@/components/DressCalendar';
 import OwnerPlatformNotice from '@/components/OwnerPlatformNotice';
+import OwnDressNoticeModal from '@/components/OwnDressNoticeModal';
 import FormError from '@/components/FormError';
 import SiteToast, { type SiteToastVariant } from '@/components/SiteToast';
 import DressImageFill from '@/components/DressImageFill';
@@ -19,6 +20,7 @@ import DressSizeInput from '@/components/DressSizeInput';
 import { validateAddDressForm, validateDressImageFiles, validateUpdateProfileForm } from '@/lib/form-validation';
 import { BOOKING_UPDATED_EVENT, notifyBookingUpdated } from '@/lib/booking-events';
 import { getStoredSiteUser } from '@/lib/session-user';
+import { dressBelongsToCustomer } from '@/lib/self-dress-guard';
 import { consumeDetailsReturnDressId, setDetailsReturnDressId } from '@/lib/details-return';
 import { notifySiteAuthChange } from '@/lib/site-auth-events';
 import { accountSectionUrl, parseAccountSection } from '@/lib/account-section-url';
@@ -82,6 +84,10 @@ function AccountPageContent() {
   const { cart, favorites, cartCount, favCount, removeFromCart, removeFromFavorites, toggleCart, toggleFavorite, isDressInCart, isDressFavorite } = useLuxeStorage();
   const [detailsDress, setDetailsDress] = useState<Dress | null>(null);
   const [rateDress, setRateDress] = useState<Dress | null>(null);
+  const [ownDressNotice, setOwnDressNotice] = useState<{
+    dressName: string;
+    variant: 'booking' | 'coordinate';
+  } | null>(null);
   const [user, setUser] = useState<AccountUser | null>(() => {
     const stored = getStoredSiteUser();
     if (!stored) return null;
@@ -105,6 +111,7 @@ function AccountPageContent() {
   const addFileInputRef = useRef<HTMLInputElement>(null);
   const editFileInputRef = useRef<HTMLInputElement>(null);
   const pendingViewDressRef = useRef<string | null>(null);
+  const loadedViewDressRef = useRef<string | null>(null);
   const [addForm, setAddForm] = useState({
     name: '', price: '', size: '', city: 'ירושלים', color: '', event_type: '',
     deposit: '', pickup_method: 'pickup', includes_dry_cleaning: 'no', condition: 'new', description: '',
@@ -157,6 +164,7 @@ function AccountPageContent() {
     setDetailsDress(null);
     setRateDress(null);
     pendingViewDressRef.current = null;
+    loadedViewDressRef.current = null;
     const { section: currentSection } = parseAccountSection(searchParams);
     if (searchParams.get('viewDress')) {
       navigateToSection(currentSection, { replace: true });
@@ -303,6 +311,10 @@ function AccountPageContent() {
     }
 
     if (viewDressId && (section === 'cart' || section === 'favorites' || section === 'rentals')) {
+      if (loadedViewDressRef.current === viewDressId && detailsDress?.id === viewDressId) {
+        return;
+      }
+      loadedViewDressRef.current = viewDressId;
       pendingViewDressRef.current = null;
       const openFromCatalog = () =>
         preloadDressesCatalog().then((list) => {
@@ -329,10 +341,12 @@ function AccountPageContent() {
     } else if (section !== 'cart' && section !== 'favorites' && section !== 'rentals') {
       setDetailsDress(null);
       pendingViewDressRef.current = null;
+      loadedViewDressRef.current = null;
     } else if (!viewDressId && !pendingViewDressRef.current && section !== 'rentals') {
       setDetailsDress(null);
+      loadedViewDressRef.current = null;
     }
-  }, [section, dressId, viewDressId, dresses]);
+  }, [section, dressId, viewDressId, dresses, detailsDress?.id]);
 
   async function cancelReservation(bookingId: number) {
     if (!confirm('לבטל את ההזמנה? התאריך ישוחרר לשוכרות אחרות.')) return;
@@ -576,6 +590,14 @@ function AccountPageContent() {
   const dressesWithBookings = activeDresses.filter((d) =>
     ownerBookings.some((b) => String(b.dress_id) === String(d.id))
   ).length;
+
+  function isOwnDressForUser(dress: Dress) {
+    if (dresses.some((d) => String(d.id) === String(dress.id))) return true;
+    return dressBelongsToCustomer(dress, {
+      phone: user?.phone || profileForm.phone,
+      email: user?.email || profileForm.email,
+    });
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#fbf8f0] to-[#e8dcbd] text-[#332c1e]" dir="rtl">
@@ -1154,13 +1176,21 @@ function AccountPageContent() {
           onToggleFavorite={() => toggleFavorite(detailsDress)}
           onReserve={() => {
             const dressId = detailsDress.id;
-            setDetailsReturnDressId(dressId, 'account');
+            if (isOwnDressForUser(detailsDress)) {
+              setOwnDressNotice({ dressName: detailsDress.name, variant: 'booking' });
+              return;
+            }
+            setDetailsReturnDressId(dressId, 'account', section);
             closeDetailsDress();
             router.push(`/?reserve=${encodeURIComponent(dressId)}`);
           }}
           onCoordinate={() => {
             const dressId = detailsDress.id;
-            setDetailsReturnDressId(dressId, 'account');
+            if (isOwnDressForUser(detailsDress)) {
+              setOwnDressNotice({ dressName: detailsDress.name, variant: 'coordinate' });
+              return;
+            }
+            setDetailsReturnDressId(dressId, 'account', section);
             closeDetailsDress();
             router.push(`/?coordinate=${encodeURIComponent(dressId)}`);
           }}
@@ -1181,6 +1211,14 @@ function AccountPageContent() {
             setRateDress((prev) => (prev?.id === dressId ? { ...prev, ...patch } : prev));
           }}
           showBackToDetails={!!detailsDress}
+        />
+      )}
+
+      {ownDressNotice && (
+        <OwnDressNoticeModal
+          dressName={ownDressNotice.dressName}
+          variant={ownDressNotice.variant}
+          onClose={() => setOwnDressNotice(null)}
         />
       )}
 
