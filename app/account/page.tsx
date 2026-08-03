@@ -26,6 +26,7 @@ import { notifySiteAuthChange } from '@/lib/site-auth-events';
 import { accountSectionUrl, parseAccountSection } from '@/lib/account-section-url';
 import { navigateAccountHub } from '@/lib/account-hub-nav';
 import { dressPageUrl, ownerWhatsAppLink } from '@/lib/site-config';
+import { buildEditFormFromDress } from '@/lib/dress-pending-update';
 import { formatAccountPhone } from '@/lib/dress-ownership';
 import { splitBookingsByEventDate } from '@/lib/booking-dates';
 import { fetchDressById, findDressInList, preloadDressesCatalog } from '@/lib/dress-api';
@@ -48,10 +49,13 @@ type RentalDress = {
   price: number;
   size: string;
   city: string;
+  color?: string;
+  description?: string;
   status: string;
   images: string[];
   rental_count: number;
   booked_dates: string[];
+  has_pending_update?: boolean;
 };
 
 type BookingRow = {
@@ -320,14 +324,7 @@ function AccountPageContent() {
       const dress = dresses.find((d) => d.id === dressId);
       if (dress) {
         setEditingDress(dress);
-        setEditForm({
-          name: dress.name,
-          price: String(dress.price),
-          size: dress.size,
-          city: dress.city,
-          color: '',
-          description: '',
-        });
+        setEditForm(buildEditFormFromDress(dress));
         setEditImages(Array.isArray(dress.images) ? [...dress.images] : []);
       }
     } else if (section !== 'edit') {
@@ -529,14 +526,7 @@ function AccountPageContent() {
 
   function startEditDress(dress: RentalDress) {
     setEditingDress(dress);
-    setEditForm({
-      name: dress.name,
-      price: String(dress.price),
-      size: dress.size,
-      city: dress.city,
-      color: '',
-      description: '',
-    });
+    setEditForm(buildEditFormFromDress(dress));
     setEditImages(Array.isArray(dress.images) ? [...dress.images] : []);
     setEditNewFiles([]);
     editNewPreviews.forEach((url) => URL.revokeObjectURL(url));
@@ -591,7 +581,14 @@ function AccountPageContent() {
     });
     const data = await res.json();
     if (res.ok) {
-      alert(data.message || 'השמלה עודכנה');
+      setToast({
+        message:
+          data.message ||
+          (data.pendingApproval
+            ? 'העדכון נשלח לאישור ההנהלה! נעדכן אותך במייל כשיאושר.'
+            : 'השמלה עודכנה בהצלחה'),
+        variant: 'success',
+      });
       editNewPreviews.forEach((url) => URL.revokeObjectURL(url));
       setEditNewFiles([]);
       setEditNewPreviews([]);
@@ -599,7 +596,7 @@ function AccountPageContent() {
       navigateToSection('rentals', { replace: true });
       load();
     } else {
-      alert(data.error || 'שגיאה בעדכון');
+      setToast({ message: data.error || 'שגיאה בעדכון', variant: 'error' });
     }
   }
 

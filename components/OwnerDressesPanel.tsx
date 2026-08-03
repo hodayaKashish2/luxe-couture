@@ -9,6 +9,7 @@ import {
   FEATURED_REWARD_DAYS,
 } from '@/lib/dress-ranking';
 import { isPastDate, splitBookingsByEventDate } from '@/lib/booking-dates';
+import { matchesCatalogTextFilter } from '@/lib/catalog-text-filter';
 
 export type OwnerRentalDress = {
   id: string;
@@ -16,12 +17,15 @@ export type OwnerRentalDress = {
   price: number;
   size: string;
   city: string;
+  color?: string;
+  description?: string;
   status: string;
   images: string[];
   rental_count: number;
   featured_boost?: number;
   featured_until?: string | null;
   booked_dates: string[];
+  has_pending_update?: boolean;
 };
 
 export type OwnerBookingRow = {
@@ -38,6 +42,7 @@ const DRESS_STATUS: Record<string, string> = {
   approved: 'מפורסמת ✓',
   pending: 'ממתינה לאישור',
   removed: 'הוסרה',
+  pending_update: 'עדכון ממתין',
 };
 
 const BOOKING_STATUS: Record<string, string> = {
@@ -165,7 +170,8 @@ export default function OwnerDressesPanel({
     [dresses]
   );
 
-  const [search, setSearch] = useState('');
+  const [searchDraft, setSearchDraft] = useState('');
+  const [appliedSearch, setAppliedSearch] = useState('');
   const [filter, setFilter] = useState<DressFilter>('all');
   const [sort, setSort] = useState<DressSort>('recent');
   const [showUpcoming, setShowUpcoming] = useState(true);
@@ -208,13 +214,14 @@ export default function OwnerDressesPanel({
   );
 
   const filteredDresses = useMemo(() => {
-    const query = search.trim().toLowerCase();
+    const query = appliedSearch.trim();
     let list = activeDresses.filter((d) => {
       if (!query) return true;
       return (
-        d.name.toLowerCase().includes(query) ||
-        d.city.toLowerCase().includes(query) ||
-        d.size.toLowerCase().includes(query)
+        matchesCatalogTextFilter(d.name, query) ||
+        matchesCatalogTextFilter(d.city, query) ||
+        matchesCatalogTextFilter(d.size, query) ||
+        matchesCatalogTextFilter(d.color || '', query)
       );
     });
 
@@ -223,9 +230,9 @@ export default function OwnerDressesPanel({
       const bookings = getConfirmedBookings(getDressBookings(d.id, ownerBookings));
       const upcomingBookings = bookings.filter((b) => b.event_date >= today);
       const hasUpcomingBookings = upcomingBookings.length > 0;
-      if (filter === 'available') return bookings.length === 0 && d.status === 'approved';
+      if (filter === 'available') return bookings.length === 0 && d.status === 'approved' && !d.has_pending_update;
       if (filter === 'booked') return hasUpcomingBookings;
-      if (filter === 'pending') return d.status === 'pending';
+      if (filter === 'pending') return d.status === 'pending' || Boolean(d.has_pending_update);
       return true;
     });
 
@@ -241,7 +248,7 @@ export default function OwnerDressesPanel({
     });
 
     return list;
-  }, [activeDresses, ownerBookings, search, filter, sort]);
+  }, [activeDresses, ownerBookings, appliedSearch, filter, sort]);
 
   const displayDresses = useMemo(() => {
     if (!selectedDressId || filteredDresses.some((d) => d.id === selectedDressId)) {
@@ -272,7 +279,16 @@ export default function OwnerDressesPanel({
   ];
 
   function handleSearchChange(value: string) {
-    setSearch(value);
+    setSearchDraft(value);
+  }
+
+  function applySearchFilter() {
+    setAppliedSearch(searchDraft.trim());
+  }
+
+  function clearSearchFilter() {
+    setSearchDraft('');
+    setAppliedSearch('');
   }
 
   function handleFilterChange(next: DressFilter) {
@@ -439,11 +455,33 @@ export default function OwnerDressesPanel({
         <div className="flex flex-col sm:flex-row gap-2">
           <input
             type="search"
-            value={search}
+            value={searchDraft}
             onChange={(e) => handleSearchChange(e.target.value)}
-            placeholder="חיפוש לפי שם, עיר או מידה..."
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                applySearchFilter();
+              }
+            }}
+            placeholder="חיפוש לפי שם, עיר, מידה או צבע..."
             className="flex-1 p-2.5 bg-neutral-50 border border-[#decfa8] rounded-xl text-xs text-[#2c261a] placeholder:text-[#9a7b4f] focus:outline-none focus:border-[#d4af37]"
           />
+          <button
+            type="button"
+            onClick={applySearchFilter}
+            className="px-4 py-2.5 bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white rounded-xl text-xs font-black shrink-0"
+          >
+            🔍 סינון
+          </button>
+          {(appliedSearch || searchDraft) && (
+            <button
+              type="button"
+              onClick={clearSearchFilter}
+              className="px-3 py-2.5 border border-[#decfa8] text-[#8b6508] rounded-xl text-xs font-bold shrink-0"
+            >
+              נקה
+            </button>
+          )}
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value as DressSort)}
@@ -475,7 +513,7 @@ export default function OwnerDressesPanel({
         </div>
 
         <p className="text-[10px] text-[#9a7b4f]">
-          {filteredDresses.length} שמלות{search || filter !== 'all' ? ' (מסוננות)' : ''}
+          {filteredDresses.length} שמלות{appliedSearch || filter !== 'all' ? ' (מסוננות)' : ''}
         </p>
       </div>
 
@@ -528,6 +566,11 @@ export default function OwnerDressesPanel({
                         <span className="text-[9px] bg-[#f4ebd4] px-1.5 py-0.5 rounded-full">
                           {DRESS_STATUS[dress.status] || dress.status}
                         </span>
+                        {dress.has_pending_update && (
+                          <span className="text-[9px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full font-bold">
+                            עדכון ממתין
+                          </span>
+                        )}
                         <span className="text-[9px] font-bold text-[#8b6508]">{summary.badge}</span>
                         {summary.detail && (
                           <span className="text-[9px] text-[#9a7b4f]">{summary.detail}</span>

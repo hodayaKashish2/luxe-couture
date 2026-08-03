@@ -20,6 +20,7 @@ export type AdminDressRow = {
   featured_until?: string | null;
   rental_count?: number;
   rating_count?: number;
+  pending_update_kind?: 'new' | 'update';
 };
 
 export type AdminSiteReview = {

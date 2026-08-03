@@ -1,5 +1,11 @@
 import { NextResponse } from 'next/server';
 import { fetchDressForNotify, notifyDressApproved } from '@/lib/dress-approval-notify';
+import {
+  mergeDressWithPendingUpdate,
+  pendingUpdateToDressPatch,
+  type PendingUpdatePayload,
+} from '@/lib/dress-pending-update';
+import { notifyDressUpdateApproved, notifyDressUpdateRejected } from '@/lib/dress-update-notify';
 import { markDressRemoved } from '@/lib/dress-removal';
 import { approveDressRating, recalculateDressRatingStats } from '@/lib/dress-rating-stats';
 import { extendFeaturedUntil, FEATURED_REWARD_DAYS } from '@/lib/dress-ranking';
@@ -27,6 +33,31 @@ function escapeIlike(value: string) {
 function mapDressNameJoin(dressJoin: { name?: string } | { name?: string }[] | null) {
   if (Array.isArray(dressJoin)) return dressJoin[0]?.name;
   return dressJoin?.name;
+}
+
+function mapPendingDressRow(row: Record<string, unknown>) {
+  const merged = mergeDressWithPendingUpdate(row, row.pending_update as PendingUpdatePayload | null);
+  return {
+    id: Number(merged.id),
+    name: String(merged.name || ''),
+    price: Number(merged.price || 0),
+    size: String(merged.size || ''),
+    city: String(merged.city || ''),
+    color: String(merged.color || ''),
+    description: String(merged.description || ''),
+    condition: String(merged.condition || ''),
+    event_type: String(merged.event_type || ''),
+    deposit: Number(merged.deposit || 0),
+    pickup_method: String(merged.pickup_method || ''),
+    includes_dry_cleaning: Boolean(merged.includes_dry_cleaning),
+    owner_name: String(merged.owner_name || ''),
+    owner_phone: String(merged.owner_phone || ''),
+    owner_email: String(merged.owner_email || ''),
+    images: Array.isArray(merged.images) ? merged.images.map(String) : [],
+    created_at: String(merged.pending_update_submitted_at || merged.created_at || ''),
+    status: String(merged.status || ''),
+    pending_update_kind: merged.isPendingUpdate ? ('update' as const) : ('new' as const),
+  };
 }
 
 function mapBookingRow(row: {
@@ -97,7 +128,7 @@ async function loadOverview(supabase: ReturnType<typeof getSupabaseAdmin>) {
     citiesRes,
   ] = await Promise.all([
     supabase.from('dresses').select('*', { count: 'exact', head: true }).eq('status', 'approved'),
-    supabase.from('dresses').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+    supabase.from('dresses').select('*', { count: 'exact', head: true }).or('status.eq.pending,pending_update.not.is.null'),
     supabase.from('dresses').select('*', { count: 'exact', head: true }).eq('status', 'approved').gt('featured_boost', 0),
     supabase.from('reviews').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
     supabase.from('dress_ratings').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
@@ -114,9 +145,9 @@ async function loadOverview(supabase: ReturnType<typeof getSupabaseAdmin>) {
     supabase
       .from('dresses')
       .select(
-        'id, name, price, size, city, color, description, condition, event_type, deposit, pickup_method, includes_dry_cleaning, owner_name, owner_phone, owner_email, status, created_at, images'
+        'id, name, price, size, city, color, description, condition, event_type, deposit, pickup_method, includes_dry_cleaning, owner_name, owner_phone, owner_email, status, created_at, images, pending_update, pending_update_submitted_at'
       )
-      .eq('status', 'pending')
+      .or('status.eq.pending,pending_update.not.is.null')
       .order('created_at', { ascending: false })
       .limit(100),
     supabase
@@ -181,7 +212,7 @@ async function loadOverview(supabase: ReturnType<typeof getSupabaseAdmin>) {
       approvedReviews: approvedReviewsRes.count ?? 0,
       confirmedBookings: confirmedBookingsRes.count ?? 0,
     },
-    pendingDresses: pendingDressesListRes.data ?? [],
+    pendingDresses: (pendingDressesListRes.data ?? []).map((row) => mapPendingDressRow(row as Record<string, unknown>)),
     pendingReviews: (pendingReviewsListRes.data ?? []).map((r) => ({
       id: r.id,
       name: r.name,
@@ -572,6 +603,43 @@ export async function POST(request: Request) {
     if (type === 'dress' && action === 'delete') {
       await markDressRemoved(id);
       return NextResponse.json({ success: true, status: 'removed' });
+    }
+
+    if (type === 'dress' && (action === 'approve' || action === 'reject')) {
+      const { data: dressRow, error: fetchDressError } = await supabase
+        .from('dresses')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle();
+
+      if (fetchDressError) throw fetchDressError;
+
+      if (dressRow?.pending_update) {
+        const payload = dressRow.pending_update as PendingUpdatePayload;
+        const dressForNotify = await fetchDressForNotify(supabase, id);
+
+        if (action === 'approve') {
+          const { error } = await supabase
+            .from('dresses')
+            .update(pendingUpdateToDressPatch(payload))
+            .eq('id', id);
+          if (error) throw error;
+          if (dressForNotify) {
+            await notifyDressUpdateApproved(supabase, dressForNotify, payload);
+          }
+          return NextResponse.json({ success: true, status: 'approved', kind: 'update' });
+        }
+
+        const { error } = await supabase
+          .from('dresses')
+          .update({ pending_update: null, pending_update_submitted_at: null })
+          .eq('id', id);
+        if (error) throw error;
+        if (dressForNotify) {
+          await notifyDressUpdateRejected(supabase, dressForNotify);
+        }
+        return NextResponse.json({ success: true, status: 'rejected', kind: 'update' });
+      }
     }
 
     const table = type === 'dress' ? 'dresses' : 'reviews';

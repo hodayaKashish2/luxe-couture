@@ -510,6 +510,130 @@ export async function sendDressApprovedOwnerEmail(params: {
   );
 }
 
+export async function sendDressUpdatePendingAdminEmail(params: {
+  dressId: string | number;
+  name: string;
+  price: number;
+  size: string;
+  city: string;
+  color?: string;
+  ownerName: string;
+  ownerPhone: string;
+  ownerEmail: string;
+  images: string[];
+}) {
+  const adminUrl = `${getAppUrl()}/admin`;
+  const imagesHtml = params.images
+    .slice(0, 4)
+    .map(
+      (url) =>
+        `<img src="${url}" alt="" style="width:120px;height:160px;object-fit:contain;border-radius:8px;border:1px solid #eadaaf;margin:4px;" />`
+    )
+    .join('');
+
+  return sendAdminEmail(
+    `✏️ עדכון שמלה לאישור: ${params.name}`,
+    `
+      <div dir="rtl" style="font-family:sans-serif;max-width:640px;margin:0 auto;padding:24px;border:1px solid #eadaaf;border-radius:16px;background:#fffdf8;">
+        <h2 style="color:#3d2f24;margin-top:0;">עדכון שמלה ממתין לאישור</h2>
+        <p style="line-height:1.7;color:#554a33;">משכירה עדכנה שמלה שכבר מפורסמת באתר. לאחר האישור — הפרטים החדשים יחליפו את הגרסה הנוכחית.</p>
+        <p><strong>שם:</strong> ${params.name}</p>
+        <p><strong>מחיר:</strong> ₪${params.price}</p>
+        <p><strong>מידה:</strong> ${params.size}</p>
+        <p><strong>עיר:</strong> ${params.city}</p>
+        ${params.color ? `<p><strong>צבע:</strong> ${params.color}</p>` : ''}
+        <p><strong>משכירה:</strong> ${params.ownerName} · ${params.ownerPhone}${params.ownerEmail ? ` · ${params.ownerEmail}` : ''}</p>
+        ${imagesHtml ? `<div style="margin:16px 0;">${imagesHtml}</div>` : ''}
+        <p style="margin-top:24px;">
+          <a href="${adminUrl}" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
+            לאישור בדף הניהול →
+          </a>
+        </p>
+      </div>
+    `
+  );
+}
+
+export async function sendDressUpdatePendingOwnerEmail(params: {
+  to: string;
+  ownerName: string;
+  dressName: string;
+}) {
+  if (!params.to?.trim()) {
+    return { success: false as const, error: 'אין כתובת מייל למשכירה' };
+  }
+
+  return sendEmailTo(
+    params.to,
+    `✏️ העדכון התקבל: ${params.dressName}`,
+    `
+      <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #eadaaf;border-radius:16px;background:#fffdf8;">
+        <h2 style="color:#3d2f24;margin-top:0;">שלום ${params.ownerName}!</h2>
+        <p style="line-height:1.7;color:#554a33;">קיבלנו את העדכון לשמלה <strong>${params.dressName}</strong> והוא ממתין לאישור ההנהלה.</p>
+        <p style="line-height:1.7;color:#554a33;">עד לאישור — בקטלוג תמשיך להופיע הגרסה הקודמת. נעדכן אותך במייל ברגע שהעדכון יאושר.</p>
+        <p style="margin-top:24px;">
+          <a href="${getAppUrl()}/account?section=rentals" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
+            לאזור האישי →
+          </a>
+        </p>
+      </div>
+    `
+  );
+}
+
+export async function sendDressUpdateApprovedOwnerEmail(params: {
+  to: string;
+  ownerName: string;
+  dressName: string;
+}) {
+  if (!params.to?.trim()) {
+    return { success: false as const, error: 'אין כתובת מייל למשכירה' };
+  }
+
+  return sendEmailTo(
+    params.to,
+    `✅ העדכון אושר: ${params.dressName}`,
+    `
+      <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #eadaaf;border-radius:16px;background:#fffdf8;">
+        <h2 style="color:#3d2f24;margin-top:0;">שלום ${params.ownerName}!</h2>
+        <p style="line-height:1.7;color:#554a33;">העדכון לשמלה <strong>${params.dressName}</strong> אושר והפרטים החדשים מופיעים עכשיו בקטלוג.</p>
+        <p style="margin-top:24px;">
+          <a href="${getAppUrl()}/" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
+            לצפייה בקטלוג →
+          </a>
+        </p>
+      </div>
+    `
+  );
+}
+
+export async function sendDressUpdateRejectedOwnerEmail(params: {
+  to: string;
+  ownerName: string;
+  dressName: string;
+}) {
+  if (!params.to?.trim()) {
+    return { success: false as const, error: 'אין כתובת מייל למשכירה' };
+  }
+
+  return sendEmailTo(
+    params.to,
+    `❌ העדכון לא אושר: ${params.dressName}`,
+    `
+      <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #eadaaf;border-radius:16px;background:#fffdf8;">
+        <h2 style="color:#3d2f24;margin-top:0;">שלום ${params.ownerName}!</h2>
+        <p style="line-height:1.7;color:#554a33;">העדכון ששלחת לשמלה <strong>${params.dressName}</strong> לא אושר על ידי ההנהלה.</p>
+        <p style="line-height:1.7;color:#554a33;">בקטלוג תמשיך להופיע הגרסה הקודמת. אפשר לערוך שוב ולשלוח מחדש מאזור האישי.</p>
+        <p style="margin-top:24px;">
+          <a href="${getAppUrl()}/account?section=rentals" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
+            לעריכה באזור האישי →
+          </a>
+        </p>
+      </div>
+    `
+  );
+}
+
 /** @deprecated השתמשי ב-sendAdminEmail או sendEmailTo */
 export async function sendEmail(subject: string, html: string) {
   return sendAdminEmail(subject, html);

@@ -40,7 +40,7 @@ export default function AdminPendingDressesGrid({ dresses, onAction }: AdminPend
             onToggle={() => setExpandedId(isOpen ? null : dress.id)}
             badge={
               <span className="text-[8px] font-bold text-amber-800 bg-amber-50 px-1 py-0.5 rounded-full shrink-0">
-                חדש
+                {dress.pending_update_kind === 'update' ? 'עדכון' : 'חדש'}
               </span>
             }
           >

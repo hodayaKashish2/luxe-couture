@@ -18,7 +18,7 @@ function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 }
 
-async function resolveOwnerContact(supabase: SupabaseClient, dress: DressForNotify) {
+export async function resolveOwnerContact(supabase: SupabaseClient, dress: DressForNotify) {
   let email = '';
   let phone = String(dress.owner_phone || '').trim();
   let name = dress.owner_name || 'משכירה';

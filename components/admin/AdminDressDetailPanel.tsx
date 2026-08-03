@@ -24,6 +24,11 @@ export default function AdminDressDetailPanel({ dress, children }: AdminDressDet
 
   return (
     <div className="space-y-2 pt-1">
+      {dress.pending_update_kind === 'update' && (
+        <p className="text-[9px] font-bold text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-2 py-1">
+          ✏️ זהו עדכון לשמלה שכבר מפורסמת — באישור יחליפו את הפרטים הנוכחיים.
+        </p>
+      )}
       <p className="text-[9px] text-[#6e634c]">
         #{dress.id} · {dress.size} · {dress.city}
         {dress.color ? ` · ${dress.color}` : ''}

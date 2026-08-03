@@ -1,6 +1,11 @@
 import { NextResponse } from 'next/server';
 import { getUserFromRequest, type SiteUser } from '@/lib/user-auth';
 import { userOwnsDress } from '@/lib/dress-ownership';
+import {
+  buildPendingUpdatePayload,
+  isSchemaMissingPendingUpdate,
+} from '@/lib/dress-pending-update';
+import { notifyDressUpdateSubmitted } from '@/lib/dress-update-notify';
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server';
 import { MAX_DRESS_IMAGES, uploadDressImages } from '@/lib/dress-images';
 
@@ -118,10 +123,58 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     }
 
     const supabase = getSupabaseAdmin();
+    const dressStatus = String(dress.status || '');
+
+    if (dressStatus === 'approved') {
+      const pendingUpdate = buildPendingUpdatePayload(dress, updates);
+      const pendingPayload = {
+        pending_update: pendingUpdate,
+        pending_update_submitted_at: new Date().toISOString(),
+      };
+
+      let updateResult = await supabase.from('dresses').update(pendingPayload).eq('id', id);
+      if (updateResult.error?.message && isSchemaMissingPendingUpdate(updateResult.error.message)) {
+        updateResult = await supabase.from('dresses').update(updates).eq('id', id);
+        if (updateResult.error) throw updateResult.error;
+
+        return NextResponse.json({
+          success: true,
+          message: 'השמלה עודכנה בהצלחה',
+          directUpdate: true,
+        });
+      }
+      if (updateResult.error) throw updateResult.error;
+
+      await notifyDressUpdateSubmitted({
+        dressId: id,
+        name: pendingUpdate.name,
+        price: pendingUpdate.price,
+        size: pendingUpdate.size,
+        city: pendingUpdate.city,
+        color: pendingUpdate.color,
+        ownerName: String(dress.owner_name || user.displayName || 'משכירה'),
+        ownerPhone: String(dress.owner_phone || user.phone || ''),
+        ownerEmail: String(dress.owner_email || user.email || ''),
+        images: pendingUpdate.images,
+      });
+
+      return NextResponse.json({
+        success: true,
+        pendingApproval: true,
+        message: 'העדכון נשלח לאישור ההנהלה! נעדכן אותך במייל כשיאושר.',
+      });
+    }
+
     const { error } = await supabase.from('dresses').update(updates).eq('id', id);
     if (error) throw error;
 
-    return NextResponse.json({ success: true, message: 'השמלה עודכנה בהצלחה' });
+    return NextResponse.json({
+      success: true,
+      message:
+        dressStatus === 'pending'
+          ? 'השמלה עודכנה וממתינה לאישור ההנהלה'
+          : 'השמלה עודכנה בהצלחה',
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'שגיאה';
     return NextResponse.json({ error: message }, { status: 500 });
