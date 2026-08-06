@@ -1,6 +1,7 @@
 import { Resend } from 'resend';
 import nodemailer from 'nodemailer';
 import { DEFAULT_ADMIN_EMAIL, getSiteAdminEmail } from '@/lib/site-config';
+import { buildDressUpdateDiffHtml } from '@/lib/dress-update-diff-html';
 
 let resendClient: Resend | null = null;
 let smtpTransport: nodemailer.Transporter | null = null;
@@ -627,61 +628,6 @@ function escapeHtml(value: string) {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
-}
-
-function dressUpdateImageTag(url: string, label?: string) {
-  const caption = label ? `<p style="font-size:11px;color:#8b6508;margin:4px 0 0;">${escapeHtml(label)}</p>` : '';
-  return `<div style="display:inline-block;text-align:center;margin:4px;">
-    <img src="${url}" alt="" style="width:100px;height:130px;object-fit:contain;border-radius:8px;border:1px solid #eadaaf;background:#fff;" />
-    ${caption}
-  </div>`;
-}
-
-function buildDressUpdateDiffHtml(diff: import('@/lib/dress-pending-update').DressUpdateDiff) {
-  const { changes, imageChanges } = diff;
-  const hasFieldChanges = changes.length > 0;
-  const hasImageChanges = imageChanges.removed.length > 0 || imageChanges.added.length > 0;
-
-  if (!hasFieldChanges && !hasImageChanges) {
-    return '<p style="line-height:1.7;color:#554a33;">לא זוהו שינויים בפרטים.</p>';
-  }
-
-  let html = '<div style="margin:16px 0;padding:16px;border:1px solid #eadaaf;border-radius:12px;background:#fff;">';
-
-  if (hasFieldChanges) {
-    html += '<p style="margin:0 0 8px;font-weight:bold;color:#3d2f24;">שינויים בפרטים:</p><ul style="margin:0;padding-right:20px;line-height:1.8;color:#554a33;">';
-    for (const change of changes) {
-      html += `<li><strong>${escapeHtml(change.label)}:</strong> ${escapeHtml(change.before)} → <strong>${escapeHtml(change.after)}</strong></li>`;
-    }
-    html += '</ul>';
-  }
-
-  if (hasImageChanges) {
-    html += '<p style="margin:16px 0 8px;font-weight:bold;color:#3d2f24;">שינויים בתמונות:</p>';
-
-    const isSingleSwap =
-      imageChanges.removed.length === 1 &&
-      imageChanges.added.length === 1;
-
-    if (isSingleSwap) {
-      html += `<p style="line-height:1.7;color:#554a33;margin:0 0 8px;">הוחלפה תמונה:</p>
-        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;">
-          ${dressUpdateImageTag(imageChanges.removed[0], 'לפני')}
-          <span style="font-size:20px;color:#b8860b;">←</span>
-          ${dressUpdateImageTag(imageChanges.added[0], 'אחרי')}
-        </div>`;
-    } else {
-      if (imageChanges.removed.length > 0) {
-        html += `<p style="line-height:1.7;color:#554a33;margin:8px 0 4px;">תמונות שהוסרו:</p><div>${imageChanges.removed.map((url) => dressUpdateImageTag(url)).join('')}</div>`;
-      }
-      if (imageChanges.added.length > 0) {
-        html += `<p style="line-height:1.7;color:#554a33;margin:8px 0 4px;">תמונות חדשות:</p><div>${imageChanges.added.map((url) => dressUpdateImageTag(url)).join('')}</div>`;
-      }
-    }
-  }
-
-  html += '</div>';
-  return html;
 }
 
 export async function sendDressUpdateApprovedOwnerEmail(params: {

@@ -25,7 +25,8 @@ import { consumeDetailsReturnDressId, setDetailsReturnDressId } from '@/lib/deta
 import { notifySiteAuthChange } from '@/lib/site-auth-events';
 import { accountSectionUrl, parseAccountSection } from '@/lib/account-section-url';
 import { navigateAccountHub } from '@/lib/account-hub-nav';
-import { dressPageUrl, ownerWhatsAppLink } from '@/lib/site-config';
+import { ownerWhatsAppLink } from '@/lib/site-config';
+import { shareDressLink } from '@/lib/share-dress';
 import { buildEditFormFromDress, normalizeDressImages } from '@/lib/dress-pending-update';
 import { formatAccountPhone } from '@/lib/dress-ownership';
 import { splitBookingsByEventDate } from '@/lib/booking-dates';
@@ -156,6 +157,7 @@ function AccountPageContent() {
     emailWarning?: string;
   } | null>(null);
   const [editLoading, setEditLoading] = useState(false);
+  const [editSaving, setEditSaving] = useState(false);
   const [editLoadError, setEditLoadError] = useState('');
   const editDressLoadRef = useRef<string | null>(null);
   const editDraftTouchedRef = useRef(false);
@@ -222,24 +224,11 @@ function AccountPageContent() {
   }, [searchParams, navigateToSection]);
 
   const shareDress = useCallback(async (dress: Dress) => {
-    const url = dressPageUrl(dress.id);
-    const shareText = `שמתי לב לשמלה "${dress.name}" באתר שמלה בקליק`;
-    try {
-      if (navigator.share) {
-        await navigator.share({ title: dress.name, text: shareText, url });
-        setToast({ message: 'השיתוף נשלח בהצלחה', variant: 'success' });
-        return;
-      }
-      await navigator.clipboard.writeText(url);
-      setToast({ message: 'הקישור לשמלה הועתק — אפשר להדביק ולשלוח', variant: 'success' });
-    } catch {
-      try {
-        await navigator.clipboard.writeText(url);
-        setToast({ message: 'הקישור לשמלה הועתק', variant: 'success' });
-      } catch {
-        setToast({ message: 'לא הצלחנו לשתף את הקישור', variant: 'error' });
-      }
-    }
+    await shareDressLink(
+      dress,
+      (message) => setToast({ message, variant: 'success' }),
+      (message) => setToast({ message, variant: 'error' })
+    );
   }, []);
 
   const openSavedDressDetails = useCallback(async (item: SavedDress) => {
@@ -658,41 +647,46 @@ function AccountPageContent() {
     formData.append('kept_images', JSON.stringify(editImages));
     editNewFiles.forEach((file) => formData.append('images', file));
 
-    const res = await fetch(`/api/user/dresses/${editingDress.id}`, {
-      method: 'PATCH',
-      headers: { 'x-user-token': token || '' },
-      body: formData,
-    });
-    const data = await res.json();
-    if (res.ok) {
-      invalidateDressesCatalog();
-      editNewPreviews.forEach((url) => URL.revokeObjectURL(url));
-      setEditNewFiles([]);
-      setEditNewPreviews([]);
-      setEditingDress(null);
-      navigateToSection('rentals', { replace: true });
-      void load();
-
-      setEditSuccessNotice({
-        dressName: editForm.name.trim() || editingDress.name,
-        pendingApproval: Boolean(data.pendingApproval),
-        emailWarning: (() => {
-          const status = data.emailStatus;
-          if (!status) return undefined;
-          const parts: string[] = [];
-          if (!status.adminOk) parts.push('מייל להנהלה לא נשלח');
-          if (!status.ownerOk) {
-            parts.push(
-              status.ownerError?.includes('אין כתובת')
-                ? 'חסר מייל בפרופיל — עדכני באזור האישי'
-                : 'מייל אליך (משכירה) לא נשלח — בדקי ספאם'
-            );
-          }
-          return parts.length ? `${parts.join('. ')}. השמירה הצליחה.` : undefined;
-        })(),
+    setEditSaving(true);
+    try {
+      const res = await fetch(`/api/user/dresses/${editingDress.id}`, {
+        method: 'PATCH',
+        headers: { 'x-user-token': token || '' },
+        body: formData,
       });
-    } else {
-      setToast({ message: data.error || 'שגיאה בעדכון', variant: 'error' });
+      const data = await res.json();
+      if (res.ok) {
+        invalidateDressesCatalog();
+        editNewPreviews.forEach((url) => URL.revokeObjectURL(url));
+        setEditNewFiles([]);
+        setEditNewPreviews([]);
+        setEditingDress(null);
+        navigateToSection('rentals', { replace: true });
+        void load();
+
+        setEditSuccessNotice({
+          dressName: editForm.name.trim() || editingDress.name,
+          pendingApproval: Boolean(data.pendingApproval),
+          emailWarning: (() => {
+            const status = data.emailStatus;
+            if (!status) return undefined;
+            const parts: string[] = [];
+            if (!status.adminOk) parts.push('מייל להנהלה לא נשלח');
+            if (!status.ownerOk) {
+              parts.push(
+                status.ownerError?.includes('אין כתובת')
+                  ? 'חסר מייל בפרופיל — עדכני באזור האישי'
+                  : 'מייל אליך (משכירה) לא נשלח — בדקי ספאם'
+              );
+            }
+            return parts.length ? `${parts.join('. ')}. השמירה הצליחה.` : undefined;
+          })(),
+        });
+      } else {
+        setToast({ message: data.error || 'שגיאה בעדכון', variant: 'error' });
+      }
+    } finally {
+      setEditSaving(false);
     }
   }
 
@@ -1171,8 +1165,14 @@ function AccountPageContent() {
               />
             </div>
 
-            <button type="submit" className="w-full py-3 bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white rounded-xl text-xs font-black shadow-md">
-              שמרי שינויים
+            <button
+              type="submit"
+              disabled={editSaving}
+              className={`w-full py-3 bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white rounded-xl text-xs font-black shadow-md transition-all disabled:opacity-60 disabled:cursor-wait ${
+                editSaving ? 'scale-[0.98] shadow-inner' : 'hover:brightness-105 active:scale-[0.98]'
+              }`}
+            >
+              {editSaving ? 'שומרת...' : 'שמרי שינויים'}
             </button>
           </form>
         )}

@@ -13,8 +13,24 @@ function isValidEmail(email: string) {
 async function resolveOwnerEmailForUpdate(
   supabase: SupabaseClient,
   dress: NonNullable<Awaited<ReturnType<typeof fetchDressForNotify>>>,
-  dressRow?: Record<string, unknown>
+  dressRow?: Record<string, unknown>,
+  payload?: PendingUpdatePayload
 ) {
+  const storedNotify = payload?.notify_email?.trim().toLowerCase();
+  if (storedNotify && isValidEmail(storedNotify)) {
+    const fromDress = await resolveOwnerContact(supabase, {
+      ...dress,
+      owner_email:
+        dress.owner_email ||
+        (dressRow?.owner_email ? String(dressRow.owner_email) : '') ||
+        undefined,
+      submitter_user_id:
+        dress.submitter_user_id ||
+        (dressRow?.submitter_user_id ? String(dressRow.submitter_user_id) : null),
+    });
+    return { email: storedNotify, name: fromDress.name || dress.owner_name || 'משכירה' };
+  }
+
   const fromDress = await resolveOwnerContact(supabase, {
     ...dress,
     owner_email:
@@ -60,7 +76,8 @@ export async function notifyDressUpdateApproved(
   const { email: ownerEmail, name: ownerName } = await resolveOwnerEmailForUpdate(
     supabase,
     dress,
-    dressRow
+    dressRow,
+    payload
   );
 
   if (!ownerEmail || !isValidEmail(ownerEmail)) {

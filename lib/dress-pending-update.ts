@@ -13,6 +13,8 @@ export type PendingUpdatePayload = {
   deposit?: number;
   pickup_method?: string;
   includes_dry_cleaning?: boolean;
+  /** Email used when the update was submitted — for approval notification */
+  notify_email?: string;
 };
 
 export function normalizeDressImages(raw: unknown): string[] {

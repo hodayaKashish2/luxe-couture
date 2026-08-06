@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { fetchDressForNotify, notifyDressApproved } from '@/lib/dress-approval-notify';
+import { fetchDressForNotify, dressRowToNotify, notifyDressApproved } from '@/lib/dress-approval-notify';
 import {
   computeDressUpdateDiff,
   getLiveDressSnapshot,
@@ -627,7 +627,8 @@ export async function POST(request: Request) {
 
       if (dressRow?.pending_update) {
         const payload = dressRow.pending_update as PendingUpdatePayload;
-        const dressForNotify = await fetchDressForNotify(supabase, id);
+        const dressForNotify =
+          (await fetchDressForNotify(supabase, id)) ?? dressRowToNotify(dressRow as Record<string, unknown>);
 
         if (action === 'approve') {
           const liveBefore = getLiveDressSnapshot(dressRow as Record<string, unknown>);
@@ -637,16 +638,20 @@ export async function POST(request: Request) {
             .update(pendingUpdateToDressPatch(payload))
             .eq('id', id);
           if (error) throw error;
-          if (dressForNotify) {
-            await notifyDressUpdateApproved(
-              supabase,
-              dressForNotify,
-              payload,
-              updateDiff,
-              dressRow as Record<string, unknown>
-            );
-          }
-          return NextResponse.json({ success: true, status: 'approved', kind: 'update' });
+          const emailResult = await notifyDressUpdateApproved(
+            supabase,
+            dressForNotify,
+            payload,
+            updateDiff,
+            dressRow as Record<string, unknown>
+          );
+          return NextResponse.json({
+            success: true,
+            status: 'approved',
+            kind: 'update',
+            ownerEmailSent: emailResult.success,
+            ownerEmailError: emailResult.success ? undefined : emailResult.error,
+          });
         }
 
         const { error } = await supabase
@@ -654,14 +659,18 @@ export async function POST(request: Request) {
           .update({ pending_update: null, pending_update_submitted_at: null })
           .eq('id', id);
         if (error) throw error;
-        if (dressForNotify) {
-          await notifyDressUpdateRejected(
-            supabase,
-            dressForNotify,
-            dressRow as Record<string, unknown>
-          );
-        }
-        return NextResponse.json({ success: true, status: 'rejected', kind: 'update' });
+        const emailResult = await notifyDressUpdateRejected(
+          supabase,
+          dressForNotify,
+          dressRow as Record<string, unknown>
+        );
+        return NextResponse.json({
+          success: true,
+          status: 'rejected',
+          kind: 'update',
+          ownerEmailSent: emailResult.success,
+          ownerEmailError: emailResult.success ? undefined : emailResult.error,
+        });
       }
     }
 

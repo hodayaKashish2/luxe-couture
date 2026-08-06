@@ -21,3 +21,8 @@ export function matchesCatalogTextFilter(fieldValue: string, filterText: string)
 
   return tokenize(fieldValue).some((token) => token === filter || token.startsWith(filter));
 }
+
+export function matchesAnyCatalogTextFilter(fieldValue: string, filters: string[]): boolean {
+  if (!filters.length) return true;
+  return filters.some((filter) => matchesCatalogTextFilter(fieldValue, filter));
+}

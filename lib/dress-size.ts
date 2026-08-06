@@ -34,3 +34,8 @@ export function dressSizeMatchesFilter(dressSize: string, filter: string): boole
 
   return getDressSizeSearchText(dressSize).includes(query.toLowerCase());
 }
+
+export function dressSizeMatchesAnyFilter(dressSize: string, filters: string[]): boolean {
+  if (!filters.length) return true;
+  return filters.some((filter) => dressSizeMatchesFilter(dressSize, filter));
+}

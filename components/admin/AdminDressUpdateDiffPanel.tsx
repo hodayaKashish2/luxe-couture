@@ -89,9 +89,10 @@ export default function AdminDressUpdateDiffPanel({
                     key={change.field}
                     className="rounded-lg bg-[#fffdf8] border border-[#f0e8d0] px-3 py-2 leading-relaxed"
                   >
-                    <span className="font-bold text-[#8b6508]">{change.label}: </span>
-                    <span className="text-[#6e634c] line-through">{change.before}</span>
-                    <span className="mx-2 text-[#b8860b]">→</span>
+                    <div className="font-bold text-[#8b6508] mb-1">{change.label}</div>
+                    <div className="text-[#9a7b4f] text-[10px]">היה:</div>
+                    <div className="text-[#6e634c] line-through mb-2">{change.before}</div>
+                    <div className="text-[#8b6508] text-[10px] font-bold">עכשיו:</div>
                     <strong className="text-[#3d2f24]">{change.after}</strong>
                   </li>
                 ))}
@@ -105,19 +106,16 @@ export default function AdminDressUpdateDiffPanel({
                 שינויים בתמונות
               </p>
               {isSingleSwap ? (
-                <div className={`flex flex-wrap items-start gap-3 ${large ? 'justify-center' : ''}`}>
+                <div className={`grid grid-cols-2 gap-3 ${large ? 'max-w-md mx-auto' : ''}`}>
                   <DiffImage
                     url={imageChanges.removed[0]}
-                    label="לפני"
+                    label="לפני (הוסר)"
                     large={large}
                     onOpen={(src, label) => setLightbox({ src, label })}
                   />
-                  <span className={`text-[#b8860b] font-black self-center ${large ? 'text-2xl' : 'text-lg'}`}>
-                    ←
-                  </span>
                   <DiffImage
                     url={imageChanges.added[0]}
-                    label="אחרי"
+                    label="אחרי (חדש)"
                     large={large}
                     onOpen={(src, label) => setLightbox({ src, label })}
                   />

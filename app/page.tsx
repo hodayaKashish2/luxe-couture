@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import SiteFooter from '@/components/SiteFooter';
 import SiteHeader from '@/components/SiteHeader';
@@ -32,13 +32,14 @@ import { useScrollToError } from '@/hooks/use-scroll-to-error';
 import { popModalStackInPlace } from '@/lib/modal-history';
 import { compareDresses } from '@/lib/dress-sort';
 import { getCatalogHighlights } from '@/lib/dress-ranking';
-import { dressSizeMatchesFilter } from '@/lib/dress-size';
+import { dressSizeMatchesAnyFilter } from '@/lib/dress-size';
 import { isPastDate, todayDateString } from '@/lib/booking-dates';
-import { matchesCatalogTextFilter } from '@/lib/catalog-text-filter';
+import { matchesAnyCatalogTextFilter } from '@/lib/catalog-text-filter';
+import { shareDressLink } from '@/lib/share-dress';
 import { OFF_PLATFORM_COORDINATE_NOTICE } from '@/lib/commission';
 import { fetchDressById, findDressInList } from '@/lib/dress-api';
 import { dressBelongsToCustomer } from '@/lib/self-dress-guard';
-import { dressPageUrl, ownerWhatsAppLink, WHATSAPP_LINK } from '@/lib/site-config';
+import { ownerWhatsAppLink, WHATSAPP_LINK } from '@/lib/site-config';
 import { consumeDetailsReturnDressId, peekDetailsReturnAccountSection, peekDetailsReturnSource, setDetailsReturnDressId } from '@/lib/details-return';
 import { Dress, Review, SortOption, EVENT_TYPES, PICKUP_METHODS } from '@/lib/types';
 import type { SavedDress } from '@/lib/luxe-storage';
@@ -72,10 +73,10 @@ export default function Home() {
   // פילטרים
   const [searchTerm, setSearchTerm] = useState('');
   const [maxPrice, setMaxPrice] = useState(2000);
-  const [sizeFilter, setSizeFilter] = useState('');
-  const [colorFilter, setColorFilter] = useState('');
-  const [cityFilter, setCityFilter] = useState('');
-  const [selectedEventType, setSelectedEventType] = useState('');
+  const [sizeFilters, setSizeFilters] = useState<string[]>([]);
+  const [colorFilters, setColorFilters] = useState<string[]>([]);
+  const [cityFilters, setCityFilters] = useState<string[]>([]);
+  const [selectedEventTypes, setSelectedEventTypes] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<SortOption>('recommended');
   const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -552,26 +553,31 @@ export default function Home() {
     setToast({ message, variant });
   }, []);
 
-  const shareDress = useCallback(async (dress: Dress) => {
-    const url = dressPageUrl(dress.id);
-    const shareText = `שמתי לב לשמלה "${dress.name}" באתר שמלה בקליק`;
-    try {
-      if (navigator.share) {
-        await navigator.share({ title: dress.name, text: shareText, url });
-        showToast('השיתוף נשלח בהצלחה');
-        return;
-      }
-      await navigator.clipboard.writeText(url);
-      showToast('הקישור לשמלה הועתק — אפשר להדביק ולשלוח');
-    } catch {
-      try {
-        await navigator.clipboard.writeText(url);
-        showToast('הקישור לשמלה הועתק');
-      } catch {
-        showToast('לא הצלחנו לשתף את הקישור', 'error');
-      }
+  const shareDress = useCallback(
+    async (dress: Dress) => {
+      await shareDressLink(
+        dress,
+        (message) => showToast(message),
+        (message) => showToast(message, 'error')
+      );
+    },
+    [showToast]
+  );
+
+  const catalogFilterOptions = useMemo(() => {
+    const cities = new Set<string>();
+    const colors = new Set<string>();
+    for (const dress of dressesList) {
+      const city = dress.city?.trim();
+      const color = dress.color?.trim();
+      if (city) cities.add(city);
+      if (color) colors.add(color);
     }
-  }, [showToast]);
+    return {
+      cities: [...cities].sort((a, b) => a.localeCompare(b, 'he')),
+      colors: [...colors].sort((a, b) => a.localeCompare(b, 'he')),
+    };
+  }, [dressesList]);
 
   const handleDateChange = (date: string) => {
     setOrderDate(date);
@@ -896,13 +902,13 @@ export default function Home() {
   const filteredDresses = dressesList
     .filter((dress) => {
       const matchesSearch = dress.name.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesCity =
-        matchesCatalogTextFilter(dress.city, cityFilter);
+      const matchesCity = matchesAnyCatalogTextFilter(dress.city, cityFilters);
       const matchesPrice = dress.price <= maxPrice;
-      const matchesSize = dressSizeMatchesFilter(dress.size, sizeFilter);
-      const matchesColor =
-        matchesCatalogTextFilter(dress.color, colorFilter);
-      const matchesEvent = !selectedEventType || dress.event_type === selectedEventType;
+      const matchesSize = dressSizeMatchesAnyFilter(dress.size, sizeFilters);
+      const matchesColor = matchesAnyCatalogTextFilter(dress.color, colorFilters);
+      const matchesEvent =
+        !selectedEventTypes.length ||
+        (dress.event_type ? selectedEventTypes.includes(dress.event_type) : false);
       const matchesFav = !showOnlyFavorites || isDressFavorite(dress.id);
       return matchesSearch && matchesCity && matchesPrice && matchesSize && matchesColor && matchesEvent && matchesFav;
     })
@@ -910,19 +916,19 @@ export default function Home() {
 
   const activeFilterCount = [
     searchTerm,
-    cityFilter,
-    sizeFilter,
-    selectedEventType,
-    colorFilter,
+    ...cityFilters,
+    ...sizeFilters,
+    ...selectedEventTypes,
+    ...colorFilters,
     maxPrice < 2000 ? 'price' : '',
   ].filter(Boolean).length;
 
   const clearFilters = () => {
     setSearchTerm('');
-    setCityFilter('');
-    setSizeFilter('');
-    setSelectedEventType('');
-    setColorFilter('');
+    setCityFilters([]);
+    setSizeFilters([]);
+    setSelectedEventTypes([]);
+    setColorFilters([]);
     setSortBy('recommended');
     setMaxPrice(2000);
   };
@@ -1051,10 +1057,26 @@ export default function Home() {
         {activeFilterCount > 0 && (
           <div className="mb-3 flex flex-wrap items-center gap-1.5">
             {searchTerm && <span className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">"{searchTerm}"</span>}
-            {cityFilter && <span className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">עיר: {cityFilter}</span>}
-            {sizeFilter && <span className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">מידה: {sizeFilter}</span>}
-            {selectedEventType && <span className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">{selectedEventType}</span>}
-            {colorFilter && <span className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">צבע: {colorFilter}</span>}
+            {cityFilters.map((city) => (
+              <span key={`city-${city}`} className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">
+                עיר: {city}
+              </span>
+            ))}
+            {sizeFilters.map((size) => (
+              <span key={`size-${size}`} className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">
+                מידה: {size}
+              </span>
+            ))}
+            {selectedEventTypes.map((eventType) => (
+              <span key={`event-${eventType}`} className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">
+                {eventType}
+              </span>
+            ))}
+            {colorFilters.map((color) => (
+              <span key={`color-${color}`} className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">
+                צבע: {color}
+              </span>
+            ))}
             {maxPrice < 2000 && <span className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">עד ₪{maxPrice}</span>}
             <button type="button" onClick={clearFilters} className="text-[10px] font-bold text-[#b8860b] underline">
               נקה
@@ -1070,16 +1092,18 @@ export default function Home() {
             onClear={clearFilters}
             searchTerm={searchTerm}
             setSearchTerm={setSearchTerm}
-            cityFilter={cityFilter}
-            setCityFilter={setCityFilter}
-            sizeFilter={sizeFilter}
-            setSizeFilter={setSizeFilter}
-            selectedEventType={selectedEventType}
-            setSelectedEventType={setSelectedEventType}
+            cityFilters={cityFilters}
+            setCityFilters={setCityFilters}
+            availableCities={catalogFilterOptions.cities}
+            sizeFilters={sizeFilters}
+            setSizeFilters={setSizeFilters}
+            selectedEventTypes={selectedEventTypes}
+            setSelectedEventTypes={setSelectedEventTypes}
             sortBy={sortBy}
             setSortBy={setSortBy}
-            colorFilter={colorFilter}
-            setColorFilter={setColorFilter}
+            colorFilters={colorFilters}
+            setColorFilters={setColorFilters}
+            availableColors={catalogFilterOptions.colors}
             maxPrice={maxPrice}
             setMaxPrice={setMaxPrice}
           />
@@ -1237,16 +1261,18 @@ export default function Home() {
           isLoading={isLoadingDresses}
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
-          cityFilter={cityFilter}
-          setCityFilter={setCityFilter}
-          sizeFilter={sizeFilter}
-          setSizeFilter={setSizeFilter}
-          selectedEventType={selectedEventType}
-          setSelectedEventType={setSelectedEventType}
+          cityFilters={cityFilters}
+          setCityFilters={setCityFilters}
+          availableCities={catalogFilterOptions.cities}
+          sizeFilters={sizeFilters}
+          setSizeFilters={setSizeFilters}
+          selectedEventTypes={selectedEventTypes}
+          setSelectedEventTypes={setSelectedEventTypes}
           sortBy={sortBy}
           setSortBy={setSortBy}
-          colorFilter={colorFilter}
-          setColorFilter={setColorFilter}
+          colorFilters={colorFilters}
+          setColorFilters={setColorFilters}
+          availableColors={catalogFilterOptions.colors}
           maxPrice={maxPrice}
           setMaxPrice={setMaxPrice}
         />

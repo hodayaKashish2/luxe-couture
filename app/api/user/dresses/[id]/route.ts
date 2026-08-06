@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getUserFromRequest, type SiteUser } from '@/lib/user-auth';
 import { userOwnsDress } from '@/lib/dress-ownership';
-import { sendDressUpdateEmails } from '@/lib/dress-edit-notify';
+import { sendDressUpdateEmails, resolveUpdateNotifyContact } from '@/lib/dress-edit-notify';
 import {
   buildEditFormFromDress,
   buildPendingUpdatePayload,
@@ -155,6 +155,11 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const dressStatus = String(dressRow.status || '');
     const pendingSnapshot = buildPendingUpdatePayload(dressRow, updates);
     const updateDiff = computeDressUpdateDiff(live, pendingSnapshot);
+
+    const { email: notifyEmail } = await resolveUpdateNotifyContact(supabase, user, dressRow);
+    if (notifyEmail) {
+      pendingSnapshot.notify_email = notifyEmail;
+    }
 
     if (dressStatus === 'approved') {
       const pendingPayload = {

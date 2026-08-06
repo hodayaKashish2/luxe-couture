@@ -62,6 +62,19 @@ export async function resolveOwnerContact(supabase: SupabaseClient, dress: Dress
   return { email, phone, name };
 }
 
+export function dressRowToNotify(dressRow: Record<string, unknown>) {
+  return {
+    id: dressRow.id as string | number,
+    name: String(dressRow.name || ''),
+    description: (dressRow.description as string | null) ?? null,
+    owner_name: (dressRow.owner_name as string | null) ?? null,
+    owner_email: (dressRow.owner_email as string | null) ?? null,
+    owner_phone: (dressRow.owner_phone as string | null) ?? null,
+    submitter_user_id: (dressRow.submitter_user_id as string | null) ?? null,
+    status: String(dressRow.status || ''),
+  };
+}
+
 export async function fetchDressForNotify(supabase: SupabaseClient, id: string | number) {
   const full = await supabase
     .from('dresses')
