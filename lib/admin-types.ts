@@ -1,3 +1,5 @@
+import type { DressUpdateDiff } from '@/lib/dress-pending-update';
+
 export type AdminDressRow = {
   id: number;
   name: string;
@@ -21,6 +23,7 @@ export type AdminDressRow = {
   rental_count?: number;
   rating_count?: number;
   pending_update_kind?: 'new' | 'update';
+  update_diff?: DressUpdateDiff;
 };
 
 export type AdminSiteReview = {

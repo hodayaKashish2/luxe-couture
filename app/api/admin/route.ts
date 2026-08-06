@@ -38,7 +38,15 @@ function mapDressNameJoin(dressJoin: { name?: string } | { name?: string }[] | n
 }
 
 function mapPendingDressRow(row: Record<string, unknown>) {
-  const merged = mergeDressWithPendingUpdate(row, row.pending_update as PendingUpdatePayload | null);
+  const pending = row.pending_update as PendingUpdatePayload | null | undefined;
+  const isPendingUpdate = Boolean(pending && typeof pending === 'object');
+  const merged = mergeDressWithPendingUpdate(row, pending ?? null);
+
+  let update_diff: ReturnType<typeof computeDressUpdateDiff> | undefined;
+  if (isPendingUpdate && pending) {
+    update_diff = computeDressUpdateDiff(getLiveDressSnapshot(row), pending);
+  }
+
   return {
     id: Number(merged.id),
     name: String(merged.name || ''),
@@ -58,7 +66,8 @@ function mapPendingDressRow(row: Record<string, unknown>) {
     images: Array.isArray(merged.images) ? merged.images.map(String) : [],
     created_at: String(merged.pending_update_submitted_at || merged.created_at || ''),
     status: String(merged.status || ''),
-    pending_update_kind: merged.isPendingUpdate ? ('update' as const) : ('new' as const),
+    pending_update_kind: isPendingUpdate ? ('update' as const) : ('new' as const),
+    update_diff,
   };
 }
 
@@ -629,7 +638,13 @@ export async function POST(request: Request) {
             .eq('id', id);
           if (error) throw error;
           if (dressForNotify) {
-            await notifyDressUpdateApproved(supabase, dressForNotify, payload, updateDiff);
+            await notifyDressUpdateApproved(
+              supabase,
+              dressForNotify,
+              payload,
+              updateDiff,
+              dressRow as Record<string, unknown>
+            );
           }
           return NextResponse.json({ success: true, status: 'approved', kind: 'update' });
         }
@@ -640,7 +655,11 @@ export async function POST(request: Request) {
           .eq('id', id);
         if (error) throw error;
         if (dressForNotify) {
-          await notifyDressUpdateRejected(supabase, dressForNotify);
+          await notifyDressUpdateRejected(
+            supabase,
+            dressForNotify,
+            dressRow as Record<string, unknown>
+          );
         }
         return NextResponse.json({ success: true, status: 'rejected', kind: 'update' });
       }

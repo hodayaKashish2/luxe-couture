@@ -688,6 +688,7 @@ export async function sendDressUpdateApprovedOwnerEmail(params: {
   to: string;
   ownerName: string;
   dressName: string;
+  dressId?: string | number;
   diff?: import('@/lib/dress-pending-update').DressUpdateDiff;
 }) {
   if (!params.to?.trim()) {
@@ -695,18 +696,31 @@ export async function sendDressUpdateApprovedOwnerEmail(params: {
   }
 
   const diffHtml = params.diff ? buildDressUpdateDiffHtml(params.diff) : '';
+  const catalogUrl = params.dressId
+    ? `${getAppUrl()}/?dress=${params.dressId}`
+    : `${getAppUrl()}/`;
 
   return sendEmailTo(
     params.to,
-    `✅ העדכון אושר: ${params.dressName}`,
+    `✅ העדכון אושר — ${params.dressName} live בקטלוג`,
     `
-      <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #eadaaf;border-radius:16px;background:#fffdf8;">
-        <h2 style="color:#3d2f24;margin-top:0;">שלום ${escapeHtml(params.ownerName)}!</h2>
-        <p style="line-height:1.7;color:#554a33;">העדכון לשמלה <strong>${escapeHtml(params.dressName)}</strong> אושר והפרטים החדשים מופיעים עכשיו בקטלוג.</p>
-        ${diffHtml ? `<p style="line-height:1.7;color:#554a33;margin-top:12px;">השינויים שאושרו:</p>${diffHtml}` : ''}
-        <p style="margin-top:24px;">
-          <a href="${getAppUrl()}/" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
-            לצפייה בקטלוג →
+      <div dir="rtl" style="font-family:sans-serif;max-width:580px;margin:0 auto;padding:28px;border:1px solid #eadaaf;border-radius:16px;background:#fffdf8;">
+        <h2 style="color:#3d2f24;margin-top:0;">שלום ${escapeHtml(params.ownerName)}! 💛</h2>
+        <p style="line-height:1.8;color:#554a33;font-size:15px;">
+          חדשות טובות — העדכון ששלחת לשמלה <strong>${escapeHtml(params.dressName)}</strong>
+          <strong> אושר על ידי ההנהלה</strong>.
+        </p>
+        <p style="line-height:1.8;color:#554a33;font-size:15px;">
+          הגרסה המעודכנת <strong>מופיעה עכשיו בקטלוג</strong> באתר שמלה בקליק, ולקוחות רואות את הפרטים החדשים.
+        </p>
+        ${diffHtml ? `<p style="line-height:1.7;color:#554a33;margin-top:16px;font-weight:bold;">השינויים שאושרו:</p>${diffHtml}` : ''}
+        <p style="line-height:1.7;color:#554a33;margin-top:20px;">תודה שאת איתנו — בהצלחה עם ההשכרות! ✨</p>
+        <p style="margin-top:28px;display:flex;flex-wrap:wrap;gap:12px;">
+          <a href="${catalogUrl}" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
+            לצפייה בשמלה בקטלוג →
+          </a>
+          <a href="${getAppUrl()}/account?section=rentals" style="display:inline-block;background:#fff;color:#8b6508;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;border:2px solid #decfa8;">
+            לאזור האישי →
           </a>
         </p>
       </div>
