@@ -2,21 +2,48 @@ import { DRESS_SIZES } from '@/lib/constants';
 
 export const DRESS_SIZE_DATALIST = DRESS_SIZES.map((s) => s.label);
 
-export function getDressSizeSearchText(size: string): string {
+function normalizeSizeText(value: string) {
+  return value.trim().toLowerCase();
+}
+
+export function findDressSizePreset(size: string) {
   const trimmed = size.trim();
-  if (!trimmed) return '';
+  if (!trimmed) return undefined;
 
-  const preset = DRESS_SIZES.find(
-    (s) =>
-      s.value.toLowerCase() === trimmed.toLowerCase() ||
-      s.label.toLowerCase() === trimmed.toLowerCase()
+  return DRESS_SIZES.find(
+    (entry) =>
+      entry.label.toLowerCase() === trimmed.toLowerCase() ||
+      entry.value.toLowerCase() === trimmed.toLowerCase()
   );
+}
 
+export function getDressSizeSearchText(size: string): string {
+  const preset = findDressSizePreset(size);
   if (preset) {
     return `${preset.value} ${preset.label}`.toLowerCase();
   }
 
-  return trimmed.toLowerCase();
+  return normalizeSizeText(size);
+}
+
+function dressSizeMatchesPreset(dressSize: string, preset: (typeof DRESS_SIZES)[number]) {
+  const normalizedDress = normalizeSizeText(dressSize);
+  const normalizedLabel = preset.label.toLowerCase();
+  const normalizedValue = preset.value.toLowerCase();
+
+  if (normalizedDress === normalizedLabel || normalizedDress === normalizedValue) {
+    return true;
+  }
+
+  if (
+    normalizedDress.startsWith(`${normalizedValue} `) ||
+    normalizedDress.startsWith(`${normalizedValue}(`)
+  ) {
+    return true;
+  }
+
+  const dressPreset = findDressSizePreset(dressSize);
+  return dressPreset?.value === preset.value;
 }
 
 export function dressSizeMatchesFilter(dressSize: string, filter: string): boolean {
@@ -25,11 +52,7 @@ export function dressSizeMatchesFilter(dressSize: string, filter: string): boole
 
   const preset = DRESS_SIZES.find((entry) => entry.label === query || entry.value === query);
   if (preset) {
-    const dressText = getDressSizeSearchText(dressSize);
-    return (
-      dressText.includes(preset.value.toLowerCase()) ||
-      dressText.includes(preset.label.toLowerCase())
-    );
+    return dressSizeMatchesPreset(dressSize, preset);
   }
 
   return getDressSizeSearchText(dressSize).includes(query.toLowerCase());

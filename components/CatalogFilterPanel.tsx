@@ -1,7 +1,8 @@
 'use client';
 
 import FilterSection from '@/components/FilterSection';
-import { DRESS_SIZES } from '@/lib/constants';
+import MultiSelectFilterMenu from '@/components/MultiSelectFilterMenu';
+import { getDressSizeFilterGroups } from '@/lib/constants';
 import { EVENT_TYPES, type SortOption } from '@/lib/types';
 
 export type CatalogFilterPanelProps = {
@@ -28,48 +29,7 @@ export type CatalogFilterPanelProps = {
 const fieldClass =
   'w-full p-2 bg-neutral-50 border border-[#dfc48c] rounded-lg text-xs text-[#2c261a] focus:outline-none focus:border-[#d4af37]';
 
-function toggleValue(selected: string[], value: string) {
-  return selected.includes(value) ? selected.filter((item) => item !== value) : [...selected, value];
-}
-
-function MultiSelectChips({
-  options,
-  selected,
-  onChange,
-  emptyHint,
-}: {
-  options: string[];
-  selected: string[];
-  onChange: (next: string[]) => void;
-  emptyHint?: string;
-}) {
-  if (!options.length) {
-    return emptyHint ? <p className="text-[10px] text-[#9a7b4f] leading-relaxed">{emptyHint}</p> : null;
-  }
-
-  return (
-    <div className="flex flex-wrap gap-1.5 max-h-44 overflow-y-auto overscroll-contain">
-      {options.map((option) => {
-        const active = selected.includes(option);
-        return (
-          <button
-            key={option}
-            type="button"
-            onClick={() => onChange(toggleValue(selected, option))}
-            aria-pressed={active}
-            className={`px-2.5 py-1 rounded-full text-[10px] font-bold border transition-colors ${
-              active
-                ? 'bg-[#d4af37] text-white border-[#b8860b] shadow-sm'
-                : 'bg-neutral-50 text-[#6e634c] border-[#dfc48c] hover:border-[#d4af37]'
-            }`}
-          >
-            {option}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
+const sizeFilterGroups = getDressSizeFilterGroups();
 
 function sortHint(sortBy: SortOption) {
   if (sortBy === 'price-asc' || sortBy === 'price-desc') {
@@ -101,8 +61,6 @@ export default function CatalogFilterPanel({
   showSort = true,
   compact = false,
 }: CatalogFilterPanelProps) {
-  const multiHint = 'אפשר לבחור כמה אפשרויות';
-
   return (
     <div className={compact ? 'px-1' : ''}>
       <FilterSection title="חיפוש" defaultOpen>
@@ -116,40 +74,44 @@ export default function CatalogFilterPanel({
       </FilterSection>
 
       <FilterSection title="עיר" defaultOpen={cityFilters.length > 0}>
-        <p className="text-[10px] text-[#9a7b4f] mb-2">{multiHint}</p>
-        <MultiSelectChips
-          options={availableCities}
+        <MultiSelectFilterMenu
+          title="עיר"
           selected={cityFilters}
           onChange={setCityFilters}
+          options={availableCities}
           emptyHint="אין ערים בקטלוג עדיין"
+          allLabel="כל הערים"
         />
       </FilterSection>
 
       <FilterSection title="מידה" defaultOpen={sizeFilters.length > 0}>
-        <p className="text-[10px] text-[#9a7b4f] mb-2">{multiHint}</p>
-        <MultiSelectChips
-          options={DRESS_SIZES.map((size) => size.label)}
+        <MultiSelectFilterMenu
+          title="מידה"
           selected={sizeFilters}
           onChange={setSizeFilters}
+          groups={sizeFilterGroups}
+          allLabel="כל המידות"
         />
       </FilterSection>
 
       <FilterSection title="סוג אירוע" defaultOpen={selectedEventTypes.length > 0}>
-        <p className="text-[10px] text-[#9a7b4f] mb-2">{multiHint}</p>
-        <MultiSelectChips
-          options={[...EVENT_TYPES]}
+        <MultiSelectFilterMenu
+          title="סוג אירוע"
           selected={selectedEventTypes}
           onChange={setSelectedEventTypes}
+          options={[...EVENT_TYPES]}
+          allLabel="כל סוגי האירועים"
         />
       </FilterSection>
 
       <FilterSection title="צבע" defaultOpen={colorFilters.length > 0}>
-        <p className="text-[10px] text-[#9a7b4f] mb-2">{multiHint}</p>
-        <MultiSelectChips
-          options={availableColors}
+        <MultiSelectFilterMenu
+          title="צבע"
           selected={colorFilters}
           onChange={setColorFilters}
+          options={availableColors}
           emptyHint="אין צבעים בקטלוג עדיין"
+          allLabel="כל הצבעים"
         />
       </FilterSection>
 
