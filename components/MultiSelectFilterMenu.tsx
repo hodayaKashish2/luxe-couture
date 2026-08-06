@@ -111,7 +111,7 @@ export default function MultiSelectFilterMenu({
           role="listbox"
           aria-multiselectable="true"
           aria-label={title}
-          className="mt-1.5 w-full max-h-72 overflow-y-auto overscroll-auto rounded-xl border border-[#eadaaf] bg-white shadow-md p-1.5 pb-2"
+          className="mt-1.5 w-full max-h-72 overflow-y-auto overscroll-contain rounded-xl border border-[#eadaaf] bg-white shadow-md p-1.5 pb-2"
         >
           {!flatOptions.length ? (
             emptyHint ? (

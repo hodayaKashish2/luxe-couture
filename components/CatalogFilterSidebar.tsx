@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useRef, useState } from 'react';
 import CatalogFilterPanel, { type CatalogFilterPanelProps } from '@/components/CatalogFilterPanel';
 
 type CatalogFilterSidebarProps = CatalogFilterPanelProps & {
@@ -10,10 +11,14 @@ type CatalogFilterSidebarProps = CatalogFilterPanelProps & {
 };
 
 const STICKY_PANEL =
-  'sticky top-3 z-20 w-full bg-white border border-[#eadaaf] rounded-xl shadow-sm self-start';
+  'sticky top-3 z-20 w-full flex flex-col bg-white border border-[#eadaaf] rounded-xl shadow-sm self-start max-h-[calc(100dvh-1.5rem)]';
 
 const COLLAPSED_PANEL =
   'sticky top-3 z-20 w-full flex flex-col bg-white border border-[#eadaaf] rounded-xl shadow-sm self-start min-h-[calc(100dvh-1.5rem)]';
+
+function hasScrollOverflow(element: HTMLElement) {
+  return element.scrollHeight > element.clientHeight + 1;
+}
 
 export default function CatalogFilterSidebar({
   collapsed,
@@ -22,6 +27,33 @@ export default function CatalogFilterSidebar({
   onClear,
   ...filterProps
 }: CatalogFilterSidebarProps) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [isScrollable, setIsScrollable] = useState(false);
+
+  useEffect(() => {
+    if (collapsed) return;
+
+    const element = scrollRef.current;
+    if (!element) return;
+
+    const updateScrollMode = () => {
+      setIsScrollable(hasScrollOverflow(element));
+    };
+
+    updateScrollMode();
+
+    const observer = new ResizeObserver(updateScrollMode);
+    observer.observe(element);
+
+    const onWindowResize = () => updateScrollMode();
+    window.addEventListener('resize', onWindowResize);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', onWindowResize);
+    };
+  }, [collapsed, activeFilterCount]);
+
   if (collapsed) {
     return (
       <div className="hidden lg:block w-11 shrink-0">
@@ -74,7 +106,12 @@ export default function CatalogFilterSidebar({
           </button>
         </div>
 
-        <div className="px-3 pb-3">
+        <div
+          ref={scrollRef}
+          className={`min-h-0 flex-1 px-3 pb-3 ${
+            isScrollable ? 'overflow-y-auto overscroll-contain' : 'overflow-visible'
+          }`}
+        >
           <CatalogFilterPanel {...filterProps} showSort={false} compact />
         </div>
 
