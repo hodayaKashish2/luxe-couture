@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import AdminBookingsGrid from '@/components/admin/AdminBookingsGrid';
+import AdminRejectReasonModal from '@/components/admin/AdminRejectReasonModal';
 import AdminDressCatalog from '@/components/admin/AdminDressCatalog';
 import AdminPendingComments from '@/components/admin/AdminPendingComments';
 import AdminPendingDressesGrid from '@/components/admin/AdminPendingDressesGrid';
@@ -50,6 +50,15 @@ export default function AdminPage() {
   const [pendingPaymentsTotal, setPendingPaymentsTotal] = useState(0);
   const [pendingPaymentsTotalPages, setPendingPaymentsTotalPages] = useState(1);
   const [loadingPendingPayments, setLoadingPendingPayments] = useState(false);
+
+  const [rejectPrompt, setRejectPrompt] = useState<{
+    type: 'dress' | 'review' | 'dress_rating';
+    id: number;
+    title: string;
+    description: string;
+    action: 'reject' | 'delete';
+  } | null>(null);
+  const [rejectBusy, setRejectBusy] = useState(false);
 
   useEffect(() => {
     const stored = sessionStorage.getItem('admin_token');
@@ -155,11 +164,14 @@ export default function AdminPage() {
       | 'delete'
       | 'toggle_featured'
       | 'extend_featured'
-      | 'approve_payment'
+      | 'approve_payment',
+    reason?: string
   ): Promise<boolean> {
     if (!savedToken) return false;
     if (action === 'delete' && type === 'dress' && !confirm('להסיר את השמלה מהאתר?')) return false;
-    if (action === 'delete' && type === 'dress_rating' && !confirm('למחוק את הדירוג?')) return false;
+    if (action === 'delete' && type === 'dress_rating' && !reason && !confirm('למחוק את הדירוג?')) {
+      return false;
+    }
     if (action === 'delete' && type === 'review' && !confirm('למחוק את התגובה?')) return false;
     if (action === 'approve_payment' && !confirm('לאשר שהתשלום התקבל?')) return false;
 
@@ -170,16 +182,65 @@ export default function AdminPage() {
         'Content-Type': 'application/json',
         'x-admin-token': savedToken,
       },
-      body: JSON.stringify({ type, id, action }),
+      body: JSON.stringify({
+        type,
+        id,
+        action,
+        ...(reason ? { reason } : {}),
+      }),
     });
     const data = await response.json();
     if (response.ok) {
-      setActionMsg('✓ עודכן בהצלחה');
+      if (data.ownerEmailError) {
+        setActionMsg(`✓ עודכן — מייל לא נשלח: ${data.ownerEmailError}`);
+      } else if (data.ownerEmailSent) {
+        setActionMsg('✓ עודכן ונשלח מייל ללקוחה');
+      } else {
+        setActionMsg('✓ עודכן בהצלחה');
+      }
       bumpRefresh();
       return true;
     }
     setActionMsg(data.error || 'שגיאה');
     return false;
+  }
+
+  function openRejectPrompt(
+    type: 'dress' | 'review' | 'dress_rating',
+    id: number,
+    label: string,
+    action: 'reject' | 'delete' = 'reject'
+  ) {
+    const titles = {
+      dress: 'דחיית שמלה',
+      review: 'דחיית תגובה',
+      dress_rating: 'דחיית דירוג',
+    };
+    const descriptions = {
+      dress: `השמלה "${label}" לא תפורסם. הסיבה תישלח במייל למשכירה.`,
+      review: `התגובה של "${label}" לא תפורסם. (תגובות לאתר ללא מייל — הסיבה תישמר בדחייה)`,
+      dress_rating: `הדירוג "${label}" לא יפורסם. הסיבה תישלח במייל ללקוחה.`,
+    };
+    setRejectPrompt({
+      type,
+      id,
+      title: titles[type],
+      description: descriptions[type],
+      action,
+    });
+  }
+
+  async function confirmReject(reason: string) {
+    if (!rejectPrompt) return;
+    setRejectBusy(true);
+    const ok = await handleAction(
+      rejectPrompt.type,
+      rejectPrompt.id,
+      rejectPrompt.action,
+      reason
+    );
+    setRejectBusy(false);
+    if (ok) setRejectPrompt(null);
   }
 
   const tabBadges = useMemo(() => {
@@ -352,7 +413,8 @@ export default function AdminPage() {
                         >
                           <AdminPendingDressesGrid
                             dresses={overview.pendingDresses.slice(0, 16)}
-                            onAction={(id, action) => handleAction('dress', id, action)}
+                            onApprove={(id) => handleAction('dress', id, 'approve')}
+                            onRejectRequest={(id, dressName) => openRejectPrompt('dress', id, dressName)}
                           />
                         </AdminCollapsibleSection>
                       )}
@@ -502,7 +564,8 @@ export default function AdminPage() {
                 </h2>
                 <AdminPendingDressesGrid
                   dresses={overview.pendingDresses}
-                  onAction={(id, action) => handleAction('dress', id, action)}
+                  onApprove={(id) => handleAction('dress', id, 'approve')}
+                  onRejectRequest={(id, dressName) => openRejectPrompt('dress', id, dressName)}
                 />
               </section>
             )}
@@ -542,7 +605,9 @@ export default function AdminPage() {
               <AdminPendingComments
                 token={savedToken}
                 refreshKey={refreshKey}
-                onAction={(type, id, action) => handleAction(type, id, action)}
+                onApprove={(type, id) => handleAction(type, id, 'approve')}
+                onRejectRequest={(type, id, label, action) => openRejectPrompt(type, id, label, action)}
+                onDeleteReview={(id) => handleAction('review', id, 'delete')}
               />
             )}
 
@@ -590,6 +655,17 @@ export default function AdminPage() {
           </div>
         )}
       </main>
+
+      <AdminRejectReasonModal
+        open={Boolean(rejectPrompt)}
+        title={rejectPrompt?.title || 'דחייה'}
+        description={rejectPrompt?.description || ''}
+        busy={rejectBusy}
+        onCancel={() => {
+          if (!rejectBusy) setRejectPrompt(null);
+        }}
+        onConfirm={confirmReject}
+      />
 
       <SiteFooter />
     </div>

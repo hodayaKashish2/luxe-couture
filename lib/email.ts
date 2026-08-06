@@ -678,24 +678,84 @@ export async function sendDressUpdateRejectedOwnerEmail(params: {
   to: string;
   ownerName: string;
   dressName: string;
+  reason?: string;
 }) {
   if (!params.to?.trim()) {
     return { success: false as const, error: 'אין כתובת מייל למשכירה' };
   }
+
+  const reasonBlock = params.reason?.trim()
+    ? `<div style="margin:16px 0;padding:14px 16px;border-right:4px solid #d4af37;background:#fff8e8;border-radius:10px;">
+        <p style="margin:0 0 6px;font-weight:bold;color:#8b6508;">סיבת הדחייה:</p>
+        <p style="margin:0;line-height:1.7;color:#554a33;">${escapeHtml(params.reason.trim())}</p>
+      </div>`
+    : '';
 
   return sendEmailTo(
     params.to,
     `❌ העדכון לא אושר: ${params.dressName}`,
     `
       <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #eadaaf;border-radius:16px;background:#fffdf8;">
-        <h2 style="color:#3d2f24;margin-top:0;">שלום ${params.ownerName}!</h2>
-        <p style="line-height:1.7;color:#554a33;">העדכון ששלחת לשמלה <strong>${params.dressName}</strong> לא אושר על ידי ההנהלה.</p>
+        <h2 style="color:#3d2f24;margin-top:0;">שלום ${escapeHtml(params.ownerName)}!</h2>
+        <p style="line-height:1.7;color:#554a33;">העדכון ששלחת לשמלה <strong>${escapeHtml(params.dressName)}</strong> לא אושר על ידי ההנהלה.</p>
+        ${reasonBlock}
         <p style="line-height:1.7;color:#554a33;">בקטלוג תמשיך להופיע הגרסה הקודמת. אפשר לערוך שוב ולשלוח מחדש מאזור האישי.</p>
         <p style="margin-top:24px;">
           <a href="${getAppUrl()}/account?section=rentals" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
             לעריכה באזור האישי →
           </a>
         </p>
+      </div>
+    `
+  );
+}
+
+export async function sendDressRejectedOwnerEmail(params: {
+  to: string;
+  ownerName: string;
+  dressName: string;
+  reason: string;
+}) {
+  return sendEmailTo(
+    params.to,
+    `❌ השמלה לא אושרה: ${params.dressName}`,
+    `
+      <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #eadaaf;border-radius:16px;background:#fffdf8;">
+        <h2 style="color:#3d2f24;margin-top:0;">שלום ${escapeHtml(params.ownerName)}!</h2>
+        <p style="line-height:1.7;color:#554a33;">השמלה <strong>${escapeHtml(params.dressName)}</strong> ששלחת לאישור לא אושרה על ידי ההנהלה.</p>
+        <div style="margin:16px 0;padding:14px 16px;border-right:4px solid #d4af37;background:#fff8e8;border-radius:10px;">
+          <p style="margin:0 0 6px;font-weight:bold;color:#8b6508;">סיבת הדחייה:</p>
+          <p style="margin:0;line-height:1.7;color:#554a33;">${escapeHtml(params.reason)}</p>
+        </div>
+        <p style="line-height:1.7;color:#554a33;">אפשר לערוך את הפרטים ולשלוח שוב מאזור האישי.</p>
+        <p style="margin-top:24px;">
+          <a href="${getAppUrl()}/account?section=rentals" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
+            לאזור האישי →
+          </a>
+        </p>
+      </div>
+    `
+  );
+}
+
+export async function sendDressRatingRejectedEmail(params: {
+  to: string;
+  customerName: string;
+  dressName: string;
+  reason: string;
+}) {
+  return sendEmailTo(
+    params.to,
+    `❌ הדירוג לא אושר: ${params.dressName}`,
+    `
+      <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #eadaaf;border-radius:16px;background:#fffdf8;">
+        <h2 style="color:#3d2f24;margin-top:0;">שלום ${escapeHtml(params.customerName)}!</h2>
+        <p style="line-height:1.7;color:#554a33;">הדירוג ששלחת על השמלה <strong>${escapeHtml(params.dressName)}</strong> לא אושר.</p>
+        <div style="margin:16px 0;padding:14px 16px;border-right:4px solid #d4af37;background:#fff8e8;border-radius:10px;">
+          <p style="margin:0 0 6px;font-weight:bold;color:#8b6508;">סיבת הדחייה:</p>
+          <p style="margin:0;line-height:1.7;color:#554a33;">${escapeHtml(params.reason)}</p>
+        </div>
+        <p style="line-height:1.7;color:#554a33;">תודה על ההבנה 💛</p>
       </div>
     `
   );

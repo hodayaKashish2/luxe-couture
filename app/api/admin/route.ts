@@ -7,7 +7,12 @@ import {
   pendingUpdateToDressPatch,
   type PendingUpdatePayload,
 } from '@/lib/dress-pending-update';
-import { notifyDressUpdateApproved, notifyDressUpdateRejected } from '@/lib/dress-update-notify';
+import { notifyDressUpdateApproved } from '@/lib/dress-update-notify';
+import {
+  notifyDressRatingRejected,
+  notifyDressUpdateRejectedWithReason,
+  notifyNewDressRejected,
+} from '@/lib/admin-reject-notify';
 import { markDressRemoved } from '@/lib/dress-removal';
 import { approveDressRating, recalculateDressRatingStats } from '@/lib/dress-rating-stats';
 import { extendFeaturedUntil, FEATURED_REWARD_DAYS } from '@/lib/dress-ranking';
@@ -495,7 +500,7 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { type, id, action } = body as {
+    const { type, id, action, reason: rawReason } = body as {
       type: 'dress' | 'review' | 'dress_rating' | 'booking';
       id: string | number;
       action:
@@ -505,10 +510,16 @@ export async function POST(request: Request) {
         | 'toggle_featured'
         | 'extend_featured'
         | 'approve_payment';
+      reason?: string;
     };
+    const reason = String(rawReason || '').trim();
 
     if (!type || !id || !action) {
       return NextResponse.json({ error: 'בקשה לא תקינה' }, { status: 400 });
+    }
+
+    if (action === 'reject' && reason.length < 3) {
+      return NextResponse.json({ error: 'נא לציין סיבת דחייה (לפחות 3 תווים)' }, { status: 400 });
     }
 
     const supabase = getSupabaseAdmin();
@@ -540,6 +551,10 @@ export async function POST(request: Request) {
     }
 
     if (type === 'dress_rating' && action === 'delete') {
+      if (reason.length < 3) {
+        return NextResponse.json({ error: 'נא לציין סיבת דחייה (לפחות 3 תווים)' }, { status: 400 });
+      }
+
       const { data: rating, error: fetchError } = await supabase
         .from('dress_ratings')
         .select('id, dress_id, status')
@@ -551,6 +566,9 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'דירוג לא נמצא' }, { status: 404 });
       }
 
+      let emailResult: { success: boolean; error?: string } | undefined;
+      emailResult = await notifyDressRatingRejected(supabase, id, reason);
+
       const { error: deleteError } = await supabase.from('dress_ratings').delete().eq('id', id);
       if (deleteError) throw deleteError;
 
@@ -558,7 +576,12 @@ export async function POST(request: Request) {
         await recalculateDressRatingStats(supabase, rating.dress_id);
       }
 
-      return NextResponse.json({ success: true });
+      return NextResponse.json({
+        success: true,
+        ownerEmailSent: emailResult?.success,
+        ownerEmailError: emailResult && !emailResult.success ? emailResult.error : undefined,
+        emailSkipped: emailResult && 'skipped' in emailResult ? emailResult.skipped : undefined,
+      });
     }
 
     if (type === 'dress' && action === 'toggle_featured') {
@@ -659,10 +682,12 @@ export async function POST(request: Request) {
           .update({ pending_update: null, pending_update_submitted_at: null })
           .eq('id', id);
         if (error) throw error;
-        const emailResult = await notifyDressUpdateRejected(
+        const emailResult = await notifyDressUpdateRejectedWithReason(
           supabase,
-          dressForNotify,
-          dressRow as Record<string, unknown>
+          id,
+          dressRow as Record<string, unknown>,
+          payload,
+          reason
         );
         return NextResponse.json({
           success: true,
@@ -672,6 +697,20 @@ export async function POST(request: Request) {
           ownerEmailError: emailResult.success ? undefined : emailResult.error,
         });
       }
+    }
+
+    if (type === 'dress' && action === 'reject') {
+      const dress = await fetchDressForNotify(supabase, id);
+      const { error } = await supabase.from('dresses').update({ status: 'rejected' }).eq('id', id);
+      if (error) throw error;
+
+      const emailResult = await notifyNewDressRejected(supabase, id, reason);
+      return NextResponse.json({
+        success: true,
+        status: 'rejected',
+        ownerEmailSent: emailResult.success,
+        ownerEmailError: emailResult.success ? undefined : emailResult.error,
+      });
     }
 
     const table = type === 'dress' ? 'dresses' : 'reviews';

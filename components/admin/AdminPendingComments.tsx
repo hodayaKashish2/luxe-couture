@@ -8,17 +8,22 @@ import type { AdminDressRatingRow, AdminSiteReview } from '@/lib/admin-types';
 type AdminPendingCommentsProps = {
   token: string;
   refreshKey: number;
-  onAction: (
+  onApprove: (type: 'review' | 'dress_rating', id: number) => Promise<boolean>;
+  onRejectRequest: (
     type: 'review' | 'dress_rating',
     id: number,
-    action: 'approve' | 'reject' | 'delete'
-  ) => Promise<boolean>;
+    label: string,
+    action: 'reject' | 'delete'
+  ) => void;
+  onDeleteReview: (id: number) => Promise<boolean>;
 };
 
 export default function AdminPendingComments({
   token,
   refreshKey,
-  onAction,
+  onApprove,
+  onRejectRequest,
+  onDeleteReview,
 }: AdminPendingCommentsProps) {
   const [siteReviews, setSiteReviews] = useState<AdminSiteReview[]>([]);
   const [dressRatings, setDressRatings] = useState<AdminDressRatingRow[]>([]);
@@ -104,21 +109,23 @@ export default function AdminPendingComments({
                     <div className="flex flex-wrap gap-2">
                       <button
                         type="button"
-                        onClick={() => onAction('review', review.id, 'approve')}
+                        onClick={() => onApprove('review', review.id)}
                         className="px-3 py-1.5 bg-[#b8860b] text-white text-xs rounded-lg font-bold"
                       >
                         אשר
                       </button>
                       <button
                         type="button"
-                        onClick={() => onAction('review', review.id, 'reject')}
+                        onClick={() =>
+                          onRejectRequest('review', review.id, review.name, 'reject')
+                        }
                         className="px-3 py-1.5 border border-red-300 text-red-600 text-xs rounded-lg"
                       >
                         דחה
                       </button>
                       <button
                         type="button"
-                        onClick={() => onAction('review', review.id, 'delete')}
+                        onClick={() => void onDeleteReview(review.id)}
                         className="px-3 py-1.5 border border-red-400 text-red-700 text-xs rounded-lg font-bold"
                       >
                         מחק
@@ -164,14 +171,21 @@ export default function AdminPendingComments({
                     <div className="flex flex-wrap gap-2">
                       <button
                         type="button"
-                        onClick={() => onAction('dress_rating', rating.id, 'approve')}
+                        onClick={() => onApprove('dress_rating', rating.id)}
                         className="px-3 py-1.5 bg-[#b8860b] text-white text-xs rounded-lg font-bold"
                       >
                         אשרי ופרסמי
                       </button>
                       <button
                         type="button"
-                        onClick={() => onAction('dress_rating', rating.id, 'delete')}
+                        onClick={() =>
+                          onRejectRequest(
+                            'dress_rating',
+                            rating.id,
+                            `${rating.dress_name} — ${rating.customer_name}`,
+                            'delete'
+                          )
+                        }
                         className="px-3 py-1.5 border border-red-300 text-red-600 text-xs rounded-lg font-bold"
                       >
                         מחקי

@@ -8,17 +8,22 @@ import type { AdminDressRow } from '@/lib/admin-types';
 
 type AdminPendingDressesGridProps = {
   dresses: AdminDressRow[];
-  onAction: (id: number, action: 'approve' | 'reject') => Promise<boolean>;
+  onApprove: (id: number) => Promise<boolean>;
+  onRejectRequest: (id: number, dressName: string) => void;
 };
 
-export default function AdminPendingDressesGrid({ dresses, onAction }: AdminPendingDressesGridProps) {
+export default function AdminPendingDressesGrid({
+  dresses,
+  onApprove,
+  onRejectRequest,
+}: AdminPendingDressesGridProps) {
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [detailDress, setDetailDress] = useState<AdminDressRow | null>(null);
   const [busyId, setBusyId] = useState<number | null>(null);
 
-  async function run(id: number, action: 'approve' | 'reject') {
+  async function runApprove(id: number) {
     setBusyId(id);
-    const ok = await onAction(id, action);
+    const ok = await onApprove(id);
     setBusyId(null);
     if (ok) {
       setExpandedId((prev) => (prev === id ? null : prev));
@@ -68,7 +73,7 @@ export default function AdminPendingDressesGrid({ dresses, onAction }: AdminPend
                   <button
                     type="button"
                     disabled={disabled}
-                    onClick={() => run(dress.id, 'approve')}
+                    onClick={() => runApprove(dress.id)}
                     className="px-2.5 py-1.5 text-[10px] rounded-lg bg-[#b8860b] text-white font-bold disabled:opacity-50"
                   >
                     אשר
@@ -76,7 +81,7 @@ export default function AdminPendingDressesGrid({ dresses, onAction }: AdminPend
                   <button
                     type="button"
                     disabled={disabled}
-                    onClick={() => run(dress.id, 'reject')}
+                    onClick={() => onRejectRequest(dress.id, dress.name)}
                     className="px-2.5 py-1.5 text-[10px] rounded-lg border border-red-300 text-red-600 disabled:opacity-50"
                   >
                     דחה
@@ -121,7 +126,7 @@ export default function AdminPendingDressesGrid({ dresses, onAction }: AdminPend
                   <button
                     type="button"
                     disabled={busyId === detailDress.id}
-                    onClick={() => run(detailDress.id, 'approve')}
+                    onClick={() => runApprove(detailDress.id)}
                     className="px-4 py-2 text-sm rounded-xl bg-[#b8860b] text-white font-bold disabled:opacity-50"
                   >
                     ✓ אשר
@@ -129,7 +134,7 @@ export default function AdminPendingDressesGrid({ dresses, onAction }: AdminPend
                   <button
                     type="button"
                     disabled={busyId === detailDress.id}
-                    onClick={() => run(detailDress.id, 'reject')}
+                    onClick={() => onRejectRequest(detailDress.id, detailDress.name)}
                     className="px-4 py-2 text-sm rounded-xl border border-red-300 text-red-600 font-bold disabled:opacity-50"
                   >
                     דחה

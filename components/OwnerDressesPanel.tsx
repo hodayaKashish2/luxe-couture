@@ -170,8 +170,7 @@ export default function OwnerDressesPanel({
     [dresses]
   );
 
-  const [searchDraft, setSearchDraft] = useState('');
-  const [appliedSearch, setAppliedSearch] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<DressFilter>('all');
   const [sort, setSort] = useState<DressSort>('recent');
   const [showUpcoming, setShowUpcoming] = useState(true);
@@ -214,7 +213,7 @@ export default function OwnerDressesPanel({
   );
 
   const filteredDresses = useMemo(() => {
-    const query = appliedSearch.trim();
+    const query = searchQuery.trim();
     let list = activeDresses.filter((d) => {
       if (!query) return true;
       return (
@@ -228,8 +227,8 @@ export default function OwnerDressesPanel({
     list = list.filter((d) => {
       const today = new Date().toISOString().slice(0, 10);
       const bookings = getConfirmedBookings(getDressBookings(d.id, ownerBookings));
-      const upcomingBookings = bookings.filter((b) => b.event_date >= today);
-      const hasUpcomingBookings = upcomingBookings.length > 0;
+      const upcomingBookingsForDress = bookings.filter((b) => b.event_date >= today);
+      const hasUpcomingBookings = upcomingBookingsForDress.length > 0;
       if (filter === 'available') return bookings.length === 0 && d.status === 'approved' && !d.has_pending_update;
       if (filter === 'booked') return hasUpcomingBookings;
       if (filter === 'pending') return d.status === 'pending' || Boolean(d.has_pending_update);
@@ -248,16 +247,18 @@ export default function OwnerDressesPanel({
     });
 
     return list;
-  }, [activeDresses, ownerBookings, appliedSearch, filter, sort]);
+  }, [activeDresses, ownerBookings, searchQuery, filter, sort]);
 
-  const displayDresses = useMemo(() => {
-    if (!selectedDressId || filteredDresses.some((d) => d.id === selectedDressId)) {
-      return filteredDresses;
+  useEffect(() => {
+    if (loading) return;
+    if (filteredDresses.length === 0) {
+      setSelectedDressId(null);
+      return;
     }
-    const selected = activeDresses.find((d) => d.id === selectedDressId);
-    if (!selected) return filteredDresses;
-    return [selected, ...filteredDresses];
-  }, [filteredDresses, selectedDressId, activeDresses]);
+    if (!selectedDressId || !filteredDresses.some((dress) => dress.id === selectedDressId)) {
+      setSelectedDressId(filteredDresses[0].id);
+    }
+  }, [loading, filteredDresses, selectedDressId]);
 
   const selectedDress = selectedDressId
     ? activeDresses.find((d) => d.id === selectedDressId) ?? null
@@ -279,16 +280,11 @@ export default function OwnerDressesPanel({
   ];
 
   function handleSearchChange(value: string) {
-    setSearchDraft(value);
-  }
-
-  function applySearchFilter() {
-    setAppliedSearch(searchDraft.trim());
+    setSearchQuery(value);
   }
 
   function clearSearchFilter() {
-    setSearchDraft('');
-    setAppliedSearch('');
+    setSearchQuery('');
   }
 
   function handleFilterChange(next: DressFilter) {
@@ -312,7 +308,7 @@ export default function OwnerDressesPanel({
     if (row) {
       row.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     }
-  }, [selectedDressId, displayDresses]);
+  }, [selectedDressId, filteredDresses]);
 
   if (loading) {
     return <p className="text-sm text-[#6e634c] animate-pulse">טוען שמלות...</p>;
@@ -455,25 +451,12 @@ export default function OwnerDressesPanel({
         <div className="flex flex-col sm:flex-row gap-2">
           <input
             type="search"
-            value={searchDraft}
+            value={searchQuery}
             onChange={(e) => handleSearchChange(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                applySearchFilter();
-              }
-            }}
             placeholder="חיפוש לפי שם, עיר, מידה או צבע..."
             className="flex-1 p-2.5 bg-neutral-50 border border-[#decfa8] rounded-xl text-xs text-[#2c261a] placeholder:text-[#9a7b4f] focus:outline-none focus:border-[#d4af37]"
           />
-          <button
-            type="button"
-            onClick={applySearchFilter}
-            className="px-4 py-2.5 bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white rounded-xl text-xs font-black shrink-0"
-          >
-            🔍 סינון
-          </button>
-          {(appliedSearch || searchDraft) && (
+          {searchQuery && (
             <button
               type="button"
               onClick={clearSearchFilter}
@@ -513,7 +496,7 @@ export default function OwnerDressesPanel({
         </div>
 
         <p className="text-[10px] text-[#9a7b4f]">
-          {filteredDresses.length} שמלות{appliedSearch || filter !== 'all' ? ' (מסוננות)' : ''}
+          {filteredDresses.length} שמלות{searchQuery || filter !== 'all' ? ' (מסוננות)' : ''}
         </p>
       </div>
 
@@ -521,12 +504,12 @@ export default function OwnerDressesPanel({
         <div className="min-w-0 bg-white rounded-2xl border border-[#eadaaf] p-2 sm:p-3">
           <p className="text-[10px] font-black text-[#8b6508] mb-2 px-1">רשימת השמלות</p>
           <div className={LIST_SCROLL_CLASS}>
-            {displayDresses.length === 0 ? (
+            {filteredDresses.length === 0 ? (
               <div className="p-4 text-center text-sm text-[#6e634c]">
                 אין שמלות שתואמות את החיפוש
               </div>
             ) : (
-              displayDresses.map((dress) => {
+              filteredDresses.map((dress) => {
                 const dressBookings = getDressBookings(dress.id, ownerBookings);
                 const summary = getDressRentalSummary(dressBookings);
                 const isSelected = selectedDressId === dress.id;
