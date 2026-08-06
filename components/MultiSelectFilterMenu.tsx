@@ -54,7 +54,6 @@ export default function MultiSelectFilterMenu({
     };
     document.addEventListener('mousedown', onPointerDown);
     window.addEventListener('keydown', onKeyDown);
-    rootRef.current?.scrollIntoView({ block: 'nearest' });
     return () => {
       document.removeEventListener('mousedown', onPointerDown);
       window.removeEventListener('keydown', onKeyDown);
@@ -112,7 +111,7 @@ export default function MultiSelectFilterMenu({
           role="listbox"
           aria-multiselectable="true"
           aria-label={title}
-          className="mt-1.5 w-full max-h-72 overflow-y-auto overscroll-contain rounded-xl border border-[#eadaaf] bg-white shadow-md p-1.5 pb-2"
+          className="mt-1.5 w-full max-h-72 overflow-y-auto overscroll-auto rounded-xl border border-[#eadaaf] bg-white shadow-md p-1.5 pb-2"
         >
           {!flatOptions.length ? (
             emptyHint ? (
@@ -131,14 +130,15 @@ export default function MultiSelectFilterMenu({
             <div className="space-y-0.5">{options.map(renderOption)}</div>
           )}
 
-          {selected.length > 0 && (
+          {flatOptions.length > 0 && (
             <div className="border-t border-[#f0e8d0] mt-1 pt-1 px-1">
               <button
                 type="button"
                 onClick={() => onChange([])}
-                className="w-full py-2 text-[11px] font-bold text-[#b8860b] rounded-lg hover:bg-[#fffdf8]"
+                disabled={selected.length === 0}
+                className="w-full py-2 text-[11px] font-bold text-[#b8860b] rounded-lg hover:bg-[#fffdf8] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
               >
-                נקי בחירה
+                נקה בחירה
               </button>
             </div>
           )}

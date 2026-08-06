@@ -10,7 +10,10 @@ type CatalogFilterSidebarProps = CatalogFilterPanelProps & {
 };
 
 const STICKY_PANEL =
-  'sticky top-3 z-20 w-full flex flex-col bg-white border border-[#eadaaf] rounded-xl shadow-sm overflow-hidden h-full min-h-[calc(100dvh-1.5rem)] max-h-[calc(100dvh-1.5rem)]';
+  'sticky top-3 z-20 w-full bg-white border border-[#eadaaf] rounded-xl shadow-sm self-start';
+
+const COLLAPSED_PANEL =
+  'sticky top-3 z-20 w-full flex flex-col bg-white border border-[#eadaaf] rounded-xl shadow-sm self-start min-h-[calc(100dvh-1.5rem)]';
 
 export default function CatalogFilterSidebar({
   collapsed,
@@ -21,8 +24,8 @@ export default function CatalogFilterSidebar({
 }: CatalogFilterSidebarProps) {
   if (collapsed) {
     return (
-      <div className="hidden lg:block self-stretch w-11 shrink-0">
-        <aside className={STICKY_PANEL}>
+      <div className="hidden lg:block w-11 shrink-0">
+        <aside className={COLLAPSED_PANEL}>
           <button
             type="button"
             onClick={onToggleCollapse}
@@ -51,7 +54,7 @@ export default function CatalogFilterSidebar({
   }
 
   return (
-    <div className="hidden lg:block self-stretch w-56 xl:w-60 shrink-0">
+    <div className="hidden lg:block w-56 xl:w-60 shrink-0">
       <aside className={STICKY_PANEL}>
         <div className="shrink-0 flex items-center justify-between gap-2 px-3 py-2.5 border-b border-[#f0e6cc] bg-[#fffdf8]">
           <div className="min-w-0">
@@ -71,7 +74,7 @@ export default function CatalogFilterSidebar({
           </button>
         </div>
 
-        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-3 pb-3">
+        <div className="px-3 pb-3">
           <CatalogFilterPanel {...filterProps} showSort={false} compact />
         </div>
 

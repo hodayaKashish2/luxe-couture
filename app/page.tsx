@@ -1084,7 +1084,7 @@ export default function Home() {
           </div>
         )}
 
-        <div className="lg:grid lg:grid-cols-[auto_minmax(0,1fr)] lg:gap-4 lg:items-stretch">
+        <div className="lg:grid lg:grid-cols-[auto_minmax(0,1fr)] lg:gap-4 lg:items-start">
           <CatalogFilterSidebar
             collapsed={filtersSidebarCollapsed}
             onToggleCollapse={() => setFiltersSidebarCollapsed((v) => !v)}
