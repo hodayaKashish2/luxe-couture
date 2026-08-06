@@ -6,12 +6,14 @@ import {
   buildEditFormFromDress,
   buildPendingUpdatePayload,
   computeDressUpdateDiff,
-  filterKeptLiveImages,
+  filterKeptDressImages,
+  getAllowedDressImageUrls,
   getDressColorFromRow,
   getLiveDressSnapshot,
   isSchemaMissingPendingUpdate,
   mapOwnedDressForEdit,
   normalizeDressImages,
+  normalizePrice,
 } from '@/lib/dress-pending-update';
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server';
 import { MAX_DRESS_IMAGES, uploadDressImages } from '@/lib/dress-images';
@@ -108,7 +110,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
     const updates: Record<string, unknown> = {
       name: String(body.name ?? live.name).trim(),
-      price: Number(body.price ?? live.price),
+      price: normalizePrice(body.price !== undefined && String(body.price).trim() !== '' ? body.price : live.price),
       size: String(body.size ?? live.size).trim(),
       city: String(body.city ?? live.city).trim(),
       color: resolvedColor,
@@ -136,7 +138,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       .join(' | ');
 
     const uploaded = newFiles.length > 0 ? await uploadDressImages(newFiles) : [];
-    const validatedKept = filterKeptLiveImages(keptImages, live.images);
+    const allowedImages = getAllowedDressImageUrls(dressRow, live.images);
+    const validatedKept = filterKeptDressImages(keptImages, allowedImages);
     const mergedImages = normalizeDressImages([...validatedKept, ...uploaded]);
 
     if (mergedImages.length === 0) {

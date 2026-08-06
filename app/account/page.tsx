@@ -158,7 +158,12 @@ function AccountPageContent() {
   const [editLoading, setEditLoading] = useState(false);
   const [editLoadError, setEditLoadError] = useState('');
   const editDressLoadRef = useRef<string | null>(null);
-  const editImagesTouchedRef = useRef(false);
+  const editDraftTouchedRef = useRef(false);
+  const editLoadedDressIdRef = useRef<string | null>(null);
+
+  function touchEditDraft() {
+    editDraftTouchedRef.current = true;
+  }
 
   useEffect(() => {
     async function loadRatedDressIds() {
@@ -335,7 +340,7 @@ function AccountPageContent() {
     editDressLoadRef.current = id;
     setEditLoadError('');
 
-    if (seed) {
+    if (seed && !editDraftTouchedRef.current) {
       const form = seed.form ?? buildEditFormFromDress(seed);
       setEditingDress(seed);
       setEditForm(form);
@@ -360,10 +365,12 @@ function AccountPageContent() {
         return;
       }
 
-      setEditingDress(dress);
-      setEditForm(dress.form ?? buildEditFormFromDress(dress));
-      if (!editImagesTouchedRef.current) {
+      if (!editDraftTouchedRef.current) {
+        setEditingDress(dress);
+        setEditForm(dress.form ?? buildEditFormFromDress(dress));
         setEditImages(normalizeDressImages(dress.images));
+      } else {
+        setEditingDress(dress);
       }
     } catch {
       if (editDressLoadRef.current === id && !seed) {
@@ -383,9 +390,15 @@ function AccountPageContent() {
 
   useEffect(() => {
     if (section === 'edit' && dressId) {
-      const seed = dresses.find((d) => d.id === dressId);
-      void loadEditDress(dressId, seed);
+      if (editLoadedDressIdRef.current !== dressId) {
+        editLoadedDressIdRef.current = dressId;
+        editDraftTouchedRef.current = false;
+        const seed = dresses.find((d) => d.id === dressId);
+        void loadEditDress(dressId, seed);
+      }
     } else if (section !== 'edit') {
+      editLoadedDressIdRef.current = null;
+      editDraftTouchedRef.current = false;
       editDressLoadRef.current = null;
       setEditingDress(null);
       setEditLoading(false);
@@ -428,7 +441,7 @@ function AccountPageContent() {
       setDetailsDress(null);
       loadedViewDressRef.current = null;
     }
-  }, [section, dressId, viewDressId, dresses, detailsDress?.id, loadEditDress]);
+  }, [section, dressId, viewDressId, detailsDress?.id, loadEditDress, dresses]);
 
   async function cancelReservation(bookingId: number) {
     if (!confirm('לבטל את ההזמנה? התאריך ישוחרר לשוכרות אחרות.')) return;
@@ -586,7 +599,8 @@ function AccountPageContent() {
   }
 
   function startEditDress(dress: RentalDress) {
-    editImagesTouchedRef.current = false;
+    editDraftTouchedRef.current = false;
+    editLoadedDressIdRef.current = dress.id;
     setEditNewFiles([]);
     editNewPreviews.forEach((url) => URL.revokeObjectURL(url));
     setEditNewPreviews([]);
@@ -604,7 +618,7 @@ function AccountPageContent() {
 
   function handleEditImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     if (!e.target.files) return;
-    editImagesTouchedRef.current = true;
+    touchEditDraft();
     const files = Array.from(e.target.files);
     const previews = files.map((file) => URL.createObjectURL(file));
     setEditNewFiles((prev) => [...prev, ...files]);
@@ -612,12 +626,12 @@ function AccountPageContent() {
   }
 
   function removeEditExistingImage(url: string) {
-    editImagesTouchedRef.current = true;
+    touchEditDraft();
     setEditImages((prev) => prev.filter((img) => img !== url));
   }
 
   function removeEditNewImage(index: number) {
-    editImagesTouchedRef.current = true;
+    touchEditDraft();
     URL.revokeObjectURL(editNewPreviews[index]);
     setEditNewFiles((prev) => prev.filter((_, i) => i !== index));
     setEditNewPreviews((prev) => prev.filter((_, i) => i !== index));
@@ -1047,7 +1061,11 @@ function AccountPageContent() {
             <p className="text-sm text-red-700 font-bold">{editLoadError}</p>
             <button
               type="button"
-              onClick={() => dressId && void loadEditDress(dressId)}
+              onClick={() => {
+                if (!dressId) return;
+                editDraftTouchedRef.current = false;
+                void loadEditDress(dressId);
+              }}
               className="px-4 py-2 bg-[#b8860b] text-white rounded-xl text-xs font-bold"
             >
               נסי שוב
@@ -1070,31 +1088,31 @@ function AccountPageContent() {
             <h2 className="font-black text-xl">✏️ עדכון שמלה</h2>
             <p className="text-xs text-[#6e634c]">עורכת: <strong>{editingDress.name}</strong></p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <input required placeholder="שם השמלה *" value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} className="p-2.5 border border-[#decfa8] rounded-xl text-xs col-span-1 sm:col-span-2" />
-              <input required type="number" placeholder="מחיר *" value={editForm.price} onChange={(e) => setEditForm({ ...editForm, price: e.target.value })} className="p-2.5 border border-[#decfa8] rounded-xl text-xs" />
+              <input required placeholder="שם השמלה *" value={editForm.name} onChange={(e) => { touchEditDraft(); setEditForm({ ...editForm, name: e.target.value }); }} className="p-2.5 border border-[#decfa8] rounded-xl text-xs col-span-1 sm:col-span-2" />
+              <input required type="number" placeholder="מחיר *" value={editForm.price} onChange={(e) => { touchEditDraft(); setEditForm({ ...editForm, price: e.target.value }); }} className="p-2.5 border border-[#decfa8] rounded-xl text-xs" />
               <div>
                 <label className="block text-xs font-bold text-[#8b6508] mb-1">מידה *</label>
                 <DressSizeInput
                   required
                   value={editForm.size}
-                  onChange={(size) => setEditForm({ ...editForm, size })}
+                  onChange={(size) => { touchEditDraft(); setEditForm({ ...editForm, size }); }}
                   className="p-2.5 border border-[#decfa8] rounded-xl text-xs w-full"
                 />
               </div>
-              <input required placeholder="עיר *" value={editForm.city} onChange={(e) => setEditForm({ ...editForm, city: e.target.value })} className="p-2.5 border border-[#decfa8] rounded-xl text-xs" />
+              <input required placeholder="עיר *" value={editForm.city} onChange={(e) => { touchEditDraft(); setEditForm({ ...editForm, city: e.target.value }); }} className="p-2.5 border border-[#decfa8] rounded-xl text-xs" />
               <div>
                 <label className="block text-xs font-bold text-[#8b6508] mb-1">צבע</label>
                 <input
                   placeholder="למשל: לבן, שמפניה, כחול כהה"
                   value={editForm.color}
-                  onChange={(e) => setEditForm({ ...editForm, color: e.target.value })}
+                  onChange={(e) => { touchEditDraft(); setEditForm({ ...editForm, color: e.target.value }); }}
                   className="p-2.5 border border-[#decfa8] rounded-xl text-xs w-full"
                 />
               </div>
               <textarea
                 placeholder="תיאור השמלה (אופציונלי)"
                 value={editForm.description}
-                onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                onChange={(e) => { touchEditDraft(); setEditForm({ ...editForm, description: e.target.value }); }}
                 rows={3}
                 className="p-2.5 border border-[#decfa8] rounded-xl text-xs col-span-1 sm:col-span-2 resize-none"
               />

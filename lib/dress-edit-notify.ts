@@ -24,7 +24,7 @@ export async function resolveUpdateNotifyContact(
   user: SiteUser,
   dressRow: Record<string, unknown>
 ) {
-  let email = String(user.email || '').trim().toLowerCase();
+  let email = '';
   let name = user.displayName || String(dressRow.owner_name || 'משכירה');
   let phone = user.phone || String(dressRow.owner_phone || '');
 
@@ -40,6 +40,10 @@ export async function resolveUpdateNotifyContact(
     }
     if (dbUser?.display_name) name = dbUser.display_name;
     if (dbUser?.phone) phone = String(dbUser.phone);
+  }
+
+  if (!email && user.email?.trim() && isValidEmail(user.email)) {
+    email = user.email.trim().toLowerCase();
   }
 
   const directOwnerEmail = String(dressRow.owner_email || '').trim().toLowerCase();
@@ -100,11 +104,11 @@ export async function sendDressUpdateEmails(
     ownerOk = ownerMail.success;
     ownerError = ownerMail.success ? undefined : ownerMail.error;
   } else {
-    ownerError = 'אין כתובת מייל תקינה למשכירה — עדכני מייל בפרופיל';
+    ownerError = 'אין כתובת מייל תקינה למשכירה — עדכני מייל בפרופיל באזור האישי';
   }
 
   if (!adminMail.success) console.error('Dress update admin email failed:', adminMail.error);
-  if (!ownerOk) console.error('Dress update owner email failed:', ownerError);
+  if (!ownerOk) console.error('Dress update owner email failed:', ownerError, 'to:', resolvedOwnerEmail || '(empty)');
 
   return {
     ownerEmail: resolvedOwnerEmail,

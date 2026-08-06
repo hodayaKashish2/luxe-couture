@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { fetchDressForNotify, notifyDressApproved } from '@/lib/dress-approval-notify';
 import {
+  computeDressUpdateDiff,
+  getLiveDressSnapshot,
   mergeDressWithPendingUpdate,
   pendingUpdateToDressPatch,
   type PendingUpdatePayload,
@@ -619,13 +621,15 @@ export async function POST(request: Request) {
         const dressForNotify = await fetchDressForNotify(supabase, id);
 
         if (action === 'approve') {
+          const liveBefore = getLiveDressSnapshot(dressRow as Record<string, unknown>);
+          const updateDiff = computeDressUpdateDiff(liveBefore, payload);
           const { error } = await supabase
             .from('dresses')
             .update(pendingUpdateToDressPatch(payload))
             .eq('id', id);
           if (error) throw error;
           if (dressForNotify) {
-            await notifyDressUpdateApproved(supabase, dressForNotify, payload);
+            await notifyDressUpdateApproved(supabase, dressForNotify, payload, updateDiff);
           }
           return NextResponse.json({ success: true, status: 'approved', kind: 'update' });
         }

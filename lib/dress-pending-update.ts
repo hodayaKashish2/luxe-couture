@@ -55,10 +55,33 @@ export function normalizeImageUrl(url: string) {
   }
 }
 
-/** Only keep image URLs that exist on the live published dress row. */
+export function normalizePrice(value: unknown) {
+  const cleaned = String(value ?? '')
+    .trim()
+    .replace(/[^\d.]/g, '');
+  if (!cleaned) return 0;
+  const parsed = Number(cleaned);
+  return Number.isFinite(parsed) ? Math.round(parsed * 100) / 100 : 0;
+}
+
+/** URLs the owner may keep when editing (live catalog + any pending draft). */
+export function getAllowedDressImageUrls(dress: Record<string, unknown>, liveImages: string[]) {
+  const pending = dress.pending_update as PendingUpdatePayload | null | undefined;
+  const pendingImages =
+    pending && typeof pending === 'object' && Array.isArray(pending.images)
+      ? normalizeDressImages(pending.images)
+      : [];
+  return normalizeDressImages([...liveImages, ...pendingImages]);
+}
+
+/** Keep only URLs the client explicitly kept and that belong to this dress. */
+export function filterKeptDressImages(kept: string[], allowedImages: string[]) {
+  const allowedSet = new Set(allowedImages.map(normalizeImageUrl));
+  return normalizeDressImages(kept).filter((url) => allowedSet.has(normalizeImageUrl(url)));
+}
+
 export function filterKeptLiveImages(kept: string[], liveImages: string[]) {
-  const liveSet = new Set(liveImages.map(normalizeImageUrl));
-  return normalizeDressImages(kept).filter((url) => liveSet.has(normalizeImageUrl(url)));
+  return filterKeptDressImages(kept, liveImages);
 }
 
 export type DressFieldChange = {
@@ -98,12 +121,12 @@ export function computeDressUpdateDiff(
     }
   }
 
-  if (Number(before.price) !== Number(after.price)) {
+  if (normalizePrice(before.price) !== normalizePrice(after.price)) {
     changes.push({
       field: 'price',
       label: labels.price,
-      before: `₪${before.price}`,
-      after: `₪${after.price}`,
+      before: `₪${normalizePrice(before.price)}`,
+      after: `₪${normalizePrice(after.price)}`,
     });
   }
 
@@ -164,7 +187,7 @@ export function getLiveDressSnapshot(dress: Record<string, unknown>) {
 
   return {
     name: String(dress.name ?? ''),
-    price: Number(dress.price ?? 0),
+    price: normalizePrice(dress.price ?? 0),
     size: String(dress.size ?? ''),
     city: String(dress.city ?? ''),
     color: liveColor,
@@ -203,7 +226,7 @@ export function getEffectiveDressSnapshot(dress: Record<string, unknown>) {
   if (!pending || typeof pending !== 'object') {
     return {
       name: String(dress.name ?? ''),
-      price: Number(dress.price ?? 0),
+      price: normalizePrice(dress.price ?? 0),
       size: String(dress.size ?? ''),
       city: String(dress.city ?? ''),
       color: liveColor,
@@ -294,10 +317,10 @@ export function buildPendingUpdatePayload(
 
   return {
     name: String(updates.name ?? base.name ?? '').trim(),
-    price: Number(updates.price ?? base.price ?? 0),
+    price: normalizePrice(updates.price ?? base.price ?? 0),
     size: String(updates.size ?? base.size ?? '').trim(),
     city: String(updates.city ?? base.city ?? '').trim(),
-    color: submittedColor || base.color || '',
+    color: submittedColor !== undefined ? submittedColor : base.color || '',
     description: String(updates.description ?? base.description ?? '').trim(),
     images: Array.isArray(updates.images)
       ? normalizeDressImages(updates.images)
@@ -315,12 +338,12 @@ export function buildPendingUpdatePayload(
 export function pendingUpdateToDressPatch(payload: PendingUpdatePayload) {
   return {
     name: payload.name,
-    price: payload.price,
+    price: normalizePrice(payload.price),
     size: payload.size,
     city: payload.city,
     color: payload.color,
     description: payload.description,
-    images: payload.images,
+    images: normalizeDressImages(payload.images),
     event_type: payload.event_type || '',
     condition: payload.condition || 'new',
     deposit: payload.deposit ?? 0,

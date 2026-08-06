@@ -688,18 +688,22 @@ export async function sendDressUpdateApprovedOwnerEmail(params: {
   to: string;
   ownerName: string;
   dressName: string;
+  diff?: import('@/lib/dress-pending-update').DressUpdateDiff;
 }) {
   if (!params.to?.trim()) {
     return { success: false as const, error: 'אין כתובת מייל למשכירה' };
   }
+
+  const diffHtml = params.diff ? buildDressUpdateDiffHtml(params.diff) : '';
 
   return sendEmailTo(
     params.to,
     `✅ העדכון אושר: ${params.dressName}`,
     `
       <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #eadaaf;border-radius:16px;background:#fffdf8;">
-        <h2 style="color:#3d2f24;margin-top:0;">שלום ${params.ownerName}!</h2>
-        <p style="line-height:1.7;color:#554a33;">העדכון לשמלה <strong>${params.dressName}</strong> אושר והפרטים החדשים מופיעים עכשיו בקטלוג.</p>
+        <h2 style="color:#3d2f24;margin-top:0;">שלום ${escapeHtml(params.ownerName)}!</h2>
+        <p style="line-height:1.7;color:#554a33;">העדכון לשמלה <strong>${escapeHtml(params.dressName)}</strong> אושר והפרטים החדשים מופיעים עכשיו בקטלוג.</p>
+        ${diffHtml ? `<p style="line-height:1.7;color:#554a33;margin-top:12px;">השינויים שאושרו:</p>${diffHtml}` : ''}
         <p style="margin-top:24px;">
           <a href="${getAppUrl()}/" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
             לצפייה בקטלוג →
