@@ -54,6 +54,7 @@ export default function MultiSelectFilterMenu({
     };
     document.addEventListener('mousedown', onPointerDown);
     window.addEventListener('keydown', onKeyDown);
+    rootRef.current?.scrollIntoView({ block: 'nearest' });
     return () => {
       document.removeEventListener('mousedown', onPointerDown);
       window.removeEventListener('keydown', onKeyDown);
@@ -111,7 +112,7 @@ export default function MultiSelectFilterMenu({
           role="listbox"
           aria-multiselectable="true"
           aria-label={title}
-          className="absolute z-30 mt-1.5 w-full max-h-64 overflow-y-auto overscroll-contain rounded-xl border border-[#eadaaf] bg-white shadow-xl p-1.5"
+          className="mt-1.5 w-full max-h-72 overflow-y-auto overscroll-contain rounded-xl border border-[#eadaaf] bg-white shadow-md p-1.5 pb-2"
         >
           {!flatOptions.length ? (
             emptyHint ? (
@@ -120,7 +121,7 @@ export default function MultiSelectFilterMenu({
           ) : groups.length ? (
             groups.map((group) => (
               <div key={group.label} className="mb-1 last:mb-0">
-                <p className="px-3 pt-2 pb-1 text-[10px] font-black text-[#8b6508] sticky top-0 bg-white/95 backdrop-blur-sm">
+                <p className="px-3 pt-2 pb-1 text-[10px] font-black text-[#8b6508] bg-[#fffdf8]">
                   {group.label}
                 </p>
                 <div className="space-y-0.5">{group.options.map(renderOption)}</div>

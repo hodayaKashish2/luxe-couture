@@ -71,7 +71,7 @@ export default function CatalogFilterSidebar({
           </button>
         </div>
 
-        <div className="flex-1 min-h-0 px-3 pb-3">
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-3 pb-3">
           <CatalogFilterPanel {...filterProps} showSort={false} compact />
         </div>
 
