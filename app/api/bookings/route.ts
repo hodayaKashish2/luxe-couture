@@ -6,7 +6,6 @@ import { getUserFromRequest } from '@/lib/user-auth';
 import { phonesMatch } from '@/lib/phone-match';
 import { isPastDate } from '@/lib/booking-dates';
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server';
-import { buildTranzilaPaymentUrl, isTranzilaConfigured } from '@/lib/tranzila';
 
 function isSchemaError(message: string) {
   return (
@@ -70,7 +69,6 @@ function buildBookingPaymentResponse({
   total,
   platformFee,
   ownerPayout,
-  paymentUrl,
   legacyMode,
   resumed = false,
 }: {
@@ -78,7 +76,6 @@ function buildBookingPaymentResponse({
   total: number;
   platformFee: number;
   ownerPayout: number;
-  paymentUrl: string | null;
   legacyMode: boolean;
   resumed?: boolean;
 }) {
@@ -89,10 +86,8 @@ function buildBookingPaymentResponse({
     platformFee,
     ownerPayout,
     commissionPercent: COMMISSION_PERCENT,
-    paymentUrl,
     legacyMode,
     confirmedImmediately: legacyMode,
-    mockMode: legacyMode || !isTranzilaConfigured(),
     resumed,
   });
 }
@@ -199,20 +194,11 @@ export async function POST(request: Request) {
       const resumedTotal = Number(sameUserPending.amount_total || total);
       const resumedPlatformFee = Number(sameUserPending.platform_fee || platformFee);
       const resumedOwnerPayout = Number(sameUserPending.owner_payout || ownerPayout);
-      const paymentUrl = buildTranzilaPaymentUrl({
-        amount: resumedTotal,
-        bookingId: sameUserPending.id,
-        description: `השכרת שמלה: ${dressName}`,
-        customerName: name,
-        customerEmail: email,
-      });
-
       return buildBookingPaymentResponse({
         bookingId: sameUserPending.id,
         total: resumedTotal,
         platformFee: resumedPlatformFee,
         ownerPayout: resumedOwnerPayout,
-        paymentUrl,
         legacyMode: false,
         resumed: true,
       });
@@ -313,8 +299,6 @@ export async function POST(request: Request) {
           platformFee,
           ownerPayout,
           commissionPercent: COMMISSION_PERCENT,
-          paymentUrl: null,
-          mockMode: true,
           message: 'ההזמנה נקלטה! (הריצי upgrade-v2.sql ב-Supabase ללוח שנה אוטומטי)',
         });
       }
@@ -324,16 +308,6 @@ export async function POST(request: Request) {
     } else {
       bookingId = paymentInsert.data.id;
     }
-
-    const paymentUrl = bookingId && !legacyMode
-      ? buildTranzilaPaymentUrl({
-          amount: total,
-          bookingId,
-          description: `השכרת שמלה: ${dressName}`,
-          customerName: name,
-          customerEmail: email,
-        })
-      : null;
 
     await sendAdminEmail(
       legacyMode
@@ -368,7 +342,6 @@ export async function POST(request: Request) {
         dressName,
         eventDate: date,
         amount: total,
-        paymentUrl,
       });
       if (!customerMail.success) {
         console.error('Customer pending booking email failed:', customerMail.error);
@@ -380,7 +353,6 @@ export async function POST(request: Request) {
       total,
       platformFee,
       ownerPayout,
-      paymentUrl,
       legacyMode,
     });
   } catch (error) {

@@ -142,8 +142,6 @@ export default function Home() {
     amount: number;
     platformFee: number;
     ownerPayout: number;
-    paymentUrl: string | null;
-    mockMode: boolean;
   } | null>(null);
   const [isConfirmingPayment, setIsConfirmingPayment] = useState(false);
   const [isSubmittingBooking, setIsSubmittingBooking] = useState(false);
@@ -718,8 +716,6 @@ export default function Home() {
         amount: data.amount,
         platformFee: data.platformFee,
         ownerPayout: data.ownerPayout,
-        paymentUrl: data.paymentUrl,
-        mockMode: data.mockMode,
       });
     } catch (error) {
       console.error('Error:', error);
@@ -1742,8 +1738,6 @@ export default function Home() {
               ) : paymentStep ? (
                 <BookingPaymentStep
                   amount={paymentStep.amount}
-                  paymentUrl={paymentStep.paymentUrl}
-                  mockMode={paymentStep.mockMode}
                   isConfirming={isConfirmingPayment}
                   onConfirmPayment={handleConfirmPayment}
                   onBack={() => setPaymentStep(null)}

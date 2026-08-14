@@ -10,7 +10,7 @@ export const BANK_TRANSFER_DETAILS = {
   branch: '290',
 } as const;
 
-export type PaymentMethod = 'bit' | 'credit' | 'bank';
+export type PaymentMethod = 'bit' | 'bank';
 
 function bitIntlPhone() {
   const digits = BIT_PHONE.replace(/\D/g, '');

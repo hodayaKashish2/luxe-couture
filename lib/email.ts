@@ -344,29 +344,22 @@ export async function sendBookingPendingEmail(params: {
   dressName: string;
   eventDate: string;
   amount: number;
-  paymentUrl?: string | null;
 }) {
-  const paySection = params.paymentUrl
-    ? `<p style="margin-top:24px;">
-          <a href="${params.paymentUrl}" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
-            לתשלום עכשיו →
-          </a>
-        </p>`
-    : `<p style="line-height:1.7;color:#554a33;margin-top:16px;">ניצור איתך קשר להשלמת התשלום.</p>`;
-
   return sendEmailTo(
     params.to,
     `📅 הזמנה התקבלה: ${params.dressName}`,
     `
       <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #eadaaf;border-radius:16px;background:#fffdf8;">
         <h2 style="color:#3d2f24;margin-top:0;">שלום ${params.customerName}!</h2>
-        <p style="line-height:1.7;color:#554a33;">ההזמנה שלך נקלטה בהצלחה וממתין לתשלום.</p>
+        <p style="line-height:1.7;color:#554a33;">ההזמנה שלך נקלטה בהצלחה וממתינה לתשלום.</p>
         <p style="line-height:1.7;color:#554a33;"><strong>שמלה:</strong> ${params.dressName}</p>
         <p style="line-height:1.7;color:#554a33;"><strong>תאריך אירוע:</strong> ${params.eventDate}</p>
         <p style="line-height:1.7;color:#554a33;"><strong>סכום לתשלום:</strong> ₪${params.amount}</p>
-        ${paySection}
-        <p style="margin-top:16px;">
-          <a href="${getAppUrl()}/account" style="color:#b8860b;font-weight:bold;">לאזור האישי →</a>
+        <p style="line-height:1.7;color:#554a33;margin-top:16px;">השלימי את התשלום בביט או בהעברה בנקאית דרך האתר, ואז לחצי <strong>אישור תשלום</strong>.</p>
+        <p style="margin-top:24px;">
+          <a href="${getAppUrl()}/account" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
+            לאזור האישי →
+          </a>
         </p>
       </div>
     `

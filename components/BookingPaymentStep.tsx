@@ -11,8 +11,6 @@ import {
 
 type BookingPaymentStepProps = {
   amount: number;
-  paymentUrl: string | null;
-  mockMode: boolean;
   isConfirming: boolean;
   onConfirmPayment: (method: PaymentMethod) => void;
   onBack: () => void;
@@ -20,14 +18,11 @@ type BookingPaymentStepProps = {
 
 const METHOD_LABELS: Record<PaymentMethod, string> = {
   bit: 'ביט',
-  credit: 'אשראי',
   bank: 'העברה בנקאית',
 };
 
 export default function BookingPaymentStep({
   amount,
-  paymentUrl,
-  mockMode,
   isConfirming,
   onConfirmPayment,
   onBack,
@@ -40,13 +35,6 @@ export default function BookingPaymentStep({
     openBitPayment(amount);
   };
 
-  const handleCredit = () => {
-    setMethod('credit');
-    if (paymentUrl) {
-      window.open(paymentUrl, '_blank', 'noopener,noreferrer');
-    }
-  };
-
   const handleBank = () => {
     setMethod('bank');
     setShowBankDetails((open) => !open);
@@ -56,7 +44,7 @@ export default function BookingPaymentStep({
     <div className="flex flex-col gap-4 my-auto">
       <h3 className="text-lg font-black text-neutral-900">💳 בחירת אמצעי תשלום</h3>
       <p className="text-xs text-[#5c5037] leading-relaxed">
-        ההזמנה נשמרה. בחרי ביט, אשראי או העברה בנקאית — השלימי את התשלום, ואז לחצי <strong>אישור תשלום</strong>.
+        ההזמנה נשמרה. בחרי ביט או העברה בנקאית — השלימי את התשלום, ואז לחצי <strong>אישור תשלום</strong>.
       </p>
 
       <div className="bg-white border border-[#decfa8] rounded-xl p-4 text-xs">
@@ -80,30 +68,16 @@ export default function BookingPaymentStep({
         </button>
         <button
           type="button"
-          onClick={handleCredit}
+          onClick={handleBank}
           className={`py-3 px-3 rounded-xl border text-xs font-black transition-colors ${
-            method === 'credit'
+            method === 'bank'
               ? 'bg-[#2c261a] text-white border-[#2c261a]'
               : 'bg-white border-[#decfa8] text-neutral-900 hover:border-[#b8860b]'
           }`}
         >
-          💳 תשלום באשראי
+          {method === 'bank' && showBankDetails ? '🏦 הסתרת פרטי בנק' : '🏦 העברה בנקאית'}
         </button>
       </div>
-
-      <button
-        type="button"
-        onClick={handleBank}
-        className={`w-full py-3 px-3 rounded-xl border text-xs font-black transition-colors ${
-          method === 'bank'
-            ? 'bg-[#2c261a] text-white border-[#2c261a]'
-            : 'bg-white border-[#decfa8] text-neutral-900 hover:border-[#b8860b]'
-        }`}
-      >
-        {method === 'bank' && showBankDetails
-          ? '🏦 הסתרת פרטי העברה בנקאית'
-          : '🏦 צפייה בפרטי העברה בנקאית'}
-      </button>
 
       {method === 'bit' && (
         <div className="bg-[#f4ebd4]/60 border border-[#decfa8] rounded-xl p-3 text-xs text-[#5c5037] space-y-1">
@@ -120,31 +94,6 @@ export default function BookingPaymentStep({
           >
             פתיחה מחדש של ביט להעברה
           </button>
-        </div>
-      )}
-
-      {method === 'credit' && (
-        <div className="bg-[#f4ebd4]/60 border border-[#decfa8] rounded-xl p-3 text-xs text-[#5c5037] space-y-2">
-          <p className="font-bold text-neutral-900">תשלום מאובטח באשראי</p>
-          {paymentUrl ? (
-            <>
-              <p>דף התשלום המאובטח נפתח בחלון חדש. אחרי סיום התשלום תישלח אלייך הודעת אישור אוטומטית במייל.</p>
-              <a
-                href={paymentUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-block text-[#8b6508] font-bold underline"
-              >
-                פתיחה מחדש של דף התשלום המאובטח →
-              </a>
-            </>
-          ) : (
-            <p className="bg-amber-50 border border-amber-200 rounded-lg p-2 text-amber-800">
-              {mockMode
-                ? 'מצב בדיקה — סליקת אשראי לא מוגדרת.'
-                : 'דף התשלום לא זמין כרגע. צרי קשר או בחרי אמצעי תשלום אחר.'}
-            </p>
-          )}
         </div>
       )}
 
@@ -185,7 +134,7 @@ export default function BookingPaymentStep({
         </div>
       )}
 
-      {method && method !== 'credit' && (
+      {method && (
         <button
           type="button"
           onClick={() => onConfirmPayment(method)}
@@ -193,17 +142,6 @@ export default function BookingPaymentStep({
           className="w-full py-3.5 bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white text-xs font-black rounded-xl shadow-lg disabled:opacity-60"
         >
           {isConfirming ? 'שולחת...' : `✓ אישור תשלום (${METHOD_LABELS[method]})`}
-        </button>
-      )}
-
-      {method === 'credit' && mockMode && !paymentUrl && (
-        <button
-          type="button"
-          onClick={() => onConfirmPayment('credit')}
-          disabled={isConfirming}
-          className="w-full py-3.5 bg-[#2c261a] text-white text-xs font-black rounded-xl disabled:opacity-60"
-        >
-          {isConfirming ? 'שולחת...' : '✓ אישור תשלום (בדיקה)'}
         </button>
       )}
 
