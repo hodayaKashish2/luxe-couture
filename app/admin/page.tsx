@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import AdminBookingsGrid from '@/components/admin/AdminBookingsGrid';
 import AdminRejectReasonModal from '@/components/admin/AdminRejectReasonModal';
 import AdminDressCatalog from '@/components/admin/AdminDressCatalog';
 import AdminPendingComments from '@/components/admin/AdminPendingComments';
