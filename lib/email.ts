@@ -344,26 +344,203 @@ export async function sendBookingPendingEmail(params: {
   dressName: string;
   eventDate: string;
   amount: number;
+  payUrl?: string;
 }) {
+  const payLink = params.payUrl || `${getAppUrl()}/account?section=reservations`;
   return sendEmailTo(
     params.to,
-    `📅 הזמנה התקבלה: ${params.dressName}`,
+    `💳 הגיע הזמן לשלם: ${params.dressName}`,
     `
       <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #eadaaf;border-radius:16px;background:#fffdf8;">
-        <h2 style="color:#3d2f24;margin-top:0;">שלום ${params.customerName}!</h2>
-        <p style="line-height:1.7;color:#554a33;">ההזמנה שלך נקלטה בהצלחה וממתינה לתשלום.</p>
-        <p style="line-height:1.7;color:#554a33;"><strong>שמלה:</strong> ${params.dressName}</p>
-        <p style="line-height:1.7;color:#554a33;"><strong>תאריך אירוע:</strong> ${params.eventDate}</p>
+        <h2 style="color:#3d2f24;margin-top:0;">שלום ${escapeHtml(params.customerName)}!</h2>
+        <p style="line-height:1.7;color:#554a33;">המשכירה אישרה את בקשת השריון שלך 🎉</p>
+        <p style="line-height:1.7;color:#554a33;"><strong>שמלה:</strong> ${escapeHtml(params.dressName)}</p>
+        <p style="line-height:1.7;color:#554a33;"><strong>תאריך אירוע:</strong> ${escapeHtml(params.eventDate)}</p>
         <p style="line-height:1.7;color:#554a33;"><strong>סכום לתשלום:</strong> ₪${params.amount}</p>
-        <p style="line-height:1.7;color:#554a33;margin-top:16px;">השלימי את התשלום בביט או בהעברה בנקאית דרך האתר, ואז לחצי <strong>אישור תשלום</strong>.</p>
+        <p style="line-height:1.7;color:#554a33;margin-top:16px;">השלימי את התשלום ב<strong>ביט</strong> או <strong>העברה בנקאית</strong> דרך האתר, ואז לחצי <strong>אישור תשלום</strong>.</p>
         <p style="margin-top:24px;">
-          <a href="${getAppUrl()}/account" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
-            לאזור האישי →
+          <a href="${payLink}" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
+            להשלמת התשלום →
           </a>
         </p>
       </div>
     `
   );
+}
+
+export async function sendBookingRequestSubmittedEmail(params: {
+  to: string;
+  customerName: string;
+  dressName: string;
+  eventDate: string;
+  amount: number;
+}) {
+  return sendEmailTo(
+    params.to,
+    `📨 בקשת השריון נשלחה: ${params.dressName}`,
+    `
+      <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #eadaaf;border-radius:16px;background:#fffdf8;">
+        <h2 style="color:#3d2f24;margin-top:0;">שלום ${escapeHtml(params.customerName)}!</h2>
+        <p style="line-height:1.7;color:#554a33;">קיבלנו את בקשת השריון שלך והעברנו אותה למשכירה לאישור.</p>
+        <p style="line-height:1.7;color:#554a33;"><strong>שמלה:</strong> ${escapeHtml(params.dressName)}</p>
+        <p style="line-height:1.7;color:#554a33;"><strong>תאריך מבוקש:</strong> ${escapeHtml(params.eventDate)}</p>
+        <p style="line-height:1.7;color:#554a33;"><strong>סכום משוער:</strong> ₪${params.amount}</p>
+        <p style="line-height:1.7;color:#554a33;margin-top:16px;">למשכירה יש עד <strong>48 שעות</strong> להגיב. נשלח אלייך מייל ברגע שתאושר — ואז תוכלי להשלים את התשלום.</p>
+        <p style="margin-top:24px;">
+          <a href="${getAppUrl()}/account?section=reservations" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
+            מעקב באזור האישי →
+          </a>
+        </p>
+      </div>
+    `
+  );
+}
+
+export async function sendBookingOwnerRequestEmail(params: {
+  to: string;
+  ownerName: string;
+  dressName: string;
+  customerName: string;
+  customerPhone: string;
+  eventDate: string;
+  amount: number;
+  deadlineIso: string;
+  accountUrl: string;
+}) {
+  const deadlineLabel = formatDeadlineForEmail(params.deadlineIso);
+  return sendEmailTo(
+    params.to,
+    `⏳ בקשת שריון חדשה: ${params.dressName}`,
+    `
+      <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #eadaaf;border-radius:16px;background:#fffdf8;">
+        <h2 style="color:#3d2f24;margin-top:0;">שלום ${escapeHtml(params.ownerName)}!</h2>
+        <p style="line-height:1.7;color:#554a33;">יש לך <strong>בקשת שריון חדשה</strong> שממתינה לתשובתך.</p>
+        <div style="margin:16px 0;padding:14px 16px;background:#faf6eb;border-radius:12px;border:1px solid #eadaaf;">
+          <p style="margin:0 0 8px;"><strong>שמלה:</strong> ${escapeHtml(params.dressName)}</p>
+          <p style="margin:0 0 8px;"><strong>תאריך:</strong> ${escapeHtml(params.eventDate)}</p>
+          <p style="margin:0 0 8px;"><strong>שוכרת:</strong> ${escapeHtml(params.customerName)}</p>
+          <p style="margin:0 0 8px;"><strong>טלפון:</strong> <span dir="ltr">${escapeHtml(params.customerPhone)}</span></p>
+          <p style="margin:0;"><strong>סכום:</strong> ₪${params.amount}</p>
+        </div>
+        <p style="line-height:1.7;color:#554a33;">יש לך עד <strong>${deadlineLabel}</strong> לאשר או לדחות את הבקשה.</p>
+        <p style="margin-top:24px;">
+          <a href="${params.accountUrl}" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
+            לאישור הבקשה באתר →
+          </a>
+        </p>
+        <p style="font-size:12px;color:#9a7b4f;margin-top:16px;">אם לא תגיבי תוך 48 שעות, הבקשה תבוטל אוטומטית והשוכרת תקבל הודעה.</p>
+      </div>
+    `
+  );
+}
+
+export async function sendBookingOwnerReminderEmail(params: {
+  to: string;
+  ownerName: string;
+  dressName: string;
+  customerName: string;
+  eventDate: string;
+  deadline: string;
+  accountUrl: string;
+}) {
+  const deadlineLabel = formatDeadlineForEmail(params.deadline);
+  return sendEmailTo(
+    params.to,
+    `🔔 תזכורת: בקשת שריון ממתינה — ${params.dressName}`,
+    `
+      <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #eadaaf;border-radius:16px;background:#fffdf8;">
+        <h2 style="color:#3d2f24;margin-top:0;">שלום ${escapeHtml(params.ownerName)}!</h2>
+        <p style="line-height:1.7;color:#554a33;">לפני כ-<strong>24 שעות</strong> התקבלה בקשת שריון לשמלה <strong>${escapeHtml(params.dressName)}</strong>, ועדיין לא הגבת.</p>
+        <p style="line-height:1.7;color:#554a33;"><strong>שוכרת:</strong> ${escapeHtml(params.customerName)} · <strong>תאריך:</strong> ${escapeHtml(params.eventDate)}</p>
+        <p style="line-height:1.7;color:#554a33;">נותרו לך כ-<strong>24 שעות</strong> להגיב (עד ${deadlineLabel}).</p>
+        <p style="margin-top:24px;">
+          <a href="${params.accountUrl}" style="display:inline-block;background:#166534;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
+            לאשר או לדחות עכשיו →
+          </a>
+        </p>
+      </div>
+    `
+  );
+}
+
+export async function sendBookingOwnerApprovedEmail(params: {
+  to: string;
+  customerName: string;
+  dressName: string;
+  eventDate: string;
+  amount: number;
+  payUrl: string;
+}) {
+  return sendBookingPendingEmail({ ...params, payUrl: params.payUrl });
+}
+
+export async function sendBookingOwnerRejectedEmail(params: {
+  to: string;
+  customerName: string;
+  dressName: string;
+  eventDate: string;
+  reason: string;
+}) {
+  return sendEmailTo(
+    params.to,
+    `לא אושר: ${params.dressName}`,
+    `
+      <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #eadaaf;border-radius:16px;background:#fffdf8;">
+        <h2 style="color:#3d2f24;margin-top:0;">שלום ${escapeHtml(params.customerName)}!</h2>
+        <p style="line-height:1.7;color:#554a33;">לצערנו, המשכירה לא אישרה את בקשת השריון לשמלה <strong>${escapeHtml(params.dressName)}</strong> לתאריך ${escapeHtml(params.eventDate)}.</p>
+        <div style="margin:16px 0;padding:14px 16px;border-right:4px solid #d4af37;background:#fff8e8;border-radius:10px;">
+          <p style="margin:0 0 6px;font-weight:bold;color:#8b6508;">פרטים:</p>
+          <p style="margin:0;line-height:1.7;color:#554a33;">${escapeHtml(params.reason)}</p>
+        </div>
+        <p style="line-height:1.7;color:#554a33;">אפשר לחפש שמלה אחרת בקטלוג — מקווים שתמצאי את המראה המושלם 💛</p>
+        <p style="margin-top:24px;">
+          <a href="${getAppUrl()}/" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
+            חזרה לקטלוג →
+          </a>
+        </p>
+      </div>
+    `
+  );
+}
+
+export async function sendBookingOwnerTimeoutEmail(params: {
+  to: string;
+  customerName: string;
+  dressName: string;
+  eventDate: string;
+}) {
+  return sendEmailTo(
+    params.to,
+    `הבקשה בוטלה: ${params.dressName}`,
+    `
+      <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #eadaaf;border-radius:16px;background:#fffdf8;">
+        <h2 style="color:#3d2f24;margin-top:0;">שלום ${escapeHtml(params.customerName)}!</h2>
+        <p style="line-height:1.7;color:#554a33;">בקשת השריון לשמלה <strong>${escapeHtml(params.dressName)}</strong> לתאריך ${escapeHtml(params.eventDate)} <strong>בוטלה</strong>.</p>
+        <div style="margin:16px 0;padding:14px 16px;border-right:4px solid #c9a227;background:#fff8e8;border-radius:10px;">
+          <p style="margin:0;line-height:1.7;color:#554a33;">המשכירה לא הגיבה לבקשה בתוך <strong>48 שעות</strong>, ולכן לא ניתן להמשיך בתהליך השריון.</p>
+        </div>
+        <p style="line-height:1.7;color:#554a33;">אפשר לנסות תאריך אחר, לבחור שמלה אחרת, או ליצור קשר עם המשכירה דרך «תיאום עם המשכירה» בדף השמלה.</p>
+        <p style="margin-top:24px;">
+          <a href="${getAppUrl()}/" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
+            חזרה לקטלוג →
+          </a>
+        </p>
+      </div>
+    `
+  );
+}
+
+function formatDeadlineForEmail(deadlineIso: string) {
+  try {
+    return new Date(deadlineIso).toLocaleString('he-IL', {
+      day: 'numeric',
+      month: 'long',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  } catch {
+    return deadlineIso;
+  }
 }
 
 export async function sendPaymentConfirmationEmail(params: {

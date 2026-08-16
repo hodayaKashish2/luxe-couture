@@ -19,6 +19,7 @@ import { useAuthModal } from '@/components/AuthModalProvider';
 import SavedDressList from '@/components/SavedDressList';
 import DressSizeInput from '@/components/DressSizeInput';
 import BookingPaymentStep from '@/components/BookingPaymentStep';
+import BookingOwnerApprovalStep from '@/components/BookingOwnerApprovalStep';
 import OwnDressNoticeModal from '@/components/OwnDressNoticeModal';
 import LoginRequiredNoticeModal from '@/components/LoginRequiredNoticeModal';
 import type { PaymentMethod } from '@/lib/payment-methods';
@@ -143,6 +144,12 @@ export default function Home() {
     platformFee: number;
     ownerPayout: number;
   } | null>(null);
+  const [ownerApprovalStep, setOwnerApprovalStep] = useState<{
+    bookingId: number;
+    amount: number;
+    dressName: string;
+    eventDate: string;
+  } | null>(null);
   const [isConfirmingPayment, setIsConfirmingPayment] = useState(false);
   const [isSubmittingBooking, setIsSubmittingBooking] = useState(false);
   const [bookingError, setBookingError] = useState('');
@@ -265,6 +272,59 @@ export default function Home() {
       setCoordinateDisclaimerAccepted(false);
     }
     params.delete('coordinate');
+    const next = params.toString() ? `/?${params}` : '/';
+    window.history.replaceState(null, '', next);
+  }, [dressesList]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const bookingIdParam = params.get('completeBooking');
+    if (!bookingIdParam || dressesList.length === 0) return;
+
+    const bookingId = Number(bookingIdParam);
+    if (!Number.isFinite(bookingId) || bookingId <= 0) return;
+
+    async function resumePayment() {
+      try {
+        const token = sessionStorage.getItem('site_token');
+        const response = await fetch(`/api/bookings?bookingId=${bookingId}`, {
+          headers: token ? { 'x-user-token': token } : {},
+        });
+        const data = await response.json();
+        if (!response.ok || !data.success || !data.booking?.canPay) {
+          if (data.booking?.awaitingOwner) {
+            setToast({
+              message: 'הבקשה עדיין ממתינה לאישור המשכירה — נשלח אלייך מייל כשתוכלי לשלם.',
+              variant: 'error',
+            });
+          } else {
+            setToast({ message: data.error || 'לא ניתן להשלים תשלום כרגע', variant: 'error' });
+          }
+          return;
+        }
+
+        const dress = findDressInList(dressesList, String(data.booking.dressId));
+        if (!dress) {
+          setToast({ message: 'השמלה לא נמצאה בקטלוג', variant: 'error' });
+          return;
+        }
+
+        setOwnerApprovalStep(null);
+        setSelectedDress(dress);
+        setOrderDate(data.booking.eventDate || '');
+        setPaymentStep({
+          bookingId: data.booking.id,
+          amount: data.booking.amount,
+          platformFee: data.booking.platformFee,
+          ownerPayout: data.booking.ownerPayout,
+        });
+      } catch {
+        setToast({ message: 'תקלה בטעינת ההזמנה', variant: 'error' });
+      }
+    }
+
+    void resumePayment();
+    params.delete('completeBooking');
     const next = params.toString() ? `/?${params}` : '/';
     window.history.replaceState(null, '', next);
   }, [dressesList]);
@@ -710,6 +770,16 @@ export default function Home() {
       }
 
       notifyBookingUpdated();
+
+      if (data.awaitingOwnerApproval) {
+        setOwnerApprovalStep({
+          bookingId: data.bookingId,
+          amount: data.amount,
+          dressName: selectedDress.name,
+          eventDate: formatHebrewDate(orderDate),
+        });
+        return;
+      }
 
       setPaymentStep({
         bookingId: data.bookingId,
@@ -1742,6 +1812,17 @@ export default function Home() {
                   onConfirmPayment={handleConfirmPayment}
                   onBack={() => setPaymentStep(null)}
                 />
+              ) : ownerApprovalStep ? (
+                <BookingOwnerApprovalStep
+                  dressName={ownerApprovalStep.dressName}
+                  eventDate={ownerApprovalStep.eventDate}
+                  amount={ownerApprovalStep.amount}
+                  customerEmail={orderEmail}
+                  onBack={() => {
+                    setOwnerApprovalStep(null);
+                    setSelectedDress(null);
+                  }}
+                />
               ) : (
                 <form onSubmit={handlePlaceOrder} className="flex flex-col gap-3">
                   <div>
@@ -1808,7 +1889,7 @@ export default function Home() {
                         : 'bg-gradient-to-r from-[#d4af37] via-[#b8860b] to-[#d4af37] hover:from-[#b8860b] hover:to-[#8b6508]'
                     }`}
                   >
-                    {isSubmittingBooking ? 'שומרת הזמנה...' : 'המשכי לבחירת אמצעי תשלום'}
+                    {isSubmittingBooking ? 'שולחת בקשה...' : 'שלחי בקשת שריון למשכירה'}
                   </button>
                 </form>
               )}

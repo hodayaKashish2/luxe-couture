@@ -114,6 +114,7 @@ export type AdminDressAction =
   | 'extend_featured';
 
 export const BOOKING_STATUS_LABELS: Record<string, string> = {
+  pending_owner_approval: 'ממתין לאישור משכירה',
   pending_payment: 'ממתין לתשלום',
   awaiting_admin_approval: 'ממתין לאישור תשלום',
   confirmed: 'אושר',

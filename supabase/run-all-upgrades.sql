@@ -96,3 +96,20 @@ alter table public.dresses add column if not exists includes_dry_cleaning boolea
 -- === upgrade-v7: תאריך הסרת שמלה (הצגה 30 יום) ===
 alter table public.dresses add column if not exists removed_at timestamptz;
 update public.dresses set removed_at = created_at where status = 'removed' and removed_at is null;
+
+-- === upgrade-v8: אישור משכירה לפני תשלום ===
+alter table public.bookings add column if not exists owner_response_deadline timestamptz;
+alter table public.bookings add column if not exists owner_reminder_sent_at timestamptz;
+alter table public.bookings add column if not exists owner_responded_at timestamptz;
+alter table public.bookings add column if not exists owner_reject_reason text;
+
+alter table public.bookings drop constraint if exists bookings_status_check;
+alter table public.bookings add constraint bookings_status_check
+  check (status in (
+    'pending_owner_approval',
+    'pending_payment',
+    'awaiting_admin_approval',
+    'confirmed',
+    'cancelled',
+    'failed'
+  ));

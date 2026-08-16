@@ -79,6 +79,7 @@ type BookingRow = {
   event_date: string;
   status: string;
   dress_status?: string;
+  owner_reject_reason?: string;
 };
 
 const STATUS: Record<string, string> = {
@@ -86,7 +87,8 @@ const STATUS: Record<string, string> = {
   pending: 'ממתינה לאישור',
   removed: 'הוסרה',
   confirmed: 'הזמנה מאושרת ✓',
-  pending_payment: 'ממתין לתשלום',
+  pending_owner_approval: 'ממתין לאישור משכירה',
+  pending_payment: 'ממתין לתשלום — השלימי עכשיו',
   awaiting_admin_approval: 'ממתין לאישור תשלום',
   cancelled: 'בוטלה',
 };
@@ -697,7 +699,9 @@ function AccountPageContent() {
     () => splitBookingsByEventDate(activeReservations),
     [activeReservations]
   );
-  const reservationDates = upcomingReservations.map((r) => r.event_date);
+  const reservationDates = upcomingReservations
+    .filter((r) => r.status === 'confirmed')
+    .map((r) => r.event_date);
   const dressesWithBookings = activeDresses.filter((d) =>
     ownerBookings.some((b) => String(b.dress_id) === String(d.id))
   ).length;
@@ -846,7 +850,7 @@ function AccountPageContent() {
               <p className="text-sm text-[#6e634c] animate-pulse">טוען שמלות...</p>
             ) : upcomingReservations.length === 0 && pastReservations.length === 0 && removedReservations.length === 0 ? (
               <div className="bg-white rounded-2xl border border-[#eadaaf] p-8 text-center">
-                <p className="text-sm text-[#6e634c]">עדיין אין הזמנות מאושרות. מצאי שמלה בקטלוג והשלימי תשלום!</p>
+                <p className="text-sm text-[#6e634c]">עדיין אין הזמנות. מצאי שמלה בקטלוג ושלחי בקשת שריון!</p>
                 <Link href="/" className="inline-block mt-4 px-4 py-2 bg-[#b8860b] text-white rounded-xl text-xs font-bold">
                   לקטלוג →
                 </Link>
@@ -867,7 +871,25 @@ function AccountPageContent() {
                         <span className="text-[10px] bg-[#f4ebd4] px-2 py-0.5 rounded-full">{STATUS[r.status] || r.status}</span>
                       </div>
                       <p className="text-sm text-[#8b6508] font-bold mt-1">📅 {r.event_date}</p>
-                      {(r.owner_name || r.owner_phone) && (
+                      {r.status === 'cancelled' && r.owner_reject_reason && (
+                        <p className="text-xs text-red-700 bg-red-50 border border-red-100 rounded-lg px-3 py-2 mt-2 leading-relaxed">
+                          {r.owner_reject_reason}
+                        </p>
+                      )}
+                      {r.status === 'pending_owner_approval' && (
+                        <p className="text-xs text-[#6e634c] mt-2 leading-relaxed">
+                          הבקשה אצל המשכירה — יש לה עד 48 שעות להגיב. נשלח אלייך מייל כשתאושר.
+                        </p>
+                      )}
+                      {r.status === 'pending_payment' && (
+                        <Link
+                          href={`/?completeBooking=${r.id}`}
+                          className="inline-block mt-3 px-4 py-2.5 bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white text-xs font-black rounded-xl shadow-md"
+                        >
+                          💳 השלימי תשלום עכשיו
+                        </Link>
+                      )}
+                      {(r.owner_name || r.owner_phone) && r.status !== 'cancelled' && (
                         <div className="mt-3">
                           {revealedOwnerIds.has(r.id) ? (
                             <div className="p-3 bg-[#fffdf8] border border-[#decfa8] rounded-xl space-y-1.5">
@@ -928,6 +950,7 @@ function AccountPageContent() {
                         </div>
                       )}
                       <div className="mt-4 pt-3 border-t border-[#f0e6cc]">
+                        {r.status !== 'cancelled' && (
                         <button
                           type="button"
                           onClick={() => cancelReservation(r.id)}
@@ -936,6 +959,7 @@ function AccountPageContent() {
                         >
                           {cancellingId === r.id ? 'מבטלת...' : '✕ ביטול הזמנה'}
                         </button>
+                        )}
                       </div>
                     </li>
                   ))}
@@ -1016,6 +1040,7 @@ function AccountPageContent() {
             loading={loading}
             onAddDress={() => navigateToSection('add')}
             onEditDress={startEditDress}
+            onRefresh={() => load({ silent: true })}
           />
         )}
 

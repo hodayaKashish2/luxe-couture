@@ -41,6 +41,15 @@ export async function reportManualPayment(
   if (booking.status === 'awaiting_admin_approval') {
     return { success: true as const, alreadyReported: true };
   }
+  if (booking.status === 'pending_owner_approval') {
+    return {
+      error: 'הבקשה עדיין ממתינה לאישור המשכירה. לא ניתן לשלם לפני האישור.',
+      status: 400 as const,
+    };
+  }
+  if (booking.status !== 'pending_payment') {
+    return { error: 'לא ניתן לדווח תשלום לבקשה זו', status: 400 as const };
+  }
 
   const { data: dressRow } = await supabase
     .from('dresses')

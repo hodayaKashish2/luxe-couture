@@ -9,6 +9,7 @@ import {
   shouldShowRemovedDress,
 } from '@/lib/retention';
 import { mapOwnedDressForEdit } from '@/lib/dress-pending-update';
+import { processBookingOwnerDeadlines } from '@/lib/booking-owner-flow';
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server';
 
 function emailsMatch(a: string, b: string) {
@@ -27,6 +28,7 @@ export async function GET(request: Request) {
 
   try {
     const supabase = getSupabaseAdmin();
+    await processBookingOwnerDeadlines(supabase);
 
     const { data: allDresses, error: dressesError } = await supabase
       .from('dresses')
@@ -48,7 +50,12 @@ export async function GET(request: Request) {
         .from('bookings')
         .select('id, dress_id, customer_name, customer_phone, customer_email, event_date, status, created_at')
         .in('dress_id', dressIds)
-        .in('status', ['confirmed', 'pending_payment', 'awaiting_admin_approval'])
+        .in('status', [
+          'confirmed',
+          'pending_owner_approval',
+          'pending_payment',
+          'awaiting_admin_approval',
+        ])
         .order('event_date', { ascending: true });
 
       if (bookingsError && !bookingsError.message.includes('bookings')) {
@@ -80,17 +87,25 @@ export async function GET(request: Request) {
     let allBookings: ReservationRow[] | null = null;
     let resError: { message: string } | null = null;
 
+    const reservationStatuses = [
+      'confirmed',
+      'pending_owner_approval',
+      'pending_payment',
+      'awaiting_admin_approval',
+      'cancelled',
+    ];
+
     const withUserId = await supabase
       .from('bookings')
-      .select('id, dress_id, customer_name, customer_phone, customer_email, event_date, status, created_at, site_user_id')
-      .eq('status', 'confirmed')
+      .select('id, dress_id, customer_name, customer_phone, customer_email, event_date, status, created_at, site_user_id, owner_reject_reason')
+      .in('status', reservationStatuses)
       .order('event_date', { ascending: true });
 
     if (withUserId.error?.message?.includes('site_user_id')) {
       const withoutUserId = await supabase
         .from('bookings')
         .select('id, dress_id, customer_name, customer_phone, customer_email, event_date, status, created_at')
-        .eq('status', 'confirmed')
+        .in('status', reservationStatuses)
         .order('event_date', { ascending: true });
       allBookings = (withoutUserId.data ?? []) as ReservationRow[];
       resError = withoutUserId.error;
@@ -164,7 +179,6 @@ export async function GET(request: Request) {
 
       myReservations = allBookings
         .filter((b) => {
-          if (b.status === 'cancelled') return false;
           if (b.site_user_id) {
             return user.userId ? String(b.site_user_id) === String(user.userId) : false;
           }

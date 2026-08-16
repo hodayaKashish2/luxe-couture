@@ -31,6 +31,15 @@ export async function POST(request: Request) {
     if (booking.status === 'confirmed') {
       return NextResponse.json({ success: true, alreadyPaid: true });
     }
+    if (booking.status === 'pending_owner_approval') {
+      return NextResponse.json(
+        { error: 'הבקשה ממתינה לאישור המשכירה. תקבלי מייל כשתוכלי להשלים תשלום.' },
+        { status: 400 }
+      );
+    }
+    if (booking.status !== 'pending_payment') {
+      return NextResponse.json({ error: 'לא ניתן לשלם עבור הזמנה זו כרגע' }, { status: 400 });
+    }
 
     if (!isTranzilaConfigured()) {
       return NextResponse.json({

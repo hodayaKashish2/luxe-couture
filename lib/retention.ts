@@ -15,7 +15,9 @@ export function shouldShowBookingByEventDate(
   today = todayDateString()
 ): boolean {
   if (!eventDate) return false;
-  if (status === 'pending_payment' || status === 'awaiting_admin_approval') return true;
+  if (status === 'pending_payment' || status === 'awaiting_admin_approval' || status === 'pending_owner_approval') {
+    return true;
+  }
   if (eventDate >= today) return true;
   return eventDate >= retentionCutoffDateString(today);
 }

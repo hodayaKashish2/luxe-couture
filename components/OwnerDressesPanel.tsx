@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import OwnerBookingRequestsPanel from '@/components/OwnerBookingRequestsPanel';
 import DressImageFill from '@/components/DressImageFill';
 import DressCalendar from '@/components/DressCalendar';
 import {
@@ -47,18 +48,23 @@ const DRESS_STATUS: Record<string, string> = {
 
 const BOOKING_STATUS: Record<string, string> = {
   confirmed: 'הזמנה מאושרת ✓',
+  pending_owner_approval: 'ממתין לאישורך',
   pending_payment: 'ממתין לתשלום',
   awaiting_admin_approval: 'ממתין לאישור תשלום',
 };
 
-const PENDING_APPROVAL_STATUSES = new Set(['pending_payment', 'awaiting_admin_approval']);
+const PAYMENT_PENDING_STATUSES = new Set(['pending_payment', 'awaiting_admin_approval']);
 
 function isConfirmedBooking(status: string) {
   return status === 'confirmed';
 }
 
 function isPendingApprovalBooking(status: string) {
-  return PENDING_APPROVAL_STATUSES.has(status);
+  return PAYMENT_PENDING_STATUSES.has(status);
+}
+
+function isOwnerRequestBooking(status: string) {
+  return status === 'pending_owner_approval';
 }
 
 function getConfirmedBookings(bookings: OwnerBookingRow[]) {
@@ -152,6 +158,7 @@ type Props = {
   loading: boolean;
   onAddDress: () => void;
   onEditDress: (dress: OwnerRentalDress) => void;
+  onRefresh?: () => void;
 };
 
 export default function OwnerDressesPanel({
@@ -160,6 +167,7 @@ export default function OwnerDressesPanel({
   loading,
   onAddDress,
   onEditDress,
+  onRefresh,
 }: Props) {
   const activeDresses = useMemo(
     () => dresses.filter((d) => d.status !== 'removed'),
@@ -203,6 +211,14 @@ export default function OwnerDressesPanel({
   );
 
   const upcomingBookings = upcomingOwnerBookings.slice(0, 8);
+
+  const pendingOwnerRequests = useMemo(
+    () =>
+      ownerBookings
+        .filter((b) => isOwnerRequestBooking(b.status))
+        .sort((a, b) => a.event_date.localeCompare(b.event_date)),
+    [ownerBookings]
+  );
 
   const pendingApprovalBookings = useMemo(
     () =>
@@ -395,6 +411,10 @@ export default function OwnerDressesPanel({
           ➕ הוספת שמלה
         </button>
       </div>
+
+      {onRefresh && (
+        <OwnerBookingRequestsPanel requests={pendingOwnerRequests} onRefresh={onRefresh} />
+      )}
 
       <div className="grid grid-cols-3 gap-2 text-center">
         <div className="bg-white rounded-xl border border-[#eadaaf] p-3">
