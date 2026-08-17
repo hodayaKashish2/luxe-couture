@@ -65,7 +65,7 @@ export default function OwnerBookingRequestsPanel({
         <div className="px-4 py-3 bg-gradient-to-l from-[#faf6eb] to-[#fffdf8] border-b border-[#eadaaf]">
           <p className="text-sm font-black text-[#3d2f24]">📨 בקשות שריון שממתינות לתשובתך</p>
           <p className="text-[10px] text-[#6e634c] mt-1 leading-relaxed">
-            יש לך עד 48 שעות להגיב. אחרי 24 שעות תישלח תזכורת — ואם לא תגיבי, הבקשה תבוטל אוטומטית.
+            יש לך עד 48 שעות להגיב. הביטול האוטומטי עלול להתרחש עם סטייה — לעיתים כבר לאחר כ-45 שעות. אחרי 24 שעות תישלח תזכורת.
           </p>
         </div>
         <ul className="divide-y divide-[#f0e6cc]">

@@ -81,7 +81,6 @@ export async function processBookingOwnerDeadlines(supabase: SupabaseAdmin) {
             dressName,
             customerName: booking.customer_name,
             eventDate: booking.event_date,
-            deadline: booking.owner_response_deadline || booking.created_at,
             accountUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/account?section=rentals`,
           });
         }
@@ -131,7 +130,6 @@ export async function notifyOwnerOfBookingRequest(
     customerPhone: string;
     eventDate: string;
     amount: number;
-    deadlineIso: string;
   }
 ) {
   const dress = await fetchDressMeta(supabase, params.dressId);
@@ -149,7 +147,6 @@ export async function notifyOwnerOfBookingRequest(
       customerPhone: params.customerPhone,
       eventDate: params.eventDate,
       amount: params.amount,
-      deadlineIso: params.deadlineIso,
       accountUrl,
     });
   }

@@ -404,10 +404,8 @@ export async function sendBookingOwnerRequestEmail(params: {
   customerPhone: string;
   eventDate: string;
   amount: number;
-  deadlineIso: string;
   accountUrl: string;
 }) {
-  const deadlineLabel = formatDeadlineForEmail(params.deadlineIso);
   return sendEmailTo(
     params.to,
     `⏳ בקשת שריון חדשה: ${params.dressName}`,
@@ -422,13 +420,16 @@ export async function sendBookingOwnerRequestEmail(params: {
           <p style="margin:0 0 8px;"><strong>טלפון:</strong> <span dir="ltr">${escapeHtml(params.customerPhone)}</span></p>
           <p style="margin:0;"><strong>סכום:</strong> ₪${params.amount}</p>
         </div>
-        <p style="line-height:1.7;color:#554a33;">יש לך עד <strong>${deadlineLabel}</strong> לאשר או לדחות את הבקשה.</p>
+        <p style="line-height:1.7;color:#554a33;">יש לך <strong>עד 48 שעות</strong> מרגע קבלת הבקשה לאשר או לדחות אותה. נשמח שתגיבי בהקדם — כדי שהשוכרת תדע אם היא יכולה להמשיך בתהליך.</p>
+        <p style="line-height:1.7;color:#554a33;font-size:13px;background:#faf6eb;padding:12px 14px;border-radius:10px;border:1px solid #eadaaf;margin-top:14px;">
+          💡 <strong>שימי לב:</strong> הביטול האוטומטי מתבצע על ידי המערכת, ולכן עלול להתרחש עם סטייה של מספר שעות — לעיתים כבר לאחר <strong>כ-45 שעות</strong>. כדי שלא תפספסי, מומלץ לא לחכות לרגע האחרון.
+        </p>
         <p style="margin-top:24px;">
           <a href="${params.accountUrl}" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
             לאישור הבקשה באתר →
           </a>
         </p>
-        <p style="font-size:12px;color:#9a7b4f;margin-top:16px;">אם לא תגיבי תוך 48 שעות, הבקשה תבוטל אוטומטית והשוכרת תקבל הודעה.</p>
+        <p style="font-size:12px;color:#9a7b4f;margin-top:16px;">אם לא תגיבי, הבקשה תבוטל אוטומטית והשוכרת תקבל על כך הודעה.</p>
       </div>
     `
   );
@@ -440,10 +441,8 @@ export async function sendBookingOwnerReminderEmail(params: {
   dressName: string;
   customerName: string;
   eventDate: string;
-  deadline: string;
   accountUrl: string;
 }) {
-  const deadlineLabel = formatDeadlineForEmail(params.deadline);
   return sendEmailTo(
     params.to,
     `🔔 תזכורת: בקשת שריון ממתינה — ${params.dressName}`,
@@ -452,7 +451,7 @@ export async function sendBookingOwnerReminderEmail(params: {
         <h2 style="color:#3d2f24;margin-top:0;">שלום ${escapeHtml(params.ownerName)}!</h2>
         <p style="line-height:1.7;color:#554a33;">לפני כ-<strong>24 שעות</strong> התקבלה בקשת שריון לשמלה <strong>${escapeHtml(params.dressName)}</strong>, ועדיין לא הגבת.</p>
         <p style="line-height:1.7;color:#554a33;"><strong>שוכרת:</strong> ${escapeHtml(params.customerName)} · <strong>תאריך:</strong> ${escapeHtml(params.eventDate)}</p>
-        <p style="line-height:1.7;color:#554a33;">נותרו לך כ-<strong>24 שעות</strong> להגיב (עד ${deadlineLabel}).</p>
+        <p style="line-height:1.7;color:#554a33;">נותר לך זמן מוגבל להגיב — <strong>עד 48 שעות</strong> מרגע הבקשה. שימי לב: המערכת עלולה לחסום את הבקשה עם סטייה של מספר שעות, לעיתים כבר לאחר <strong>כ-45 שעות</strong> — אל תמתיני לרגע האחרון.</p>
         <p style="margin-top:24px;">
           <a href="${params.accountUrl}" style="display:inline-block;background:#166534;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
             לאשר או לדחות עכשיו →
@@ -528,19 +527,6 @@ export async function sendBookingOwnerTimeoutEmail(params: {
       </div>
     `
   );
-}
-
-function formatDeadlineForEmail(deadlineIso: string) {
-  try {
-    return new Date(deadlineIso).toLocaleString('he-IL', {
-      day: 'numeric',
-      month: 'long',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  } catch {
-    return deadlineIso;
-  }
 }
 
 export async function sendPaymentConfirmationEmail(params: {

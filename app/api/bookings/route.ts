@@ -415,7 +415,6 @@ export async function POST(request: Request) {
         customerPhone: phone,
         eventDate: date,
         amount: total,
-        deadlineIso,
       });
 
       const customerMail = await sendBookingRequestSubmittedEmail({
