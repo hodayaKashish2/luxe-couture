@@ -1,6 +1,6 @@
 import { Resend } from 'resend';
 import nodemailer from 'nodemailer';
-import { DEFAULT_ADMIN_EMAIL, getSiteAdminEmail } from '@/lib/site-config';
+import { DEFAULT_ADMIN_EMAIL, getSiteAdminEmail, getServerAppUrl } from '@/lib/site-config';
 import { buildDressUpdateDiffHtml } from '@/lib/dress-update-diff-html';
 
 let resendClient: Resend | null = null;
@@ -76,7 +76,7 @@ export function getAdminEmail(): string {
 }
 
 export function getAppUrl(): string {
-  return process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  return getServerAppUrl();
 }
 
 function isValidEmail(email: string) {
@@ -566,8 +566,22 @@ export async function sendPaymentReportedAdminEmail(params: {
   eventDate: string;
   amount: number;
   paymentMethodLabel: string;
+  paymentSenderName?: string;
+  paymentSenderPhone?: string;
 }) {
   const approveUrl = `${getAppUrl()}/api/payments/approve?bookingId=${params.bookingId}&token=${encodeURIComponent(process.env.ADMIN_SECRET || '')}`;
+  const adminPanelUrl = `${getAppUrl()}/admin`;
+
+  const senderBlock =
+    params.paymentSenderName || params.paymentSenderPhone
+      ? `
+        <div style="background:#fff8e8;border:2px solid #d4af37;border-radius:12px;padding:16px;margin:16px 0;">
+          <p style="margin:0 0 8px;font-size:13px;color:#6e634c;font-weight:bold;">פרטי מבצעת ההעברה (לפי דיווח השוכרת):</p>
+          ${params.paymentSenderName ? `<p style="margin:0 0 6px;line-height:1.7;color:#554a33;"><strong>שם:</strong> ${escapeHtml(params.paymentSenderName)}</p>` : ''}
+          ${params.paymentSenderPhone ? `<p style="margin:0;line-height:1.7;color:#554a33;"><strong>טלפון:</strong> <span dir="ltr">${escapeHtml(params.paymentSenderPhone)}</span></p>` : ''}
+        </div>
+      `
+      : '';
 
   return sendAdminEmail(
     `💰 דיווח תשלום — ${params.paymentMethodLabel}: ${params.dressName}`,
@@ -578,18 +592,24 @@ export async function sendPaymentReportedAdminEmail(params: {
           <p style="margin:0;font-size:13px;color:#6e634c;">אמצעי התשלום שבו שילמה:</p>
           <p style="margin:8px 0 0;font-size:20px;font-weight:bold;color:#3d2f24;">${params.paymentMethodLabel}</p>
         </div>
-        <p style="line-height:1.7;color:#554a33;"><strong>שמלה:</strong> ${params.dressName}</p>
-        <p style="line-height:1.7;color:#554a33;"><strong>שוכרת:</strong> ${params.customerName}</p>
-        <p style="line-height:1.7;color:#554a33;"><strong>טלפון:</strong> ${params.customerPhone}</p>
-        <p style="line-height:1.7;color:#554a33;"><strong>אימייל:</strong> ${params.customerEmail}</p>
-        <p style="line-height:1.7;color:#554a33;"><strong>תאריך אירוע לשריון:</strong> ${params.eventDate}</p>
+        ${senderBlock}
+        <p style="line-height:1.7;color:#554a33;"><strong>שמלה:</strong> ${escapeHtml(params.dressName)}</p>
+        <p style="line-height:1.7;color:#554a33;"><strong>שוכרת:</strong> ${escapeHtml(params.customerName)}</p>
+        <p style="line-height:1.7;color:#554a33;"><strong>טלפון בהזמנה:</strong> <span dir="ltr">${escapeHtml(params.customerPhone)}</span></p>
+        <p style="line-height:1.7;color:#554a33;"><strong>אימייל:</strong> ${escapeHtml(params.customerEmail)}</p>
+        <p style="line-height:1.7;color:#554a33;"><strong>תאריך אירוע לשריון:</strong> ${escapeHtml(params.eventDate)}</p>
         <p style="line-height:1.7;color:#554a33;"><strong>סכום:</strong> ₪${params.amount}</p>
         <p style="margin-top:24px;">
           <a href="${approveUrl}" style="display:inline-block;background:#166534;color:#fff;padding:14px 24px;border-radius:12px;text-decoration:none;font-weight:bold;">
             ✓ אישור תשלום ושריון לתאריך
           </a>
         </p>
-        <p style="font-size:12px;color:#9a7b4f;margin-top:12px;">לחיצה על הכפתור תאשר את התשלום ותשמור את השמלה לתאריך האירוע.</p>
+        <p style="margin-top:12px;">
+          <a href="${adminPanelUrl}" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
+            לפאנל הניהול →
+          </a>
+        </p>
+        <p style="font-size:12px;color:#9a7b4f;margin-top:12px;">לחיצה על «אישור תשלום» תאשר את התשלום ותשמור את השמלה לתאריך האירוע.</p>
       </div>
     `
   );

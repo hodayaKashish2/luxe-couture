@@ -88,7 +88,19 @@ export async function PUT(request: Request) {
     const supabase = getSupabaseAdmin();
 
     if (paymentMethod === 'bit' || paymentMethod === 'bank') {
-      const result = await reportManualPayment(supabase, bookingId, paymentMethod);
+      const senderName = String(body.paymentSenderName || '').trim();
+      const senderPhone = String(body.paymentSenderPhone || '').trim();
+      if (!senderName || senderPhone.length < 9) {
+        return NextResponse.json(
+          { error: 'נא למלא שם וטלפון של מבצעת ההעברה' },
+          { status: 400 }
+        );
+      }
+
+      const result = await reportManualPayment(supabase, bookingId, paymentMethod, {
+        name: senderName,
+        phone: senderPhone,
+      });
       if ('error' in result && result.error) {
         return NextResponse.json({ error: result.error }, { status: result.status || 400 });
       }

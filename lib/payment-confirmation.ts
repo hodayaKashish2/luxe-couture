@@ -23,7 +23,8 @@ export function paymentMethodLabel(method: string | null | undefined) {
 export async function reportManualPayment(
   supabase: SupabaseAdmin,
   bookingId: number,
-  paymentMethod: 'bit' | 'bank'
+  paymentMethod: 'bit' | 'bank',
+  sender?: { name: string; phone: string }
 ) {
   const { data: booking, error: fetchError } = await supabase
     .from('bookings')
@@ -58,16 +59,32 @@ export async function reportManualPayment(
     .maybeSingle();
 
   const reportedAt = new Date().toISOString();
+  const updatePayload: Record<string, unknown> = {
+    status: 'awaiting_admin_approval',
+    payment_method: paymentMethod,
+    payment_reported_at: reportedAt,
+  };
+  if (sender?.name) updatePayload.payment_sender_name = sender.name;
+  if (sender?.phone) updatePayload.payment_sender_phone = sender.phone;
+
   const { error: updateError } = await supabase
     .from('bookings')
-    .update({
-      status: 'awaiting_admin_approval',
-      payment_method: paymentMethod,
-      payment_reported_at: reportedAt,
-    })
+    .update(updatePayload)
     .eq('id', bookingId);
 
-  if (updateError) throw updateError;
+  if (updateError?.message?.includes('payment_sender')) {
+    const { error: fallbackError } = await supabase
+      .from('bookings')
+      .update({
+        status: 'awaiting_admin_approval',
+        payment_method: paymentMethod,
+        payment_reported_at: reportedAt,
+      })
+      .eq('id', bookingId);
+    if (fallbackError) throw fallbackError;
+  } else if (updateError) {
+    throw updateError;
+  }
 
   const methodLabel = paymentMethodLabel(paymentMethod);
   await sendPaymentReportedAdminEmail({
@@ -79,6 +96,8 @@ export async function reportManualPayment(
     eventDate: booking.event_date,
     amount: Number(booking.amount_total),
     paymentMethodLabel: methodLabel,
+    paymentSenderName: sender?.name || '',
+    paymentSenderPhone: sender?.phone || '',
   });
 
   if (booking.customer_email) {

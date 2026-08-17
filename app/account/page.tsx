@@ -702,9 +702,56 @@ function AccountPageContent() {
   const reservationDates = upcomingReservations
     .filter((r) => r.status === 'confirmed')
     .map((r) => r.event_date);
-  const dressesWithBookings = activeDresses.filter((d) =>
-    ownerBookings.some((b) => String(b.dress_id) === String(d.id))
+  const renterPendingStatuses = new Set([
+    'pending_owner_approval',
+    'pending_payment',
+    'awaiting_admin_approval',
+  ]);
+  const pendingReservationsCount = activeReservations.filter((r) =>
+    renterPendingStatuses.has(r.status)
   ).length;
+  const confirmedReservationsCount = activeReservations.filter((r) => r.status === 'confirmed').length;
+  const pendingOwnerRequestsCount = ownerBookings.filter(
+    (b) => b.status === 'pending_owner_approval'
+  ).length;
+  const confirmedOwnerBookingsCount = ownerBookings.filter((b) => b.status === 'confirmed').length;
+  const ownerPipelineCount = ownerBookings.filter((b) =>
+    ['pending_payment', 'awaiting_admin_approval'].includes(b.status)
+  ).length;
+
+  const reservationHubSummary = (() => {
+    const parts: string[] = [];
+    if (pendingReservationsCount > 0) {
+      parts.push(
+        `${pendingReservationsCount} הזמנ${pendingReservationsCount === 1 ? 'ה ממתינה' : 'ות ממתינות'}`
+      );
+    }
+    if (confirmedReservationsCount > 0) {
+      parts.push(
+        `${confirmedReservationsCount} הזמנ${confirmedReservationsCount === 1 ? 'ה מאושרת' : 'ות מאושרות'}`
+      );
+    }
+    if (!parts.length) return 'עדיין אין הזמנות';
+    return parts.join(' · ');
+  })();
+
+  const rentalsHubSummary = (() => {
+    const parts: string[] = [`${activeDresses.length} שמלות`];
+    if (pendingOwnerRequestsCount > 0) {
+      parts.push(
+        `${pendingOwnerRequestsCount} בקש${pendingOwnerRequestsCount === 1 ? 'ה' : 'ות'} ממתינ${pendingOwnerRequestsCount === 1 ? 'ה' : 'ות'}`
+      );
+    }
+    if (ownerPipelineCount > 0) {
+      parts.push(`${ownerPipelineCount} בתהליך תשלום`);
+    }
+    if (confirmedOwnerBookingsCount > 0) {
+      parts.push(
+        `${confirmedOwnerBookingsCount} שריון${confirmedOwnerBookingsCount === 1 ? '' : 'ות'} מאושר${confirmedOwnerBookingsCount === 1 ? '' : 'ים'}`
+      );
+    }
+    return parts.join(' · ');
+  })();
 
   function isOwnDressForUser(dress: Dress) {
     if (dresses.some((d) => String(d.id) === String(dress.id))) return true;
@@ -760,10 +807,7 @@ function AccountPageContent() {
                   {!dataReady ? (
                     <span className="text-[#9a7b4f] animate-pulse">טוען...</span>
                   ) : (
-                    <>
-                      {upcomingReservations.length} הזמנות קרובות
-                      {pastReservations.length > 0 && ` · ${pastReservations.length} בעבר`}
-                    </>
+                    reservationHubSummary
                   )}
                 </p>
               </button>
@@ -782,10 +826,7 @@ function AccountPageContent() {
                   {!dataReady ? (
                     <span className="text-[#9a7b4f] animate-pulse">טוען...</span>
                   ) : (
-                    <>
-                      {activeDresses.length} שמלות
-                      {dressesWithBookings > 0 && ` · ${dressesWithBookings} עם הזמנות`}
-                    </>
+                    rentalsHubSummary
                   )}
                 </p>
               </button>

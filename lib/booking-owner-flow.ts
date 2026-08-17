@@ -5,6 +5,7 @@ import {
   ownerReminderDue,
   ownerResponseExpired,
 } from '@/lib/booking-owner-deadlines';
+import { getServerAppUrl } from '@/lib/site-config';
 import {
   sendBookingOwnerApprovedEmail,
   sendBookingOwnerRejectedEmail,
@@ -81,7 +82,7 @@ export async function processBookingOwnerDeadlines(supabase: SupabaseAdmin) {
             dressName,
             customerName: booking.customer_name,
             eventDate: booking.event_date,
-            accountUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/account?section=rentals`,
+            accountUrl: `${getServerAppUrl()}/account?section=rentals`,
           });
         }
       }
@@ -136,7 +137,7 @@ export async function notifyOwnerOfBookingRequest(
   if (!dress) return;
 
   const owner = await resolveOwnerContact(supabase, dress);
-  const accountUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/account?section=rentals`;
+  const accountUrl = `${getServerAppUrl()}/account?section=rentals`;
 
   if (owner.email) {
     await sendBookingOwnerRequestEmail({
@@ -247,7 +248,7 @@ export async function approveBookingByOwner(
 
   const dress = await fetchDressMeta(supabase, booking.dress_id);
   const dressName = dress?.name || 'שמלה';
-  const payUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/?completeBooking=${bookingId}`;
+  const payUrl = `${getServerAppUrl()}/?completeBooking=${bookingId}`;
 
   await sendBookingOwnerApprovedEmail({
     to: booking.customer_email,

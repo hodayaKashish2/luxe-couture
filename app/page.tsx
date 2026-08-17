@@ -143,6 +143,7 @@ export default function Home() {
     amount: number;
     platformFee: number;
     ownerPayout: number;
+    ownerApproved?: boolean;
   } | null>(null);
   const [ownerApprovalStep, setOwnerApprovalStep] = useState<{
     bookingId: number;
@@ -317,6 +318,7 @@ export default function Home() {
           amount: data.booking.amount,
           platformFee: data.booking.platformFee,
           ownerPayout: data.booking.ownerPayout,
+          ownerApproved: true,
         });
       } catch {
         setToast({ message: 'תקלה בטעינת ההזמנה', variant: 'error' });
@@ -640,7 +642,75 @@ export default function Home() {
   const handleDateChange = (date: string) => {
     setOrderDate(date);
     setDateError(getDateValidationError(date, selectedDress));
+    setBookingError('');
   };
+
+  useEffect(() => {
+    if (!selectedDress || !orderDate || dateError) return;
+
+    let cancelled = false;
+
+    async function syncExistingBooking() {
+      try {
+        const token = sessionStorage.getItem('site_token');
+        const params = new URLSearchParams({
+          dressId: selectedDress!.id,
+          date: orderDate,
+        });
+        if (orderEmail.trim()) params.set('email', orderEmail.trim());
+        if (orderPhone.trim()) params.set('phone', orderPhone.trim());
+
+        const response = await fetch(`/api/bookings?${params.toString()}`, {
+          headers: token ? { 'x-user-token': token } : {},
+        });
+        const data = await response.json();
+        if (cancelled || !response.ok || !data.success) return;
+
+        if (!data.booking) {
+          setPaymentStep(null);
+          setOwnerApprovalStep(null);
+          return;
+        }
+
+        if (data.booking.canPay) {
+          setOwnerApprovalStep(null);
+          setPaymentStep({
+            bookingId: data.booking.id,
+            amount: data.booking.amount,
+            platformFee: data.booking.platformFee,
+            ownerPayout: data.booking.ownerPayout,
+            ownerApproved: true,
+          });
+          return;
+        }
+
+        if (data.booking.awaitingOwner) {
+          setPaymentStep(null);
+          setOwnerApprovalStep({
+            bookingId: data.booking.id,
+            amount: data.booking.amount,
+            dressName: data.booking.dressName || selectedDress!.name,
+            eventDate: formatHebrewDate(data.booking.eventDate || orderDate),
+          });
+          return;
+        }
+
+        if (data.booking.awaitingAdmin) {
+          setPaymentStep(null);
+          setOwnerApprovalStep(null);
+          setBookingError('דיווח התשלום כבר נשלח — ממתין לאישור המערכת.');
+        }
+      } catch {
+        // ignore lookup errors — user can still submit manually
+      }
+    }
+
+    void syncExistingBooking();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedDress, orderDate, orderEmail, orderPhone, dateError]);
 
   const finishSuccessfulBooking = () => {
     if (!selectedDress) return;
@@ -717,6 +787,9 @@ export default function Home() {
       return;
     }
     setModalImageIndex(imageIndex ?? (currentImageIndexes[dress.id] || 0));
+    setOwnerApprovalStep(null);
+    setPaymentStep(null);
+    setBookingError('');
     setSelectedDress(dress);
   };
 
@@ -781,11 +854,13 @@ export default function Home() {
         return;
       }
 
+      setOwnerApprovalStep(null);
       setPaymentStep({
         bookingId: data.bookingId,
         amount: data.amount,
         platformFee: data.platformFee,
         ownerPayout: data.ownerPayout,
+        ownerApproved: Boolean(data.resumed),
       });
     } catch (error) {
       console.error('Error:', error);
@@ -795,7 +870,10 @@ export default function Home() {
     }
   };
 
-  const handleConfirmPayment = async (paymentMethod: PaymentMethod) => {
+  const handleConfirmPayment = async (
+    paymentMethod: PaymentMethod,
+    sender: { name: string; phone: string }
+  ) => {
     if (!paymentStep || !selectedDress) return;
     setIsConfirmingPayment(true);
     try {
@@ -807,7 +885,12 @@ export default function Home() {
       const response = await fetch('/api/payments/create', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ bookingId: paymentStep.bookingId, paymentMethod }),
+        body: JSON.stringify({
+          bookingId: paymentStep.bookingId,
+          paymentMethod,
+          paymentSenderName: sender.name,
+          paymentSenderPhone: sender.phone,
+        }),
       });
       const data = await response.json();
       if (data.success && data.awaitingAdminApproval) {
@@ -1809,6 +1892,7 @@ export default function Home() {
                 <BookingPaymentStep
                   amount={paymentStep.amount}
                   isConfirming={isConfirmingPayment}
+                  ownerApproved={paymentStep.ownerApproved}
                   onConfirmPayment={handleConfirmPayment}
                   onBack={() => setPaymentStep(null)}
                 />

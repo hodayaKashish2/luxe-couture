@@ -30,11 +30,30 @@ export const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP || '972534201133
 export const WHATSAPP_LINK = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent('היי, אשמח לפרטים על שמלה מהאתר')}`;
 
 /** כתובת ציבורית של האתר — בדפדפן משתמשים ב-origin הנוכחי */
+export function getServerAppUrl(): string {
+  const configured = process.env.NEXT_PUBLIC_APP_URL?.trim();
+  if (configured) {
+    return configured.replace(/\/$/, '');
+  }
+
+  const vercelHost =
+    process.env.NEXT_PUBLIC_VERCEL_URL?.trim() ||
+    process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim() ||
+    process.env.VERCEL_URL?.trim();
+
+  if (vercelHost) {
+    const host = vercelHost.replace(/^https?:\/\//, '').replace(/\/$/, '');
+    return `https://${host}`;
+  }
+
+  return 'https://dress-click.co.il';
+}
+
 export function getPublicAppUrl() {
   if (typeof window !== 'undefined' && window.location?.origin) {
-    return window.location.origin;
+    return window.location.origin.replace(/\/$/, '');
   }
-  return process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  return getServerAppUrl();
 }
 
 export function dressShareUrl(dressName: string, dressId: string) {

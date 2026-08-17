@@ -113,3 +113,7 @@ alter table public.bookings add constraint bookings_status_check
     'cancelled',
     'failed'
   ));
+
+-- === upgrade-v9: פרטי מבצעת ההעברה ===
+alter table public.bookings add column if not exists payment_sender_name text;
+alter table public.bookings add column if not exists payment_sender_phone text;

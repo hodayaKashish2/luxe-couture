@@ -78,6 +78,39 @@ function bookingMatchesCustomer(
   return false;
 }
 
+async function ackRenterBookingRequest(params: {
+  bookingId: number;
+  to: string;
+  customerName: string;
+  dressName: string;
+  eventDate: string;
+  amount: number;
+}) {
+  const recipient = params.to.trim();
+  const customerMail = await sendBookingRequestSubmittedEmail({
+    to: recipient,
+    customerName: params.customerName,
+    dressName: params.dressName,
+    eventDate: params.eventDate,
+    amount: params.amount,
+  });
+
+  if (!customerMail.success) {
+    console.error('Customer booking request email failed:', customerMail.error);
+    await sendAdminEmail(
+      `⚠️ מייל לשוכרת לא נשלח: ${params.dressName}`,
+      `
+        <div dir="rtl" style="font-family:sans-serif;padding:16px;">
+          <p>בקשת שריון #${params.bookingId} נשמרה, אך המייל לשוכרת <strong>${recipient}</strong> לא נשלח.</p>
+          <p>סיבה: ${customerMail.error || 'לא ידוע'}</p>
+        </div>
+      `
+    );
+  }
+
+  return customerMail;
+}
+
 function buildBookingPaymentResponse({
   bookingId,
   total,
@@ -199,25 +232,6 @@ export async function POST(request: Request) {
 
     const { platformFee, ownerPayout, total } = calculateCommission(dressPrice);
 
-    const { data: heldBooking, error: heldError } = await supabase
-      .from('bookings')
-      .select('id, status')
-      .eq('dress_id', dressId)
-      .eq('event_date', date)
-      .in('status', ['confirmed', 'pending_payment', 'awaiting_admin_approval'])
-      .maybeSingle();
-
-    if (heldError && !isSchemaError(heldError.message)) {
-      throw heldError;
-    }
-
-    if (heldBooking) {
-      return NextResponse.json(
-        { error: 'השמלה כבר שמורה או בתהליך שריון לתאריך זה. בחרי תאריך אחר.' },
-        { status: 409 }
-      );
-    }
-
     const { data: existingBookings, error: existingError } = await supabase
       .from('bookings')
       .select(
@@ -252,6 +266,15 @@ export async function POST(request: Request) {
       }
 
       if (sameUserBooking.status === 'pending_owner_approval') {
+        await ackRenterBookingRequest({
+          bookingId: sameUserBooking.id,
+          to: email,
+          customerName: name,
+          dressName,
+          eventDate: date,
+          amount: resumedTotal,
+        });
+
         return buildOwnerApprovalResponse({
           bookingId: sameUserBooking.id,
           total: resumedTotal,
@@ -260,6 +283,28 @@ export async function POST(request: Request) {
           resumed: true,
         });
       }
+    }
+
+    const { data: blockingBookings, error: heldError } = await supabase
+      .from('bookings')
+      .select('id, status, customer_email, customer_phone, site_user_id')
+      .eq('dress_id', dressId)
+      .eq('event_date', date)
+      .in('status', ['confirmed', 'pending_payment', 'awaiting_admin_approval']);
+
+    if (heldError && !isSchemaError(heldError.message)) {
+      throw heldError;
+    }
+
+    const blockedByOther = ((blockingBookings as PendingBookingRow[] | null) ?? []).some(
+      (booking) => !bookingMatchesCustomer(booking, loggedInUser, email, phone)
+    );
+
+    if (blockedByOther) {
+      return NextResponse.json(
+        { error: 'השמלה כבר שמורה או בתהליך שריון לתאריך זה. בחרי תאריך אחר.' },
+        { status: 409 }
+      );
     }
 
     const createdAt = new Date().toISOString();
@@ -408,6 +453,15 @@ export async function POST(request: Request) {
     }
 
     if (bookingId) {
+      await ackRenterBookingRequest({
+        bookingId,
+        to: email,
+        customerName: name,
+        dressName,
+        eventDate: date,
+        amount: total,
+      });
+
       await notifyOwnerOfBookingRequest(supabase, {
         bookingId,
         dressId,
@@ -416,17 +470,6 @@ export async function POST(request: Request) {
         eventDate: date,
         amount: total,
       });
-
-      const customerMail = await sendBookingRequestSubmittedEmail({
-        to: email,
-        customerName: name,
-        dressName,
-        eventDate: date,
-        amount: total,
-      });
-      if (!customerMail.success) {
-        console.error('Customer booking request email failed:', customerMail.error);
-      }
     }
 
     return buildOwnerApprovalResponse({
@@ -449,15 +492,73 @@ export async function GET(request: Request) {
 
   const url = new URL(request.url);
   const bookingId = Number(url.searchParams.get('bookingId'));
-  if (!bookingId) {
-    return NextResponse.json({ error: 'חסר מזהה הזמנה' }, { status: 400 });
-  }
+  const dressId = Number(url.searchParams.get('dressId'));
+  const eventDate = String(url.searchParams.get('date') || '').trim();
+  const emailParam = String(url.searchParams.get('email') || '').trim();
+  const phoneParam = String(url.searchParams.get('phone') || '').trim();
 
   try {
     const supabase = getSupabaseAdmin();
     await processBookingOwnerDeadlines(supabase);
 
     const loggedInUser = getUserFromRequest(request);
+
+    if (dressId && eventDate) {
+      const email = emailParam || loggedInUser?.email || '';
+      const phone = phoneParam || loggedInUser?.phone || '';
+
+      if (!email && !phone && !loggedInUser?.userId) {
+        return NextResponse.json({ success: true, booking: null });
+      }
+
+      const { data: bookings, error } = await supabase
+        .from('bookings')
+        .select(
+          'id, dress_id, customer_name, customer_phone, customer_email, event_date, status, amount_total, platform_fee, owner_payout, site_user_id'
+        )
+        .eq('dress_id', dressId)
+        .eq('event_date', eventDate)
+        .in('status', ['pending_owner_approval', 'pending_payment', 'awaiting_admin_approval'])
+        .order('id', { ascending: false });
+
+      if (error) throw error;
+
+      const booking = (bookings ?? []).find((row) =>
+        bookingMatchesCustomer(row, loggedInUser, email, phone)
+      );
+
+      if (!booking) {
+        return NextResponse.json({ success: true, booking: null });
+      }
+
+      const { data: dress } = await supabase
+        .from('dresses')
+        .select('name, price')
+        .eq('id', booking.dress_id)
+        .maybeSingle();
+
+      return NextResponse.json({
+        success: true,
+        booking: {
+          id: booking.id,
+          dressId: booking.dress_id,
+          dressName: dress?.name || '',
+          dressPrice: Number(dress?.price || booking.amount_total || 0),
+          status: booking.status,
+          amount: Number(booking.amount_total || 0),
+          platformFee: Number(booking.platform_fee || 0),
+          ownerPayout: Number(booking.owner_payout || 0),
+          eventDate: booking.event_date,
+          canPay: booking.status === 'pending_payment',
+          awaitingOwner: booking.status === 'pending_owner_approval',
+          awaitingAdmin: booking.status === 'awaiting_admin_approval',
+        },
+      });
+    }
+
+    if (!bookingId) {
+      return NextResponse.json({ error: 'חסר מזהה הזמנה' }, { status: 400 });
+    }
     const { data: booking, error } = await supabase
       .from('bookings')
       .select(

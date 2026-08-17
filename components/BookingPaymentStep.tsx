@@ -12,7 +12,8 @@ import {
 type BookingPaymentStepProps = {
   amount: number;
   isConfirming: boolean;
-  onConfirmPayment: (method: PaymentMethod) => void;
+  ownerApproved?: boolean;
+  onConfirmPayment: (method: PaymentMethod, sender: { name: string; phone: string }) => void;
   onBack: () => void;
 };
 
@@ -24,27 +25,60 @@ const METHOD_LABELS: Record<PaymentMethod, string> = {
 export default function BookingPaymentStep({
   amount,
   isConfirming,
+  ownerApproved = false,
   onConfirmPayment,
   onBack,
 }: BookingPaymentStepProps) {
   const [method, setMethod] = useState<PaymentMethod | null>(null);
   const [showBankDetails, setShowBankDetails] = useState(false);
+  const [showSenderForm, setShowSenderForm] = useState(false);
+  const [senderName, setSenderName] = useState('');
+  const [senderPhone, setSenderPhone] = useState('');
+  const [senderError, setSenderError] = useState('');
 
   const handleBit = () => {
     setMethod('bit');
+    setShowSenderForm(false);
     openBitPayment(amount);
   };
 
   const handleBank = () => {
     setMethod('bank');
+    setShowSenderForm(false);
     setShowBankDetails((open) => !open);
+  };
+
+  const handleStartConfirm = () => {
+    if (!method) return;
+    setSenderError('');
+    setShowSenderForm(true);
+  };
+
+  const handleSubmitPayment = () => {
+    if (!method) return;
+    const name = senderName.trim();
+    const phone = senderPhone.trim();
+    if (!name) {
+      setSenderError('נא למלא את שם מבצעת ההעברה');
+      return;
+    }
+    if (phone.replace(/\D/g, '').length < 9) {
+      setSenderError('נא למלא מספר טלפון תקין של מבצעת ההעברה');
+      return;
+    }
+    setSenderError('');
+    onConfirmPayment(method, { name, phone });
   };
 
   return (
     <div className="flex flex-col gap-4 my-auto">
-      <h3 className="text-lg font-black text-neutral-900">💳 בחירת אמצעי תשלום</h3>
+      <h3 className="text-lg font-black text-neutral-900">
+        {ownerApproved ? '✅ המשכירה אישרה — השלימי תשלום' : '💳 בחירת אמצעי תשלום'}
+      </h3>
       <p className="text-xs text-[#5c5037] leading-relaxed">
-        ההזמנה נשמרה. בחרי ביט או העברה בנקאית — השלימי את התשלום, ואז לחצי <strong>אישור תשלום</strong>.
+        {ownerApproved
+          ? 'הבקשה אושרה על ידי המשכירה. בחרי ביט או העברה בנקאית, בצעי את התשלום, ואז אשרי עם פרטי מבצעת ההעברה.'
+          : 'ההזמנה נשמרה. בחרי ביט או העברה בנקאית — השלימי את התשלום, ואז אשרי עם פרטי מבצעת ההעברה.'}
       </p>
 
       <div className="bg-white border border-[#decfa8] rounded-xl p-4 text-xs">
@@ -86,7 +120,6 @@ export default function BookingPaymentStep({
             האפליקציה אמורה להיפתח על עמוד ההעברה ל-<strong dir="ltr">{BIT_PHONE_DISPLAY}</strong> בסכום{' '}
             <strong>₪{amount}</strong>.
           </p>
-          <p className="text-[10px] text-[#9a7b4f]">אחרי ההעברה לחצי אישור תשלום — נשלח אלייך אישור במייל.</p>
           <button
             type="button"
             onClick={() => openBitPayment(amount)}
@@ -130,23 +163,57 @@ export default function BookingPaymentStep({
               <span className="font-bold text-neutral-800">סכום להעברה: </span>₪{amount}
             </p>
           </div>
-          <p className="text-[10px] text-[#9a7b4f] pt-1">אחרי ביצוע ההעברה, לחצי אישור תשלום — נשלח אלייך אישור במייל.</p>
         </div>
       )}
 
-      {method && (
+      {method && !showSenderForm && (
         <button
           type="button"
-          onClick={() => onConfirmPayment(method)}
-          disabled={isConfirming}
-          className="w-full py-3.5 bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white text-xs font-black rounded-xl shadow-lg disabled:opacity-60"
+          onClick={handleStartConfirm}
+          className="w-full py-3.5 bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white text-xs font-black rounded-xl shadow-lg"
         >
-          {isConfirming ? 'שולחת...' : `✓ אישור תשלום (${METHOD_LABELS[method]})`}
+          {`✓ ביצעתי תשלום (${METHOD_LABELS[method]}) — המשך`}
         </button>
       )}
 
+      {method && showSenderForm && (
+        <div className="bg-white border border-[#decfa8] rounded-xl p-4 text-xs space-y-3">
+          <p className="font-black text-neutral-900">פרטי מבצעת ההעברה</p>
+          <p className="text-[#5c5037] leading-relaxed">
+            מי ביצעה את התשלום ב{METHOD_LABELS[method]}? הפרטים יישלחו לאישור המערכת.
+          </p>
+          <input
+            type="text"
+            placeholder="שם מלא של מבצעת ההעברה"
+            value={senderName}
+            onChange={(e) => setSenderName(e.target.value)}
+            className="w-full p-3 bg-[#fffdf8] border border-[#decfa8] rounded-xl text-xs font-medium focus:outline-none focus:border-[#d4af37]"
+          />
+          <input
+            type="tel"
+            placeholder="טלפון של מבצעת ההעברה"
+            value={senderPhone}
+            onChange={(e) => setSenderPhone(e.target.value)}
+            className="w-full p-3 bg-[#fffdf8] border border-[#decfa8] rounded-xl text-xs font-medium focus:outline-none focus:border-[#d4af37]"
+          />
+          {senderError && (
+            <p className="text-[11px] text-red-600 font-bold bg-red-50 p-2 rounded-lg border border-red-200">
+              {senderError}
+            </p>
+          )}
+          <button
+            type="button"
+            onClick={handleSubmitPayment}
+            disabled={isConfirming}
+            className="w-full py-3.5 bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white text-xs font-black rounded-xl shadow-lg disabled:opacity-60"
+          >
+            {isConfirming ? 'שולחת...' : '✓ אישור תשלום ושליחה לאישור'}
+          </button>
+        </div>
+      )}
+
       <button type="button" onClick={onBack} className="text-xs text-[#8b6508] hover:underline">
-        ← חזרה לפרטים
+        ← חזרה
       </button>
     </div>
   );
