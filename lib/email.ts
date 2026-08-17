@@ -385,7 +385,7 @@ export async function sendBookingRequestSubmittedEmail(params: {
         <p style="line-height:1.7;color:#554a33;"><strong>שמלה:</strong> ${escapeHtml(params.dressName)}</p>
         <p style="line-height:1.7;color:#554a33;"><strong>תאריך מבוקש:</strong> ${escapeHtml(params.eventDate)}</p>
         <p style="line-height:1.7;color:#554a33;"><strong>סכום משוער:</strong> ₪${params.amount}</p>
-        <p style="line-height:1.7;color:#554a33;margin-top:16px;">למשכירה יש עד <strong>48 שעות</strong> להגיב. נשלח אלייך מייל ברגע שתאושר — ואז תוכלי להשלים את התשלום.</p>
+        <p style="line-height:1.7;color:#554a33;margin-top:16px;">תקבלי מייל עם תשובה האם השריון אושר <strong>עד 72 שעות</strong> מרגע שליחת הבקשה (ברוב המקרים הרבה לפני כן). אם תאושר — תוכלי להמשיך ולהשלים את התשלום.</p>
         <p style="margin-top:24px;">
           <a href="${getAppUrl()}/account?section=reservations" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
             מעקב באזור האישי →

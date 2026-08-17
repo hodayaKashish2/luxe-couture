@@ -878,7 +878,7 @@ function AccountPageContent() {
                       )}
                       {r.status === 'pending_owner_approval' && (
                         <p className="text-xs text-[#6e634c] mt-2 leading-relaxed">
-                          הבקשה אצל המשכירה — יש לה עד 48 שעות להגיב. נשלח אלייך מייל כשתאושר.
+                          הבקשה אצל המשכירה. תקבלי מייל עם תשובה האם השריון אושר עד 72 שעות.
                         </p>
                       )}
                       {r.status === 'pending_payment' && (
