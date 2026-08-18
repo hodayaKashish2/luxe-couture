@@ -26,6 +26,11 @@ import { notifySiteAuthChange } from '@/lib/site-auth-events';
 import { accountSectionUrl, parseAccountSection } from '@/lib/account-section-url';
 import { navigateAccountHub } from '@/lib/account-hub-nav';
 import { ownerWhatsAppLink } from '@/lib/site-config';
+import {
+  formatPaymentDeadlineHebrew,
+  PAYMENT_DEADLINE_DAYS,
+  resolvePaymentDeadline,
+} from '@/lib/booking-payment-deadlines';
 import { shareDressLink } from '@/lib/share-dress';
 import { buildEditFormFromDress, normalizeDressImages } from '@/lib/dress-pending-update';
 import { formatAccountPhone } from '@/lib/dress-ownership';
@@ -80,6 +85,8 @@ type BookingRow = {
   status: string;
   dress_status?: string;
   owner_reject_reason?: string;
+  payment_deadline?: string | null;
+  owner_responded_at?: string | null;
 };
 
 const STATUS: Record<string, string> = {
@@ -923,12 +930,27 @@ function AccountPageContent() {
                         </p>
                       )}
                       {r.status === 'pending_payment' && (
-                        <Link
-                          href={`/?completeBooking=${r.id}`}
-                          className="inline-block mt-3 px-4 py-2.5 bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white text-xs font-black rounded-xl shadow-md"
-                        >
-                          💳 השלימי תשלום עכשיו
-                        </Link>
+                        <>
+                          {(() => {
+                            const deadline = resolvePaymentDeadline(
+                              r.payment_deadline,
+                              r.owner_responded_at
+                            );
+                            return deadline ? (
+                              <p className="text-xs text-[#6e634c] mt-2 leading-relaxed">
+                                יש להשלים תשלום עד{' '}
+                                <strong>{formatPaymentDeadlineHebrew(deadline)}</strong> ({PAYMENT_DEADLINE_DAYS}{' '}
+                                ימים מרגע אישור המשכירה).
+                              </p>
+                            ) : null;
+                          })()}
+                          <Link
+                            href={`/?completeBooking=${r.id}`}
+                            className="inline-block mt-3 px-4 py-2.5 bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white text-xs font-black rounded-xl shadow-md"
+                          >
+                            💳 השלימי תשלום עכשיו
+                          </Link>
+                        </>
                       )}
                       {(r.owner_name || r.owner_phone) && r.status !== 'cancelled' && (
                         <div className="mt-3">
@@ -1409,6 +1431,16 @@ function AccountPageContent() {
             setDetailsReturnDressId(dressId, 'account', section);
             closeDetailsDress();
             router.push(`/?reserve=${encodeURIComponent(dressId)}`);
+          }}
+          onCoordinate={() => {
+            const dressId = detailsDress.id;
+            if (isOwnDressForUser(detailsDress)) {
+              setOwnDressNotice({ dressName: detailsDress.name, variant: 'coordinate' });
+              return;
+            }
+            setDetailsReturnDressId(dressId, 'account', section);
+            closeDetailsDress();
+            router.push(`/?coordinate=${encodeURIComponent(dressId)}`);
           }}
           onRate={() => tryRateDress(detailsDress)}
           onShare={() => {

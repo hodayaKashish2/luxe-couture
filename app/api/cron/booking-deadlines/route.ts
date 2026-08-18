@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-import { processBookingOwnerDeadlines } from '@/lib/booking-owner-flow';
+import { processAllBookingLifecycle } from '@/lib/booking-lifecycle';
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server';
 
 function isAuthorized(request: Request) {
@@ -22,7 +22,7 @@ export async function GET(request: Request) {
 
   try {
     const supabase = getSupabaseAdmin();
-    const result = await processBookingOwnerDeadlines(supabase);
+    const result = await processAllBookingLifecycle(supabase);
     return NextResponse.json({ success: true, ...result });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'שגיאה';

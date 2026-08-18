@@ -6,6 +6,7 @@ import DressImageFill from '@/components/DressImageFill';
 import DressImageSliderNav, { stepImageIndex } from '@/components/DressImageSliderNav';
 import DressRatingsSection from '@/components/DressRatingsSection';
 import { DRESS_DETAIL_NOT_SPECIFIED, getCleanDescription, getDressDetailRows } from '@/lib/dress-display';
+import { FINAL_OWNER_APPROVAL_BUTTON_LABEL, FINAL_OWNER_APPROVAL_HINT } from '@/lib/constants';
 
 type Props = {
   dress: Dress;
@@ -16,6 +17,7 @@ type Props = {
   reserveButtonHint?: string;
   onToggleCart?: () => void;
   onToggleFavorite?: () => void;
+  onCoordinate?: () => void;
   onRate?: () => void;
   onShare?: () => void;
   isInCart?: boolean;
@@ -30,10 +32,11 @@ export default function DressDetailsModal({
   onClose,
   initialImageIndex = 0,
   onReserve,
-  reserveButtonLabel = 'בדיקת זמינות ושריון',
-  reserveButtonHint,
+  reserveButtonLabel = FINAL_OWNER_APPROVAL_BUTTON_LABEL,
+  reserveButtonHint = FINAL_OWNER_APPROVAL_HINT,
   onToggleCart,
   onToggleFavorite,
+  onCoordinate,
   onRate,
   onShare,
   isInCart = false,
@@ -164,8 +167,17 @@ export default function DressDetailsModal({
             )}
           </div>
 
-          {(onReserve || onToggleCart || onToggleFavorite || onRate || onShare) && (
+          {(onReserve || onToggleCart || onToggleFavorite || onCoordinate || onRate || onShare) && (
             <div className="p-5 sm:p-6 pt-0 space-y-2 border-t border-[#f0e2c3] bg-white/60">
+              {onCoordinate && (
+                <button
+                  type="button"
+                  onClick={onCoordinate}
+                  className={`w-full py-2.5 border-2 border-[#decfa8] bg-white text-[#8b6508] text-xs font-bold rounded-xl ${actionBtnClass}`}
+                >
+                  📅 תיאום ומדידה עם המשכירה
+                </button>
+              )}
               {onReserve && (
                 <>
                   <button

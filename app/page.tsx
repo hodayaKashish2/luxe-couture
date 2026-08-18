@@ -21,9 +21,10 @@ import DressSizeInput from '@/components/DressSizeInput';
 import BookingPaymentStep from '@/components/BookingPaymentStep';
 import BookingOwnerApprovalStep from '@/components/BookingOwnerApprovalStep';
 import OwnDressNoticeModal from '@/components/OwnDressNoticeModal';
+import FittingConfirmationModal from '@/components/FittingConfirmationModal';
 import LoginRequiredNoticeModal from '@/components/LoginRequiredNoticeModal';
 import type { PaymentMethod } from '@/lib/payment-methods';
-import { FAQS } from '@/lib/constants';
+import { FAQS, FINAL_OWNER_APPROVAL_BUTTON_LABEL, FINAL_OWNER_APPROVAL_HINT } from '@/lib/constants';
 import { validateAddDressForm, validateDressImageFiles } from '@/lib/form-validation';
 import { notifyBookingUpdated } from '@/lib/booking-events';
 import { getStoredSiteUser } from '@/lib/session-user';
@@ -169,6 +170,11 @@ export default function Home() {
     dressName: string;
     variant: 'booking' | 'coordinate' | 'rating';
   } | null>(null);
+  const [fittingConfirm, setFittingConfirm] = useState<{
+    dress: Dress;
+    imageIndex?: number;
+  } | null>(null);
+  const [pendingReserveDress, setPendingReserveDress] = useState<Dress | null>(null);
   const [loginRequiredNotice, setLoginRequiredNotice] = useState<'rate' | 'review' | null>(null);
   const [loginRequiredNext, setLoginRequiredNext] = useState('/');
 
@@ -251,7 +257,7 @@ export default function Home() {
     ) {
       setOwnDressNotice({ dressName: dress.name, variant: 'booking' });
     } else {
-      setSelectedDress(dress);
+      setPendingReserveDress(dress);
     }
     params.delete('reserve');
     const next = params.toString() ? `/?${params}` : '/';
@@ -302,6 +308,13 @@ export default function Home() {
           headers: token ? { 'x-user-token': token } : {},
         });
         const data = await response.json();
+        if (data.cancelled || response.status === 410) {
+          setToast({
+            message: data.error || data.reason || 'הבקשה בוטלה — התאריך כבר לא זמין.',
+            variant: 'error',
+          });
+          return;
+        }
         if (!response.ok || !data.success || !data.booking?.canPay) {
           if (data.booking?.awaitingOwner) {
             setToast({
@@ -837,7 +850,10 @@ export default function Home() {
 
   const detailsReserveButton = (() => {
     if (!detailsDressBooking) {
-      return { label: 'בדיקת זמינות ושריון', hint: undefined as string | undefined };
+      return {
+        label: FINAL_OWNER_APPROVAL_BUTTON_LABEL,
+        hint: FINAL_OWNER_APPROVAL_HINT,
+      };
     }
     if (detailsDressBooking.canPay) {
       return {
@@ -857,50 +873,14 @@ export default function Home() {
         hint: 'פרטי המשכירה מופיעים ב«ההזמנות שלי» באזור האישי, תחת הזמנות ממתינות.',
       };
     }
-    return { label: 'בדיקת זמינות ושריון', hint: undefined };
+    return {
+      label: FINAL_OWNER_APPROVAL_BUTTON_LABEL,
+      hint: FINAL_OWNER_APPROVAL_HINT,
+    };
   })();
 
   const handleDetailsReserve = (dress: Dress, imageIndex?: number) => {
-    if (isOwnDress(dress)) {
-      setOwnDressNotice({ dressName: dress.name, variant: 'booking' });
-      return;
-    }
-
-    const booking = detailsDressBooking;
-    setModalImageIndex(imageIndex ?? (currentImageIndexes[dress.id] || 0));
-    setBookingError('');
-    setIsOrdered(false);
-    setSelectedDress(dress);
-
-    if (booking?.canPay) {
-      setOwnerApprovalStep(null);
-      setOrderDate(booking.eventDate);
-      setPaymentStep({
-        bookingId: booking.id,
-        amount: booking.amount,
-        platformFee: booking.platformFee,
-        ownerPayout: booking.ownerPayout,
-        ownerApproved: true,
-      });
-      setDetailsDress(null);
-      return;
-    }
-
-    if (booking?.awaitingOwner || booking?.awaitingAdmin) {
-      setPaymentStep(null);
-      setOrderDate(booking.eventDate);
-      setOwnerApprovalStep({
-        bookingId: booking.id,
-        amount: booking.amount,
-        dressName: dress.name,
-        eventDate: formatHebrewDate(booking.eventDate),
-      });
-      setDetailsDress(null);
-      return;
-    }
-
-    tryReserveDress(dress, imageIndex);
-    setDetailsDress(null);
+    void openFinalApprovalFlow(dress, imageIndex);
   };
 
   const tryReserveDress = (dress: Dress, imageIndex?: number) => {
@@ -913,6 +893,111 @@ export default function Home() {
     setPaymentStep(null);
     setBookingError('');
     setSelectedDress(dress);
+  };
+
+  const resumeActiveBookingFlow = useCallback(
+    (dress: Dress, booking: NonNullable<typeof detailsDressBooking>, imageIndex?: number) => {
+      setModalImageIndex(imageIndex ?? (currentImageIndexes[dress.id] || 0));
+      setBookingError('');
+      setIsOrdered(false);
+      setSelectedDress(dress);
+
+      if (booking.canPay) {
+        setOwnerApprovalStep(null);
+        setOrderDate(booking.eventDate);
+        setPaymentStep({
+          bookingId: booking.id,
+          amount: booking.amount,
+          platformFee: booking.platformFee,
+          ownerPayout: booking.ownerPayout,
+          ownerApproved: true,
+        });
+        setDetailsDress(null);
+        return;
+      }
+
+      if (booking.awaitingOwner || booking.awaitingAdmin) {
+        setPaymentStep(null);
+        setOrderDate(booking.eventDate);
+        setOwnerApprovalStep({
+          bookingId: booking.id,
+          amount: booking.amount,
+          dressName: dress.name,
+          eventDate: formatHebrewDate(booking.eventDate),
+        });
+        setDetailsDress(null);
+      }
+    },
+    [currentImageIndexes]
+  );
+
+  const fetchActiveBookingForDress = useCallback(async (dressId: string) => {
+    try {
+      const token = sessionStorage.getItem('site_token');
+      const response = await fetch(`/api/bookings?dressId=${encodeURIComponent(dressId)}`, {
+        headers: token ? { 'x-user-token': token } : {},
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success || !data.booking) return null;
+
+      return {
+        id: data.booking.id,
+        eventDate: data.booking.eventDate,
+        amount: data.booking.amount,
+        platformFee: data.booking.platformFee,
+        ownerPayout: data.booking.ownerPayout,
+        canPay: Boolean(data.booking.canPay),
+        awaitingOwner: Boolean(data.booking.awaitingOwner),
+        awaitingAdmin: Boolean(data.booking.awaitingAdmin),
+      };
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const openFinalApprovalFlow = useCallback(
+    async (dress: Dress, imageIndex?: number) => {
+      if (isOwnDress(dress)) {
+        setOwnDressNotice({ dressName: dress.name, variant: 'booking' });
+        return;
+      }
+
+      let booking =
+        detailsDress?.id === dress.id ? detailsDressBooking : null;
+
+      if (!booking) {
+        booking = await fetchActiveBookingForDress(dress.id);
+      }
+
+      if (booking && (booking.canPay || booking.awaitingOwner || booking.awaitingAdmin)) {
+        resumeActiveBookingFlow(dress, booking, imageIndex);
+        return;
+      }
+
+      setFittingConfirm({ dress, imageIndex });
+    },
+    [
+      detailsDress,
+      detailsDressBooking,
+      fetchActiveBookingForDress,
+      isOwnDress,
+      resumeActiveBookingFlow,
+    ]
+  );
+
+  useEffect(() => {
+    if (!pendingReserveDress) return;
+    const dress = pendingReserveDress;
+    setPendingReserveDress(null);
+    void openFinalApprovalFlow(dress);
+  }, [pendingReserveDress, openFinalApprovalFlow]);
+
+  const confirmFittingAndOpenBooking = () => {
+    if (!fittingConfirm) return;
+    const { dress, imageIndex } = fittingConfirm;
+    setFittingConfirm(null);
+    tryReserveDress(dress, imageIndex);
+    setDetailsDress(null);
   };
 
   const handlePlaceOrder = async (e: React.FormEvent) => {
@@ -1927,7 +2012,7 @@ export default function Home() {
                   onClick={() => {
                     closeCartModal();
                     const fullDress = dressesList.find((d) => d.id === cart[0].id) || null;
-                    if (fullDress) tryReserveDress(fullDress);
+                    if (fullDress) void openFinalApprovalFlow(fullDress);
                   }}
                   className="w-full bg-[#2c261a] hover:bg-[#b8860b] text-white text-xs font-bold py-3 rounded-xl transition shadow-md"
                 >
@@ -2086,6 +2171,10 @@ export default function Home() {
                     </p>
                   )}
 
+                  <p className="text-[10px] text-[#6e634c] leading-relaxed bg-[#faf6eb] border border-[#ede3c8] rounded-xl p-3">
+                    {FINAL_OWNER_APPROVAL_HINT}
+                  </p>
+
                   <button 
                     type="submit" 
                     disabled={!!dateError || isSubmittingBooking}
@@ -2095,7 +2184,7 @@ export default function Home() {
                         : 'bg-gradient-to-r from-[#d4af37] via-[#b8860b] to-[#d4af37] hover:from-[#b8860b] hover:to-[#8b6508]'
                     }`}
                   >
-                    {isSubmittingBooking ? 'שולחת בקשה...' : 'בדיקת זמינות ושריון'}
+                    {isSubmittingBooking ? 'שולחת בקשה...' : FINAL_OWNER_APPROVAL_BUTTON_LABEL}
                   </button>
                 </form>
               )}
@@ -2116,6 +2205,15 @@ export default function Home() {
           onReserve={() => {
             setDetailsReturnDressId(detailsDress.id);
             handleDetailsReserve(detailsDress, currentImageIndexes[detailsDress.id] || 0);
+          }}
+          onCoordinate={() => {
+            setDetailsReturnDressId(detailsDress.id);
+            if (isOwnDress(detailsDress)) {
+              setOwnDressNotice({ dressName: detailsDress.name, variant: 'coordinate' });
+              return;
+            }
+            openCoordinate(detailsDress);
+            setDetailsDress(null);
           }}
           onToggleCart={() => toggleCart(detailsDress)}
           onToggleFavorite={() => toggleFavorite(detailsDress)}
@@ -2241,6 +2339,14 @@ export default function Home() {
           message={toast.message}
           variant={toast.variant}
           onClose={() => setToast(null)}
+        />
+      )}
+
+      {fittingConfirm && (
+        <FittingConfirmationModal
+          dressName={fittingConfirm.dress.name}
+          onConfirm={confirmFittingAndOpenBooking}
+          onCancel={() => setFittingConfirm(null)}
         />
       )}
 

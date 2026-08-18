@@ -9,7 +9,7 @@ import {
   shouldShowRemovedDress,
 } from '@/lib/retention';
 import { mapOwnedDressForEdit } from '@/lib/dress-pending-update';
-import { processBookingOwnerDeadlines } from '@/lib/booking-owner-flow';
+import { processAllBookingLifecycle } from '@/lib/booking-lifecycle';
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server';
 
 function emailsMatch(a: string, b: string) {
@@ -28,7 +28,7 @@ export async function GET(request: Request) {
 
   try {
     const supabase = getSupabaseAdmin();
-    await processBookingOwnerDeadlines(supabase);
+    await processAllBookingLifecycle(supabase);
 
     const { data: allDresses, error: dressesError } = await supabase
       .from('dresses')
@@ -97,18 +97,21 @@ export async function GET(request: Request) {
 
     const withUserId = await supabase
       .from('bookings')
-      .select('id, dress_id, customer_name, customer_phone, customer_email, event_date, status, created_at, site_user_id, owner_reject_reason')
+      .select('id, dress_id, customer_name, customer_phone, customer_email, event_date, status, created_at, site_user_id, owner_reject_reason, payment_deadline, owner_responded_at')
       .in('status', reservationStatuses)
       .order('event_date', { ascending: true });
 
-    if (withUserId.error?.message?.includes('site_user_id')) {
-      const withoutUserId = await supabase
+    if (
+      withUserId.error?.message?.includes('site_user_id') ||
+      withUserId.error?.message?.includes('payment_deadline')
+    ) {
+      const withoutOptional = await supabase
         .from('bookings')
-        .select('id, dress_id, customer_name, customer_phone, customer_email, event_date, status, created_at')
+        .select('id, dress_id, customer_name, customer_phone, customer_email, event_date, status, created_at, owner_reject_reason')
         .in('status', reservationStatuses)
         .order('event_date', { ascending: true });
-      allBookings = (withoutUserId.data ?? []) as ReservationRow[];
-      resError = withoutUserId.error;
+      allBookings = (withoutOptional.data ?? []) as ReservationRow[];
+      resError = withoutOptional.error;
     } else {
       allBookings = (withUserId.data ?? []) as ReservationRow[];
       resError = withUserId.error;

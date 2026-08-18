@@ -5,6 +5,11 @@ import {
   ownerReminderDue,
   ownerResponseExpired,
 } from '@/lib/booking-owner-deadlines';
+import {
+  BOOKING_CANCEL_SLOT_TAKEN,
+  paymentDeadlineIso,
+} from '@/lib/booking-payment-deadlines';
+import { cancelCompetingSlotBookings } from '@/lib/booking-slot-guard';
 import { getServerAppUrl, accountRentalsUrl, completeBookingUrl } from '@/lib/site-config';
 import {
   sendBookingOwnerApprovedEmail,
@@ -159,39 +164,13 @@ export async function rejectCompetingOwnerRequests(
   eventDate: string,
   approvedBookingId: number
 ) {
-  const { data: others } = await supabase
-    .from('bookings')
-    .select('id, customer_name, customer_email, event_date')
-    .eq('dress_id', dressId)
-    .eq('event_date', eventDate)
-    .eq('status', 'pending_owner_approval')
-    .neq('id', approvedBookingId);
-
-  const reason = 'התאריך נתפס — המשכירה אישרה בקשה אחרת לאותו יום.';
-  const dress = await fetchDressMeta(supabase, dressId);
-  const dressName = dress?.name || 'שמלה';
-  const now = new Date().toISOString();
-
-  for (const row of others ?? []) {
-    await supabase
-      .from('bookings')
-      .update({
-        status: 'cancelled',
-        owner_responded_at: now,
-        owner_reject_reason: reason,
-      })
-      .eq('id', row.id);
-
-    if (row.customer_email) {
-      await sendBookingOwnerRejectedEmail({
-        to: row.customer_email,
-        customerName: row.customer_name,
-        dressName,
-        eventDate: row.event_date,
-        reason,
-      });
-    }
-  }
+  return cancelCompetingSlotBookings(
+    supabase,
+    dressId,
+    eventDate,
+    approvedBookingId,
+    BOOKING_CANCEL_SLOT_TAKEN
+  );
 }
 
 export async function approveBookingByOwner(
@@ -228,22 +207,38 @@ export async function approveBookingByOwner(
   }
 
   const now = new Date().toISOString();
-  const { error: updateError } = await supabase
+  const paymentDeadline = paymentDeadlineIso(now);
+  const updatePayload: Record<string, unknown> = {
+    status: 'pending_payment',
+    owner_responded_at: now,
+    payment_deadline: paymentDeadline,
+  };
+
+  let { error: updateError } = await supabase
     .from('bookings')
-    .update({
-      status: 'pending_payment',
-      owner_responded_at: now,
-    })
+    .update(updatePayload)
     .eq('id', bookingId)
     .eq('status', 'pending_owner_approval');
 
+  if (updateError?.message?.includes('payment_deadline')) {
+    ({ error: updateError } = await supabase
+      .from('bookings')
+      .update({
+        status: 'pending_payment',
+        owner_responded_at: now,
+      })
+      .eq('id', bookingId)
+      .eq('status', 'pending_owner_approval'));
+  }
+
   if (updateError) throw updateError;
 
-  await rejectCompetingOwnerRequests(
+  await cancelCompetingSlotBookings(
     supabase,
     booking.dress_id,
     booking.event_date,
-    bookingId
+    bookingId,
+    BOOKING_CANCEL_SLOT_TAKEN
   );
 
   const dress = await fetchDressMeta(supabase, booking.dress_id);

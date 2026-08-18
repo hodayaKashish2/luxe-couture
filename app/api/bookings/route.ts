@@ -8,8 +8,9 @@ import {
 import { ownerResponseDeadlineIso } from '@/lib/booking-owner-deadlines';
 import {
   notifyOwnerOfBookingRequest,
-  processBookingOwnerDeadlines,
 } from '@/lib/booking-owner-flow';
+import { processAllBookingLifecycle } from '@/lib/booking-lifecycle';
+import { BOOKING_SLOT_BLOCKED_USER_MESSAGE } from '@/lib/booking-payment-deadlines';
 import { userOwnsDress } from '@/lib/dress-ownership';
 import { getUserFromRequest } from '@/lib/user-auth';
 import { phonesMatch } from '@/lib/phone-match';
@@ -174,7 +175,7 @@ export async function POST(request: Request) {
 
   try {
     const supabase = getSupabaseAdmin();
-    await processBookingOwnerDeadlines(supabase);
+    await processAllBookingLifecycle(supabase);
 
     const body = await request.json();
     const loggedInUser = getUserFromRequest(request);
@@ -302,7 +303,7 @@ export async function POST(request: Request) {
 
     if (blockedByOther) {
       return NextResponse.json(
-        { error: 'השמלה כבר שמורה או בתהליך שריון לתאריך זה. בחרי תאריך אחר.' },
+        { error: BOOKING_SLOT_BLOCKED_USER_MESSAGE },
         { status: 409 }
       );
     }
@@ -499,7 +500,7 @@ export async function GET(request: Request) {
 
   try {
     const supabase = getSupabaseAdmin();
-    await processBookingOwnerDeadlines(supabase);
+    await processAllBookingLifecycle(supabase);
 
     const loggedInUser = getUserFromRequest(request);
 
@@ -614,7 +615,7 @@ export async function GET(request: Request) {
     const { data: booking, error } = await supabase
       .from('bookings')
       .select(
-        'id, dress_id, customer_name, customer_phone, customer_email, event_date, status, amount_total, platform_fee, owner_payout, site_user_id'
+        'id, dress_id, customer_name, customer_phone, customer_email, event_date, status, amount_total, platform_fee, owner_payout, site_user_id, owner_reject_reason, payment_deadline, owner_responded_at'
       )
       .eq('id', bookingId)
       .maybeSingle();
@@ -628,6 +629,18 @@ export async function GET(request: Request) {
     const phone = String(booking.customer_phone || '');
     if (!bookingMatchesCustomer(booking, loggedInUser, email, phone)) {
       return NextResponse.json({ error: 'אין הרשאה' }, { status: 403 });
+    }
+
+    if (booking.status === 'cancelled') {
+      return NextResponse.json(
+        {
+          success: false,
+          cancelled: true,
+          reason: booking.owner_reject_reason || 'הבקשה בוטלה.',
+          error: booking.owner_reject_reason || 'הבקשה בוטלה.',
+        },
+        { status: 410 }
+      );
     }
 
     const { data: dress } = await supabase

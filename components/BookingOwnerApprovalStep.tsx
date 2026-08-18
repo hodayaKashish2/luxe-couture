@@ -19,8 +19,8 @@ export default function BookingOwnerApprovalStep({
     <div className="flex flex-col gap-4 my-auto">
       <h3 className="text-lg font-black text-neutral-900">📨 הבקשה נשלחה למשכירה</h3>
       <p className="text-xs text-[#5c5037] leading-relaxed">
-        בקשת השריון הועברה למשכירה לאישור. תקבלי מייל עם תשובה האם השריון אושר{' '}
-        <strong>עד 72 שעות</strong> — ואם יאושר, תוכלי להשלים את התשלום.
+        בקשת האישור הסופי הועברה למשכירה. לאחר שתיאמתן ומדדתן — המשכירה תאשר את השריון, ותקבלי מייל עם תשובה{' '}
+        <strong>עד 72 שעות</strong>. אם יאושר, תוכלי להשלים את התשלום.
       </p>
 
       <div className="bg-white border border-[#decfa8] rounded-xl p-4 text-xs space-y-2">

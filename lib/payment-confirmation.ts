@@ -7,6 +7,7 @@ import {
 } from '@/lib/email';
 import { FEATURED_REWARD_DAYS, extendFeaturedUntil } from '@/lib/dress-ranking';
 import { dressRowToNotify, resolveOwnerContact } from '@/lib/dress-approval-notify';
+import { cancelCompetingSlotBookings } from '@/lib/booking-slot-guard';
 import { getSupabaseAdmin } from '@/lib/supabase/server';
 
 type SupabaseAdmin = ReturnType<typeof getSupabaseAdmin>;
@@ -179,6 +180,13 @@ export async function confirmBookingPayment(
     .eq('id', bookingId);
 
   if (updateBookingError) throw updateBookingError;
+
+  await cancelCompetingSlotBookings(
+    supabase,
+    booking.dress_id,
+    booking.event_date,
+    bookingId
+  );
 
   if (dress) {
     const featuredUntil = extendFeaturedUntil(dress.featured_until, FEATURED_REWARD_DAYS);

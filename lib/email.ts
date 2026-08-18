@@ -1,6 +1,7 @@
 import { Resend } from 'resend';
 import nodemailer from 'nodemailer';
 import { DEFAULT_ADMIN_EMAIL, getSiteAdminEmail, getServerAppUrl, accountReservationsUrl, accountRentalsUrl, completeBookingUrl } from '@/lib/site-config';
+import { PAYMENT_DEADLINE_DAYS } from '@/lib/booking-payment-deadlines';
 import { buildDressUpdateDiffHtml } from '@/lib/dress-update-diff-html';
 
 let resendClient: Resend | null = null;
@@ -357,7 +358,8 @@ export async function sendBookingPendingEmail(params: {
         <p style="line-height:1.7;color:#554a33;"><strong>שמלה:</strong> ${escapeHtml(params.dressName)}</p>
         <p style="line-height:1.7;color:#554a33;"><strong>תאריך אירוע:</strong> ${escapeHtml(params.eventDate)}</p>
         <p style="line-height:1.7;color:#554a33;"><strong>סכום לתשלום:</strong> ₪${params.amount}</p>
-        <p style="line-height:1.7;color:#554a33;margin-top:16px;">השלימי את התשלום ב<strong>ביט</strong> או <strong>העברה בנקאית</strong> דרך האתר, ואז לחצי <strong>אישור תשלום</strong>.</p>
+        <p style="line-height:1.7;color:#554a33;margin-top:16px;">יש לך <strong>${PAYMENT_DEADLINE_DAYS} ימים</strong> להשלים את התשלום. אחרי מועד זה הבקשה תבוטל והתאריך ישוחרר.</p>
+        <p style="line-height:1.7;color:#554a33;">השלימי את התשלום ב<strong>ביט</strong> או <strong>העברה בנקאית</strong> דרך האתר, ואז לחצי <strong>אישור תשלום</strong>.</p>
         <p style="margin-top:24px;">
           <a href="${payLink}" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
             להשלמת התשלום →
@@ -492,6 +494,58 @@ export async function sendBookingOwnerRejectedEmail(params: {
           <p style="margin:0;line-height:1.7;color:#554a33;">${escapeHtml(params.reason)}</p>
         </div>
         <p style="line-height:1.7;color:#554a33;">אפשר לחפש שמלה אחרת בקטלוג — מקווים שתמצאי את המראה המושלם 💛</p>
+        <p style="margin-top:24px;">
+          <a href="${getAppUrl()}/" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
+            חזרה לקטלוג →
+          </a>
+        </p>
+      </div>
+    `
+  );
+}
+
+export async function sendBookingSlotTakenEmail(params: {
+  to: string;
+  customerName: string;
+  dressName: string;
+  eventDate: string;
+}) {
+  return sendEmailTo(
+    params.to,
+    `התאריך נתפס: ${params.dressName}`,
+    `
+      <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #eadaaf;border-radius:16px;background:#fffdf8;">
+        <h2 style="color:#3d2f24;margin-top:0;">שלום ${escapeHtml(params.customerName)}!</h2>
+        <p style="line-height:1.7;color:#554a33;">לצערנו, השמלה <strong>${escapeHtml(params.dressName)}</strong> שוריינה על ידי שוכרת אחרת לתאריך <strong>${escapeHtml(params.eventDate)}</strong>.</p>
+        <div style="margin:16px 0;padding:14px 16px;border-right:4px solid #d4af37;background:#fff8e8;border-radius:10px;">
+          <p style="margin:0;line-height:1.7;color:#554a33;">הבקשה שלך בוטלה — התאריך כבר לא זמין. אפשר לחפש תאריך אחר או שמלה אחרת בקטלוג.</p>
+        </div>
+        <p style="margin-top:24px;">
+          <a href="${getAppUrl()}/" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
+            חזרה לקטלוג →
+          </a>
+        </p>
+      </div>
+    `
+  );
+}
+
+export async function sendBookingPaymentExpiredEmail(params: {
+  to: string;
+  customerName: string;
+  dressName: string;
+  eventDate: string;
+}) {
+  return sendEmailTo(
+    params.to,
+    `פג מועד התשלום: ${params.dressName}`,
+    `
+      <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #eadaaf;border-radius:16px;background:#fffdf8;">
+        <h2 style="color:#3d2f24;margin-top:0;">שלום ${escapeHtml(params.customerName)}!</h2>
+        <p style="line-height:1.7;color:#554a33;">בקשת השריון לשמלה <strong>${escapeHtml(params.dressName)}</strong> לתאריך ${escapeHtml(params.eventDate)} <strong>בוטלה</strong> כי לא הושלם התשלום בזמן.</p>
+        <div style="margin:16px 0;padding:14px 16px;border-right:4px solid #d4af37;background:#fff8e8;border-radius:10px;">
+          <p style="margin:0;line-height:1.7;color:#554a33;">התאריך שוחרר לשוכרות אחרות. אם השמלה עדיין מעניינת אותך — אפשר לשלוח בקשה חדשה (לאחר תיאום ומדידה).</p>
+        </div>
         <p style="margin-top:24px;">
           <a href="${getAppUrl()}/" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
             חזרה לקטלוג →

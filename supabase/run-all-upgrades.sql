@@ -117,3 +117,12 @@ alter table public.bookings add constraint bookings_status_check
 -- === upgrade-v9: פרטי מבצעת ההעברה ===
 alter table public.bookings add column if not exists payment_sender_name text;
 alter table public.bookings add column if not exists payment_sender_phone text;
+
+-- === upgrade-v10: מועד אחרון לתשלום ===
+alter table public.bookings add column if not exists payment_deadline timestamptz;
+
+update public.bookings
+set payment_deadline = owner_responded_at + interval '7 days'
+where status = 'pending_payment'
+  and payment_deadline is null
+  and owner_responded_at is not null;
