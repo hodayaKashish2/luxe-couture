@@ -116,24 +116,29 @@ export async function cancelCompetingSlotBookings(
 }
 
 export async function processBookingPaymentDeadlines(supabase: SupabaseAdmin) {
-  let selectQuery = await supabase
+  const withDeadline = await supabase
     .from('bookings')
     .select(
       'id, dress_id, customer_name, customer_email, event_date, status, owner_responded_at, payment_deadline'
     )
     .eq('status', 'pending_payment');
 
-  if (selectQuery.error && schemaMissingPaymentDeadline(selectQuery.error.message)) {
-    selectQuery = await supabase
+  let rows: CancellableBookingRow[] = (withDeadline.data ?? []) as CancellableBookingRow[];
+
+  if (withDeadline.error && schemaMissingPaymentDeadline(withDeadline.error.message)) {
+    const withoutDeadline = await supabase
       .from('bookings')
       .select('id, dress_id, customer_name, customer_email, event_date, status, owner_responded_at')
       .eq('status', 'pending_payment');
+
+    if (withoutDeadline.error) throw withoutDeadline.error;
+    rows = (withoutDeadline.data ?? []) as CancellableBookingRow[];
+  } else if (withDeadline.error) {
+    throw withDeadline.error;
   }
 
-  if (selectQuery.error) throw selectQuery.error;
-
   let expiredCount = 0;
-  for (const row of (selectQuery.data ?? []) as CancellableBookingRow[]) {
+  for (const row of rows) {
     const deadline = resolvePaymentDeadline(row.payment_deadline, row.owner_responded_at);
     if (!paymentDeadlineExpired(deadline)) continue;
 
