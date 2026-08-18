@@ -503,6 +503,58 @@ export async function GET(request: Request) {
 
     const loggedInUser = getUserFromRequest(request);
 
+    if (dressId && !eventDate) {
+      const email = emailParam || loggedInUser?.email || '';
+      const phone = phoneParam || loggedInUser?.phone || '';
+
+      if (!email && !phone && !loggedInUser?.userId) {
+        return NextResponse.json({ success: true, booking: null });
+      }
+
+      const { data: bookings, error } = await supabase
+        .from('bookings')
+        .select(
+          'id, dress_id, customer_name, customer_phone, customer_email, event_date, status, amount_total, platform_fee, owner_payout, site_user_id'
+        )
+        .eq('dress_id', dressId)
+        .in('status', ['pending_owner_approval', 'pending_payment', 'awaiting_admin_approval'])
+        .order('id', { ascending: false });
+
+      if (error) throw error;
+
+      const booking = (bookings ?? []).find((row) =>
+        bookingMatchesCustomer(row, loggedInUser, email, phone)
+      );
+
+      if (!booking) {
+        return NextResponse.json({ success: true, booking: null });
+      }
+
+      const { data: dress } = await supabase
+        .from('dresses')
+        .select('name, price')
+        .eq('id', booking.dress_id)
+        .maybeSingle();
+
+      return NextResponse.json({
+        success: true,
+        booking: {
+          id: booking.id,
+          dressId: booking.dress_id,
+          dressName: dress?.name || '',
+          dressPrice: Number(dress?.price || booking.amount_total || 0),
+          status: booking.status,
+          amount: Number(booking.amount_total || 0),
+          platformFee: Number(booking.platform_fee || 0),
+          ownerPayout: Number(booking.owner_payout || 0),
+          eventDate: booking.event_date,
+          canPay: booking.status === 'pending_payment',
+          awaitingOwner: booking.status === 'pending_owner_approval',
+          awaitingAdmin: booking.status === 'awaiting_admin_approval',
+        },
+      });
+    }
+
     if (dressId && eventDate) {
       const email = emailParam || loggedInUser?.email || '';
       const phone = phoneParam || loggedInUser?.phone || '';

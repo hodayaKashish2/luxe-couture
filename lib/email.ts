@@ -1,6 +1,6 @@
 import { Resend } from 'resend';
 import nodemailer from 'nodemailer';
-import { DEFAULT_ADMIN_EMAIL, getSiteAdminEmail, getServerAppUrl } from '@/lib/site-config';
+import { DEFAULT_ADMIN_EMAIL, getSiteAdminEmail, getServerAppUrl, accountReservationsUrl, accountRentalsUrl, completeBookingUrl } from '@/lib/site-config';
 import { buildDressUpdateDiffHtml } from '@/lib/dress-update-diff-html';
 
 let resendClient: Resend | null = null;
@@ -327,7 +327,7 @@ export async function sendBookingConfirmationEmail(params: {
         <p style="line-height:1.7;color:#554a33;"><strong>שמלה:</strong> ${params.dressName}</p>
         <p style="line-height:1.7;color:#554a33;"><strong>תאריך אירוע:</strong> ${params.eventDate}</p>
         <p style="line-height:1.7;color:#554a33;"><strong>סכום:</strong> ₪${params.amount}</p>
-        <p style="line-height:1.7;color:#554a33;margin-top:16px;">ניצור קשר בהקדם לתיאום עם המשכירה.</p>
+        <p style="line-height:1.7;color:#554a33;margin-top:16px;">ההזמנה נקלטה. לתיאום מסירת השמלה — צרי קשר ישירות עם המשכירה; פרטיה מופיעים ב<strong>«ההזמנות שלי»</strong> באזור האישי.</p>
         <p style="margin-top:24px;">
           <a href="${getAppUrl()}/account" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
             לאזור האישי →
@@ -346,7 +346,7 @@ export async function sendBookingPendingEmail(params: {
   amount: number;
   payUrl?: string;
 }) {
-  const payLink = params.payUrl || `${getAppUrl()}/account?section=reservations`;
+  const payLink = params.payUrl || accountReservationsUrl();
   return sendEmailTo(
     params.to,
     `💳 הגיע הזמן לשלם: ${params.dressName}`,
@@ -387,7 +387,7 @@ export async function sendBookingRequestSubmittedEmail(params: {
         <p style="line-height:1.7;color:#554a33;"><strong>סכום משוער:</strong> ₪${params.amount}</p>
         <p style="line-height:1.7;color:#554a33;margin-top:16px;">תקבלי מייל עם תשובה האם השריון אושר <strong>עד 72 שעות</strong> מרגע שליחת הבקשה (ברוב המקרים הרבה לפני כן). אם תאושר — תוכלי להמשיך ולהשלים את התשלום.</p>
         <p style="margin-top:24px;">
-          <a href="${getAppUrl()}/account?section=reservations" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
+          <a href="${accountReservationsUrl()}" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
             מעקב באזור האישי →
           </a>
         </p>
@@ -518,7 +518,7 @@ export async function sendBookingOwnerTimeoutEmail(params: {
         <div style="margin:16px 0;padding:14px 16px;border-right:4px solid #c9a227;background:#fff8e8;border-radius:10px;">
           <p style="margin:0;line-height:1.7;color:#554a33;">המשכירה לא הגיבה לבקשה בתוך <strong>48 שעות</strong>, ולכן לא ניתן להמשיך בתהליך השריון.</p>
         </div>
-        <p style="line-height:1.7;color:#554a33;">אפשר לנסות תאריך אחר, לבחור שמלה אחרת, או ליצור קשר עם המשכירה דרך «תיאום עם המשכירה» בדף השמלה.</p>
+        <p style="line-height:1.7;color:#554a33;">אפשר לנסות תאריך אחר או לבחור שמלה אחרת בקטלוג.</p>
         <p style="margin-top:24px;">
           <a href="${getAppUrl()}/" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
             חזרה לקטלוג →
@@ -546,10 +546,42 @@ export async function sendPaymentConfirmationEmail(params: {
         <p style="line-height:1.7;color:#554a33;"><strong>שמלה:</strong> ${params.dressName}</p>
         <p style="line-height:1.7;color:#554a33;"><strong>תאריך אירוע:</strong> ${params.eventDate}</p>
         <p style="line-height:1.7;color:#554a33;"><strong>סכום ששולם:</strong> ₪${params.amount}</p>
-        <p style="line-height:1.7;color:#554a33;margin-top:16px;">ניצור קשר בהקדם לתיאום איסוף עם המשכירה.</p>
+        <p style="line-height:1.7;color:#554a33;margin-top:16px;">ההזמנה אושרה והתאריך שמור עבורך. לתיאום מסירת השמלה — צרי קשר ישירות עם המשכירה; פרטיה מופיעים ב<strong>«ההזמנות שלי»</strong> באזור האישי.</p>
         <p style="margin-top:24px;">
-          <a href="${getAppUrl()}/account" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
-            לאזור האישי →
+          <a href="${accountReservationsUrl()}" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
+            להזמנות שלי →
+          </a>
+        </p>
+      </div>
+    `
+  );
+}
+
+export async function sendBookingConfirmedOwnerEmail(params: {
+  to: string;
+  ownerName: string;
+  dressName: string;
+  customerName: string;
+  customerPhone: string;
+  eventDate: string;
+  amount: number;
+}) {
+  return sendEmailTo(
+    params.to,
+    `✅ שריון מאושר ושולם: ${params.dressName}`,
+    `
+      <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #eadaaf;border-radius:16px;background:#fffdf8;">
+        <h2 style="color:#3d2f24;margin-top:0;">שלום ${escapeHtml(params.ownerName)}!</h2>
+        <p style="line-height:1.7;color:#554a33;">התשלום עבור השמלה <strong>${escapeHtml(params.dressName)}</strong> אושר — השריון לתאריך <strong>${escapeHtml(params.eventDate)}</strong> סגור.</p>
+        <div style="margin:16px 0;padding:14px 16px;background:#faf6eb;border-radius:12px;border:1px solid #eadaaf;">
+          <p style="margin:0 0 8px;"><strong>שוכרת:</strong> ${escapeHtml(params.customerName)}</p>
+          <p style="margin:0 0 8px;"><strong>טלפון:</strong> <span dir="ltr">${escapeHtml(params.customerPhone)}</span></p>
+          <p style="margin:0;"><strong>סכום:</strong> ₪${params.amount}</p>
+        </div>
+        <p style="line-height:1.7;color:#554a33;">כדאי ליצור קשר עם השוכרת לתיאום מסירת השמלה. ניתן לראות את ההזמנה ב<strong>«השמלות שלי»</strong> באזור האישי.</p>
+        <p style="margin-top:24px;">
+          <a href="${accountRentalsUrl()}" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
+            ל«השמלות שלי» →
           </a>
         </p>
       </div>
@@ -702,7 +734,7 @@ export async function sendDressPendingOwnerEmail(params: {
         <p style="line-height:1.7;color:#554a33;">קיבלנו את השמלה <strong>${params.dressName}</strong> והיא ממתינה לאישור ההנהלה.</p>
         <p style="line-height:1.7;color:#554a33;">נעדכן אותך במייל ברגע שהשמלה תאושר ותופיע בקטלוג האתר.</p>
         <p style="margin-top:24px;">
-          <a href="${getAppUrl()}/account?section=rentals" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
+          <a href="${accountRentalsUrl()}" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
             לאזור האישי →
           </a>
         </p>
@@ -789,7 +821,7 @@ export async function sendDressUpdatePendingOwnerEmail(params: {
         ${diffHtml}
         <p style="line-height:1.7;color:#554a33;margin-top:16px;">עד לאישור — בקטלוג תמשיך להופיע הגרסה הקודמת. נעדכן אותך במייל ברגע שהעדכון יאושר.</p>
         <p style="margin-top:24px;">
-          <a href="${getAppUrl()}/account?section=rentals" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
+          <a href="${accountRentalsUrl()}" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
             לאזור האישי →
           </a>
         </p>
@@ -841,7 +873,7 @@ export async function sendDressUpdateApprovedOwnerEmail(params: {
           <a href="${catalogUrl}" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
             לצפייה בשמלה בקטלוג →
           </a>
-          <a href="${getAppUrl()}/account?section=rentals" style="display:inline-block;background:#fff;color:#8b6508;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;border:2px solid #decfa8;">
+          <a href="${accountRentalsUrl()}" style="display:inline-block;background:#fff;color:#8b6508;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;border:2px solid #decfa8;">
             לאזור האישי →
           </a>
         </p>
@@ -877,7 +909,7 @@ export async function sendDressUpdateRejectedOwnerEmail(params: {
         ${reasonBlock}
         <p style="line-height:1.7;color:#554a33;">בקטלוג תמשיך להופיע הגרסה הקודמת. אפשר לערוך שוב ולשלוח מחדש מאזור האישי.</p>
         <p style="margin-top:24px;">
-          <a href="${getAppUrl()}/account?section=rentals" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
+          <a href="${accountRentalsUrl()}" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
             לעריכה באזור האישי →
           </a>
         </p>
@@ -905,7 +937,7 @@ export async function sendDressRejectedOwnerEmail(params: {
         </div>
         <p style="line-height:1.7;color:#554a33;">אפשר לערוך את הפרטים ולשלוח שוב מאזור האישי.</p>
         <p style="margin-top:24px;">
-          <a href="${getAppUrl()}/account?section=rentals" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
+          <a href="${accountRentalsUrl()}" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
             לאזור האישי →
           </a>
         </p>

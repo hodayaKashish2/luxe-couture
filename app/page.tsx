@@ -127,6 +127,16 @@ export default function Home() {
   const [coordinateChecked, setCoordinateChecked] = useState(false);
   const [coordinateDisclaimerAccepted, setCoordinateDisclaimerAccepted] = useState(false);
   const [detailsDress, setDetailsDress] = useState<Dress | null>(null);
+  const [detailsDressBooking, setDetailsDressBooking] = useState<{
+    id: number;
+    eventDate: string;
+    amount: number;
+    platformFee: number;
+    ownerPayout: number;
+    canPay: boolean;
+    awaitingOwner: boolean;
+    awaitingAdmin: boolean;
+  } | null>(null);
 
   // אינדקס גלריה לכל כרטיס
   const [currentImageIndexes, setCurrentImageIndexes] = useState<{ [key: string]: number }>({});
@@ -403,7 +413,7 @@ export default function Home() {
     const params = new URLSearchParams(window.location.search);
     const payment = params.get('payment');
     if (payment === 'success') {
-      alert('התשלום אושר! ההזמנה שלך מאושרת. ניצור קשר בהקדם.');
+      alert('התשלום אושר! ההזמנה שלך מאושרת. פרטי המשכירה מופיעים ב«ההזמנות שלי» באזור האישי.');
       window.history.replaceState({}, '', '/');
     } else if (payment === 'fail') {
       alert('התשלום לא הושלם. נסי שוב או צרי קשר.');
@@ -780,6 +790,118 @@ export default function Home() {
     }
     setIsAddReviewOpen(true);
   }, []);
+
+  useEffect(() => {
+    if (!detailsDress) {
+      setDetailsDressBooking(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    const dressId = detailsDress.id;
+
+    async function loadActiveBooking() {
+      try {
+        const token = sessionStorage.getItem('site_token');
+        const response = await fetch(`/api/bookings?dressId=${encodeURIComponent(dressId)}`, {
+          headers: token ? { 'x-user-token': token } : {},
+        });
+        const data = await response.json();
+        if (cancelled) return;
+
+        if (response.ok && data.success && data.booking) {
+          setDetailsDressBooking({
+            id: data.booking.id,
+            eventDate: data.booking.eventDate,
+            amount: data.booking.amount,
+            platformFee: data.booking.platformFee,
+            ownerPayout: data.booking.ownerPayout,
+            canPay: Boolean(data.booking.canPay),
+            awaitingOwner: Boolean(data.booking.awaitingOwner),
+            awaitingAdmin: Boolean(data.booking.awaitingAdmin),
+          });
+        } else {
+          setDetailsDressBooking(null);
+        }
+      } catch {
+        if (!cancelled) setDetailsDressBooking(null);
+      }
+    }
+
+    void loadActiveBooking();
+    return () => {
+      cancelled = true;
+    };
+  }, [detailsDress]);
+
+  const detailsReserveButton = (() => {
+    if (!detailsDressBooking) {
+      return { label: 'בדיקת זמינות ושריון', hint: undefined as string | undefined };
+    }
+    if (detailsDressBooking.canPay) {
+      return {
+        label: '💳 השלימי תשלום — המשכירה אישרה',
+        hint: 'המשכירה אישרה את הבקשה — נשאר רק להשלים את התשלום דרך האתר.',
+      };
+    }
+    if (detailsDressBooking.awaitingAdmin) {
+      return {
+        label: 'ממתינה לאישור תשלום',
+        hint: 'דיווח התשלום התקבל — נעדכן אותך במייל ברגע שהאישור יושלם.',
+      };
+    }
+    if (detailsDressBooking.awaitingOwner) {
+      return {
+        label: 'בקשה נשלחה — ממתינה לאישור',
+        hint: 'פרטי המשכירה מופיעים ב«ההזמנות שלי» באזור האישי, תחת הזמנות ממתינות.',
+      };
+    }
+    return { label: 'בדיקת זמינות ושריון', hint: undefined };
+  })();
+
+  const handleDetailsReserve = (dress: Dress, imageIndex?: number) => {
+    if (isOwnDress(dress)) {
+      setOwnDressNotice({ dressName: dress.name, variant: 'booking' });
+      return;
+    }
+
+    const booking = detailsDressBooking;
+    setModalImageIndex(imageIndex ?? (currentImageIndexes[dress.id] || 0));
+    setBookingError('');
+    setIsOrdered(false);
+    setSelectedDress(dress);
+
+    if (booking?.canPay) {
+      setOwnerApprovalStep(null);
+      setOrderDate(booking.eventDate);
+      setPaymentStep({
+        bookingId: booking.id,
+        amount: booking.amount,
+        platformFee: booking.platformFee,
+        ownerPayout: booking.ownerPayout,
+        ownerApproved: true,
+      });
+      setDetailsDress(null);
+      return;
+    }
+
+    if (booking?.awaitingOwner || booking?.awaitingAdmin) {
+      setPaymentStep(null);
+      setOrderDate(booking.eventDate);
+      setOwnerApprovalStep({
+        bookingId: booking.id,
+        amount: booking.amount,
+        dressName: dress.name,
+        eventDate: formatHebrewDate(booking.eventDate),
+      });
+      setDetailsDress(null);
+      return;
+    }
+
+    tryReserveDress(dress, imageIndex);
+    setDetailsDress(null);
+  };
 
   const tryReserveDress = (dress: Dress, imageIndex?: number) => {
     if (isOwnDress(dress)) {
@@ -1883,7 +2005,7 @@ export default function Home() {
                       </>
                     ) : (
                       <>
-                        אישור נשלח ל-<strong>{orderEmail}</strong>. ניצור קשר בהקדם לתיאום עם המשכירה.
+                        אישור נשלח ל-<strong>{orderEmail}</strong>. ההזמנה מאושרת — לתיאום מסירת השמלה צרי קשר ישירות עם המשכירה; פרטיה מופיעים ב<strong>«ההזמנות שלי»</strong>.
                       </>
                     )}
                   </p>
@@ -1973,7 +2095,7 @@ export default function Home() {
                         : 'bg-gradient-to-r from-[#d4af37] via-[#b8860b] to-[#d4af37] hover:from-[#b8860b] hover:to-[#8b6508]'
                     }`}
                   >
-                    {isSubmittingBooking ? 'שולחת בקשה...' : 'שלחי בקשת שריון למשכירה'}
+                    {isSubmittingBooking ? 'שולחת בקשה...' : 'בדיקת זמינות ושריון'}
                   </button>
                 </form>
               )}
@@ -1989,26 +2111,14 @@ export default function Home() {
           onClose={closeDetailsModal}
           isInCart={isDressInCart(detailsDress.id)}
           isFavorite={isDressFavorite(detailsDress.id)}
+          reserveButtonLabel={detailsReserveButton.label}
+          reserveButtonHint={detailsReserveButton.hint}
           onReserve={() => {
             setDetailsReturnDressId(detailsDress.id);
-            if (isOwnDress(detailsDress)) {
-              setOwnDressNotice({ dressName: detailsDress.name, variant: 'booking' });
-              return;
-            }
-            tryReserveDress(detailsDress, currentImageIndexes[detailsDress.id] || 0);
-            setDetailsDress(null);
+            handleDetailsReserve(detailsDress, currentImageIndexes[detailsDress.id] || 0);
           }}
           onToggleCart={() => toggleCart(detailsDress)}
           onToggleFavorite={() => toggleFavorite(detailsDress)}
-          onCoordinate={() => {
-            setDetailsReturnDressId(detailsDress.id);
-            if (isOwnDress(detailsDress)) {
-              setOwnDressNotice({ dressName: detailsDress.name, variant: 'coordinate' });
-              return;
-            }
-            openCoordinate(detailsDress);
-            setDetailsDress(null);
-          }}
           onRate={() => tryRateDress(detailsDress)}
           onShare={() => {
             void shareDress(detailsDress);

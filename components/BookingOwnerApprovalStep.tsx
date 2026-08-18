@@ -43,6 +43,7 @@ export default function BookingOwnerApprovalStep({
         <ul className="space-y-1.5 list-none">
           <li>⏳ תשובה האם השריון אושר — <strong>עד 72 שעות</strong></li>
           <li>📧 עדכון יישלח ל-<strong dir="ltr">{customerEmail}</strong></li>
+          <li>👤 פרטי המשכירה יופיעו ב<strong>«ההזמנות שלי»</strong> באזור האישי, תחת הזמנות ממתינות</li>
           <li>💳 רק אחרי אישור — תעברי לשלב התשלום</li>
         </ul>
       </div>

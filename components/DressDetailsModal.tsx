@@ -12,9 +12,10 @@ type Props = {
   onClose: () => void;
   initialImageIndex?: number;
   onReserve?: () => void;
+  reserveButtonLabel?: string;
+  reserveButtonHint?: string;
   onToggleCart?: () => void;
   onToggleFavorite?: () => void;
-  onCoordinate?: () => void;
   onRate?: () => void;
   onShare?: () => void;
   isInCart?: boolean;
@@ -29,9 +30,10 @@ export default function DressDetailsModal({
   onClose,
   initialImageIndex = 0,
   onReserve,
+  reserveButtonLabel = 'בדיקת זמינות ושריון',
+  reserveButtonHint,
   onToggleCart,
   onToggleFavorite,
-  onCoordinate,
   onRate,
   onShare,
   isInCart = false,
@@ -162,16 +164,23 @@ export default function DressDetailsModal({
             )}
           </div>
 
-          {(onReserve || onToggleCart || onToggleFavorite || onCoordinate || onRate || onShare) && (
+          {(onReserve || onToggleCart || onToggleFavorite || onRate || onShare) && (
             <div className="p-5 sm:p-6 pt-0 space-y-2 border-t border-[#f0e2c3] bg-white/60">
               {onReserve && (
-                <button
-                  type="button"
-                  onClick={onReserve}
-                  className={`w-full py-3.5 bg-gradient-to-r from-[#2c261a] to-[#4a3f2b] hover:from-[#d4af37] hover:to-[#b8860b] text-white text-sm font-black rounded-xl shadow-md ${actionBtnClass}`}
-                >
-                  שרייני עכשיו
-                </button>
+                <>
+                  <button
+                    type="button"
+                    onClick={onReserve}
+                    className={`w-full py-3.5 bg-gradient-to-r from-[#2c261a] to-[#4a3f2b] hover:from-[#d4af37] hover:to-[#b8860b] text-white text-sm font-black rounded-xl shadow-md ${actionBtnClass}`}
+                  >
+                    {reserveButtonLabel}
+                  </button>
+                  {reserveButtonHint && (
+                    <p className="text-[11px] text-center text-[#6e634c] leading-relaxed px-1">
+                      {reserveButtonHint}
+                    </p>
+                  )}
+                </>
               )}
               <div className="grid grid-cols-2 gap-2">
                 {onToggleCart && (
@@ -201,15 +210,7 @@ export default function DressDetailsModal({
                   </button>
                 )}
               </div>
-              {onCoordinate && (
-                <button
-                  type="button"
-                  onClick={onCoordinate}
-                  className={`w-full py-2.5 border-2 border-[#decfa8] bg-white text-[#8b6508] text-xs font-bold rounded-xl ${actionBtnClass}`}
-                >
-                  📅 תיאום עם המשכירה
-                </button>
-              )}
+
               {(onRate || onShare) && (
                 <div className="grid grid-cols-2 gap-2">
                   {onRate && (

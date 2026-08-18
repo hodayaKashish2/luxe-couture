@@ -747,7 +747,7 @@ function AccountPageContent() {
     }
     if (confirmedOwnerBookingsCount > 0) {
       parts.push(
-        `${confirmedOwnerBookingsCount} שריון${confirmedOwnerBookingsCount === 1 ? '' : 'ות'} מאושר${confirmedOwnerBookingsCount === 1 ? '' : 'ים'}`
+        `${confirmedOwnerBookingsCount} הזמנ${confirmedOwnerBookingsCount === 1 ? 'ה מאושרת' : 'ות מאושרות'}`
       );
     }
     return parts.join(' · ');
@@ -1409,16 +1409,6 @@ function AccountPageContent() {
             setDetailsReturnDressId(dressId, 'account', section);
             closeDetailsDress();
             router.push(`/?reserve=${encodeURIComponent(dressId)}`);
-          }}
-          onCoordinate={() => {
-            const dressId = detailsDress.id;
-            if (isOwnDressForUser(detailsDress)) {
-              setOwnDressNotice({ dressName: detailsDress.name, variant: 'coordinate' });
-              return;
-            }
-            setDetailsReturnDressId(dressId, 'account', section);
-            closeDetailsDress();
-            router.push(`/?coordinate=${encodeURIComponent(dressId)}`);
           }}
           onRate={() => tryRateDress(detailsDress)}
           onShare={() => {

@@ -29,31 +29,44 @@ export const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP || '972534201133
 
 export const WHATSAPP_LINK = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent('היי, אשמח לפרטים על שמלה מהאתר')}`;
 
+export const PRODUCTION_SITE_URL = 'https://dress-click.co.il';
+
 /** כתובת ציבורית של האתר — בדפדפן משתמשים ב-origin הנוכחי */
 export function getServerAppUrl(): string {
   const configured = process.env.NEXT_PUBLIC_APP_URL?.trim();
   if (configured) {
-    return configured.replace(/\/$/, '');
+    const normalized = configured.replace(/\/$/, '');
+    if (normalized.includes('localhost') || normalized.includes('127.0.0.1')) {
+      return normalized;
+    }
+    if (!normalized.includes('.vercel.app')) {
+      return normalized;
+    }
   }
 
-  const vercelHost =
-    process.env.NEXT_PUBLIC_VERCEL_URL?.trim() ||
-    process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim() ||
-    process.env.VERCEL_URL?.trim();
-
-  if (vercelHost) {
-    const host = vercelHost.replace(/^https?:\/\//, '').replace(/\/$/, '');
-    return `https://${host}`;
-  }
-
-  return 'https://dress-click.co.il';
+  return PRODUCTION_SITE_URL;
 }
 
 export function getPublicAppUrl() {
   if (typeof window !== 'undefined' && window.location?.origin) {
-    return window.location.origin.replace(/\/$/, '');
+    const origin = window.location.origin.replace(/\/$/, '');
+    if (!origin.includes('.vercel.app')) {
+      return origin;
+    }
   }
   return getServerAppUrl();
+}
+
+export function accountReservationsUrl() {
+  return `${getServerAppUrl()}/account?section=reservations`;
+}
+
+export function accountRentalsUrl() {
+  return `${getServerAppUrl()}/account?section=rentals`;
+}
+
+export function completeBookingUrl(bookingId: number | string) {
+  return `${getServerAppUrl()}/?completeBooking=${bookingId}`;
 }
 
 export function dressShareUrl(dressName: string, dressId: string) {

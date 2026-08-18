@@ -5,7 +5,7 @@ import {
   ownerReminderDue,
   ownerResponseExpired,
 } from '@/lib/booking-owner-deadlines';
-import { getServerAppUrl } from '@/lib/site-config';
+import { getServerAppUrl, accountRentalsUrl, completeBookingUrl } from '@/lib/site-config';
 import {
   sendBookingOwnerApprovedEmail,
   sendBookingOwnerRejectedEmail,
@@ -82,7 +82,7 @@ export async function processBookingOwnerDeadlines(supabase: SupabaseAdmin) {
             dressName,
             customerName: booking.customer_name,
             eventDate: booking.event_date,
-            accountUrl: `${getServerAppUrl()}/account?section=rentals`,
+            accountUrl: accountRentalsUrl(),
           });
         }
       }
@@ -137,7 +137,7 @@ export async function notifyOwnerOfBookingRequest(
   if (!dress) return;
 
   const owner = await resolveOwnerContact(supabase, dress);
-  const accountUrl = `${getServerAppUrl()}/account?section=rentals`;
+  const accountUrl = accountRentalsUrl();
 
   if (owner.email) {
     await sendBookingOwnerRequestEmail({
@@ -248,7 +248,7 @@ export async function approveBookingByOwner(
 
   const dress = await fetchDressMeta(supabase, booking.dress_id);
   const dressName = dress?.name || 'שמלה';
-  const payUrl = `${getServerAppUrl()}/?completeBooking=${bookingId}`;
+  const payUrl = completeBookingUrl(bookingId);
 
   await sendBookingOwnerApprovedEmail({
     to: booking.customer_email,

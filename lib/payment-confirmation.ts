@@ -1,10 +1,12 @@
 import {
   sendAdminEmail,
+  sendBookingConfirmedOwnerEmail,
   sendPaymentConfirmationEmail,
   sendPaymentReportedAdminEmail,
   sendPaymentReportedCustomerEmail,
 } from '@/lib/email';
 import { FEATURED_REWARD_DAYS, extendFeaturedUntil } from '@/lib/dress-ranking';
+import { dressRowToNotify, resolveOwnerContact } from '@/lib/dress-approval-notify';
 import { getSupabaseAdmin } from '@/lib/supabase/server';
 
 type SupabaseAdmin = ReturnType<typeof getSupabaseAdmin>;
@@ -159,7 +161,7 @@ export async function confirmBookingPayment(
 
   const { data: dress } = await supabase
     .from('dresses')
-    .select('name, owner_name, rental_count, featured_until')
+    .select('name, owner_name, rental_count, featured_until, owner_phone, owner_email, submitter_user_id')
     .eq('id', booking.dress_id)
     .maybeSingle();
 
@@ -231,6 +233,24 @@ export async function confirmBookingPayment(
     });
     if (!customerMail.success) {
       console.error('Customer payment confirmation email failed:', customerMail.error);
+    }
+  }
+
+  if (dress) {
+    const owner = await resolveOwnerContact(supabase, dressRowToNotify(dress as Record<string, unknown>));
+    if (owner.email) {
+      const ownerMail = await sendBookingConfirmedOwnerEmail({
+        to: owner.email,
+        ownerName: owner.name,
+        dressName: dress.name || 'שמלה',
+        customerName: booking.customer_name,
+        customerPhone: booking.customer_phone,
+        eventDate: booking.event_date,
+        amount: Number(booking.amount_total),
+      });
+      if (!ownerMail.success) {
+        console.error('Owner payment confirmation email failed:', ownerMail.error);
+      }
     }
   }
 
