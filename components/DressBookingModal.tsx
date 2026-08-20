@@ -280,10 +280,13 @@ export default function DressBookingModal({
             </>
           )}
           <DressImageFill
-            src={dress.images[modalImageIndex] || dress.images[0]}
+            src={dress.images[modalImageIndex] || dress.images[0] || ''}
             alt={dress.name}
             className="absolute inset-0 h-full w-full"
           />
+          {!dress.images.length && (
+            <div className="absolute inset-0 flex items-center justify-center text-5xl text-[#decfa8]">👗</div>
+          )}
         </div>
 
         <div className="w-full md:w-1/2 p-6 flex flex-col justify-between overflow-y-auto bg-gradient-to-b from-[#fffdf9] to-[#faf6eb]">

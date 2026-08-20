@@ -13,6 +13,7 @@ import { cancelCompetingSlotBookings } from '@/lib/booking-slot-guard';
 import { getServerAppUrl, accountRentalsUrl, completeBookingUrl } from '@/lib/site-config';
 import {
   sendBookingOwnerApprovedEmail,
+  sendBookingOwnerApprovedAdminEmail,
   sendBookingOwnerRejectedEmail,
   sendBookingOwnerReminderEmail,
   sendBookingOwnerRequestEmail,
@@ -180,7 +181,7 @@ export async function approveBookingByOwner(
   const { data: booking, error } = await supabase
     .from('bookings')
     .select(
-      'id, dress_id, customer_name, customer_email, event_date, status, amount_total'
+      'id, dress_id, customer_name, customer_phone, customer_email, event_date, status, amount_total'
     )
     .eq('id', bookingId)
     .maybeSingle();
@@ -252,6 +253,16 @@ export async function approveBookingByOwner(
     eventDate: booking.event_date,
     amount: Number(booking.amount_total || 0),
     payUrl,
+  });
+
+  await sendBookingOwnerApprovedAdminEmail({
+    bookingId,
+    dressName,
+    customerName: booking.customer_name,
+    customerPhone: booking.customer_phone || '',
+    customerEmail: booking.customer_email,
+    eventDate: booking.event_date,
+    amount: Number(booking.amount_total || 0),
   });
 
   return { success: true as const, dressName };

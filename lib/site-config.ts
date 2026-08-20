@@ -66,7 +66,7 @@ export function accountRentalsUrl() {
 }
 
 export function completeBookingUrl(bookingId: number | string) {
-  return `${getServerAppUrl()}/?completeBooking=${bookingId}`;
+  return `${getServerAppUrl()}/account?section=reservations&completeBooking=${bookingId}`;
 }
 
 export function dressShareUrl(dressName: string, dressId: string) {

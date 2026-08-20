@@ -475,6 +475,44 @@ export async function sendBookingOwnerApprovedEmail(params: {
   return sendBookingPendingEmail({ ...params, payUrl: params.payUrl });
 }
 
+export async function sendBookingOwnerApprovedAdminEmail(params: {
+  bookingId: number;
+  dressName: string;
+  customerName: string;
+  customerPhone: string;
+  customerEmail: string;
+  eventDate: string;
+  amount: number;
+}) {
+  const adminPanelUrl = `${getAppUrl()}/admin`;
+  const reservationsUrl = accountReservationsUrl();
+
+  return sendAdminEmail(
+    `✅ המשכירה אישרה — ממתין לתשלום: ${params.dressName}`,
+    `
+      <div dir="rtl" style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px;border:1px solid #eadaaf;border-radius:16px;background:#fffdf8;">
+        <h2 style="color:#3d2f24;margin-top:0;">המשכירה אישרה בקשת שריון</h2>
+        <p style="line-height:1.7;color:#554a33;">השוכרת קיבלה מייל עם קישור לתשלום. ההזמנה ממתינה לתשלום מהשוכרת.</p>
+        <div style="margin:16px 0;padding:14px 16px;background:#faf6eb;border-radius:12px;border:1px solid #eadaaf;">
+          <p style="margin:0 0 8px;"><strong>מס׳ הזמנה:</strong> ${params.bookingId}</p>
+          <p style="margin:0 0 8px;"><strong>שמלה:</strong> ${escapeHtml(params.dressName)}</p>
+          <p style="margin:0 0 8px;"><strong>תאריך אירוע:</strong> ${escapeHtml(params.eventDate)}</p>
+          <p style="margin:0 0 8px;"><strong>שוכרת:</strong> ${escapeHtml(params.customerName)}</p>
+          <p style="margin:0 0 8px;"><strong>טלפון:</strong> <span dir="ltr">${escapeHtml(params.customerPhone)}</span></p>
+          <p style="margin:0 0 8px;"><strong>אימייל:</strong> ${escapeHtml(params.customerEmail)}</p>
+          <p style="margin:0;"><strong>סכום:</strong> ₪${params.amount}</p>
+        </div>
+        <p style="margin-top:24px;">
+          <a href="${adminPanelUrl}" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
+            לפאנל הניהול →
+          </a>
+        </p>
+        <p style="font-size:12px;color:#9a7b4f;margin-top:12px;">קישור מעקב: <a href="${reservationsUrl}">${reservationsUrl}</a></p>
+      </div>
+    `
+  );
+}
+
 export async function sendBookingOwnerRejectedEmail(params: {
   to: string;
   customerName: string;

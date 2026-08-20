@@ -320,70 +320,10 @@ export default function Home() {
     const bookingIdParam = params.get('completeBooking');
     if (!bookingIdParam) return;
 
-    const bookingId = Number(bookingIdParam);
-    if (!Number.isFinite(bookingId) || bookingId <= 0) return;
-
-    let cancelled = false;
-
-    async function resumePayment() {
-      try {
-        setBookingReturnAccount('reservations');
-        const token = sessionStorage.getItem('site_token');
-        const response = await fetch(`/api/bookings?bookingId=${bookingId}`, {
-          headers: token ? { 'x-user-token': token } : {},
-        });
-        const data = await response.json();
-        if (cancelled) return;
-        if (data.cancelled || response.status === 410) {
-          setToast({
-            message: data.error || data.reason || 'הבקשה בוטלה — התאריך כבר לא זמין.',
-            variant: 'error',
-          });
-          return;
-        }
-        if (!response.ok || !data.success || !data.booking?.canPay) {
-          if (data.booking?.awaitingOwner) {
-            setToast({
-              message: 'הבקשה עדיין ממתינה לאישור המשכירה — נשלח אלייך מייל כשתוכלי לשלם.',
-              variant: 'error',
-            });
-          } else {
-            setToast({ message: data.error || 'לא ניתן להשלים תשלום כרגע', variant: 'error' });
-          }
-          return;
-        }
-
-        let dress = findDressInList(dressesList, String(data.booking.dressId));
-        if (!dress) dress = await fetchDressById(String(data.booking.dressId));
-        if (cancelled || !dress) {
-          setToast({ message: 'השמלה לא נמצאה בקטלוג', variant: 'error' });
-          return;
-        }
-
-        setOwnerApprovalStep(null);
-        setSelectedDress(dress);
-        setOrderDate(data.booking.eventDate || '');
-        setPaymentStep({
-          bookingId: data.booking.id,
-          amount: data.booking.amount,
-          platformFee: data.booking.platformFee,
-          ownerPayout: data.booking.ownerPayout,
-          ownerApproved: true,
-        });
-      } catch {
-        if (!cancelled) setToast({ message: 'תקלה בטעינת ההזמנה', variant: 'error' });
-      }
-    }
-
-    void resumePayment();
-    params.delete('completeBooking');
-    const next = params.toString() ? `/?${params}` : '/';
-    window.history.replaceState(null, '', next);
-
-    return () => {
-      cancelled = true;
-    };
-  }, [dressesList]);
+    router.replace(`/account?section=reservations&completeBooking=${encodeURIComponent(bookingIdParam)}`, {
+      scroll: false,
+    });
+  }, [router]);
 
   // טעינת שמלות ותגובות
   useEffect(() => {

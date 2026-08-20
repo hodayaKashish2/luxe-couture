@@ -24,8 +24,9 @@ import { BOOKING_UPDATED_EVENT, notifyBookingUpdated } from '@/lib/booking-event
 import { getStoredSiteUser } from '@/lib/session-user';
 import { dressBelongsToCustomer } from '@/lib/self-dress-guard';
 import { consumeDetailsReturnDressId, setDetailsReturnDressId } from '@/lib/details-return';
-import { notifySiteAuthChange } from '@/lib/site-auth-events';
+import { SITE_AUTH_EVENT, notifySiteAuthChange } from '@/lib/site-auth-events';
 import { accountSectionUrl, parseAccountSection } from '@/lib/account-section-url';
+import { dressFromBookingPayload } from '@/lib/booking-dress';
 import { navigateAccountHub } from '@/lib/account-hub-nav';
 import { ownerWhatsAppLink } from '@/lib/site-config';
 import {
@@ -139,6 +140,10 @@ function AccountPageContent() {
   const [showRemovedReservations, setShowRemovedReservations] = useState(false);
   const [loading, setLoading] = useState(true);
   const [dataReady, setDataReady] = useState(false);
+  const [hasSession, setHasSession] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return Boolean(sessionStorage.getItem('site_token'));
+  });
   const [addFiles, setAddFiles] = useState<File[]>([]);
   const [addImagePreviews, setAddImagePreviews] = useState<string[]>([]);
   const addFileInputRef = useRef<HTMLInputElement>(null);
@@ -181,6 +186,7 @@ function AccountPageContent() {
   const editDressLoadRef = useRef<string | null>(null);
   const editDraftTouchedRef = useRef(false);
   const editLoadedDressIdRef = useRef<string | null>(null);
+  const completeBookingHandledRef = useRef<number | null>(null);
 
   function touchEditDraft() {
     editDraftTouchedRef.current = true;
@@ -266,45 +272,53 @@ function AccountPageContent() {
 
   const load = useCallback(async (opts?: { silent?: boolean }) => {
     const token = sessionStorage.getItem('site_token');
+    setHasSession(Boolean(token));
     if (!token) {
       setLoading(false);
       setDataReady(false);
       setUser(null);
       return;
     }
-    if (!opts?.silent) setLoading(true);
+    if (!opts?.silent) {
+      setLoading(true);
+      setDataReady(false);
+    }
     const stored = sessionStorage.getItem('site_user');
     if (stored) setUser(JSON.parse(stored));
 
-    const res = await fetch('/api/user/dashboard', {
-      headers: { 'x-user-token': token },
-      cache: 'no-store',
-    });
-    const data = await res.json();
-    if (res.status === 401) {
-      sessionStorage.removeItem('site_token');
-      sessionStorage.removeItem('site_user');
-      setUser(null);
-      setDataReady(false);
-      router.replace('/', { scroll: false });
-      return;
-    }
-    if (res.ok) {
-      setDresses(data.rentals?.dresses || []);
-      setOwnerBookings(data.rentals?.bookings || []);
-      setReservations(data.reservations || []);
-      if (data.user) {
-        setUser({
-          displayName: data.user.displayName,
-          username: data.user.username,
-          phone: data.user.phone || '',
-          email: data.user.email || '',
-        });
-        sessionStorage.setItem('site_user', JSON.stringify(data.user));
+    try {
+      const res = await fetch('/api/user/dashboard', {
+        headers: { 'x-user-token': token },
+        cache: 'no-store',
+      });
+      const data = await res.json();
+      if (res.status === 401) {
+        sessionStorage.removeItem('site_token');
+        sessionStorage.removeItem('site_user');
+        setHasSession(false);
+        setUser(null);
+        setDataReady(false);
+        router.replace('/', { scroll: false });
+        return;
       }
+      if (res.ok) {
+        setDresses(data.rentals?.dresses || []);
+        setOwnerBookings(data.rentals?.bookings || []);
+        setReservations(data.reservations || []);
+        if (data.user) {
+          setUser({
+            displayName: data.user.displayName,
+            username: data.user.username,
+            phone: data.user.phone || '',
+            email: data.user.email || '',
+          });
+          sessionStorage.setItem('site_user', JSON.stringify(data.user));
+        }
+      }
+    } finally {
       setDataReady(true);
+      setLoading(false);
     }
-    setLoading(false);
   }, [router]);
 
   useEffect(() => {
@@ -338,11 +352,18 @@ function AccountPageContent() {
     }
   }, [section]);
 
+  const prevSectionRef = useRef(section);
+
   useEffect(() => {
-    load();
+    void load();
     const onBookingUpdate = () => load({ silent: true });
+    const onAuth = () => {
+      setHasSession(Boolean(sessionStorage.getItem('site_token')));
+      void load();
+    };
     const onFocus = () => load({ silent: true });
     window.addEventListener(BOOKING_UPDATED_EVENT, onBookingUpdate);
+    window.addEventListener(SITE_AUTH_EVENT, onAuth);
     window.addEventListener('focus', onFocus);
     const onVisibility = () => {
       if (document.visibilityState === 'visible') load({ silent: true });
@@ -350,14 +371,17 @@ function AccountPageContent() {
     document.addEventListener('visibilitychange', onVisibility);
     return () => {
       window.removeEventListener(BOOKING_UPDATED_EVENT, onBookingUpdate);
+      window.removeEventListener(SITE_AUTH_EVENT, onAuth);
       window.removeEventListener('focus', onFocus);
       document.removeEventListener('visibilitychange', onVisibility);
     };
   }, [load]);
 
   useEffect(() => {
+    if (prevSectionRef.current === section) return;
+    prevSectionRef.current = section;
     if (section === 'reservations' || section === 'rentals') {
-      load({ silent: true });
+      void load({ silent: true });
     }
   }, [section, load]);
 
@@ -807,6 +831,68 @@ function AccountPageContent() {
     setRateDress(dress);
   }
 
+  const openPaymentForBookingId = useCallback(async (bookingId: number) => {
+    const token = sessionStorage.getItem('site_token');
+    if (!token) return false;
+
+    try {
+      const response = await fetch(`/api/bookings?bookingId=${bookingId}`, {
+        headers: { 'x-user-token': token },
+      });
+      const data = await response.json();
+      if (data.cancelled || response.status === 410) {
+        setToast({
+          message: data.error || data.reason || 'הבקשה בוטלה — התאריך כבר לא זמין.',
+          variant: 'error',
+        });
+        return true;
+      }
+      if (!response.ok || !data.success || !data.booking?.canPay) {
+        if (data.booking?.awaitingOwner) {
+          setToast({
+            message: 'הבקשה עדיין ממתינה לאישור המשכירה — נשלח אלייך מייל כשתוכלי לשלם.',
+            variant: 'error',
+          });
+        } else {
+          setToast({ message: data.error || 'לא ניתן להשלים תשלום כרגע', variant: 'error' });
+        }
+        return true;
+      }
+
+      setDetailsDress(null);
+      setAccountBookingDress(dressFromBookingPayload(data.booking));
+      setAccountBookingResume({
+        eventDate: data.booking.eventDate,
+        payment: {
+          bookingId: data.booking.id,
+          amount: data.booking.amount,
+          platformFee: data.booking.platformFee,
+          ownerPayout: data.booking.ownerPayout,
+          ownerApproved: true,
+        },
+      });
+      return true;
+    } catch {
+      setToast({ message: 'תקלה בטעינת ההזמנה', variant: 'error' });
+      return true;
+    }
+  }, []);
+
+  useEffect(() => {
+    const param = searchParams.get('completeBooking');
+    if (!param || section !== 'reservations') return;
+
+    const bookingId = Number(param);
+    if (!Number.isFinite(bookingId) || bookingId <= 0) return;
+    if (completeBookingHandledRef.current === bookingId) return;
+    if (!sessionStorage.getItem('site_token')) return;
+
+    completeBookingHandledRef.current = bookingId;
+    void openPaymentForBookingId(bookingId).then(() => {
+      router.replace(accountSectionUrl('reservations'), { scroll: false });
+    });
+  }, [searchParams, section, openPaymentForBookingId, router, dataReady]);
+
   const fetchActiveBookingForDress = useCallback(async (dressId: string) => {
     try {
       const token = sessionStorage.getItem('site_token');
@@ -1002,8 +1088,10 @@ function AccountPageContent() {
         {section === 'reservations' && (
           <div className="space-y-6">
             <h2 className="font-black text-xl">📅 ההזמנות שלי</h2>
-            {loading ? (
-              <p className="text-sm text-[#6e634c] animate-pulse">טוען שמלות...</p>
+            {!hasSession ? (
+              <p className="text-sm text-[#6e634c] animate-pulse">מתחברת...</p>
+            ) : !dataReady ? (
+              <p className="text-sm text-[#6e634c] animate-pulse">טוען הזמנות...</p>
             ) : upcomingReservations.length === 0 && pastReservations.length === 0 && removedReservations.length === 0 ? (
               <div className="bg-white rounded-2xl border border-[#eadaaf] p-8 text-center">
                 <p className="text-sm text-[#6e634c]">עדיין אין הזמנות. מצאי שמלה בקטלוג ושלחי בקשת שריון!</p>
@@ -1052,12 +1140,13 @@ function AccountPageContent() {
                               </p>
                             ) : null;
                           })()}
-                          <Link
-                            href={`/?completeBooking=${r.id}`}
+                          <button
+                            type="button"
+                            onClick={() => void openPaymentForBookingId(r.id)}
                             className="inline-block mt-3 px-4 py-2.5 bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white text-xs font-black rounded-xl shadow-md"
                           >
                             💳 השלימי תשלום עכשיו
-                          </Link>
+                          </button>
                         </>
                       )}
                       {(r.owner_name || r.owner_phone) && r.status !== 'cancelled' && (
@@ -1211,7 +1300,7 @@ function AccountPageContent() {
           <OwnerDressesPanel
             dresses={dresses}
             ownerBookings={ownerBookings}
-            loading={loading}
+            loading={!hasSession || !dataReady}
             onAddDress={() => navigateToSection('add')}
             onEditDress={startEditDress}
             onRefresh={() => load({ silent: true })}

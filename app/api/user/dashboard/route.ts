@@ -9,7 +9,6 @@ import {
   shouldShowRemovedDress,
 } from '@/lib/retention';
 import { mapOwnedDressForEdit } from '@/lib/dress-pending-update';
-import { processAllBookingLifecycle } from '@/lib/booking-lifecycle';
 import { todayDateString } from '@/lib/booking-dates';
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server';
 
@@ -29,7 +28,6 @@ export async function GET(request: Request) {
 
   try {
     const supabase = getSupabaseAdmin();
-    await processAllBookingLifecycle(supabase);
 
     const { data: allDresses, error: dressesError } = await supabase
       .from('dresses')

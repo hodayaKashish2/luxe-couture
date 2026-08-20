@@ -33,6 +33,43 @@ function isSchemaError(message: string) {
   );
 }
 
+function mapBookingResponse(
+  booking: Record<string, unknown>,
+  dress: Record<string, unknown> | null | undefined
+) {
+  const images = dress?.images;
+  return {
+    id: booking.id,
+    dressId: booking.dress_id,
+    dressName: dress?.name || '',
+    dressPrice: Number(dress?.price || booking.amount_total || 0),
+    dressSize: dress?.size || '',
+    dressCity: dress?.city || '',
+    dressColor: dress?.color || '',
+    dressImages: Array.isArray(images) ? images : [],
+    status: booking.status,
+    amount: Number(booking.amount_total || 0),
+    platformFee: Number(booking.platform_fee || 0),
+    ownerPayout: Number(booking.owner_payout || 0),
+    eventDate: booking.event_date,
+    canPay: booking.status === 'pending_payment',
+    awaitingOwner: booking.status === 'pending_owner_approval',
+    awaitingAdmin: booking.status === 'awaiting_admin_approval',
+  };
+}
+
+async function fetchDressForBooking(
+  supabase: ReturnType<typeof getSupabaseAdmin>,
+  dressId: number | string
+) {
+  const { data: dress } = await supabase
+    .from('dresses')
+    .select('name, price, size, city, color, images')
+    .eq('id', dressId)
+    .maybeSingle();
+  return dress as Record<string, unknown> | null;
+}
+
 function shouldOmitSiteUserId(message: string) {
   const m = message.toLowerCase();
   return (
@@ -534,28 +571,11 @@ export async function GET(request: Request) {
         return NextResponse.json({ success: true, booking: null });
       }
 
-      const { data: dress } = await supabase
-        .from('dresses')
-        .select('name, price')
-        .eq('id', booking.dress_id)
-        .maybeSingle();
+      const dress = await fetchDressForBooking(supabase, booking.dress_id);
 
       return NextResponse.json({
         success: true,
-        booking: {
-          id: booking.id,
-          dressId: booking.dress_id,
-          dressName: dress?.name || '',
-          dressPrice: Number(dress?.price || booking.amount_total || 0),
-          status: booking.status,
-          amount: Number(booking.amount_total || 0),
-          platformFee: Number(booking.platform_fee || 0),
-          ownerPayout: Number(booking.owner_payout || 0),
-          eventDate: booking.event_date,
-          canPay: booking.status === 'pending_payment',
-          awaitingOwner: booking.status === 'pending_owner_approval',
-          awaitingAdmin: booking.status === 'awaiting_admin_approval',
-        },
+        booking: mapBookingResponse(booking, dress),
       });
     }
 
@@ -587,28 +607,11 @@ export async function GET(request: Request) {
         return NextResponse.json({ success: true, booking: null });
       }
 
-      const { data: dress } = await supabase
-        .from('dresses')
-        .select('name, price')
-        .eq('id', booking.dress_id)
-        .maybeSingle();
+      const dress = await fetchDressForBooking(supabase, booking.dress_id);
 
       return NextResponse.json({
         success: true,
-        booking: {
-          id: booking.id,
-          dressId: booking.dress_id,
-          dressName: dress?.name || '',
-          dressPrice: Number(dress?.price || booking.amount_total || 0),
-          status: booking.status,
-          amount: Number(booking.amount_total || 0),
-          platformFee: Number(booking.platform_fee || 0),
-          ownerPayout: Number(booking.owner_payout || 0),
-          eventDate: booking.event_date,
-          canPay: booking.status === 'pending_payment',
-          awaitingOwner: booking.status === 'pending_owner_approval',
-          awaitingAdmin: booking.status === 'awaiting_admin_approval',
-        },
+        booking: mapBookingResponse(booking, dress),
       });
     }
 
@@ -646,27 +649,11 @@ export async function GET(request: Request) {
       );
     }
 
-    const { data: dress } = await supabase
-      .from('dresses')
-      .select('name, price')
-      .eq('id', booking.dress_id)
-      .maybeSingle();
+    const dress = await fetchDressForBooking(supabase, booking.dress_id);
 
     return NextResponse.json({
       success: true,
-      booking: {
-        id: booking.id,
-        dressId: booking.dress_id,
-        dressName: dress?.name || '',
-        dressPrice: Number(dress?.price || booking.amount_total || 0),
-        status: booking.status,
-        amount: Number(booking.amount_total || 0),
-        platformFee: Number(booking.platform_fee || 0),
-        ownerPayout: Number(booking.owner_payout || 0),
-        eventDate: booking.event_date,
-        canPay: booking.status === 'pending_payment',
-        awaitingOwner: booking.status === 'pending_owner_approval',
-      },
+      booking: mapBookingResponse(booking, dress),
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'שגיאה';
