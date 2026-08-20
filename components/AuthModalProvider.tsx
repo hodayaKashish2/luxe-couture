@@ -114,6 +114,9 @@ function AuthModalProviderInner({ children }: { children: ReactNode }) {
 
   const closeAuthModal = useCallback(() => {
     markAuthDismissed();
+    const onAccount = window.location.pathname.startsWith('/account');
+    const hasToken = Boolean(sessionStorage.getItem('site_token'));
+
     if (hasAuthInUrl(searchParams)) {
       const cleaned = stripAuthParams(
         `${window.location.pathname}${window.location.search}`
@@ -121,6 +124,10 @@ function AuthModalProviderInner({ children }: { children: ReactNode }) {
       router.replace(cleaned, { scroll: false });
     }
     resetAuthModalState();
+
+    if (onAccount && !hasToken) {
+      router.replace('/', { scroll: false });
+    }
   }, [router, searchParams, resetAuthModalState]);
 
   const finishAuth = useCallback(() => {

@@ -7,6 +7,18 @@ export function isPastDate(date: string): boolean {
   return date < todayDateString();
 }
 
+export function isUpcomingEventDate(eventDate: string, today = todayDateString()): boolean {
+  if (!eventDate) return false;
+  return eventDate >= today;
+}
+
+export function countUpcomingConfirmed<T extends { event_date: string; status: string }>(
+  bookings: T[],
+  today = todayDateString()
+): number {
+  return bookings.filter((b) => b.status === 'confirmed' && b.event_date >= today).length;
+}
+
 /** מפריד הזמנות עתידיות/היום מול היסטוריה (עד 30 יום אחורה) */
 export function splitBookingsByEventDate<T extends { event_date: string }>(
   bookings: T[],

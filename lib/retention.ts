@@ -2,6 +2,12 @@ import { todayDateString } from '@/lib/booking-dates';
 
 export const RETENTION_DAYS = 30;
 
+/** הודעה בקטע «הזמנות שהאירוע שלהן עבר» */
+export const BOOKINGS_PAST_RETENTION_NOTE =
+  'מוצגות כאן רק הזמנות שהאירוע שלהן כבר עבר, מהחודש האחרון. הזמנות ישנות יותר מוסרות מהתצוגה אוטומטית.';
+
+export const BOOKINGS_PAST_SECTION_TITLE = 'הזמנות שהאירוע שלהן עבר';
+
 export function retentionCutoffDateString(today = todayDateString()): string {
   const date = new Date(`${today}T12:00:00`);
   date.setDate(date.getDate() - RETENTION_DAYS);

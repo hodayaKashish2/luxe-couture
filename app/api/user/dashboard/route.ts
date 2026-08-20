@@ -10,6 +10,7 @@ import {
 } from '@/lib/retention';
 import { mapOwnedDressForEdit } from '@/lib/dress-pending-update';
 import { processAllBookingLifecycle } from '@/lib/booking-lifecycle';
+import { todayDateString } from '@/lib/booking-dates';
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server';
 
 function emailsMatch(a: string, b: string) {
@@ -231,12 +232,18 @@ export async function GET(request: Request) {
       rentals: {
         dresses: myDresses.map((d) => {
           const mapped = mapOwnedDressForEdit(d as Record<string, unknown>);
+          const today = todayDateString();
           return {
             ...mapped,
             featured_boost: Number(d.featured_boost || 0),
             featured_until: d.featured_until || null,
             booked_dates: ownerBookings
-              .filter((b) => String(b.dress_id) === String(d.id) && b.status === 'confirmed')
+              .filter(
+                (b) =>
+                  String(b.dress_id) === String(d.id) &&
+                  b.status === 'confirmed' &&
+                  String(b.event_date) >= today
+              )
               .map((b) => b.event_date),
           };
         }),

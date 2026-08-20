@@ -88,6 +88,12 @@ export function isTopModal(entry: ModalHistoryEntry): boolean {
   return entriesMatch(top, entry);
 }
 
+export function resetModalStack() {
+  if (typeof window === 'undefined') return;
+  window.history.replaceState({ modalStack: [] }, '', window.location.href);
+  notify();
+}
+
 export function buildModalEntry(key: string, data?: Record<string, string>): ModalHistoryEntry {
   return data ? { key, data } : { key };
 }

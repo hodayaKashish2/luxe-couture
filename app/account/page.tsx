@@ -8,6 +8,8 @@ import SiteHeader from '@/components/SiteHeader';
 import SavedDressList from '@/components/SavedDressList';
 import DressDetailsModal from '@/components/DressDetailsModal';
 import DressRateModal from '@/components/DressRateModal';
+import FittingConfirmationModal from '@/components/FittingConfirmationModal';
+import DressBookingModal, { type DressBookingResume } from '@/components/DressBookingModal';
 import { useLuxeStorage } from '@/components/LuxeStorageProvider';
 import DressCalendar from '@/components/DressCalendar';
 import OwnerPlatformNotice from '@/components/OwnerPlatformNotice';
@@ -34,8 +36,13 @@ import {
 import { shareDressLink } from '@/lib/share-dress';
 import { buildEditFormFromDress, normalizeDressImages } from '@/lib/dress-pending-update';
 import { formatAccountPhone } from '@/lib/dress-ownership';
-import { splitBookingsByEventDate } from '@/lib/booking-dates';
+import { countUpcomingConfirmed, splitBookingsByEventDate } from '@/lib/booking-dates';
+import {
+  BOOKINGS_PAST_RETENTION_NOTE,
+  BOOKINGS_PAST_SECTION_TITLE,
+} from '@/lib/retention';
 import { fetchDressById, findDressInList, invalidateDressesCatalog, preloadDressesCatalog } from '@/lib/dress-api';
+import { resetModalStack } from '@/lib/modal-history';
 import { useScrollToError } from '@/hooks/use-scroll-to-error';
 import type { Dress } from '@/lib/types';
 import type { SavedDress } from '@/lib/luxe-storage';
@@ -111,6 +118,9 @@ function AccountPageContent() {
     dressName: string;
     variant: 'booking' | 'coordinate' | 'rating';
   } | null>(null);
+  const [fittingConfirm, setFittingConfirm] = useState<Dress | null>(null);
+  const [accountBookingDress, setAccountBookingDress] = useState<Dress | null>(null);
+  const [accountBookingResume, setAccountBookingResume] = useState<DressBookingResume | null>(null);
   const [user, setUser] = useState<AccountUser | null>(() => {
     const stored = getStoredSiteUser();
     if (!stored) return null;
@@ -256,7 +266,12 @@ function AccountPageContent() {
 
   const load = useCallback(async (opts?: { silent?: boolean }) => {
     const token = sessionStorage.getItem('site_token');
-    if (!token) return;
+    if (!token) {
+      setLoading(false);
+      setDataReady(false);
+      setUser(null);
+      return;
+    }
     if (!opts?.silent) setLoading(true);
     const stored = sessionStorage.getItem('site_user');
     if (stored) setUser(JSON.parse(stored));
@@ -266,6 +281,14 @@ function AccountPageContent() {
       cache: 'no-store',
     });
     const data = await res.json();
+    if (res.status === 401) {
+      sessionStorage.removeItem('site_token');
+      sessionStorage.removeItem('site_user');
+      setUser(null);
+      setDataReady(false);
+      router.replace('/', { scroll: false });
+      return;
+    }
     if (res.ok) {
       setDresses(data.rentals?.dresses || []);
       setOwnerBookings(data.rentals?.bookings || []);
@@ -282,6 +305,10 @@ function AccountPageContent() {
       setDataReady(true);
     }
     setLoading(false);
+  }, [router]);
+
+  useEffect(() => {
+    resetModalStack();
   }, []);
 
   useEffect(() => {
@@ -717,11 +744,11 @@ function AccountPageContent() {
   const pendingReservationsCount = activeReservations.filter((r) =>
     renterPendingStatuses.has(r.status)
   ).length;
-  const confirmedReservationsCount = activeReservations.filter((r) => r.status === 'confirmed').length;
+  const confirmedReservationsCount = countUpcomingConfirmed(activeReservations);
   const pendingOwnerRequestsCount = ownerBookings.filter(
     (b) => b.status === 'pending_owner_approval'
   ).length;
-  const confirmedOwnerBookingsCount = ownerBookings.filter((b) => b.status === 'confirmed').length;
+  const confirmedOwnerBookingsCount = countUpcomingConfirmed(ownerBookings);
   const ownerPipelineCount = ownerBookings.filter((b) =>
     ['pending_payment', 'awaiting_admin_approval'].includes(b.status)
   ).length;
@@ -779,6 +806,87 @@ function AccountPageContent() {
     }
     setRateDress(dress);
   }
+
+  const fetchActiveBookingForDress = useCallback(async (dressId: string) => {
+    try {
+      const token = sessionStorage.getItem('site_token');
+      const response = await fetch(`/api/bookings?dressId=${encodeURIComponent(dressId)}`, {
+        headers: token ? { 'x-user-token': token } : {},
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success || !data.booking) return null;
+      return data.booking as {
+        id: number;
+        eventDate: string;
+        amount: number;
+        platformFee: number;
+        ownerPayout: number;
+        canPay: boolean;
+        awaitingOwner: boolean;
+        awaitingAdmin: boolean;
+      };
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const openAccountBookingWithResume = useCallback(
+    (dress: Dress, booking: NonNullable<Awaited<ReturnType<typeof fetchActiveBookingForDress>>>) => {
+      setFittingConfirm(null);
+      setDetailsDress(null);
+      const resume: DressBookingResume = { eventDate: booking.eventDate };
+      if (booking.canPay) {
+        resume.payment = {
+          bookingId: booking.id,
+          amount: booking.amount,
+          platformFee: booking.platformFee,
+          ownerPayout: booking.ownerPayout,
+          ownerApproved: true,
+        };
+      } else if (booking.awaitingOwner || booking.awaitingAdmin) {
+        resume.ownerApproval = {
+          bookingId: booking.id,
+          amount: booking.amount,
+          eventDate: booking.eventDate,
+        };
+      }
+      setAccountBookingResume(resume);
+      setAccountBookingDress(dress);
+    },
+    []
+  );
+
+  const beginAccountFinalApproval = useCallback(
+    (dress: Dress) => {
+      if (isOwnDressForUser(dress)) {
+        setOwnDressNotice({ dressName: dress.name, variant: 'booking' });
+        return;
+      }
+      closeDetailsDress();
+      setFittingConfirm(dress);
+      void fetchActiveBookingForDress(dress.id).then((booking) => {
+        if (!booking) return;
+        if (booking.canPay || booking.awaitingOwner || booking.awaitingAdmin) {
+          openAccountBookingWithResume(dress, booking);
+        }
+      });
+    },
+    [closeDetailsDress, fetchActiveBookingForDress, openAccountBookingWithResume]
+  );
+
+  const confirmAccountFitting = useCallback(() => {
+    if (!fittingConfirm) return;
+    setAccountBookingDress(fittingConfirm);
+    setAccountBookingResume(null);
+    setFittingConfirm(null);
+  }, [fittingConfirm]);
+
+  const closeAccountBooking = useCallback(() => {
+    setAccountBookingDress(null);
+    setAccountBookingResume(null);
+    resetModalStack();
+    void load({ silent: true });
+  }, [load]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#fbf8f0] to-[#e8dcbd] text-[#332c1e]" dir="rtl">
@@ -1032,7 +1140,7 @@ function AccountPageContent() {
 
                 {upcomingReservations.length === 0 && pastReservations.length > 0 && (
                   <div className="bg-[#fffdf8] rounded-2xl border border-[#eadaaf] p-5 text-center">
-                    <p className="text-sm text-[#6e634c]">אין הזמנות קרובות — כל ההזמנות שלך בעבר.</p>
+                    <p className="text-sm text-[#6e634c]">אין הזמנות קרובות כרגע.</p>
                   </div>
                 )}
 
@@ -1043,9 +1151,12 @@ function AccountPageContent() {
                       onClick={() => setShowPastReservations((v) => !v)}
                       className="w-full flex items-center justify-between gap-2 px-4 py-3 text-xs font-black text-neutral-700 bg-neutral-100 hover:bg-neutral-200/80 transition-colors"
                     >
-                      <span>🗓️ שמלות שהוזמנו בעבר ({pastReservations.length})</span>
+                      <span>🗓️ {BOOKINGS_PAST_SECTION_TITLE} ({pastReservations.length})</span>
                       <span>{showPastReservations ? '▲' : '▼'}</span>
                     </button>
+                    <p className="px-4 py-3 text-[11px] text-[#6e634c] leading-relaxed border-t border-neutral-200 bg-white/60">
+                      {BOOKINGS_PAST_RETENTION_NOTE}
+                    </p>
                     {showPastReservations && (
                       <ul className="divide-y divide-neutral-200 max-h-72 overflow-y-auto">
                         {pastReservations.map((r) => (
@@ -1053,7 +1164,7 @@ function AccountPageContent() {
                             <div className="flex justify-between gap-2 flex-wrap">
                               <strong className="text-neutral-700">{r.dress_name}</strong>
                               <span className="text-[10px] bg-neutral-200 text-neutral-600 px-2 py-0.5 rounded-full">
-                                {STATUS[r.status] || r.status}
+                                {r.status === 'confirmed' ? 'הושלמה ✓' : STATUS[r.status] || r.status}
                               </span>
                             </div>
                             <p className="text-sm text-neutral-500 font-bold mt-1">📅 {r.event_date}</p>
@@ -1116,6 +1227,19 @@ function AccountPageContent() {
               onRemove={removeFromCart}
               onViewDetails={openSavedDressDetails}
               showTotal
+              actionLabel="בקשת אישור סופי"
+              onAction={async (item) => {
+                let dress = await fetchDressById(item.id);
+                if (!dress) {
+                  const list = await preloadDressesCatalog();
+                  dress = findDressInList(list, item.id);
+                }
+                if (!dress) {
+                  setToast({ message: 'לא מצאנו את השמלה — אולי הוסרה', variant: 'error' });
+                  return;
+                }
+                beginAccountFinalApproval(dress);
+              }}
             />
           </div>
         )}
@@ -1422,16 +1546,7 @@ function AccountPageContent() {
           isFavorite={isDressFavorite(detailsDress.id)}
           onToggleCart={() => toggleCart(detailsDress)}
           onToggleFavorite={() => toggleFavorite(detailsDress)}
-          onReserve={() => {
-            const dressId = detailsDress.id;
-            if (isOwnDressForUser(detailsDress)) {
-              setOwnDressNotice({ dressName: detailsDress.name, variant: 'booking' });
-              return;
-            }
-            setDetailsReturnDressId(dressId, 'account', section);
-            closeDetailsDress();
-            router.push(`/?reserve=${encodeURIComponent(dressId)}`);
-          }}
+          onReserve={() => beginAccountFinalApproval(detailsDress)}
           onCoordinate={() => {
             const dressId = detailsDress.id;
             if (isOwnDressForUser(detailsDress)) {
@@ -1460,6 +1575,28 @@ function AccountPageContent() {
             setRateDress((prev) => (prev?.id === dressId ? { ...prev, ...patch } : prev));
           }}
           showBackToDetails={!!detailsDress}
+        />
+      )}
+
+      {fittingConfirm && (
+        <FittingConfirmationModal
+          dressName={fittingConfirm.name}
+          onConfirm={confirmAccountFitting}
+          onCancel={() => setFittingConfirm(null)}
+        />
+      )}
+
+      {accountBookingDress && (
+        <DressBookingModal
+          dress={accountBookingDress}
+          resume={accountBookingResume}
+          onClose={closeAccountBooking}
+          onComplete={() => void load({ silent: true })}
+          onViewDetails={(dress) => {
+            setAccountBookingDress(null);
+            setAccountBookingResume(null);
+            setDetailsDress(dress);
+          }}
         />
       )}
 

@@ -9,7 +9,8 @@ import {
   hasActiveFeaturedBoost,
   FEATURED_REWARD_DAYS,
 } from '@/lib/dress-ranking';
-import { isPastDate, splitBookingsByEventDate } from '@/lib/booking-dates';
+import { isPastDate, splitBookingsByEventDate, todayDateString } from '@/lib/booking-dates';
+import { BOOKINGS_PAST_RETENTION_NOTE, BOOKINGS_PAST_SECTION_TITLE } from '@/lib/retention';
 import { matchesCatalogTextFilter } from '@/lib/catalog-text-filter';
 
 export type OwnerRentalDress = {
@@ -774,9 +775,12 @@ export default function OwnerDressesPanel({
             onClick={() => setShowPastBookings((v) => !v)}
             className="w-full flex items-center justify-between gap-2 px-4 py-3 text-xs font-black text-neutral-700 bg-neutral-100 hover:bg-neutral-200/80 transition-colors"
           >
-            <span>🗓️ שמלות שהושכרו בעבר ({pastOwnerBookings.length})</span>
+            <span>🗓️ {BOOKINGS_PAST_SECTION_TITLE} ({pastOwnerBookings.length})</span>
             <span>{showPastBookings ? '▲' : '▼'}</span>
           </button>
+          <p className="px-4 py-3 text-[11px] text-[#6e634c] leading-relaxed border-t border-neutral-200 bg-white/60">
+            {BOOKINGS_PAST_RETENTION_NOTE}
+          </p>
           {showPastBookings && (
             <ul className="divide-y divide-neutral-200 max-h-72 overflow-y-auto">
               {pastOwnerBookings.map((b) => (

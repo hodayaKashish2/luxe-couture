@@ -500,7 +500,10 @@ export async function GET(request: Request) {
 
   try {
     const supabase = getSupabaseAdmin();
-    await processAllBookingLifecycle(supabase);
+    const runLifecycle = url.searchParams.get('runLifecycle') === '1';
+    if (runLifecycle) {
+      await processAllBookingLifecycle(supabase);
+    }
 
     const loggedInUser = getUserFromRequest(request);
 

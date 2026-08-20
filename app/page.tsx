@@ -31,7 +31,13 @@ import { getStoredSiteUser } from '@/lib/session-user';
 import { isLoggedIn } from '@/lib/require-login';
 import { useModalHistory } from '@/hooks/use-modal-history';
 import { useScrollToError } from '@/hooks/use-scroll-to-error';
-import { popModalStackInPlace } from '@/lib/modal-history';
+import { popModalStackInPlace, resetModalStack } from '@/lib/modal-history';
+import { accountSectionUrl } from '@/lib/account-section-url';
+import {
+  consumeBookingReturnAccount,
+  peekBookingReturnAccount,
+  setBookingReturnAccount,
+} from '@/lib/booking-return';
 import { compareDresses } from '@/lib/dress-sort';
 import { getCatalogHighlights } from '@/lib/dress-ranking';
 import { dressSizeMatchesAnyFilter } from '@/lib/dress-size';
@@ -241,27 +247,43 @@ export default function Home() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const reserveId = params.get('reserve');
-    if (!reserveId || dressesList.length === 0) return;
+    if (!reserveId) return;
 
-    const dress = findDressInList(dressesList, reserveId);
-    if (!dress) return;
+    let cancelled = false;
 
-    const user = getStoredSiteUser();
-    if (
-      user &&
-      dressBelongsToCustomer(dress, {
-        phone: user.phone,
-        email: user.email,
-        userId: user.userId,
-      })
-    ) {
-      setOwnDressNotice({ dressName: dress.name, variant: 'booking' });
-    } else {
-      setPendingReserveDress(dress);
+    async function startReserve() {
+      let dress = findDressInList(dressesList, reserveId!);
+      if (!dress) dress = await fetchDressById(reserveId!);
+      if (cancelled || !dress) return;
+
+      const accountSection =
+        peekDetailsReturnAccountSection() || peekBookingReturnAccount();
+      if (accountSection) {
+        setBookingReturnAccount(accountSection);
+      }
+
+      const user = getStoredSiteUser();
+      if (
+        user &&
+        dressBelongsToCustomer(dress, {
+          phone: user.phone,
+          email: user.email,
+          userId: user.userId,
+        })
+      ) {
+        setOwnDressNotice({ dressName: dress.name, variant: 'booking' });
+      } else {
+        setPendingReserveDress(dress);
+      }
+      params.delete('reserve');
+      const next = params.toString() ? `/?${params}` : '/';
+      window.history.replaceState(null, '', next);
     }
-    params.delete('reserve');
-    const next = params.toString() ? `/?${params}` : '/';
-    window.history.replaceState(null, '', next);
+
+    void startReserve();
+    return () => {
+      cancelled = true;
+    };
   }, [dressesList]);
 
   useEffect(() => {
@@ -296,18 +318,22 @@ export default function Home() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const bookingIdParam = params.get('completeBooking');
-    if (!bookingIdParam || dressesList.length === 0) return;
+    if (!bookingIdParam) return;
 
     const bookingId = Number(bookingIdParam);
     if (!Number.isFinite(bookingId) || bookingId <= 0) return;
 
+    let cancelled = false;
+
     async function resumePayment() {
       try {
+        setBookingReturnAccount('reservations');
         const token = sessionStorage.getItem('site_token');
         const response = await fetch(`/api/bookings?bookingId=${bookingId}`, {
           headers: token ? { 'x-user-token': token } : {},
         });
         const data = await response.json();
+        if (cancelled) return;
         if (data.cancelled || response.status === 410) {
           setToast({
             message: data.error || data.reason || 'הבקשה בוטלה — התאריך כבר לא זמין.',
@@ -327,8 +353,9 @@ export default function Home() {
           return;
         }
 
-        const dress = findDressInList(dressesList, String(data.booking.dressId));
-        if (!dress) {
+        let dress = findDressInList(dressesList, String(data.booking.dressId));
+        if (!dress) dress = await fetchDressById(String(data.booking.dressId));
+        if (cancelled || !dress) {
           setToast({ message: 'השמלה לא נמצאה בקטלוג', variant: 'error' });
           return;
         }
@@ -344,7 +371,7 @@ export default function Home() {
           ownerApproved: true,
         });
       } catch {
-        setToast({ message: 'תקלה בטעינת ההזמנה', variant: 'error' });
+        if (!cancelled) setToast({ message: 'תקלה בטעינת ההזמנה', variant: 'error' });
       }
     }
 
@@ -352,6 +379,10 @@ export default function Home() {
     params.delete('completeBooking');
     const next = params.toString() ? `/?${params}` : '/';
     window.history.replaceState(null, '', next);
+
+    return () => {
+      cancelled = true;
+    };
   }, [dressesList]);
 
   // טעינת שמלות ותגובות
@@ -480,10 +511,19 @@ export default function Home() {
     setSelectedDress(null);
     setDateError('');
     setPaymentStep(null);
+    setOwnerApprovalStep(null);
     setIsOrdered(false);
     setBookingError('');
+    resetModalStack();
     restoreDetailsAfterSubModal();
-  }, [restoreDetailsAfterSubModal]);
+
+    const returnSection = consumeBookingReturnAccount();
+    if (returnSection) {
+      router.replace(accountSectionUrl(returnSection as 'cart' | 'favorites' | 'reservations'), {
+        scroll: false,
+      });
+    }
+  }, [restoreDetailsAfterSubModal, router]);
 
   const closeCoordinateModal = useCallback(() => {
     setCoordinateDress(null);
@@ -756,11 +796,11 @@ export default function Home() {
     setTimeout(() => {
       setIsOrdered(false);
       setOrderOutcome(null);
-      setSelectedDress(null);
       setOrderName('');
       setOrderPhone('');
       setOrderEmail('');
       setOrderDate('');
+      closeBookingModal();
     }, 4000);
   };
 
@@ -956,25 +996,32 @@ export default function Home() {
   }, []);
 
   const openFinalApprovalFlow = useCallback(
-    async (dress: Dress, imageIndex?: number) => {
+    (dress: Dress, imageIndex?: number) => {
       if (isOwnDress(dress)) {
         setOwnDressNotice({ dressName: dress.name, variant: 'booking' });
         return;
       }
 
-      let booking =
+      const knownBooking =
         detailsDress?.id === dress.id ? detailsDressBooking : null;
 
-      if (!booking) {
-        booking = await fetchActiveBookingForDress(dress.id);
-      }
-
-      if (booking && (booking.canPay || booking.awaitingOwner || booking.awaitingAdmin)) {
-        resumeActiveBookingFlow(dress, booking, imageIndex);
+      if (knownBooking && (knownBooking.canPay || knownBooking.awaitingOwner || knownBooking.awaitingAdmin)) {
+        resumeActiveBookingFlow(dress, knownBooking, imageIndex);
         return;
       }
 
       setFittingConfirm({ dress, imageIndex });
+
+      void fetchActiveBookingForDress(dress.id).then((booking) => {
+        if (!booking) return;
+        if (booking.canPay || booking.awaitingOwner || booking.awaitingAdmin) {
+          setFittingConfirm((current) => {
+            if (current?.dress.id !== dress.id) return current;
+            return null;
+          });
+          resumeActiveBookingFlow(dress, booking, imageIndex);
+        }
+      });
     },
     [
       detailsDress,
@@ -1108,11 +1155,11 @@ export default function Home() {
         setTimeout(() => {
           setIsOrdered(false);
           setOrderOutcome(null);
-          setSelectedDress(null);
           setOrderName('');
           setOrderPhone('');
           setOrderEmail('');
           setOrderDate('');
+          closeBookingModal();
         }, 6000);
         return;
       }
@@ -2109,10 +2156,7 @@ export default function Home() {
                   eventDate={ownerApprovalStep.eventDate}
                   amount={ownerApprovalStep.amount}
                   customerEmail={orderEmail}
-                  onBack={() => {
-                    setOwnerApprovalStep(null);
-                    setSelectedDress(null);
-                  }}
+                  onBack={closeBookingModalWithHistory}
                 />
               ) : (
                 <form onSubmit={handlePlaceOrder} className="flex flex-col gap-3">
