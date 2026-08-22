@@ -140,6 +140,7 @@ function AccountPageContent() {
   });
   const [dresses, setDresses] = useState<RentalDress[]>([]);
   const [ownerBookings, setOwnerBookings] = useState<BookingRow[]>([]);
+  const [cancelledOwnerBookings, setCancelledOwnerBookings] = useState<BookingRow[]>([]);
   const [reservations, setReservations] = useState<BookingRow[]>([]);
   const [revealedOwnerIds, setRevealedOwnerIds] = useState<Set<number>>(new Set());
   const [showPastReservations, setShowPastReservations] = useState(false);
@@ -311,6 +312,7 @@ function AccountPageContent() {
       if (res.ok) {
         setDresses(data.rentals?.dresses || []);
         setOwnerBookings(data.rentals?.bookings || []);
+        setCancelledOwnerBookings(data.rentals?.cancelledBookings || []);
         setReservations(data.reservations || []);
         if (data.user) {
           setUser({
@@ -1314,6 +1316,7 @@ function AccountPageContent() {
           <OwnerDressesPanel
             dresses={dresses}
             ownerBookings={ownerBookings}
+            cancelledOwnerBookings={cancelledOwnerBookings}
             loading={!hasSession || !dataReady}
             onAddDress={() => navigateToSection('add')}
             onEditDress={startEditDress}

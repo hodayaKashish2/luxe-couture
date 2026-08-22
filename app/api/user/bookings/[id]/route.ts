@@ -46,7 +46,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
     const { error: updateError } = await supabase
       .from('bookings')
-      .update({ status: 'cancelled' })
+      .update({
+        status: 'cancelled',
+        owner_responded_at: new Date().toISOString(),
+      })
       .eq('id', id);
 
     if (updateError) throw updateError;

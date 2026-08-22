@@ -8,6 +8,38 @@ export const BOOKINGS_PAST_RETENTION_NOTE =
 
 export const BOOKINGS_PAST_SECTION_TITLE = 'הזמנות שהאירוע שלהן עבר';
 
+/** כותרת וקטע «הזמנות שבוטלו» ב«השמלות שלי» */
+export const BOOKINGS_CANCELLED_SECTION_TITLE = 'הזמנות שבוטלו';
+
+export const BOOKINGS_CANCELLED_RETENTION_NOTE =
+  'מוצגות כאן הזמנות שבוטלו מהחודש האחרון. הזמנות ישנות יותר יוסרו מהתצוגה אוטומטית.';
+
+export function cancelledBookingReferenceDate(booking: {
+  owner_responded_at?: string | null;
+  created_at?: string | null;
+}): string {
+  const reference = booking.owner_responded_at || booking.created_at;
+  return reference ? reference.slice(0, 10) : '';
+}
+
+export function shouldShowCancelledBooking(
+  referenceDate: string,
+  today = todayDateString()
+): boolean {
+  if (!referenceDate) return false;
+  return referenceDate >= retentionCutoffDateString(today);
+}
+
+export function filterCancelledBookingsWithinRetention<
+  T extends { status?: string; owner_responded_at?: string | null; created_at?: string | null },
+>(bookings: T[], today = todayDateString()): T[] {
+  return bookings.filter(
+    (booking) =>
+      booking.status === 'cancelled' &&
+      shouldShowCancelledBooking(cancelledBookingReferenceDate(booking), today)
+  );
+}
+
 export function retentionCutoffDateString(today = todayDateString()): string {
   const date = new Date(`${today}T12:00:00`);
   date.setDate(date.getDate() - RETENTION_DAYS);

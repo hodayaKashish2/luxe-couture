@@ -4,6 +4,7 @@ import { phonesMatch } from '@/lib/owner-auth';
 import { userOwnsDress } from '@/lib/dress-ownership';
 import {
   filterBookingsWithinRetention,
+  filterCancelledBookingsWithinRetention,
   filterRemovedDressesWithinRetention,
   shouldShowBookingByEventDate,
   shouldShowRemovedDress,
@@ -43,30 +44,63 @@ export async function GET(request: Request) {
 
     const dressIds = myDresses.map((d) => d.id);
     let ownerBookings: Array<Record<string, unknown>> = [];
+    let cancelledOwnerBookings: Array<Record<string, unknown>> = [];
 
     if (dressIds.length > 0) {
-      const { data: bookingRows, error: bookingsError } = await supabase
+      const ownerStatuses = [
+        'confirmed',
+        'pending_owner_approval',
+        'pending_payment',
+        'awaiting_admin_approval',
+        'cancelled',
+      ] as const;
+
+      let bookingRows: Array<Record<string, unknown>> | null = null;
+      let bookingsError: { message: string } | null = null;
+
+      const withCancelMeta = await supabase
         .from('bookings')
-        .select('id, dress_id, customer_name, customer_phone, customer_email, event_date, status, created_at')
+        .select(
+          'id, dress_id, customer_name, customer_phone, customer_email, event_date, status, created_at, owner_responded_at, owner_reject_reason'
+        )
         .in('dress_id', dressIds)
-        .in('status', [
-          'confirmed',
-          'pending_owner_approval',
-          'pending_payment',
-          'awaiting_admin_approval',
-        ])
+        .in('status', [...ownerStatuses])
         .order('event_date', { ascending: true });
+
+      if (
+        withCancelMeta.error?.message?.includes('owner_responded_at') ||
+        withCancelMeta.error?.message?.includes('owner_reject_reason')
+      ) {
+        const fallback = await supabase
+          .from('bookings')
+          .select(
+            'id, dress_id, customer_name, customer_phone, customer_email, event_date, status, created_at'
+          )
+          .in('dress_id', dressIds)
+          .in('status', [...ownerStatuses])
+          .order('event_date', { ascending: true });
+        bookingRows = (fallback.data ?? []) as Array<Record<string, unknown>>;
+        bookingsError = fallback.error;
+      } else {
+        bookingRows = (withCancelMeta.data ?? []) as Array<Record<string, unknown>>;
+        bookingsError = withCancelMeta.error;
+      }
 
       if (bookingsError && !bookingsError.message.includes('bookings')) {
         throw bookingsError;
       }
 
       const dressNames = Object.fromEntries(myDresses.map((d) => [String(d.id), d.name]));
+      const mappedOwnerBookings = (bookingRows ?? []).map((b) => ({
+        ...b,
+        dress_name: dressNames[String(b.dress_id)] || 'שמלה',
+      }));
+
       ownerBookings = filterBookingsWithinRetention(
-        (bookingRows ?? []).map((b) => ({
-          ...b,
-          dress_name: dressNames[String(b.dress_id)] || 'שמלה',
-        }))
+        mappedOwnerBookings.filter((b) => b.status !== 'cancelled')
+      );
+      cancelledOwnerBookings = filterCancelledBookingsWithinRetention(
+        mappedOwnerBookings.filter((b) => b.status === 'cancelled')
       );
     }
 
@@ -246,6 +280,7 @@ export async function GET(request: Request) {
           };
         }),
         bookings: ownerBookings,
+        cancelledBookings: cancelledOwnerBookings,
       },
       reservations: myReservations,
     });

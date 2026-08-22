@@ -10,7 +10,12 @@ import {
   FEATURED_REWARD_DAYS,
 } from '@/lib/dress-ranking';
 import { isPastDate, splitBookingsByEventDate, todayDateString } from '@/lib/booking-dates';
-import { BOOKINGS_PAST_RETENTION_NOTE, BOOKINGS_PAST_SECTION_TITLE } from '@/lib/retention';
+import {
+  BOOKINGS_CANCELLED_RETENTION_NOTE,
+  BOOKINGS_CANCELLED_SECTION_TITLE,
+  BOOKINGS_PAST_RETENTION_NOTE,
+  BOOKINGS_PAST_SECTION_TITLE,
+} from '@/lib/retention';
 import { matchesCatalogTextFilter } from '@/lib/catalog-text-filter';
 
 export type OwnerRentalDress = {
@@ -38,6 +43,9 @@ export type OwnerBookingRow = {
   customer_phone?: string;
   event_date: string;
   status: string;
+  owner_reject_reason?: string | null;
+  owner_responded_at?: string | null;
+  created_at?: string | null;
 };
 
 const DRESS_STATUS: Record<string, string> = {
@@ -52,6 +60,7 @@ const BOOKING_STATUS: Record<string, string> = {
   pending_owner_approval: 'ממתין לאישורך',
   pending_payment: 'ממתין לתשלום',
   awaiting_admin_approval: 'ממתין לאישור תשלום',
+  cancelled: 'בוטלה',
 };
 
 const PAYMENT_PENDING_STATUSES = new Set(['pending_payment', 'awaiting_admin_approval']);
@@ -153,9 +162,17 @@ function nearestBookingDate(bookings: OwnerBookingRow[]) {
   return sorted[0]?.event_date;
 }
 
+function cancelledBookingDetail(booking: OwnerBookingRow) {
+  if (booking.owner_reject_reason?.trim()) {
+    return booking.owner_reject_reason.trim();
+  }
+  return 'בוטלה על ידי השוכרת';
+}
+
 type Props = {
   dresses: OwnerRentalDress[];
   ownerBookings: OwnerBookingRow[];
+  cancelledOwnerBookings?: OwnerBookingRow[];
   loading: boolean;
   onAddDress: () => void;
   onEditDress: (dress: OwnerRentalDress) => void;
@@ -165,6 +182,7 @@ type Props = {
 export default function OwnerDressesPanel({
   dresses,
   ownerBookings,
+  cancelledOwnerBookings = [],
   loading,
   onAddDress,
   onEditDress,
@@ -185,6 +203,7 @@ export default function OwnerDressesPanel({
   const [showUpcoming, setShowUpcoming] = useState(true);
   const [showPastBookings, setShowPastBookings] = useState(false);
   const [showPendingApproval, setShowPendingApproval] = useState(false);
+  const [showCancelledBookings, setShowCancelledBookings] = useState(false);
   const [showRemovedDresses, setShowRemovedDresses] = useState(false);
   const [showSelectedPastBookings, setShowSelectedPastBookings] = useState(false);
   const [selectedDressId, setSelectedDressId] = useState<string | null>(null);
@@ -227,6 +246,16 @@ export default function OwnerDressesPanel({
         a.event_date.localeCompare(b.event_date)
       ),
     [ownerBookings]
+  );
+
+  const cancelledBookings = useMemo(
+    () =>
+      [...cancelledOwnerBookings].sort((a, b) => {
+        const aRef = a.owner_responded_at || a.created_at || a.event_date;
+        const bRef = b.owner_responded_at || b.created_at || b.event_date;
+        return bRef.localeCompare(aRef);
+      }),
+    [cancelledOwnerBookings]
   );
 
   const filteredDresses = useMemo(() => {
@@ -760,6 +789,51 @@ export default function OwnerDressesPanel({
                     <span className="text-[9px] shrink-0 bg-amber-100 text-amber-900 px-2 py-0.5 rounded-full font-bold">
                       {BOOKING_STATUS[b.status] || b.status}
                     </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
+      {cancelledBookings.length > 0 && (
+        <div className="bg-red-50/60 rounded-2xl border border-red-200 overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setShowCancelledBookings((v) => !v)}
+            className="w-full flex items-center justify-between gap-2 px-4 py-3 text-xs font-black text-red-900 bg-red-50 hover:bg-red-100/80 transition-colors"
+          >
+            <span>✕ {BOOKINGS_CANCELLED_SECTION_TITLE} ({cancelledBookings.length})</span>
+            <span>{showCancelledBookings ? '▲' : '▼'}</span>
+          </button>
+          <p className="px-4 py-3 text-[11px] text-[#6e634c] leading-relaxed border-t border-red-100 bg-white/70">
+            {BOOKINGS_CANCELLED_RETENTION_NOTE}
+          </p>
+          {showCancelledBookings && (
+            <ul className="divide-y divide-red-100 max-h-72 overflow-y-auto">
+              {cancelledBookings.map((b) => (
+                <li key={b.id}>
+                  <button
+                    type="button"
+                    onClick={() => handleSelectDress(String(b.dress_id))}
+                    className="w-full text-right px-4 py-3 hover:bg-red-50/80 transition-colors"
+                  >
+                    <div className="flex justify-between gap-3 items-start">
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-[#3d2f24] truncate">{b.dress_name}</p>
+                        <p className="text-[10px] text-[#6e634c] mt-0.5">
+                          {formatHebrewDate(b.event_date)} · {b.customer_name || 'שוכרת'}
+                          {b.customer_phone ? ` · ${b.customer_phone}` : ''}
+                        </p>
+                        <p className="text-[10px] text-red-800/90 mt-1 leading-relaxed">
+                          {cancelledBookingDetail(b)}
+                        </p>
+                      </div>
+                      <span className="text-[9px] shrink-0 bg-red-100 text-red-900 px-2 py-0.5 rounded-full font-bold">
+                        בוטלה
+                      </span>
+                    </div>
                   </button>
                 </li>
               ))}
