@@ -513,6 +513,59 @@ export async function sendBookingOwnerApprovedAdminEmail(params: {
   );
 }
 
+export async function sendBookingCancelledByRenterEmail(params: {
+  to: string;
+  customerName: string;
+  dressName: string;
+  eventDate: string;
+}) {
+  return sendEmailTo(
+    params.to,
+    `ההזמנה בוטלה: ${params.dressName}`,
+    `
+      <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #eadaaf;border-radius:16px;background:#fffdf8;">
+        <h2 style="color:#3d2f24;margin-top:0;">שלום ${escapeHtml(params.customerName)}!</h2>
+        <p style="line-height:1.7;color:#554a33;">ההזמנה שלך לשמלה <strong>${escapeHtml(params.dressName)}</strong> לתאריך <strong>${escapeHtml(params.eventDate)}</strong> <strong>בוטלה</strong> בהצלחה.</p>
+        <div style="margin:16px 0;padding:14px 16px;border-right:4px solid #d4af37;background:#fff8e8;border-radius:10px;">
+          <p style="margin:0;line-height:1.7;color:#554a33;">התאריך שוחרר — אפשר לחפש שמלה או תאריך אחר בקטלוג.</p>
+        </div>
+        <p style="margin-top:24px;">
+          <a href="${accountReservationsUrl()}" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
+            לאזור האישי →
+          </a>
+        </p>
+      </div>
+    `
+  );
+}
+
+export async function sendBookingCancelledOwnerNoticeEmail(params: {
+  to: string;
+  ownerName: string;
+  dressName: string;
+  customerName: string;
+  eventDate: string;
+}) {
+  return sendEmailTo(
+    params.to,
+    `הזמנה בוטלה: ${params.dressName}`,
+    `
+      <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #eadaaf;border-radius:16px;background:#fffdf8;">
+        <h2 style="color:#3d2f24;margin-top:0;">שלום ${escapeHtml(params.ownerName)}!</h2>
+        <p style="line-height:1.7;color:#554a33;">השוכרת <strong>${escapeHtml(params.customerName)}</strong> ביטלה את ההזמנה לשמלה <strong>${escapeHtml(params.dressName)}</strong> לתאריך <strong>${escapeHtml(params.eventDate)}</strong>.</p>
+        <div style="margin:16px 0;padding:14px 16px;border-right:4px solid #d4af37;background:#fff8e8;border-radius:10px;">
+          <p style="margin:0;line-height:1.7;color:#554a33;">התאריך שוב פנוי לשריון — אפשר לקבל בקשות חדשות מהאתר.</p>
+        </div>
+        <p style="margin-top:24px;">
+          <a href="${accountRentalsUrl()}" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
+            ל«השמלות שלי» →
+          </a>
+        </p>
+      </div>
+    `
+  );
+}
+
 export async function sendBookingOwnerRejectedEmail(params: {
   to: string;
   customerName: string;

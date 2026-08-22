@@ -2106,7 +2106,7 @@ export default function Home() {
                   isConfirming={isConfirmingPayment}
                   ownerApproved={paymentStep.ownerApproved}
                   onConfirmPayment={handleConfirmPayment}
-                  onBack={() => setPaymentStep(null)}
+                  onBack={closeBookingModalWithHistory}
                 />
               ) : ownerApprovalStep ? (
                 <BookingOwnerApprovalStep

@@ -324,7 +324,7 @@ export default function DressBookingModal({
               isConfirming={isConfirmingPayment}
               ownerApproved={paymentStep.ownerApproved}
               onConfirmPayment={handleConfirmPayment}
-              onBack={() => setPaymentStep(null)}
+              onBack={onClose}
             />
           ) : ownerApprovalStep ? (
             <BookingOwnerApprovalStep
