@@ -216,6 +216,17 @@ export async function POST(request: Request) {
 
     const body = await request.json();
     const loggedInUser = getUserFromRequest(request);
+
+    if (!loggedInUser) {
+      return NextResponse.json(
+        {
+          error:
+            'כדי לשלוח בקשת שריון צריך להתחבר או להירשם. ההזמנה תישמר ב«ההזמנות שלי» באזור האישי.',
+        },
+        { status: 401 }
+      );
+    }
+
     const dressId = Number(body.dressId);
     const name = String(body.name || loggedInUser?.displayName || '').trim();
     const phone = String(body.phone || loggedInUser?.phone || '').trim();

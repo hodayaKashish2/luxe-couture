@@ -1,8 +1,11 @@
 import type { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 
+import { getSiteToken, restoreSiteSession } from '@/lib/site-session';
+
 export function isLoggedIn(): boolean {
   if (typeof window === 'undefined') return false;
-  return Boolean(sessionStorage.getItem('site_token'));
+  restoreSiteSession();
+  return Boolean(getSiteToken());
 }
 
 export function loginUrl(next?: string): string {

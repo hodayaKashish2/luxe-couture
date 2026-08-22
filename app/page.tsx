@@ -29,6 +29,7 @@ import { validateAddDressForm, validateDressImageFiles } from '@/lib/form-valida
 import { notifyBookingUpdated } from '@/lib/booking-events';
 import { getStoredSiteUser } from '@/lib/session-user';
 import { isLoggedIn } from '@/lib/require-login';
+import { getSiteToken } from '@/lib/site-session';
 import { useModalHistory } from '@/hooks/use-modal-history';
 import { useScrollToError } from '@/hooks/use-scroll-to-error';
 import { popModalStackInPlace, resetModalStack } from '@/lib/modal-history';
@@ -191,7 +192,7 @@ export default function Home() {
     }
 
     async function loadRatedDressIds() {
-      const token = sessionStorage.getItem('site_token');
+      const token = getSiteToken();
       if (!token) return;
 
       try {
@@ -655,7 +656,7 @@ export default function Home() {
 
     async function syncExistingBooking() {
       try {
-        const token = sessionStorage.getItem('site_token');
+        const token = getSiteToken();
         const params = new URLSearchParams({
           dressId: selectedDress!.id,
           date: orderDate,
@@ -796,7 +797,7 @@ export default function Home() {
 
     async function loadActiveBooking() {
       try {
-        const token = sessionStorage.getItem('site_token');
+        const token = getSiteToken();
         const response = await fetch(`/api/bookings?dressId=${encodeURIComponent(dressId)}`, {
           headers: token ? { 'x-user-token': token } : {},
         });
@@ -913,7 +914,7 @@ export default function Home() {
 
   const fetchActiveBookingForDress = useCallback(async (dressId: string) => {
     try {
-      const token = sessionStorage.getItem('site_token');
+      const token = getSiteToken();
       const response = await fetch(`/api/bookings?dressId=${encodeURIComponent(dressId)}`, {
         headers: token ? { 'x-user-token': token } : {},
       });
@@ -950,6 +951,14 @@ export default function Home() {
         return;
       }
 
+      if (!isLoggedIn()) {
+        openAuthModal({
+          reason: 'booking',
+          next: `/?reserve=${encodeURIComponent(dress.id)}`,
+        });
+        return;
+      }
+
       setFittingConfirm({ dress, imageIndex });
 
       void fetchActiveBookingForDress(dress.id).then((booking) => {
@@ -968,6 +977,7 @@ export default function Home() {
       detailsDressBooking,
       fetchActiveBookingForDress,
       isOwnDress,
+      openAuthModal,
       resumeActiveBookingFlow,
     ]
   );
@@ -1005,9 +1015,17 @@ export default function Home() {
       return;
     }
 
+    if (!isLoggedIn()) {
+      openAuthModal({
+        reason: 'booking',
+        next: `/?reserve=${encodeURIComponent(selectedDress.id)}`,
+      });
+      return;
+    }
+
     setIsSubmittingBooking(true);
     try {
-      const token = sessionStorage.getItem('site_token');
+      const token = getSiteToken();
       const response = await fetch('/api/bookings', {
         method: 'POST',
         headers: {

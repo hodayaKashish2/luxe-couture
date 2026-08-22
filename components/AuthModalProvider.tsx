@@ -22,6 +22,7 @@ import {
 } from '@/lib/auth-url';
 import { validateLoginForm, validateRegisterForm } from '@/lib/form-validation';
 import { notifySiteAuthChange } from '@/lib/site-auth-events';
+import { getSiteToken, persistSiteSession } from '@/lib/site-session';
 import {
   clearAuthDismissed,
   isAuthDismissed,
@@ -115,7 +116,7 @@ function AuthModalProviderInner({ children }: { children: ReactNode }) {
   const closeAuthModal = useCallback(() => {
     markAuthDismissed();
     const onAccount = window.location.pathname.startsWith('/account');
-    const hasToken = Boolean(sessionStorage.getItem('site_token'));
+    const hasToken = Boolean(getSiteToken());
 
     if (hasAuthInUrl(searchParams)) {
       const cleaned = stripAuthParams(
@@ -234,8 +235,7 @@ function AuthModalProviderInner({ children }: { children: ReactNode }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'שגיאה');
 
-      sessionStorage.setItem('site_token', data.token);
-      sessionStorage.setItem('site_user', JSON.stringify(data.user));
+      persistSiteSession(data.token, data.user);
       finishAuth();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'שגיאה');
@@ -264,8 +264,7 @@ function AuthModalProviderInner({ children }: { children: ReactNode }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'שגיאה');
 
-      sessionStorage.setItem('site_token', data.token);
-      sessionStorage.setItem('site_user', JSON.stringify(data.user));
+      persistSiteSession(data.token, data.user);
       finishAuth();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'שגיאה');

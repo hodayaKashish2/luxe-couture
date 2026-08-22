@@ -1,3 +1,5 @@
+import { restoreSiteSession } from '@/lib/site-session';
+
 export type StoredSiteUser = {
   userId?: string;
   username?: string;
@@ -9,8 +11,10 @@ export type StoredSiteUser = {
 
 export function getStoredSiteUser(): StoredSiteUser | null {
   if (typeof window === 'undefined') return null;
+  restoreSiteSession();
   try {
-    const raw = sessionStorage.getItem('site_user');
+    const raw =
+      sessionStorage.getItem('site_user') || localStorage.getItem('site_user');
     if (!raw) return null;
     return JSON.parse(raw) as StoredSiteUser;
   } catch {

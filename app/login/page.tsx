@@ -7,6 +7,7 @@ import { SITE_NAME } from '@/lib/site-config';
 import FormError from '@/components/FormError';
 import { validateLoginForm } from '@/lib/form-validation';
 import { notifySiteAuthChange } from '@/lib/site-auth-events';
+import { persistSiteSession } from '@/lib/site-session';
 
 function LoginForm() {
   const router = useRouter();
@@ -38,8 +39,7 @@ function LoginForm() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'שגיאה');
 
-      sessionStorage.setItem('site_token', data.token);
-      sessionStorage.setItem('site_user', JSON.stringify(data.user));
+      persistSiteSession(data.token, data.user);
       notifySiteAuthChange();
       router.replace(next);
     } catch (err) {

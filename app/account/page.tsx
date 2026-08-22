@@ -25,6 +25,12 @@ import { getStoredSiteUser } from '@/lib/session-user';
 import { dressBelongsToCustomer } from '@/lib/self-dress-guard';
 import { consumeDetailsReturnDressId, setDetailsReturnDressId } from '@/lib/details-return';
 import { SITE_AUTH_EVENT, notifySiteAuthChange } from '@/lib/site-auth-events';
+import {
+  clearSiteSession,
+  getSiteToken,
+  persistSiteSession,
+  restoreSiteSession,
+} from '@/lib/site-session';
 import { accountSectionUrl, parseAccountSection } from '@/lib/account-section-url';
 import { dressFromBookingPayload } from '@/lib/booking-dress';
 import { navigateAccountHub } from '@/lib/account-hub-nav';
@@ -142,7 +148,8 @@ function AccountPageContent() {
   const [dataReady, setDataReady] = useState(false);
   const [hasSession, setHasSession] = useState(() => {
     if (typeof window === 'undefined') return false;
-    return Boolean(sessionStorage.getItem('site_token'));
+    restoreSiteSession();
+    return Boolean(getSiteToken());
   });
   const [addFiles, setAddFiles] = useState<File[]>([]);
   const [addImagePreviews, setAddImagePreviews] = useState<string[]>([]);
@@ -194,7 +201,7 @@ function AccountPageContent() {
 
   useEffect(() => {
     async function loadRatedDressIds() {
-      const token = sessionStorage.getItem('site_token');
+      const token = getSiteToken();
       if (!token) {
         setRatedDressIds(new Set());
         return;
@@ -271,7 +278,7 @@ function AccountPageContent() {
   }, [section, navigateToSection]);
 
   const load = useCallback(async (opts?: { silent?: boolean }) => {
-    const token = sessionStorage.getItem('site_token');
+    const token = getSiteToken();
     setHasSession(Boolean(token));
     if (!token) {
       setLoading(false);
@@ -283,7 +290,8 @@ function AccountPageContent() {
       setLoading(true);
       setDataReady(false);
     }
-    const stored = sessionStorage.getItem('site_user');
+    const stored =
+      sessionStorage.getItem('site_user') || localStorage.getItem('site_user');
     if (stored) setUser(JSON.parse(stored));
 
     try {
@@ -293,8 +301,7 @@ function AccountPageContent() {
       });
       const data = await res.json();
       if (res.status === 401) {
-        sessionStorage.removeItem('site_token');
-        sessionStorage.removeItem('site_user');
+        clearSiteSession();
         setHasSession(false);
         setUser(null);
         setDataReady(false);
@@ -312,7 +319,7 @@ function AccountPageContent() {
             phone: data.user.phone || '',
             email: data.user.email || '',
           });
-          sessionStorage.setItem('site_user', JSON.stringify(data.user));
+          persistSiteSession(token, data.user);
         }
       }
     } finally {
@@ -358,7 +365,7 @@ function AccountPageContent() {
     void load();
     const onBookingUpdate = () => load({ silent: true });
     const onAuth = () => {
-      setHasSession(Boolean(sessionStorage.getItem('site_token')));
+      setHasSession(Boolean(getSiteToken()));
       void load();
     };
     const onFocus = () => load({ silent: true });
@@ -398,7 +405,7 @@ function AccountPageContent() {
 
     setEditLoading(true);
 
-    const token = sessionStorage.getItem('site_token');
+    const token = getSiteToken();
     try {
       const res = await fetch(`/api/user/dresses/${id}`, {
         headers: { 'x-user-token': token || '' },
@@ -495,7 +502,7 @@ function AccountPageContent() {
   async function cancelReservation(bookingId: number) {
     if (!confirm('לבטל את ההזמנה? התאריך ישוחרר לשוכרות אחרות.')) return;
 
-    const token = sessionStorage.getItem('site_token');
+    const token = getSiteToken();
     setCancellingId(bookingId);
     const res = await fetch(`/api/user/bookings/${bookingId}`, {
       method: 'PATCH',
@@ -530,7 +537,7 @@ function AccountPageContent() {
       return;
     }
 
-    const token = sessionStorage.getItem('site_token');
+    const token = getSiteToken();
     setProfileSaving(true);
     const res = await fetch('/api/user/profile', {
       method: 'PATCH',
@@ -548,9 +555,9 @@ function AccountPageContent() {
     setProfileSaving(false);
 
     if (res.ok) {
-      if (data.token) sessionStorage.setItem('site_token', data.token);
-      if (data.user) {
-        sessionStorage.setItem('site_user', JSON.stringify(data.user));
+      const nextToken = data.token || getSiteToken();
+      if (nextToken && data.user) {
+        persistSiteSession(nextToken, data.user);
         setUser({
           displayName: data.user.displayName,
           username: data.user.username,
@@ -567,8 +574,7 @@ function AccountPageContent() {
 
   async function logout() {
     await fetch('/api/auth/logout', { method: 'POST' });
-    sessionStorage.removeItem('site_token');
-    sessionStorage.removeItem('site_user');
+    clearSiteSession();
     notifySiteAuthChange();
     router.replace('/');
   }
@@ -601,7 +607,7 @@ function AccountPageContent() {
       return;
     }
 
-    const token = sessionStorage.getItem('site_token');
+    const token = getSiteToken();
     const formData = new FormData();
     Object.entries(addForm).forEach(([k, v]) => formData.append(k, v));
     addFiles.forEach((f) => formData.append('images', f));
@@ -696,7 +702,7 @@ function AccountPageContent() {
       return;
     }
 
-    const token = sessionStorage.getItem('site_token');
+    const token = getSiteToken();
     const formData = new FormData();
     formData.append('name', editForm.name);
     formData.append('price', editForm.price);
@@ -832,7 +838,7 @@ function AccountPageContent() {
   }
 
   const openPaymentForBookingId = useCallback(async (bookingId: number) => {
-    const token = sessionStorage.getItem('site_token');
+    const token = getSiteToken();
     if (!token) return false;
 
     try {
@@ -885,7 +891,7 @@ function AccountPageContent() {
     const bookingId = Number(param);
     if (!Number.isFinite(bookingId) || bookingId <= 0) return;
     if (completeBookingHandledRef.current === bookingId) return;
-    if (!sessionStorage.getItem('site_token')) return;
+    if (!getSiteToken()) return;
 
     completeBookingHandledRef.current = bookingId;
     void openPaymentForBookingId(bookingId).then(() => {
@@ -895,7 +901,7 @@ function AccountPageContent() {
 
   const fetchActiveBookingForDress = useCallback(async (dressId: string) => {
     try {
-      const token = sessionStorage.getItem('site_token');
+      const token = getSiteToken();
       const response = await fetch(`/api/bookings?dressId=${encodeURIComponent(dressId)}`, {
         headers: token ? { 'x-user-token': token } : {},
       });

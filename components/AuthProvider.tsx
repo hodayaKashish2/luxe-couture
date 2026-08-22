@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuthModal } from '@/components/AuthModalProvider';
 import { isAuthDismissed } from '@/lib/auth-dismiss';
+import { getSiteToken } from '@/lib/site-session';
 
 const PROTECTED_PREFIXES = ['/account'];
 
@@ -22,7 +23,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
   useEffect(() => {
     if (!needsAuth(pathname)) return;
 
-    const token = sessionStorage.getItem('site_token');
+    const token = getSiteToken();
     if (token) {
       promptedRef.current = null;
       return;

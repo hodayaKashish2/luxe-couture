@@ -7,6 +7,9 @@ import BookingOwnerApprovalStep from '@/components/BookingOwnerApprovalStep';
 import { FINAL_OWNER_APPROVAL_BUTTON_LABEL, FINAL_OWNER_APPROVAL_HINT } from '@/lib/constants';
 import { notifyBookingUpdated } from '@/lib/booking-events';
 import { getStoredSiteUser } from '@/lib/session-user';
+import { isLoggedIn } from '@/lib/require-login';
+import { getSiteToken } from '@/lib/site-session';
+import { useAuthModal } from '@/components/AuthModalProvider';
 import { isPastDate, todayDateString } from '@/lib/booking-dates';
 import type { PaymentMethod } from '@/lib/payment-methods';
 import type { Dress } from '@/lib/types';
@@ -56,6 +59,7 @@ export default function DressBookingModal({
   onComplete,
   onViewDetails,
 }: Props) {
+  const { openAuthModal } = useAuthModal();
   const [modalImageIndex, setModalImageIndex] = useState(initialImageIndex);
   const [orderName, setOrderName] = useState('');
   const [orderPhone, setOrderPhone] = useState('');
@@ -140,9 +144,17 @@ export default function DressBookingModal({
       return;
     }
 
+    if (!isLoggedIn()) {
+      openAuthModal({
+        reason: 'booking',
+        next: `/?reserve=${encodeURIComponent(dress.id)}`,
+      });
+      return;
+    }
+
     setIsSubmittingBooking(true);
     try {
-      const token = sessionStorage.getItem('site_token');
+      const token = getSiteToken();
       const response = await fetch('/api/bookings', {
         method: 'POST',
         headers: {
