@@ -42,9 +42,23 @@ export async function GET(request: Request) {
       (allDresses ?? []).filter((d) => userOwnsDress(d, user))
     );
 
+    type OwnerBookingRow = {
+      id: number;
+      dress_id: number;
+      customer_name?: string;
+      customer_phone?: string;
+      customer_email?: string;
+      event_date: string;
+      status: string;
+      created_at?: string;
+      owner_responded_at?: string | null;
+      owner_reject_reason?: string | null;
+      dress_name: string;
+    };
+
     const dressIds = myDresses.map((d) => d.id);
-    let ownerBookings: Array<Record<string, unknown>> = [];
-    let cancelledOwnerBookings: Array<Record<string, unknown>> = [];
+    let ownerBookings: OwnerBookingRow[] = [];
+    let cancelledOwnerBookings: OwnerBookingRow[] = [];
 
     if (dressIds.length > 0) {
       const ownerStatuses = [
@@ -91,8 +105,8 @@ export async function GET(request: Request) {
       }
 
       const dressNames = Object.fromEntries(myDresses.map((d) => [String(d.id), d.name]));
-      const mappedOwnerBookings = (bookingRows ?? []).map((b) => ({
-        ...b,
+      const mappedOwnerBookings: OwnerBookingRow[] = (bookingRows ?? []).map((b) => ({
+        ...(b as Omit<OwnerBookingRow, 'dress_name'>),
         dress_name: dressNames[String(b.dress_id)] || 'שמלה',
       }));
 
