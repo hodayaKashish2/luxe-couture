@@ -1,9 +1,5 @@
 import { NextResponse } from 'next/server';
-import { dressRowToNotify, resolveOwnerContact } from '@/lib/dress-approval-notify';
-import {
-  sendBookingCancelledByRenterEmail,
-  sendBookingCancelledOwnerNoticeEmail,
-} from '@/lib/email';
+import { notifyBookingCancelledByRenter } from '@/lib/booking-cancel-notify';
 import { getUserFromRequest } from '@/lib/user-auth';
 import { userOwnsBooking } from '@/lib/booking-ownership';
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server';
@@ -55,48 +51,20 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
     if (updateError) throw updateError;
 
-    const { data: dressRow } = await supabase
-      .from('dresses')
-      .select('id, name, owner_name, owner_email, owner_phone, description, submitter_user_id')
-      .eq('id', booking.dress_id)
-      .maybeSingle();
+    const { warnings } = await notifyBookingCancelledByRenter(supabase, {
+      bookingId: booking.id,
+      dressId: booking.dress_id,
+      customerName: String(booking.customer_name || user.displayName || ''),
+      customerEmail: String(booking.customer_email || user.email || ''),
+      eventDate: String(booking.event_date || ''),
+      user,
+    });
 
-    const dressName = dressRow?.name || 'שמלה';
-    const eventDate = String(booking.event_date || '');
-    const customerName = String(booking.customer_name || user.displayName || 'שוכרת');
-    const customerEmail = String(booking.customer_email || user.email || '').trim();
-
-    if (customerEmail) {
-      try {
-        await sendBookingCancelledByRenterEmail({
-          to: customerEmail,
-          customerName,
-          dressName,
-          eventDate,
-        });
-      } catch (emailError) {
-        console.error('cancel renter email failed:', emailError);
-      }
-    }
-
-    if (dressRow) {
-      try {
-        const owner = await resolveOwnerContact(supabase, dressRowToNotify(dressRow));
-        if (owner.email) {
-          await sendBookingCancelledOwnerNoticeEmail({
-            to: owner.email,
-            ownerName: owner.name,
-            dressName,
-            customerName,
-            eventDate,
-          });
-        }
-      } catch (emailError) {
-        console.error('cancel owner email failed:', emailError);
-      }
-    }
-
-    return NextResponse.json({ success: true, message: 'ההזמנה בוטלה בהצלחה' });
+    return NextResponse.json({
+      success: true,
+      message: 'ההזמנה בוטלה בהצלחה',
+      emailWarnings: warnings.length ? warnings : undefined,
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'שגיאה';
     return NextResponse.json({ error: message }, { status: 500 });

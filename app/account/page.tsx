@@ -518,6 +518,14 @@ function AccountPageContent() {
     if (res.ok) {
       notifyBookingUpdated();
       load({ silent: true });
+      if (Array.isArray(data.emailWarnings) && data.emailWarnings.length > 0) {
+        setToast({
+          message: 'ההזמנה בוטלה. לא הצלחנו לשלוח מייל אישור — נבדוק את זה.',
+          variant: 'error',
+        });
+      } else {
+        setToast({ message: 'ההזמנה בוטלה — נשלח אלייך ולמשכירה מייל אישור.', variant: 'success' });
+      }
     } else {
       alert(data.error || 'לא הצלחנו לבטל את ההזמנה');
     }
