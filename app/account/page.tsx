@@ -14,6 +14,7 @@ import { useLuxeStorage } from '@/components/LuxeStorageProvider';
 import DressCalendar from '@/components/DressCalendar';
 import OwnerPlatformNotice from '@/components/OwnerPlatformNotice';
 import OwnDressNoticeModal from '@/components/OwnDressNoticeModal';
+import CancelReservationConfirmModal from '@/components/CancelReservationConfirmModal';
 import FormError from '@/components/FormError';
 import SiteToast, { type SiteToastVariant } from '@/components/SiteToast';
 import DressImageFill from '@/components/DressImageFill';
@@ -45,6 +46,8 @@ import { buildEditFormFromDress, normalizeDressImages } from '@/lib/dress-pendin
 import { formatAccountPhone } from '@/lib/dress-ownership';
 import { countUpcomingConfirmed, splitBookingsByEventDate } from '@/lib/booking-dates';
 import {
+  BOOKINGS_CANCELLED_RETENTION_NOTE,
+  BOOKINGS_CANCELLED_SECTION_TITLE,
   BOOKINGS_PAST_RETENTION_NOTE,
   BOOKINGS_PAST_SECTION_TITLE,
 } from '@/lib/retention';
@@ -101,6 +104,7 @@ type BookingRow = {
   owner_reject_reason?: string;
   payment_deadline?: string | null;
   owner_responded_at?: string | null;
+  created_at?: string | null;
 };
 
 const STATUS: Record<string, string> = {
@@ -142,9 +146,12 @@ function AccountPageContent() {
   const [ownerBookings, setOwnerBookings] = useState<BookingRow[]>([]);
   const [cancelledOwnerBookings, setCancelledOwnerBookings] = useState<BookingRow[]>([]);
   const [reservations, setReservations] = useState<BookingRow[]>([]);
+  const [cancelledReservations, setCancelledReservations] = useState<BookingRow[]>([]);
   const [revealedOwnerIds, setRevealedOwnerIds] = useState<Set<number>>(new Set());
   const [showPastReservations, setShowPastReservations] = useState(false);
+  const [showCancelledReservations, setShowCancelledReservations] = useState(false);
   const [showRemovedReservations, setShowRemovedReservations] = useState(false);
+  const [cancelConfirm, setCancelConfirm] = useState<BookingRow | null>(null);
   const [loading, setLoading] = useState(true);
   const [dataReady, setDataReady] = useState(false);
   const [hasSession, setHasSession] = useState(() => {
@@ -314,6 +321,7 @@ function AccountPageContent() {
         setOwnerBookings(data.rentals?.bookings || []);
         setCancelledOwnerBookings(data.rentals?.cancelledBookings || []);
         setReservations(data.reservations || []);
+        setCancelledReservations(data.cancelledReservations || []);
         if (data.user) {
           setUser({
             displayName: data.user.displayName,
@@ -501,9 +509,10 @@ function AccountPageContent() {
     }
   }, [section, dressId, viewDressId, detailsDress?.id, loadEditDress, dresses]);
 
-  async function cancelReservation(bookingId: number) {
-    if (!confirm('לבטל את ההזמנה? התאריך ישוחרר לשוכרות אחרות.')) return;
+  async function confirmCancelReservation() {
+    if (!cancelConfirm) return;
 
+    const bookingId = cancelConfirm.id;
     const token = getSiteToken();
     setCancellingId(bookingId);
     const res = await fetch(`/api/user/bookings/${bookingId}`, {
@@ -516,6 +525,7 @@ function AccountPageContent() {
     });
     const data = await res.json();
     setCancellingId(null);
+    setCancelConfirm(null);
 
     if (res.ok) {
       notifyBookingUpdated();
@@ -529,8 +539,21 @@ function AccountPageContent() {
         setToast({ message: 'ההזמנה בוטלה — נשלח אלייך ולמשכירה מייל אישור.', variant: 'success' });
       }
     } else {
-      alert(data.error || 'לא הצלחנו לבטל את ההזמנה');
+      setToast({ message: data.error || 'לא הצלחנו לבטל את ההזמנה', variant: 'error' });
     }
+  }
+
+  function cancelledReservationDetail(reservation: BookingRow) {
+    if (reservation.owner_reject_reason?.trim()) {
+      return reservation.owner_reject_reason.trim();
+    }
+    return 'בוטלה על ידך';
+  }
+
+  async function cancelReservation(bookingId: number) {
+    const reservation = reservations.find((r) => r.id === bookingId);
+    if (!reservation) return;
+    setCancelConfirm(reservation);
   }
 
   async function submitProfile(e: React.FormEvent) {
@@ -767,7 +790,17 @@ function AccountPageContent() {
   }
 
   const activeDresses = dresses.filter((d) => d.status !== 'removed');
-  const activeReservations = reservations.filter((r) => r.dress_status !== 'removed');
+  const sortedCancelledReservations = useMemo(
+    () =>
+      [...cancelledReservations].sort((a, b) => {
+        const aRef = a.owner_responded_at || a.created_at || a.event_date;
+        const bRef = b.owner_responded_at || b.created_at || b.event_date;
+        return String(bRef).localeCompare(String(aRef));
+      }),
+    [cancelledReservations]
+  );
+
+  const activeReservations = reservations.filter((r) => r.dress_status !== 'removed' && r.status !== 'cancelled');
   const removedReservations = reservations.filter((r) => r.dress_status === 'removed');
   const { upcoming: upcomingReservations, past: pastReservations } = useMemo(
     () => splitBookingsByEventDate(activeReservations),
@@ -1108,7 +1141,10 @@ function AccountPageContent() {
               <p className="text-sm text-[#6e634c] animate-pulse">מתחברת...</p>
             ) : !dataReady ? (
               <p className="text-sm text-[#6e634c] animate-pulse">טוען הזמנות...</p>
-            ) : upcomingReservations.length === 0 && pastReservations.length === 0 && removedReservations.length === 0 ? (
+            ) : upcomingReservations.length === 0 &&
+              pastReservations.length === 0 &&
+              removedReservations.length === 0 &&
+              sortedCancelledReservations.length === 0 ? (
               <div className="bg-white rounded-2xl border border-[#eadaaf] p-8 text-center">
                 <p className="text-sm text-[#6e634c]">עדיין אין הזמנות. מצאי שמלה בקטלוג ושלחי בקשת שריון!</p>
                 <Link href="/" className="inline-block mt-4 px-4 py-2 bg-[#b8860b] text-white rounded-xl text-xs font-bold">
@@ -1131,11 +1167,6 @@ function AccountPageContent() {
                         <span className="text-[10px] bg-[#f4ebd4] px-2 py-0.5 rounded-full">{STATUS[r.status] || r.status}</span>
                       </div>
                       <p className="text-sm text-[#8b6508] font-bold mt-1">📅 {r.event_date}</p>
-                      {r.status === 'cancelled' && r.owner_reject_reason && (
-                        <p className="text-xs text-red-700 bg-red-50 border border-red-100 rounded-lg px-3 py-2 mt-2 leading-relaxed">
-                          {r.owner_reject_reason}
-                        </p>
-                      )}
                       {r.status === 'pending_owner_approval' && (
                         <p className="text-xs text-[#6e634c] mt-2 leading-relaxed">
                           הבקשה אצל המשכירה. תקבלי מייל עם תשובה האם השריון אושר עד 72 שעות.
@@ -1273,6 +1304,40 @@ function AccountPageContent() {
                               </span>
                             </div>
                             <p className="text-sm text-neutral-500 font-bold mt-1">📅 {r.event_date}</p>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
+
+                {sortedCancelledReservations.length > 0 && (
+                  <div className="bg-red-50/60 rounded-2xl border border-red-200 overflow-hidden mt-8">
+                    <button
+                      type="button"
+                      onClick={() => setShowCancelledReservations((v) => !v)}
+                      className="w-full flex items-center justify-between gap-2 px-4 py-3 text-xs font-black text-red-900 bg-red-50 hover:bg-red-100/80 transition-colors"
+                    >
+                      <span>✕ {BOOKINGS_CANCELLED_SECTION_TITLE} ({sortedCancelledReservations.length})</span>
+                      <span>{showCancelledReservations ? '▲' : '▼'}</span>
+                    </button>
+                    <p className="px-4 py-3 text-[11px] text-[#6e634c] leading-relaxed border-t border-red-100 bg-white/70">
+                      {BOOKINGS_CANCELLED_RETENTION_NOTE}
+                    </p>
+                    {showCancelledReservations && (
+                      <ul className="divide-y divide-red-100 max-h-72 overflow-y-auto">
+                        {sortedCancelledReservations.map((r) => (
+                          <li key={r.id} className="px-4 py-3">
+                            <div className="flex justify-between gap-2 flex-wrap">
+                              <strong className="text-[#3d2f24]">{r.dress_name}</strong>
+                              <span className="text-[10px] bg-red-100 text-red-900 px-2 py-0.5 rounded-full font-bold">
+                                בוטלה
+                              </span>
+                            </div>
+                            <p className="text-sm text-[#8b6508] font-bold mt-1">📅 {r.event_date}</p>
+                            <p className="text-xs text-red-800/90 mt-2 leading-relaxed bg-red-50/80 border border-red-100 rounded-lg px-3 py-2">
+                              {cancelledReservationDetail(r)}
+                            </p>
                           </li>
                         ))}
                       </ul>
@@ -1702,6 +1767,18 @@ function AccountPageContent() {
             setAccountBookingDress(null);
             setAccountBookingResume(null);
             setDetailsDress(dress);
+          }}
+        />
+      )}
+
+      {cancelConfirm && (
+        <CancelReservationConfirmModal
+          dressName={cancelConfirm.dress_name}
+          eventDate={cancelConfirm.event_date}
+          loading={cancellingId === cancelConfirm.id}
+          onConfirm={() => void confirmCancelReservation()}
+          onClose={() => {
+            if (cancellingId !== cancelConfirm.id) setCancelConfirm(null);
           }}
         />
       )}

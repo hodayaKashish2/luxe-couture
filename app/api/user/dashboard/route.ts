@@ -131,6 +131,7 @@ export async function GET(request: Request) {
     };
 
     let myReservations: Array<Record<string, unknown>> = [];
+    let cancelledReservations: Array<Record<string, unknown>> = [];
     let allBookings: ReservationRow[] | null = null;
     let resError: { message: string } | null = null;
 
@@ -227,7 +228,7 @@ export async function GET(request: Request) {
         );
       }
 
-      myReservations = allBookings
+      const mappedReservations = allBookings
         .filter((b) => {
           if (b.site_user_id) {
             return user.userId ? String(b.site_user_id) === String(user.userId) : false;
@@ -261,7 +262,10 @@ export async function GET(request: Request) {
             dress_removed_at: owner.removed_at,
             dress_created_at: owner.created_at,
           };
-        })
+        });
+
+      myReservations = mappedReservations
+        .filter((b) => b.status !== 'cancelled')
         .filter((b) => {
           if (
             b.dress_status === 'removed' &&
@@ -271,6 +275,10 @@ export async function GET(request: Request) {
           }
           return shouldShowBookingByEventDate(b.event_date, b.status);
         });
+
+      cancelledReservations = filterCancelledBookingsWithinRetention(
+        mappedReservations.filter((b) => b.status === 'cancelled')
+      );
     }
 
     return NextResponse.json({
@@ -297,6 +305,7 @@ export async function GET(request: Request) {
         cancelledBookings: cancelledOwnerBookings,
       },
       reservations: myReservations,
+      cancelledReservations,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'שגיאה';
