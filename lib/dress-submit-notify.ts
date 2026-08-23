@@ -23,25 +23,26 @@ export type DressNotifyResult = {
 };
 
 export async function notifyDressSubmitted(params: DressSubmitNotifyParams): Promise<DressNotifyResult> {
-  const adminMail = await sendDressPendingAdminEmail(params);
+  const ownerEmail = params.ownerEmail?.trim();
+  const [adminMail, ownerMail] = await Promise.all([
+    sendDressPendingAdminEmail(params),
+    ownerEmail
+      ? sendDressPendingOwnerEmail({
+          to: ownerEmail,
+          ownerName: params.ownerName,
+          dressName: params.name,
+        })
+      : Promise.resolve({
+          success: false as const,
+          error: 'אין כתובת מייל למשכירה',
+        }),
+  ]);
+
   if (!adminMail.success) {
     console.error('Dress pending admin email failed:', adminMail.error);
   }
-
-  let ownerMail: { success: boolean; error?: string } = {
-    success: false,
-    error: params.ownerEmail?.trim() ? undefined : 'אין כתובת מייל למשכירה',
-  };
-
-  if (params.ownerEmail?.trim()) {
-    ownerMail = await sendDressPendingOwnerEmail({
-      to: params.ownerEmail,
-      ownerName: params.ownerName,
-      dressName: params.name,
-    });
-    if (!ownerMail.success) {
-      console.error('Dress pending owner email failed:', ownerMail.error);
-    }
+  if (!ownerMail.success && ownerEmail) {
+    console.error('Dress pending owner email failed:', ownerMail.error);
   }
 
   return {
@@ -50,4 +51,11 @@ export async function notifyDressSubmitted(params: DressSubmitNotifyParams): Pro
     adminError: adminMail.success ? undefined : adminMail.error,
     ownerError: ownerMail.success ? undefined : ownerMail.error,
   };
+}
+
+/** שולח מיילים ברקע — לא מעכב את תגובת ה-API */
+export function notifyDressSubmittedInBackground(params: DressSubmitNotifyParams): void {
+  void notifyDressSubmitted(params).catch((error) => {
+    console.error('Dress submit background notify failed:', error);
+  });
 }

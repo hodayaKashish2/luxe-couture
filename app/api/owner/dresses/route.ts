@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { notifyDressSubmitted } from '@/lib/dress-submit-notify';
+import { uploadDressImages } from '@/lib/dress-image-upload';
+import { notifyDressSubmittedInBackground } from '@/lib/dress-submit-notify';
 import { appendContactEmailToDescription } from '@/lib/dress-contact';
 import { isValidDressKind, isValidListingType } from '@/lib/dress-listing';
 import { formatAccountPhone } from '@/lib/dress-ownership';
@@ -11,38 +12,10 @@ import {
   validateAddDressServerInput,
 } from '@/lib/validate-add-dress-server';
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024;
-
 function conditionLabel(condition: string) {
   if (condition === 'new') return 'חדש עם תווית';
   if (condition === 'like-new') return 'כמו חדש';
   return 'יד שנייה';
-}
-
-async function uploadImages(files: File[]) {
-  const supabase = getSupabaseAdmin();
-  const imageUrls: string[] = [];
-  const folder = `pending/${Date.now()}-${Math.random().toString(36).slice(2)}`;
-
-  for (const file of files) {
-    if (!file.type.startsWith('image/')) continue;
-    if (file.size > MAX_FILE_SIZE) throw new Error(`הקובץ ${file.name} גדול מדי (מקסימום 5MB)`);
-
-    const extension = file.name.split('.').pop() || 'jpg';
-    const path = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}.${extension}`;
-    const buffer = Buffer.from(await file.arrayBuffer());
-
-    const { error } = await supabase.storage
-      .from('dress-images')
-      .upload(path, buffer, { contentType: file.type, upsert: false });
-
-    if (error) throw error;
-
-    const { data } = supabase.storage.from('dress-images').getPublicUrl(path);
-    imageUrls.push(data.publicUrl);
-  }
-
-  return imageUrls;
 }
 
 export async function POST(request: Request) {
@@ -110,7 +83,7 @@ export async function POST(request: Request) {
     ].filter(Boolean);
 
     const supabase = getSupabaseAdmin();
-    const imageUrls = await uploadImages(files);
+    const imageUrls = await uploadDressImages(files);
 
     const insertPayload: Record<string, unknown> = {
       name,
@@ -161,7 +134,7 @@ export async function POST(request: Request) {
 
     if (error) throw error;
 
-    const emailStatus = await notifyDressSubmitted({
+    notifyDressSubmittedInBackground({
       dressId: data!.id,
       name,
       price,
@@ -177,7 +150,6 @@ export async function POST(request: Request) {
       success: true,
       message: 'השמלה נשלחה לאישור! היא תופיע באתר לאחר אישור בדף הניהול.',
       id: data!.id,
-      emailStatus,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'שגיאה';

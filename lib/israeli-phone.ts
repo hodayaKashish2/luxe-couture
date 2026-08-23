@@ -1,6 +1,4 @@
-const VALID_AREA_SECOND_DIGITS = new Set(['2', '3', '4', '5', '8', '9']);
-
-/** מחזיר 10 ספרות ישראליות עם 0 בתחילה, או null אם לא תקין */
+/** מחזיר ספרות ישראליות עם 0 בתחילה (9 או 10 ספרות), או null אם לא תקין */
 export function parseIsraeliPhoneDigits(phone: string): string | null {
   let digits = phone.replace(/\D/g, '');
   if (!digits) return null;
@@ -9,17 +7,13 @@ export function parseIsraeliPhoneDigits(phone: string): string | null {
     digits = `0${digits.slice(3)}`;
   }
 
+  // נייד בלי 0 בתחילה — למשל 501234567
   if (digits.length === 9 && !digits.startsWith('0')) {
     digits = `0${digits}`;
   }
 
-  if (digits.length !== 10 || !digits.startsWith('0')) {
-    return null;
-  }
-
-  if (!VALID_AREA_SECOND_DIGITS.has(digits[1]!)) {
-    return null;
-  }
+  if (!digits.startsWith('0')) return null;
+  if (digits.length !== 9 && digits.length !== 10) return null;
 
   return digits;
 }
@@ -42,5 +36,5 @@ export function formatPhoneForDisplay(phone: string): string {
 }
 
 export function phoneValidationMessage(): string {
-  return 'נא להזין מספר ישראלי תקין — 10 ספרות, מתחיל ב-0 (למשל 0501234567)';
+  return 'נא להזין מספר טלפון ישראלי — מתחיל ב-0, 9 או 10 ספרות (למשל 0501234567 או 021234567)';
 }
