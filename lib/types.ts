@@ -8,7 +8,10 @@ export type Dress = {
   description: string;
   city: string;
   color: string;
+  /** single | set — שמלה בודדת או סט */
   event_type: string;
+  /** rent | sale */
+  listing_type?: string;
   owner_name: string;
   owner_phone: string;
   owner_email?: string;
@@ -43,13 +46,8 @@ export type Review = {
 
 export type SortOption = 'recommended' | 'popular' | 'newest' | 'price-asc' | 'price-desc';
 
-export const EVENT_TYPES = [
-  'חתונה',
-  'בר/בת מצווה',
-  'שבת חתן',
-  'ערב משפחתי',
-  'אחר',
-] as const;
+/** @deprecated השתמשי ב-DRESS_KIND_OPTIONS מ-lib/dress-listing */
+export const EVENT_TYPES = ['single', 'set'] as const;
 
 export const PICKUP_METHODS = [
   { value: 'pickup', label: 'איסוף עצמי' },

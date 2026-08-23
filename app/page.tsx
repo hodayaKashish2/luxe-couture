@@ -50,7 +50,8 @@ import { fetchDressById, findDressInList } from '@/lib/dress-api';
 import { dressBelongsToCustomer } from '@/lib/self-dress-guard';
 import { ownerWhatsAppLink, WHATSAPP_LINK } from '@/lib/site-config';
 import { consumeDetailsReturnDressId, peekDetailsReturnAccountSection, peekDetailsReturnSource, setDetailsReturnDressId } from '@/lib/details-return';
-import { Dress, Review, SortOption, EVENT_TYPES, PICKUP_METHODS } from '@/lib/types';
+import { Dress, Review, SortOption, PICKUP_METHODS } from '@/lib/types';
+import { DRESS_KIND_OPTIONS, LISTING_TYPE_OPTIONS, dressKindLabel, listingTypeLabel } from '@/lib/dress-listing';
 import type { SavedDress } from '@/lib/luxe-storage';
 
 const DRESS_CARD_BTN =
@@ -85,7 +86,8 @@ export default function Home() {
   const [sizeFilters, setSizeFilters] = useState<string[]>([]);
   const [colorFilters, setColorFilters] = useState<string[]>([]);
   const [cityFilters, setCityFilters] = useState<string[]>([]);
-  const [selectedEventTypes, setSelectedEventTypes] = useState<string[]>([]);
+  const [selectedDressKinds, setSelectedDressKinds] = useState<string[]>([]);
+  const [selectedListingTypes, setSelectedListingTypes] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<SortOption>('recommended');
   const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -110,7 +112,8 @@ export default function Home() {
     size: '',
     color: '',
     city: '',
-    event_type: '',
+    event_type: 'single',
+    listing_type: 'rent',
     owner_name: '',
     owner_phone: '',
     owner_email: '',
@@ -346,7 +349,8 @@ export default function Home() {
                 images: Array.isArray(dress.images) ? dress.images : [],
                 city: dress.city || '',
                 color: dress.color || '',
-                event_type: dress.event_type || '',
+                event_type: dress.event_type || 'single',
+                listing_type: dress.listing_type || 'rent',
                 owner_name: dress.owner_name || '',
                 owner_phone: dress.owner_phone || '',
                 owner_email: dress.owner_email || '',
@@ -423,7 +427,7 @@ export default function Home() {
   const resetAddDressForm = () => {
     newDressData.images.forEach((url) => URL.revokeObjectURL(url));
     setNewDressData({
-      name: '', price: '', size: '', color: '', city: '', event_type: '',
+      name: '', price: '', size: '', color: '', city: '', event_type: 'single', listing_type: 'rent',
       owner_name: '', owner_phone: '', owner_email: '', deposit: '', pickup_method: 'pickup',
       includes_dry_cleaning: 'no',
       condition: 'new', description: '', images: [],
@@ -1228,6 +1232,7 @@ export default function Home() {
       formData.append('color', newDressData.color);
       formData.append('city', newDressData.city);
       formData.append('event_type', newDressData.event_type);
+      formData.append('listing_type', newDressData.listing_type);
       formData.append('owner_name', newDressData.owner_name);
       formData.append('owner_phone', newDressData.owner_phone);
       formData.append('owner_email', newDressData.owner_email);
@@ -1267,11 +1272,14 @@ export default function Home() {
       const matchesPrice = dress.price <= maxPrice;
       const matchesSize = dressSizeMatchesAnyFilter(dress.size, sizeFilters);
       const matchesColor = matchesAnyCatalogTextFilter(dress.color, colorFilters);
-      const matchesEvent =
-        !selectedEventTypes.length ||
-        (dress.event_type ? selectedEventTypes.includes(dress.event_type) : false);
+      const matchesDressKind =
+        !selectedDressKinds.length ||
+        (dress.event_type ? selectedDressKinds.includes(dress.event_type) : false);
+      const matchesListingType =
+        !selectedListingTypes.length ||
+        selectedListingTypes.includes(dress.listing_type || 'rent');
       const matchesFav = !showOnlyFavorites || isDressFavorite(dress.id);
-      return matchesSearch && matchesCity && matchesPrice && matchesSize && matchesColor && matchesEvent && matchesFav;
+      return matchesSearch && matchesCity && matchesPrice && matchesSize && matchesColor && matchesDressKind && matchesListingType && matchesFav;
     })
     .sort((a, b) => compareDresses(a, b, sortBy));
 
@@ -1279,7 +1287,8 @@ export default function Home() {
     searchTerm,
     ...cityFilters,
     ...sizeFilters,
-    ...selectedEventTypes,
+    ...selectedDressKinds,
+    ...selectedListingTypes,
     ...colorFilters,
     maxPrice < 2000 ? 'price' : '',
   ].filter(Boolean).length;
@@ -1288,7 +1297,8 @@ export default function Home() {
     setSearchTerm('');
     setCityFilters([]);
     setSizeFilters([]);
-    setSelectedEventTypes([]);
+    setSelectedDressKinds([]);
+    setSelectedListingTypes([]);
     setColorFilters([]);
     setSortBy('recommended');
     setMaxPrice(2000);
@@ -1428,9 +1438,14 @@ export default function Home() {
                 מידה: {size}
               </span>
             ))}
-            {selectedEventTypes.map((eventType) => (
-              <span key={`event-${eventType}`} className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">
-                {eventType}
+            {selectedDressKinds.map((kind) => (
+              <span key={`kind-${kind}`} className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">
+                {dressKindLabel(kind)}
+              </span>
+            ))}
+            {selectedListingTypes.map((listingType) => (
+              <span key={`listing-${listingType}`} className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">
+                {listingTypeLabel(listingType)}
               </span>
             ))}
             {colorFilters.map((color) => (
@@ -1458,8 +1473,10 @@ export default function Home() {
             availableCities={catalogFilterOptions.cities}
             sizeFilters={sizeFilters}
             setSizeFilters={setSizeFilters}
-            selectedEventTypes={selectedEventTypes}
-            setSelectedEventTypes={setSelectedEventTypes}
+            selectedDressKinds={selectedDressKinds}
+            setSelectedDressKinds={setSelectedDressKinds}
+            selectedListingTypes={selectedListingTypes}
+            setSelectedListingTypes={setSelectedListingTypes}
             sortBy={sortBy}
             setSortBy={setSortBy}
             colorFilters={colorFilters}
@@ -1627,8 +1644,10 @@ export default function Home() {
           availableCities={catalogFilterOptions.cities}
           sizeFilters={sizeFilters}
           setSizeFilters={setSizeFilters}
-          selectedEventTypes={selectedEventTypes}
-          setSelectedEventTypes={setSelectedEventTypes}
+          selectedDressKinds={selectedDressKinds}
+          setSelectedDressKinds={setSelectedDressKinds}
+          selectedListingTypes={selectedListingTypes}
+          setSelectedListingTypes={setSelectedListingTypes}
           sortBy={sortBy}
           setSortBy={setSortBy}
           colorFilters={colorFilters}
@@ -1735,27 +1754,36 @@ export default function Home() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-[#8b6508] mb-1">עיר *</label>
-                  <input type="text" required placeholder="ירושלים" value={newDressData.city} onChange={(e) => setNewDressData({...newDressData, city: e.target.value})} className="w-full p-2.5 bg-white border border-[#decfa8] rounded-xl text-xs text-[#2c261a] placeholder:text-[#9a7b4f]" />
+                  <label className="block text-xs font-bold text-[#8b6508] mb-1">השכרה או מכירה *</label>
+                  <select required value={newDressData.listing_type} onChange={(e) => setNewDressData({...newDressData, listing_type: e.target.value})} className="w-full p-2.5 bg-white border border-[#decfa8] rounded-xl text-xs text-[#2c261a]">
+                    {LISTING_TYPE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                  </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-[#8b6508] mb-1">סוג אירוע</label>
-                  <select value={newDressData.event_type} onChange={(e) => setNewDressData({...newDressData, event_type: e.target.value})} className="w-full p-2.5 bg-white border border-[#decfa8] rounded-xl text-xs text-[#2c261a] placeholder:text-[#9a7b4f]">
-                    <option value="">בחרי...</option>
-                    {EVENT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+                  <label className="block text-xs font-bold text-[#8b6508] mb-1">שמלה בודדת או סט *</label>
+                  <select required value={newDressData.event_type} onChange={(e) => setNewDressData({...newDressData, event_type: e.target.value})} className="w-full p-2.5 bg-white border border-[#decfa8] rounded-xl text-xs text-[#2c261a]">
+                    {DRESS_KIND_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
                   </select>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
+                  <label className="block text-xs font-bold text-[#8b6508] mb-1">עיר *</label>
+                  <input type="text" required placeholder="ירושלים" value={newDressData.city} onChange={(e) => setNewDressData({...newDressData, city: e.target.value})} className="w-full p-2.5 bg-white border border-[#decfa8] rounded-xl text-xs text-[#2c261a] placeholder:text-[#9a7b4f]" />
+                </div>
+                <div>
                   <label className="block text-xs font-bold text-[#8b6508] mb-1">שם המשכירה *</label>
                   <input type="text" required value={newDressData.owner_name} onChange={(e) => setNewDressData({...newDressData, owner_name: e.target.value})} className="w-full p-2.5 bg-white border border-[#decfa8] rounded-xl text-xs text-[#2c261a] placeholder:text-[#9a7b4f]" />
                 </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-[#8b6508] mb-1">טלפון *</label>
                   <input type="tel" required placeholder="050-0000000" value={newDressData.owner_phone} onChange={(e) => setNewDressData({...newDressData, owner_phone: e.target.value})} className="w-full p-2.5 bg-white border border-[#decfa8] rounded-xl text-xs text-[#2c261a] placeholder:text-[#9a7b4f]" dir="ltr" />
                 </div>
+                <div />
               </div>
 
               <div>

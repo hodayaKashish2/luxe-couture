@@ -55,6 +55,7 @@ import { fetchDressById, findDressInList, invalidateDressesCatalog, preloadDress
 import { resetModalStack } from '@/lib/modal-history';
 import { useScrollToError } from '@/hooks/use-scroll-to-error';
 import type { Dress } from '@/lib/types';
+import { DRESS_KIND_OPTIONS, LISTING_TYPE_OPTIONS } from '@/lib/dress-listing';
 import type { SavedDress } from '@/lib/luxe-storage';
 
 type Section = 'hub' | 'reservations' | 'rentals' | 'cart' | 'favorites' | 'add' | 'edit' | 'profile';
@@ -166,7 +167,7 @@ function AccountPageContent() {
   const pendingViewDressRef = useRef<string | null>(null);
   const loadedViewDressRef = useRef<string | null>(null);
   const [addForm, setAddForm] = useState({
-    name: '', price: '', size: '', city: 'ירושלים', color: '', event_type: '',
+    name: '', price: '', size: '', city: 'ירושלים', color: '', event_type: 'single', listing_type: 'rent',
     deposit: '', pickup_method: 'pickup', includes_dry_cleaning: 'no', condition: 'new', description: '',
     owner_phone: '',
   });
@@ -1646,6 +1647,18 @@ function AccountPageContent() {
                 <p className="text-[10px] text-[#9a7b4f] mt-1">טלפון החשבון שלך — לפיו מוצגות השמלות באזור האישי</p>
               </div>
               <input placeholder="צבע *" required value={addForm.color} onChange={(e) => setAddForm({ ...addForm, color: e.target.value })} className="p-2.5 border border-[#decfa8] rounded-xl text-xs text-[#2c261a] placeholder:text-[#9a7b4f] bg-white" />
+              <div>
+                <label className="block text-xs font-bold text-[#8b6508] mb-1">השכרה או מכירה *</label>
+                <select required value={addForm.listing_type} onChange={(e) => setAddForm({ ...addForm, listing_type: e.target.value })} className="p-2.5 border border-[#decfa8] rounded-xl text-xs text-[#2c261a] bg-white w-full">
+                  {LISTING_TYPE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-[#8b6508] mb-1">שמלה בודדת או סט *</label>
+                <select required value={addForm.event_type} onChange={(e) => setAddForm({ ...addForm, event_type: e.target.value })} className="p-2.5 border border-[#decfa8] rounded-xl text-xs text-[#2c261a] bg-white w-full">
+                  {DRESS_KIND_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                </select>
+              </div>
               <textarea
                 placeholder="תיאור השמלה (אופציונלי)"
                 value={addForm.description}

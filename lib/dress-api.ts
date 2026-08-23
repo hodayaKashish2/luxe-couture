@@ -1,4 +1,5 @@
 import type { Dress } from '@/lib/types';
+import { normalizeDressKind, normalizeListingType } from '@/lib/dress-listing';
 
 export function normalizeDress(dress: Dress): Dress {
   return {
@@ -8,7 +9,8 @@ export function normalizeDress(dress: Dress): Dress {
     images: Array.isArray(dress.images) ? dress.images : [],
     city: dress.city || '',
     color: dress.color || '',
-    event_type: dress.event_type || '',
+    event_type: normalizeDressKind(dress.event_type),
+    listing_type: normalizeListingType(dress.listing_type),
     owner_name: dress.owner_name || '',
     owner_phone: dress.owner_phone || '',
     deposit: Number(dress.deposit || 0),

@@ -1,4 +1,5 @@
 import type { Dress } from '@/lib/types';
+import { dressKindLabel, listingTypeLabel } from '@/lib/dress-listing';
 import RentalCountBadge from '@/components/RentalCountBadge';
 
 type Props = {
@@ -17,11 +18,18 @@ export default function DressCardSummary({ dress, onShowDetails }: Props) {
             📍 {dress.city}
           </span>
         )}
-        {dress.event_type && (
-          <span className="bg-neutral-100 text-[#6e634c] px-2.5 py-0.5 rounded-full">
-            {dress.event_type}
+        {dress.listing_type === 'sale' ? (
+          <span className="bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full font-bold">
+            {listingTypeLabel(dress.listing_type)}
+          </span>
+        ) : (
+          <span className="bg-[#f4ebd4] text-[#8b6508] px-2.5 py-0.5 rounded-full font-bold">
+            {listingTypeLabel(dress.listing_type)}
           </span>
         )}
+        <span className="bg-neutral-100 text-[#6e634c] px-2.5 py-0.5 rounded-full">
+          {dressKindLabel(dress.event_type)}
+        </span>
       </div>
       <button
         type="button"

@@ -15,15 +15,21 @@ type MultiSelectFilterMenuProps = {
   groups?: FilterOptionGroup[];
   emptyHint?: string;
   allLabel?: string;
+  optionLabels?: Record<string, string>;
 };
 
 function toggleValue(selected: string[], value: string) {
   return selected.includes(value) ? selected.filter((item) => item !== value) : [...selected, value];
 }
 
-function selectionSummary(title: string, selected: string[], allLabel: string) {
+function selectionSummary(
+  title: string,
+  selected: string[],
+  allLabel: string,
+  optionLabels?: Record<string, string>
+) {
   if (!selected.length) return allLabel;
-  if (selected.length === 1) return selected[0];
+  if (selected.length === 1) return optionLabels?.[selected[0]] || selected[0];
   return `${selected.length} נבחרו ב${title}`;
 }
 
@@ -35,6 +41,7 @@ export default function MultiSelectFilterMenu({
   groups = [],
   emptyHint,
   allLabel,
+  optionLabels,
 }: MultiSelectFilterMenuProps) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -78,7 +85,7 @@ export default function MultiSelectFilterMenu({
         }`}>
           ✓
         </span>
-        <span className="flex-1 text-xs font-medium leading-snug">{option}</span>
+        <span className="flex-1 text-xs font-medium leading-snug">{optionLabels?.[option] || option}</span>
       </button>
     );
   };
@@ -97,7 +104,7 @@ export default function MultiSelectFilterMenu({
         }`}
       >
         <span className="text-[#9a7b4f] text-[10px] shrink-0">{open ? '▲' : '▼'}</span>
-        <span className="flex-1 truncate text-right">{selectionSummary(title, selected, resolvedAllLabel)}</span>
+        <span className="flex-1 truncate text-right">{selectionSummary(title, selected, resolvedAllLabel, optionLabels)}</span>
         {selected.length > 0 && (
           <span className="shrink-0 min-w-[1.25rem] h-5 px-1.5 rounded-full bg-[#d4af37] text-white text-[10px] font-black flex items-center justify-center">
             {selected.length}

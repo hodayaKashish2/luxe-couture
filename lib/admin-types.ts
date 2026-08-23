@@ -10,6 +10,7 @@ export type AdminDressRow = {
   description?: string;
   condition?: string;
   event_type?: string;
+  listing_type?: string;
   deposit?: number;
   pickup_method?: string;
   includes_dry_cleaning?: boolean;

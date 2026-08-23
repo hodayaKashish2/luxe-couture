@@ -61,7 +61,8 @@ function mapPendingDressRow(row: Record<string, unknown>) {
     color: String(merged.color || ''),
     description: String(merged.description || ''),
     condition: String(merged.condition || ''),
-    event_type: String(merged.event_type || ''),
+    event_type: String(merged.event_type || 'single'),
+    listing_type: String(merged.listing_type || 'rent'),
     deposit: Number(merged.deposit || 0),
     pickup_method: String(merged.pickup_method || ''),
     includes_dry_cleaning: Boolean(merged.includes_dry_cleaning),
@@ -161,7 +162,7 @@ async function loadOverview(supabase: ReturnType<typeof getSupabaseAdmin>) {
     supabase
       .from('dresses')
       .select(
-        'id, name, price, size, city, color, description, condition, event_type, deposit, pickup_method, includes_dry_cleaning, owner_name, owner_phone, owner_email, status, created_at, images, pending_update, pending_update_submitted_at'
+        'id, name, price, size, city, color, description, condition, event_type, listing_type, deposit, pickup_method, includes_dry_cleaning, owner_name, owner_phone, owner_email, status, created_at, images, pending_update, pending_update_submitted_at'
       )
       .or('status.eq.pending,pending_update.not.is.null')
       .order('created_at', { ascending: false })
@@ -260,7 +261,7 @@ async function loadDressesPage(
   let query = supabase
     .from('dresses')
     .select(
-      'id, name, price, size, city, color, description, condition, event_type, deposit, pickup_method, includes_dry_cleaning, owner_name, owner_phone, owner_email, created_at, images, featured_boost, featured_until, rental_count, rating_count',
+      'id, name, price, size, city, color, description, condition, event_type, listing_type, deposit, pickup_method, includes_dry_cleaning, owner_name, owner_phone, owner_email, created_at, images, featured_boost, featured_until, rental_count, rating_count',
       { count: 'exact' }
     )
     .eq('status', 'approved');

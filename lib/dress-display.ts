@@ -1,3 +1,4 @@
+import { dressKindLabel, listingTypeLabel } from '@/lib/dress-listing';
 import type { Dress } from '@/lib/types';
 
 export const DRESS_DETAIL_NOT_SPECIFIED = 'לא צויין';
@@ -34,7 +35,8 @@ export function getCleanDescription(description: string) {
 export function getDressDetailRows(dress: Dress) {
   return [
     { label: 'עיר', value: displayDetailValue(dress.city) },
-    { label: 'סוג אירוע', value: displayDetailValue(dress.event_type) },
+    { label: 'סוג פרסום', value: listingTypeLabel(dress.listing_type) },
+    { label: 'סוג פריט', value: dressKindLabel(dress.event_type) },
     { label: 'צבע', value: displayDetailValue(dress.color) },
     {
       label: 'פיקדון',

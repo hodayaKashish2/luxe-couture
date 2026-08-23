@@ -126,3 +126,12 @@ set payment_deadline = owner_responded_at + interval '7 days'
 where status = 'pending_payment'
   and payment_deadline is null
   and owner_responded_at is not null;
+
+-- === upgrade-v11: השכרה/מכירה + סוג פריט (בודד/סט) ===
+alter table public.dresses add column if not exists listing_type text not null default 'rent';
+update public.dresses set listing_type = 'rent' where coalesce(listing_type, '') = '';
+update public.dresses
+set event_type = 'single'
+where event_type is null
+   or trim(event_type) = ''
+   or event_type not in ('single', 'set');

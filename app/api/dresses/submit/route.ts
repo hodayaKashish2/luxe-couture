@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { notifyDressSubmitted } from '@/lib/dress-submit-notify';
 import { appendContactEmailToDescription } from '@/lib/dress-contact';
+import { isValidDressKind, isValidListingType } from '@/lib/dress-listing';
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server';
 import {
   MAX_DRESS_IMAGES,
@@ -61,7 +62,8 @@ export async function POST(request: Request) {
     const color = String(formData.get('color') || '').trim();
     const descriptionInput = String(formData.get('description') || '').trim();
     const city = String(formData.get('city') || '').trim();
-    const eventType = String(formData.get('event_type') || '').trim();
+    const dressKindRaw = String(formData.get('event_type') || 'single').trim();
+    const listingTypeRaw = String(formData.get('listing_type') || 'rent').trim();
     const ownerName = String(formData.get('owner_name') || '').trim();
     const ownerPhone = String(formData.get('owner_phone') || '').trim();
     const ownerEmail = String(formData.get('owner_email') || '').trim();
@@ -85,6 +87,13 @@ export async function POST(request: Request) {
     });
     if (validationError) {
       return NextResponse.json({ error: validationError }, { status: 400 });
+    }
+
+    if (!isValidDressKind(dressKindRaw)) {
+      return NextResponse.json({ error: 'נא לבחור סוג פריט — שמלה בודדת או סט' }, { status: 400 });
+    }
+    if (!isValidListingType(listingTypeRaw)) {
+      return NextResponse.json({ error: 'נא לבחור סוג פרסום — השכרה או מכירה' }, { status: 400 });
     }
 
     for (const file of files) {
@@ -113,7 +122,8 @@ export async function POST(request: Request) {
       images: imageUrls,
       color,
       city,
-      event_type: eventType,
+      event_type: dressKindRaw,
+      listing_type: listingTypeRaw,
       owner_name: ownerName,
       owner_phone: ownerPhone,
       owner_email: ownerEmail,
@@ -131,6 +141,15 @@ export async function POST(request: Request) {
 
     if (error?.message?.includes('includes_dry_cleaning')) {
       delete insertPayload.includes_dry_cleaning;
+      ({ data, error } = await supabase
+        .from('dresses')
+        .insert([insertPayload])
+        .select('id, name, price, size, condition, description, images, status, created_at')
+        .single());
+    }
+
+    if (error?.message?.includes('listing_type')) {
+      delete insertPayload.listing_type;
       ({ data, error } = await supabase
         .from('dresses')
         .insert([insertPayload])

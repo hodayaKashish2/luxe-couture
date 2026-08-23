@@ -1,6 +1,7 @@
 'use client';
 
 import DressImageFill from '@/components/DressImageFill';
+import { dressKindLabel, listingTypeLabel } from '@/lib/dress-listing';
 import AdminDressUpdateDiffPanel from '@/components/admin/AdminDressUpdateDiffPanel';
 import type { AdminDressRow } from '@/lib/admin-types';
 
@@ -67,8 +68,11 @@ export default function AdminDressDetailPanel({ dress, large = false, children }
           מצב: {CONDITION_LABELS[dress.condition] || dress.condition}
         </p>
       )}
+      {dress.listing_type && (
+        <p className={`${textSize} text-[#6e634c]`}>סוג פרסום: {listingTypeLabel(dress.listing_type)}</p>
+      )}
       {dress.event_type && (
-        <p className={`${textSize} text-[#6e634c]`}>סוג אירוע: {dress.event_type}</p>
+        <p className={`${textSize} text-[#6e634c]`}>סוג פריט: {dressKindLabel(dress.event_type)}</p>
       )}
       {dress.deposit != null && dress.deposit > 0 && (
         <p className={`${textSize} text-[#6e634c]`}>פיקדון: ₪{dress.deposit}</p>

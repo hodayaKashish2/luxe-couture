@@ -30,6 +30,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     if (body.city !== undefined) updates.city = String(body.city).trim();
     if (body.color !== undefined) updates.color = String(body.color).trim();
     if (body.event_type !== undefined) updates.event_type = String(body.event_type).trim();
+    if (body.listing_type !== undefined) updates.listing_type = String(body.listing_type).trim();
     if (body.deposit !== undefined) updates.deposit = Number(body.deposit) || 0;
     if (body.pickup_method !== undefined) updates.pickup_method = String(body.pickup_method);
     if (body.includes_dry_cleaning !== undefined) {

@@ -3,7 +3,13 @@
 import FilterSection from '@/components/FilterSection';
 import MultiSelectFilterMenu from '@/components/MultiSelectFilterMenu';
 import { getDressSizeFilterGroups } from '@/lib/constants';
-import { EVENT_TYPES, type SortOption } from '@/lib/types';
+import {
+  DRESS_KIND_OPTIONS,
+  LISTING_TYPE_OPTIONS,
+  dressKindLabel,
+  listingTypeLabel,
+} from '@/lib/dress-listing';
+import type { SortOption } from '@/lib/types';
 
 export type CatalogFilterPanelProps = {
   searchTerm: string;
@@ -13,8 +19,10 @@ export type CatalogFilterPanelProps = {
   availableCities: string[];
   sizeFilters: string[];
   setSizeFilters: (value: string[]) => void;
-  selectedEventTypes: string[];
-  setSelectedEventTypes: (value: string[]) => void;
+  selectedDressKinds: string[];
+  setSelectedDressKinds: (value: string[]) => void;
+  selectedListingTypes: string[];
+  setSelectedListingTypes: (value: string[]) => void;
   sortBy: SortOption;
   setSortBy: (value: SortOption) => void;
   colorFilters: string[];
@@ -49,8 +57,10 @@ export default function CatalogFilterPanel({
   availableCities,
   sizeFilters,
   setSizeFilters,
-  selectedEventTypes,
-  setSelectedEventTypes,
+  selectedDressKinds,
+  setSelectedDressKinds,
+  selectedListingTypes,
+  setSelectedListingTypes,
   sortBy,
   setSortBy,
   colorFilters,
@@ -94,13 +104,25 @@ export default function CatalogFilterPanel({
         />
       </FilterSection>
 
-      <FilterSection title="סוג אירוע" defaultOpen={selectedEventTypes.length > 0}>
+      <FilterSection title="השכרה / מכירה" defaultOpen={selectedListingTypes.length > 0}>
         <MultiSelectFilterMenu
-          title="סוג אירוע"
-          selected={selectedEventTypes}
-          onChange={setSelectedEventTypes}
-          options={[...EVENT_TYPES]}
-          allLabel="כל סוגי האירועים"
+          title="השכרה / מכירה"
+          selected={selectedListingTypes}
+          onChange={setSelectedListingTypes}
+          options={LISTING_TYPE_OPTIONS.map((o) => o.value)}
+          optionLabels={Object.fromEntries(LISTING_TYPE_OPTIONS.map((o) => [o.value, o.label]))}
+          allLabel="הכל"
+        />
+      </FilterSection>
+
+      <FilterSection title="סוג פריט" defaultOpen={selectedDressKinds.length > 0}>
+        <MultiSelectFilterMenu
+          title="סוג פריט"
+          selected={selectedDressKinds}
+          onChange={setSelectedDressKinds}
+          options={DRESS_KIND_OPTIONS.map((o) => o.value)}
+          optionLabels={Object.fromEntries(DRESS_KIND_OPTIONS.map((o) => [o.value, o.label]))}
+          allLabel="הכל"
         />
       </FilterSection>
 

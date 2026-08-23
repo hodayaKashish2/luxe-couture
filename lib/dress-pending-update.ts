@@ -9,6 +9,7 @@ export type PendingUpdatePayload = {
   description: string;
   images: string[];
   event_type?: string;
+  listing_type?: string;
   condition?: string;
   deposit?: number;
   pickup_method?: string;
@@ -327,7 +328,8 @@ export function buildPendingUpdatePayload(
     images: Array.isArray(updates.images)
       ? normalizeDressImages(updates.images)
       : base.images,
-    event_type: String(updates.event_type ?? dress.event_type ?? '').trim() || undefined,
+    event_type: String(updates.event_type ?? dress.event_type ?? 'single').trim() || 'single',
+    listing_type: String(updates.listing_type ?? dress.listing_type ?? 'rent').trim() || 'rent',
     condition: String(updates.condition ?? dress.condition ?? 'new').trim(),
     deposit: Number(updates.deposit ?? dress.deposit ?? 0) || 0,
     pickup_method: String(updates.pickup_method ?? dress.pickup_method ?? 'pickup'),
@@ -346,7 +348,8 @@ export function pendingUpdateToDressPatch(payload: PendingUpdatePayload) {
     color: payload.color,
     description: payload.description,
     images: normalizeDressImages(payload.images),
-    event_type: payload.event_type || '',
+    event_type: payload.event_type || 'single',
+    listing_type: payload.listing_type || 'rent',
     condition: payload.condition || 'new',
     deposit: payload.deposit ?? 0,
     pickup_method: payload.pickup_method || 'pickup',

@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import { notifyDressSubmitted } from '@/lib/dress-submit-notify';
 import { appendContactEmailToDescription } from '@/lib/dress-contact';
-import { getUserFromRequest } from '@/lib/user-auth';
+import { isValidDressKind, isValidListingType } from '@/lib/dress-listing';
 import { formatAccountPhone } from '@/lib/dress-ownership';
+import { getUserFromRequest } from '@/lib/user-auth';
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server';
 import {
   MAX_DRESS_IMAGES,
@@ -58,7 +59,8 @@ export async function POST(request: Request) {
     const color = String(formData.get('color') || '').trim();
     const descriptionInput = String(formData.get('description') || '').trim();
     const city = String(formData.get('city') || '').trim();
-    const eventType = String(formData.get('event_type') || '').trim();
+    const dressKindRaw = String(formData.get('event_type') || 'single').trim();
+    const listingTypeRaw = String(formData.get('listing_type') || 'rent').trim();
     const deposit = Number(formData.get('deposit') || 0);
     const pickupMethod = String(formData.get('pickup_method') || 'pickup').trim();
     const includesDryCleaning = String(formData.get('includes_dry_cleaning') || 'no') === 'yes';
@@ -68,6 +70,13 @@ export async function POST(request: Request) {
     const ownerPhone = formatAccountPhone(owner.phone);
     if (!ownerPhone) {
       return NextResponse.json({ error: 'יש להשלים מספר טלפון בפרופיל לפני הוספת שמלה' }, { status: 400 });
+    }
+
+    if (!isValidDressKind(dressKindRaw)) {
+      return NextResponse.json({ error: 'נא לבחור סוג פריט — שמלה בודדת או סט' }, { status: 400 });
+    }
+    if (!isValidListingType(listingTypeRaw)) {
+      return NextResponse.json({ error: 'נא לבחור סוג פרסום — השכרה או מכירה' }, { status: 400 });
     }
 
     const contactEmail = (ownerEmail || owner.email || '').trim().toLowerCase();
@@ -112,7 +121,8 @@ export async function POST(request: Request) {
       images: imageUrls,
       color,
       city,
-      event_type: eventType,
+      event_type: dressKindRaw,
+      listing_type: listingTypeRaw,
       owner_name: owner.displayName,
       owner_phone: ownerPhone,
       owner_email: contactEmail,
@@ -131,6 +141,11 @@ export async function POST(request: Request) {
 
     if (error?.message?.includes('includes_dry_cleaning')) {
       delete insertPayload.includes_dry_cleaning;
+      ({ data, error } = await supabase.from('dresses').insert([insertPayload]).select('id, name').single());
+    }
+
+    if (error?.message?.includes('listing_type')) {
+      delete insertPayload.listing_type;
       ({ data, error } = await supabase.from('dresses').insert([insertPayload]).select('id, name').single());
     }
 
