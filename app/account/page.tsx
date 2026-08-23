@@ -178,6 +178,7 @@ function AccountPageContent() {
   const [editImages, setEditImages] = useState<string[]>([]);
   const [editNewFiles, setEditNewFiles] = useState<File[]>([]);
   const [editNewPreviews, setEditNewPreviews] = useState<string[]>([]);
+  const [addSubmitting, setAddSubmitting] = useState(false);
   const [addFormError, setAddFormError] = useState('');
   const addFormErrorRef = useRef<HTMLDivElement>(null);
   useScrollToError(addFormErrorRef, addFormError);
@@ -615,6 +616,7 @@ function AccountPageContent() {
 
   async function submitDress(e: React.FormEvent) {
     e.preventDefault();
+    if (addSubmitting) return;
     setAddFormError('');
 
     const validationError = validateAddDressForm(
@@ -641,27 +643,32 @@ function AccountPageContent() {
       return;
     }
 
-    const token = getSiteToken();
-    const formData = new FormData();
-    Object.entries(addForm).forEach(([k, v]) => formData.append(k, v));
-    addFiles.forEach((f) => formData.append('images', f));
+    setAddSubmitting(true);
+    try {
+      const token = getSiteToken();
+      const formData = new FormData();
+      Object.entries(addForm).forEach(([k, v]) => formData.append(k, v));
+      addFiles.forEach((f) => formData.append('images', f));
 
-    const res = await fetch('/api/owner/dresses', {
-      method: 'POST',
-      headers: { 'x-user-token': token || '' },
-      body: formData,
-    });
-    const data = await res.json();
-    if (res.ok) {
-      setAddFiles([]);
-      addImagePreviews.forEach((url) => URL.revokeObjectURL(url));
-      setAddImagePreviews([]);
-      if (addFileInputRef.current) addFileInputRef.current.value = '';
-      setToast({ message: 'השמלה נשלחה לאישור! נעדכן אותך כשתופיע בקטלוג.', variant: 'success' });
-      navigateToSection('rentals', { replace: true });
-      load();
-    } else {
-      setAddFormError(data.error || 'שגיאה בשליחת השמלה');
+      const res = await fetch('/api/owner/dresses', {
+        method: 'POST',
+        headers: { 'x-user-token': token || '' },
+        body: formData,
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setAddFiles([]);
+        addImagePreviews.forEach((url) => URL.revokeObjectURL(url));
+        setAddImagePreviews([]);
+        if (addFileInputRef.current) addFileInputRef.current.value = '';
+        setToast({ message: 'השמלה נשלחה לאישור! נעדכן אותך כשתופיע בקטלוג.', variant: 'success' });
+        navigateToSection('rentals', { replace: true });
+        load();
+      } else {
+        setAddFormError(data.error || 'שגיאה בשליחת השמלה');
+      }
+    } finally {
+      setAddSubmitting(false);
     }
   }
 
@@ -790,7 +797,7 @@ function AccountPageContent() {
     }
   }
 
-  const activeDresses = dresses.filter((d) => d.status !== 'removed');
+  const activeDresses = dresses.filter((d) => d.status !== 'removed' && d.status !== 'pending');
   const sortedCancelledReservations = useMemo(
     () =>
       [...cancelledReservations].sort((a, b) => {
@@ -1094,7 +1101,11 @@ function AccountPageContent() {
                   key={item.id}
                   type="button"
                   onClick={() => navigateToSection(item.id)}
-                  className="p-2.5 sm:p-4 rounded-xl border border-[#eadaaf] bg-white/90 hover:bg-[#fffdf8] hover:border-[#d4af37] text-center transition-colors"
+                  className={`p-2.5 sm:p-4 rounded-xl border-2 text-center transition-all duration-200 cursor-pointer hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] ${
+                    item.id === 'add'
+                      ? 'border-[#d4af37] bg-gradient-to-b from-[#fff8e7] to-[#f4ebd4] hover:from-[#f4ebd4] hover:to-[#e8d4a8] ring-1 ring-[#d4af37]/40'
+                      : 'border-[#eadaaf] bg-white/90 hover:bg-[#fffdf8] hover:border-[#d4af37]'
+                  }`}
                 >
                   <span className="text-lg sm:text-xl block">{item.icon}</span>
                   <p className="text-[9px] sm:text-[11px] font-bold mt-1 text-[#8b6508] leading-tight">{item.label}</p>
@@ -1715,8 +1726,12 @@ function AccountPageContent() {
               )}
             </div>
 
-            <button type="submit" className="w-full py-3 bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white rounded-xl text-xs font-black shadow-md">
-              שלחי לאישור
+            <button
+              type="submit"
+              disabled={addSubmitting}
+              className="w-full py-3 rounded-xl text-xs font-black shadow-md cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.98] bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white border border-[#c9a227] hover:from-[#b8860b] hover:to-[#8b6508] disabled:opacity-60 disabled:pointer-events-none"
+            >
+              {addSubmitting ? 'שולחת...' : 'שלחי לאישור'}
             </button>
           </form>
         )}

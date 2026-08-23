@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { parseContactEmailFromDescription } from '@/lib/dress-contact';
-import { getAdminEmail, sendAdminEmail, sendDressApprovedOwnerEmail } from '@/lib/email';
+import { sendAdminEmail, sendDressApprovedOwnerEmail } from '@/lib/email';
 import { phonesMatch } from '@/lib/owner-auth';
 import { dressApprovedWhatsAppMessage, sendWhatsAppText, type WhatsAppSendResult } from '@/lib/whatsapp-notify';
 
@@ -109,9 +109,6 @@ export async function notifyDressApproved(supabase: SupabaseClient, dress: Dress
 
   const emailTargets = new Set<string>();
   if (ownerEmail) emailTargets.add(ownerEmail);
-
-  const adminEmail = getAdminEmail().toLowerCase();
-  emailTargets.add(adminEmail);
 
   let emailSentTo: string[] = [];
   let emailError = '';

@@ -54,6 +54,9 @@ import { Dress, Review, SortOption, PICKUP_METHODS } from '@/lib/types';
 import { DRESS_KIND_OPTIONS, LISTING_TYPE_OPTIONS, dressKindLabel, listingTypeLabel } from '@/lib/dress-listing';
 import type { SavedDress } from '@/lib/luxe-storage';
 
+const ADD_DRESS_BTN =
+  'cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.98] bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white font-bold border border-[#c9a227] hover:from-[#b8860b] hover:to-[#8b6508] disabled:opacity-60 disabled:pointer-events-none disabled:transform-none';
+
 const DRESS_CARD_BTN =
   'cursor-pointer transition-all duration-200 hover:border-[#d4af37] hover:bg-[#fffdf8] hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98]';
 
@@ -1190,6 +1193,7 @@ export default function Home() {
 
   const handleAddDressSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmittingDress) return;
     setAddDressError('');
     if (!isLoggedIn()) {
       openAuthModal({ reason: 'publish', next: '/?publish=1' });
@@ -1383,10 +1387,14 @@ export default function Home() {
           יש לך שמלה בארון? פרסמי אותה — שמלות חדשות ומומלצות מקבלות חשיפה מוגברת, ותשלום מאובטח דרך האתר מחזק את המיקום שלך בקטלוג.
         </p>
         <div className="flex flex-wrap justify-center gap-3 mt-4 mb-0">
-          <button onClick={openAddDressForm} className="px-6 py-3 bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white rounded-xl text-sm font-bold shadow-lg">
+          <button
+            type="button"
+            onClick={openAddDressForm}
+            className={`px-6 py-3 rounded-xl text-sm font-bold shadow-lg ${ADD_DRESS_BTN}`}
+          >
             👗 יש לי שמלה — פרסמי
           </button>
-          <a href="#catalog" className="px-6 py-3 bg-white/90 border border-[#decfa8] text-[#8b6508] rounded-xl text-sm font-bold">
+          <a href="#catalog" className="px-6 py-3 bg-white/90 border border-[#decfa8] text-[#8b6508] rounded-xl text-sm font-bold cursor-pointer transition-all hover:border-[#d4af37] hover:shadow-md">
             🔍 מחפשת שמלה — לקטלוג
           </a>
         </div>
@@ -1857,7 +1865,7 @@ export default function Home() {
               <button 
                 type="submit"
                 disabled={isSubmittingDress}
-                className="w-full bg-gradient-to-r from-[#d4af37] via-[#b8860b] to-[#d4af37] hover:from-[#b8860b] hover:to-[#8b6508] disabled:opacity-60 text-white text-xs font-black py-3.5 rounded-xl shadow-lg mt-2 transition-transform active:scale-98"
+                className={`w-full text-xs font-black py-3.5 rounded-xl shadow-lg mt-2 ${ADD_DRESS_BTN}`}
               >
                 {isSubmittingDress ? 'שולחת לאישור...' : 'שלחי לאישור ✨'}
               </button>

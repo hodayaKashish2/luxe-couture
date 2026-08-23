@@ -42,6 +42,7 @@ export async function GET(request: Request) {
     const myDresses = filterRemovedDressesWithinRetention(
       (allDresses ?? []).filter((d) => userOwnsDress(d, user))
     );
+    const visibleDresses = myDresses.filter((d) => d.status !== 'pending');
 
     type OwnerBookingRow = {
       id: number;
@@ -58,9 +59,9 @@ export async function GET(request: Request) {
       dress_status: string;
     };
 
-    const dressIds = myDresses.map((d) => d.id);
+    const dressIds = visibleDresses.map((d) => d.id);
     const dressStatusById = Object.fromEntries(
-      myDresses.map((d) => [String(d.id), String(d.status || 'approved')])
+      visibleDresses.map((d) => [String(d.id), String(d.status || 'approved')])
     );
     let ownerBookings: OwnerBookingRow[] = [];
     let cancelledOwnerBookings: OwnerBookingRow[] = [];
@@ -114,7 +115,7 @@ export async function GET(request: Request) {
         throw bookingsError;
       }
 
-      const dressNames = Object.fromEntries(myDresses.map((d) => [String(d.id), d.name]));
+      const dressNames = Object.fromEntries(visibleDresses.map((d) => [String(d.id), d.name]));
       const mappedOwnerBookings: OwnerBookingRow[] = (bookingRows ?? []).map((b) => ({
         ...(b as Omit<OwnerBookingRow, 'dress_name' | 'dress_status'>),
         dress_name: dressNames[String(b.dress_id)] || 'שמלה',
@@ -297,7 +298,7 @@ export async function GET(request: Request) {
     return NextResponse.json({
       user,
       rentals: {
-        dresses: myDresses.map((d) => {
+        dresses: visibleDresses.map((d) => {
           const mapped = mapOwnedDressForEdit(d as Record<string, unknown>);
           const today = todayDateString();
           return {

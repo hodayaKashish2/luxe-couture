@@ -179,6 +179,9 @@ type Props = {
   onRefresh?: () => void;
 };
 
+const ADD_DRESS_BTN =
+  'cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.98] bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white font-bold border border-[#c9a227] hover:from-[#b8860b] hover:to-[#8b6508] disabled:opacity-60 disabled:pointer-events-none disabled:transform-none';
+
 export default function OwnerDressesPanel({
   dresses,
   ownerBookings,
@@ -189,7 +192,7 @@ export default function OwnerDressesPanel({
   onRefresh,
 }: Props) {
   const activeDresses = useMemo(
-    () => dresses.filter((d) => d.status !== 'removed'),
+    () => dresses.filter((d) => d.status !== 'removed' && d.status !== 'pending'),
     [dresses]
   );
   const removedDresses = useMemo(
@@ -367,7 +370,7 @@ export default function OwnerDressesPanel({
         <button
           type="button"
           onClick={onAddDress}
-          className="px-4 py-2 bg-[#b8860b] text-white rounded-xl text-xs font-bold"
+          className={`px-4 py-2 rounded-xl text-xs shrink-0 ${ADD_DRESS_BTN}`}
         >
           ➕ הוספת שמלה
         </button>
@@ -386,7 +389,7 @@ export default function OwnerDressesPanel({
           <button
             type="button"
             onClick={onAddDress}
-            className="px-4 py-2 bg-[#b8860b] text-white rounded-xl text-xs font-bold shrink-0"
+            className={`px-4 py-2 rounded-xl text-xs font-bold shrink-0 ${ADD_DRESS_BTN}`}
           >
             ➕ הוספת שמלה
           </button>
@@ -436,7 +439,7 @@ export default function OwnerDressesPanel({
         <button
           type="button"
           onClick={onAddDress}
-          className="px-4 py-2 bg-[#b8860b] text-white rounded-xl text-xs font-bold shrink-0"
+          className={`px-4 py-2 rounded-xl text-xs font-bold shrink-0 ${ADD_DRESS_BTN}`}
         >
           ➕ הוספת שמלה
         </button>
