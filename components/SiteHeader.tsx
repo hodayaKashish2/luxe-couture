@@ -18,7 +18,6 @@ const links = [
   { href: '/terms', label: 'תקנון', icon: '📋' },
   { href: '/privacy', label: 'פרטיות', icon: '🔒' },
   { href: '/contact', label: 'צור קשר', icon: '💬' },
-  { href: '/admin', label: 'ניהול', icon: '⚙️' },
 ];
 
 function isActive(pathname: string, href: string) {

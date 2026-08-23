@@ -31,6 +31,13 @@ export const WHATSAPP_LINK = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIC
 
 export const PRODUCTION_SITE_URL = 'https://dress-click.co.il';
 
+/** נתיב סודי לפאנל הניהול — לא מופיע בתפריט */
+export const ADMIN_PANEL_PATH = 'hodaya0527640';
+
+export function adminPanelUrl() {
+  return `${getServerAppUrl()}/${ADMIN_PANEL_PATH}`;
+}
+
 /** כתובת ציבורית של האתר — בדפדפן משתמשים ב-origin הנוכחי */
 export function getServerAppUrl(): string {
   const configured = process.env.NEXT_PUBLIC_APP_URL?.trim();

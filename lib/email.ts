@@ -1,6 +1,6 @@
 import { Resend } from 'resend';
 import nodemailer from 'nodemailer';
-import { DEFAULT_ADMIN_EMAIL, getSiteAdminEmail, getServerAppUrl, accountReservationsUrl, accountRentalsUrl, completeBookingUrl } from '@/lib/site-config';
+import { DEFAULT_ADMIN_EMAIL, getSiteAdminEmail, getServerAppUrl, accountReservationsUrl, accountRentalsUrl, completeBookingUrl, adminPanelUrl } from '@/lib/site-config';
 import { PAYMENT_DEADLINE_DAYS } from '@/lib/booking-payment-deadlines';
 import { buildDressUpdateDiffHtml } from '@/lib/dress-update-diff-html';
 
@@ -484,7 +484,7 @@ export async function sendBookingOwnerApprovedAdminEmail(params: {
   eventDate: string;
   amount: number;
 }) {
-  const adminPanelUrl = `${getAppUrl()}/admin`;
+  const adminPanelLink = adminPanelUrl();
   const reservationsUrl = accountReservationsUrl();
 
   return sendAdminEmail(
@@ -503,7 +503,7 @@ export async function sendBookingOwnerApprovedAdminEmail(params: {
           <p style="margin:0;"><strong>סכום:</strong> ₪${params.amount}</p>
         </div>
         <p style="margin-top:24px;">
-          <a href="${adminPanelUrl}" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
+          <a href="${adminPanelLink}" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
             לפאנל הניהול →
           </a>
         </p>
@@ -747,7 +747,7 @@ export async function sendPaymentReportedAdminEmail(params: {
   paymentSenderPhone?: string;
 }) {
   const approveUrl = `${getAppUrl()}/api/payments/approve?bookingId=${params.bookingId}&token=${encodeURIComponent(process.env.ADMIN_SECRET || '')}`;
-  const adminPanelUrl = `${getAppUrl()}/admin`;
+  const adminPanelLink = adminPanelUrl();
 
   const senderBlock =
     params.paymentSenderName || params.paymentSenderPhone
@@ -782,7 +782,7 @@ export async function sendPaymentReportedAdminEmail(params: {
           </a>
         </p>
         <p style="margin-top:12px;">
-          <a href="${adminPanelUrl}" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
+          <a href="${adminPanelLink}" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
             לפאנל הניהול →
           </a>
         </p>
@@ -828,7 +828,7 @@ export async function sendDressPendingAdminEmail(params: {
   images: string[];
 }) {
   const approveUrl = `${getAppUrl()}/api/dresses/approve?id=${params.dressId}&token=${encodeURIComponent(process.env.ADMIN_SECRET || '')}`;
-  const adminUrl = `${getAppUrl()}/admin`;
+  const adminPanelLink = adminPanelUrl();
   const imagesHtml = params.images
     .slice(0, 4)
     .map(
@@ -852,7 +852,7 @@ export async function sendDressPendingAdminEmail(params: {
           <a href="${approveUrl}" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;margin-left:8px;">
             ✅ אשר והוסף לאתר
           </a>
-          <a href="${adminUrl}" style="display:inline-block;background:#fff;color:#8b6508;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;border:2px solid #decfa8;">
+          <a href="${adminPanelLink}" style="display:inline-block;background:#fff;color:#8b6508;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;border:2px solid #decfa8;">
             דף ניהול
           </a>
         </p>
@@ -921,7 +921,7 @@ export async function sendDressUpdatePendingAdminEmail(params: {
   ownerEmail: string;
   diff: import('@/lib/dress-pending-update').DressUpdateDiff;
 }) {
-  const adminUrl = `${getAppUrl()}/admin`;
+  const adminPanelLink = adminPanelUrl();
   const diffHtml = buildDressUpdateDiffHtml(params.diff);
 
   return sendAdminEmail(
@@ -934,7 +934,7 @@ export async function sendDressUpdatePendingAdminEmail(params: {
         ${diffHtml}
         <p style="line-height:1.7;color:#554a33;margin-top:16px;"><strong>משכירה:</strong> ${escapeHtml(params.ownerName)}${params.ownerEmail ? ` · ${escapeHtml(params.ownerEmail)}` : ''}</p>
         <p style="margin-top:24px;">
-          <a href="${adminUrl}" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
+          <a href="${adminPanelLink}" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
             לאישור בדף הניהול →
           </a>
         </p>
