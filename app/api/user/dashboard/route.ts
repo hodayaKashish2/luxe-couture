@@ -10,6 +10,7 @@ import {
   shouldShowRemovedDress,
 } from '@/lib/retention';
 import { mapOwnedDressForEdit } from '@/lib/dress-pending-update';
+import { reconcileRemovedDressBookings } from '@/lib/dress-removal';
 import { todayDateString } from '@/lib/booking-dates';
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server';
 
@@ -54,11 +55,20 @@ export async function GET(request: Request) {
       owner_responded_at?: string | null;
       owner_reject_reason?: string | null;
       dress_name: string;
+      dress_status: string;
     };
 
     const dressIds = myDresses.map((d) => d.id);
+    const dressStatusById = Object.fromEntries(
+      myDresses.map((d) => [String(d.id), String(d.status || 'approved')])
+    );
     let ownerBookings: OwnerBookingRow[] = [];
     let cancelledOwnerBookings: OwnerBookingRow[] = [];
+
+    const removedDressIds = myDresses.filter((d) => d.status === 'removed').map((d) => d.id);
+    if (removedDressIds.length > 0) {
+      await reconcileRemovedDressBookings(supabase, removedDressIds);
+    }
 
     if (dressIds.length > 0) {
       const ownerStatuses = [
@@ -106,12 +116,15 @@ export async function GET(request: Request) {
 
       const dressNames = Object.fromEntries(myDresses.map((d) => [String(d.id), d.name]));
       const mappedOwnerBookings: OwnerBookingRow[] = (bookingRows ?? []).map((b) => ({
-        ...(b as Omit<OwnerBookingRow, 'dress_name'>),
+        ...(b as Omit<OwnerBookingRow, 'dress_name' | 'dress_status'>),
         dress_name: dressNames[String(b.dress_id)] || 'שמלה',
+        dress_status: dressStatusById[String(b.dress_id)] || 'approved',
       }));
 
       ownerBookings = filterBookingsWithinRetention(
-        mappedOwnerBookings.filter((b) => b.status !== 'cancelled')
+        mappedOwnerBookings.filter(
+          (b) => b.status !== 'cancelled' && b.dress_status !== 'removed'
+        )
       );
       cancelledOwnerBookings = filterCancelledBookingsWithinRetention(
         mappedOwnerBookings.filter((b) => b.status === 'cancelled')
