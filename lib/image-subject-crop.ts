@@ -5,7 +5,7 @@ export type ImageSubjectFocus = {
 
 const DEFAULT_FOCUS: ImageSubjectFocus = {
   objectPosition: '50% 42%',
-  useSideBlur: false,
+  useSideBlur: true,
 };
 
 const focusCache = new Map<string, ImageSubjectFocus>();
@@ -114,8 +114,9 @@ function computeFocusFromBounds(
 
   const objectPosition = `${(centerX / width) * 100}% ${(centerY / height) * 100}%`;
 
-  // תמונה רחבה — שומרים את כל הדוגמנית עם רקע מטושטש מהצדדים
-  const useSideBlur = subjectAspect > targetAspect * 0.92;
+  // תמונה שלא בפרופורציית 3:4 — מציגים במלואה עם רקע מטושטש
+  const useSideBlur =
+    Math.abs(subjectAspect - targetAspect) / targetAspect > 0.04;
 
   return { objectPosition, useSideBlur };
 }

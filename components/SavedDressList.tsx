@@ -66,6 +66,7 @@ export default function SavedDressList({
                       src={image}
                       alt={item.name}
                       className="h-full w-full"
+                      fillMode="smart"
                       hoverScale
                     />
                   ) : (

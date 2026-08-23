@@ -1522,7 +1522,7 @@ export default function Home() {
                 key={dress.id} 
                 className="group flex flex-col bg-white rounded-lg sm:rounded-xl overflow-hidden border border-[#ebd3a4]/60 shadow-sm hover:shadow-md hover:border-[#d4af37] transition-all duration-200"
               >
-                {/* תמונה — זיהוי דוגמנית, חיתוך מלמעלה/מלמטה, רקע מהצדדים במידת הצורך */}
+                {/* תמונה — כל האורך/רוחב נראים; רקע מטושטש מהצדדים כשצריך */}
                 <div
                   className="relative w-full aspect-[3/4] overflow-hidden bg-[#f5f0e6] cursor-pointer"
                   onClick={() => setDetailsDress(dress)}
