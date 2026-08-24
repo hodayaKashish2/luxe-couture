@@ -1,6 +1,6 @@
 import { Resend } from 'resend';
 import nodemailer from 'nodemailer';
-import { DEFAULT_ADMIN_EMAIL, getSiteAdminEmail, getServerAppUrl, accountReservationsUrl, accountRentalsUrl, completeBookingUrl, adminPanelUrl } from '@/lib/site-config';
+import { DEFAULT_ADMIN_EMAIL, getSiteAdminEmail, getServerAppUrl, accountAddDressUrl, accountReservationsUrl, accountRentalsUrl, completeBookingUrl, adminPanelUrl } from '@/lib/site-config';
 import { PAYMENT_DEADLINE_DAYS } from '@/lib/booking-payment-deadlines';
 import { buildDressUpdateDiffHtml } from '@/lib/dress-update-diff-html';
 
@@ -1080,10 +1080,10 @@ export async function sendDressRejectedOwnerEmail(params: {
           <p style="margin:0 0 6px;font-weight:bold;color:#8b6508;">סיבת הדחייה:</p>
           <p style="margin:0;line-height:1.7;color:#554a33;">${escapeHtml(params.reason)}</p>
         </div>
-        <p style="line-height:1.7;color:#554a33;">אפשר לערוך את הפרטים ולשלוח שוב מאזור האישי.</p>
+        <p style="line-height:1.7;color:#554a33;">אפשר לשלוח שמלה מחדש עם תיקונים — לחצי «הוספת שמלה» באתר.</p>
         <p style="margin-top:24px;">
-          <a href="${accountRentalsUrl()}" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
-            לאזור האישי →
+          <a href="${accountAddDressUrl()}" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
+            להוספת שמלה →
           </a>
         </p>
       </div>

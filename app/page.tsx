@@ -47,6 +47,7 @@ import { matchesAnyCatalogTextFilter } from '@/lib/catalog-text-filter';
 import { shareDressLink } from '@/lib/share-dress';
 import { OFF_PLATFORM_COORDINATE_NOTICE } from '@/lib/commission';
 import CatalogPlatformNotice from '@/components/CatalogPlatformNotice';
+import RemovedFromListsNotice from '@/components/RemovedFromListsNotice';
 import { fetchDressById, findDressInList } from '@/lib/dress-api';
 import { dressBelongsToCustomer } from '@/lib/self-dress-guard';
 import { ownerWhatsAppLink, WHATSAPP_LINK } from '@/lib/site-config';
@@ -110,8 +111,16 @@ export default function Home() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [filtersSidebarCollapsed, setFiltersSidebarCollapsed] = useState(false);
 
-  const { cart, toggleCart, toggleFavorite, removeFromCart, isDressInCart, isDressFavorite } =
-    useLuxeStorage();
+  const {
+    cart,
+    toggleCart,
+    toggleFavorite,
+    removeFromCart,
+    isDressInCart,
+    isDressFavorite,
+    cartPruneNotice,
+    dismissCartPruneNotice,
+  } = useLuxeStorage();
   const [isCartOpen, setIsCartOpen] = useState(false);
 
   // מודאל הוספת שמלה חדשה
@@ -437,10 +446,14 @@ export default function Home() {
         return;
       }
       const dress = await fetchDressById(item.id);
-      if (dress) setDetailsDress(dress);
-      else alert('לא מצאנו את השמלה — אולי הוסרה מהאתר');
+      if (dress) {
+        setDetailsDress(dress);
+        return;
+      }
+      removeFromCart(item.id);
+      setToast({ message: 'השמלה הוסרה מהאתר — הורדנו אותה מהסל', variant: 'error' });
     },
-    [dressesList]
+    [dressesList, removeFromCart]
   );
 
   const resetAddDressForm = () => {
@@ -2162,6 +2175,7 @@ export default function Home() {
             </div>
 
             <div className="flex-1 overflow-y-auto py-4 min-h-0">
+              <RemovedFromListsNotice names={cartPruneNotice} onDismiss={dismissCartPruneNotice} />
               <SavedDressList
                 items={cart}
                 emptyMessage="הסל שלך עדיין ריק. הוסיפי שמלות כדי לבצע הזמנה מרוכזת."

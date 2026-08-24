@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import SiteFooter from '@/components/SiteFooter';
 import SiteHeader from '@/components/SiteHeader';
 import SavedDressList from '@/components/SavedDressList';
+import RemovedFromListsNotice from '@/components/RemovedFromListsNotice';
 import DressDetailsModal from '@/components/DressDetailsModal';
 import DressRateModal from '@/components/DressRateModal';
 import FittingConfirmationModal from '@/components/FittingConfirmationModal';
@@ -129,7 +130,23 @@ function AccountPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { section, dressId, viewDress: viewDressId } = parseAccountSection(searchParams);
-  const { cart, favorites, cartCount, favCount, removeFromCart, removeFromFavorites, toggleCart, toggleFavorite, isDressInCart, isDressFavorite } = useLuxeStorage();
+  const {
+    cart,
+    favorites,
+    cartCount,
+    favCount,
+    cartPruneNotice,
+    favoritesPruneNotice,
+    dismissCartPruneNotice,
+    dismissFavoritesPruneNotice,
+    removeFromCart,
+    removeFromFavorites,
+    toggleCart,
+    toggleFavorite,
+    isDressInCart,
+    isDressFavorite,
+    reconcileWithCatalog,
+  } = useLuxeStorage();
   const [detailsDress, setDetailsDress] = useState<Dress | null>(null);
   const [rateDress, setRateDress] = useState<Dress | null>(null);
   const [ratedDressIds, setRatedDressIds] = useState<Set<string>>(() => new Set());
@@ -289,12 +306,14 @@ function AccountPageContent() {
     if (!dress) dress = await fetchDressById(item.id);
     if (!dress) {
       pendingViewDressRef.current = null;
-      alert('לא מצאנו את השמלה באתר — אולי הוסרה');
+      if (section === 'cart') removeFromCart(item.id);
+      if (section === 'favorites') removeFromFavorites(item.id);
+      setToast({ message: 'השמלה הוסרה מהאתר — הורדנו אותה מהרשימה', variant: 'error' });
       return;
     }
     setDetailsDress(dress);
-    navigateToSection(section, { viewDress: item.id, replace: true });
-  }, [section, navigateToSection]);
+    navigateToSection(section, { viewDress: item.id });
+  }, [section, navigateToSection, removeFromCart, removeFromFavorites]);
 
   const load = useCallback(async (opts?: { silent?: boolean }) => {
     const token = getSiteToken();
@@ -346,8 +365,9 @@ function AccountPageContent() {
     } finally {
       setDataReady(true);
       setLoading(false);
+      void reconcileWithCatalog();
     }
-  }, [router]);
+  }, [router, reconcileWithCatalog]);
 
   useEffect(() => {
     resetModalStack();
@@ -496,7 +516,15 @@ function AccountPageContent() {
             return;
           }
           fetchDressById(viewDressId).then((dress) => {
-            if (dress) setDetailsDress(dress);
+            if (dress) {
+              setDetailsDress(dress);
+              return;
+            }
+            loadedViewDressRef.current = null;
+            if (section === 'cart') removeFromCart(viewDressId);
+            if (section === 'favorites') removeFromFavorites(viewDressId);
+            setToast({ message: 'השמלה הוסרה מהאתר — הורדנו אותה מהרשימה', variant: 'error' });
+            navigateToSection(section, { replace: true });
           });
         });
 
@@ -518,7 +546,7 @@ function AccountPageContent() {
       setDetailsDress(null);
       loadedViewDressRef.current = null;
     }
-  }, [section, dressId, viewDressId, detailsDress?.id, loadEditDress, dresses]);
+  }, [section, dressId, viewDressId, detailsDress?.id, loadEditDress, dresses, removeFromCart, removeFromFavorites, navigateToSection]);
 
   async function confirmCancelReservation() {
     if (!cancelConfirm) return;
@@ -1153,7 +1181,16 @@ function AccountPageContent() {
             }}
             className="mb-4 text-xs text-[#8b6508] font-bold hover:underline"
           >
-            ← {section === 'edit' ? 'חזרה לשמלות שלי' : detailsDress || viewDressId ? 'חזרה לרשימה' : 'חזרה לאזור האישי'}
+            ←{' '}
+            {section === 'edit'
+              ? 'חזרה לשמלות שלי'
+              : detailsDress || viewDressId
+                ? section === 'cart'
+                  ? 'חזרה לסל'
+                  : section === 'favorites'
+                    ? 'חזרה למועדפים'
+                    : 'חזרה לרשימה'
+                : 'חזרה לאזור האישי'}
           </button>
         )}
 
@@ -1415,6 +1452,7 @@ function AccountPageContent() {
         {section === 'cart' && (
           <div>
             <h2 className="font-black text-xl mb-4">🛍️ הסל שלי</h2>
+            <RemovedFromListsNotice names={cartPruneNotice} onDismiss={dismissCartPruneNotice} />
             <SavedDressList
               items={cart}
               emptyMessage="הסל ריק — הוסיפי שמלות מהקטלוג"
@@ -1429,7 +1467,8 @@ function AccountPageContent() {
                   dress = findDressInList(list, item.id);
                 }
                 if (!dress) {
-                  setToast({ message: 'לא מצאנו את השמלה — אולי הוסרה', variant: 'error' });
+                  removeFromCart(item.id);
+                  setToast({ message: 'השמלה הוסרה מהאתר — הורדנו אותה מהסל', variant: 'error' });
                   return;
                 }
                 beginAccountFinalApproval(dress);
@@ -1441,6 +1480,7 @@ function AccountPageContent() {
         {section === 'favorites' && (
           <div>
             <h2 className="font-black text-xl mb-4">❤️ מועדפים</h2>
+            <RemovedFromListsNotice names={favoritesPruneNotice} onDismiss={dismissFavoritesPruneNotice} />
             <SavedDressList
               items={favorites}
               emptyMessage="אין מועדפים עדיין — לחצי ❤️ על שמלה בקטלוג"

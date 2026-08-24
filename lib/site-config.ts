@@ -72,6 +72,10 @@ export function accountRentalsUrl() {
   return `${getServerAppUrl()}/account?section=rentals`;
 }
 
+export function accountAddDressUrl() {
+  return `${getServerAppUrl()}/account?section=add`;
+}
+
 export function completeBookingUrl(bookingId: number | string) {
   return `${getServerAppUrl()}/account?section=reservations&completeBooking=${bookingId}`;
 }
