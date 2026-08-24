@@ -175,7 +175,8 @@ function AccountPageContent() {
   const loadedViewDressRef = useRef<string | null>(null);
   const [addForm, setAddForm] = useState({
     name: '', price: '', size: '', city: 'ירושלים', color: '', event_type: 'single', listing_type: 'rent',
-    dress_style: DEFAULT_DRESS_STYLE, dress_length: DEFAULT_DRESS_LENGTH,
+    dress_style: DEFAULT_DRESS_STYLE as string,
+    dress_length: DEFAULT_DRESS_LENGTH as string,
     deposit: '', pickup_method: 'pickup', includes_dry_cleaning: 'no', condition: 'new', description: '',
     owner_phone: '',
   });

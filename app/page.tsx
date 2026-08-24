@@ -131,8 +131,8 @@ export default function Home() {
     city: '',
     event_type: 'single',
     listing_type: 'rent',
-    dress_style: DEFAULT_DRESS_STYLE,
-    dress_length: DEFAULT_DRESS_LENGTH,
+    dress_style: DEFAULT_DRESS_STYLE as string,
+    dress_length: DEFAULT_DRESS_LENGTH as string,
     owner_name: '',
     owner_phone: '',
     owner_email: '',
@@ -447,7 +447,7 @@ export default function Home() {
     newDressData.images.forEach((url) => URL.revokeObjectURL(url));
     setNewDressData({
       name: '', price: '', size: '', color: '', city: '', event_type: 'single', listing_type: 'rent',
-      dress_style: DEFAULT_DRESS_STYLE, dress_length: DEFAULT_DRESS_LENGTH,
+      dress_style: DEFAULT_DRESS_STYLE as string, dress_length: DEFAULT_DRESS_LENGTH as string,
       owner_name: '', owner_phone: '', owner_email: '', deposit: '', pickup_method: 'pickup',
       includes_dry_cleaning: 'no',
       condition: 'new', description: '', images: [],
