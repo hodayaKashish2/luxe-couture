@@ -1,4 +1,5 @@
 import { DRESS_SIZES } from '@/lib/constants';
+import { isValidDressLength, isValidDressStyle } from '@/lib/dress-style-length';
 import { isValidIsraeliPhone, phoneValidationMessage } from '@/lib/israeli-phone';
 
 export const MAX_DRESS_IMAGE_SIZE = 5 * 1024 * 1024;
@@ -46,6 +47,8 @@ export type AddDressFormFields = {
   size: string;
   city: string;
   color: string;
+  dress_style?: string;
+  dress_length?: string;
   owner_name?: string;
   owner_phone?: string;
   owner_email?: string;
@@ -63,6 +66,20 @@ export function validateAddDressForm(form: AddDressFormFields, imageCount: numbe
   }
   if (!form.city.trim()) return 'נא להזין עיר';
   if (!form.color.trim()) return 'נא להזין צבע לשמלה — למשל: לבן, שמנת, ורוד';
+
+  if (form.dress_style !== undefined) {
+    if (!form.dress_style.trim()) return 'נא לבחור סגנון — שמרני, קלאסי או מודרני';
+    if (!isValidDressStyle(form.dress_style.trim())) {
+      return 'נא לבחור סגנון — שמרני, קלאסי או מודרני';
+    }
+  }
+
+  if (form.dress_length !== undefined) {
+    if (!form.dress_length.trim()) return 'נא לבחור אורך — קצר, אמצע או ארוך';
+    if (!isValidDressLength(form.dress_length.trim())) {
+      return 'נא לבחור אורך — קצר, אמצע או ארוך';
+    }
+  }
 
   if (form.owner_name !== undefined && !form.owner_name.trim()) {
     return 'נא להזין שם משכירה';

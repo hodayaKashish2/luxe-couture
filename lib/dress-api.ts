@@ -1,5 +1,6 @@
 import type { Dress } from '@/lib/types';
 import { normalizeDressKind, normalizeListingType } from '@/lib/dress-listing';
+import { normalizeDressLength, normalizeDressStyle } from '@/lib/dress-style-length';
 
 export function normalizeDress(dress: Dress): Dress {
   return {
@@ -10,6 +11,8 @@ export function normalizeDress(dress: Dress): Dress {
     city: dress.city || '',
     color: dress.color || '',
     event_type: normalizeDressKind(dress.event_type),
+    dress_style: normalizeDressStyle(dress.dress_style),
+    dress_length: normalizeDressLength(dress.dress_length),
     listing_type: normalizeListingType(dress.listing_type),
     owner_name: dress.owner_name || '',
     owner_phone: dress.owner_phone || '',

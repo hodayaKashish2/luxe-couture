@@ -56,6 +56,13 @@ import { resetModalStack } from '@/lib/modal-history';
 import { useScrollToError } from '@/hooks/use-scroll-to-error';
 import type { Dress } from '@/lib/types';
 import { DRESS_KIND_OPTIONS, LISTING_TYPE_OPTIONS } from '@/lib/dress-listing';
+import {
+  DEFAULT_DRESS_LENGTH,
+  DEFAULT_DRESS_STYLE,
+  DRESS_LENGTH_OPTIONS,
+  DRESS_STYLE_OPTIONS,
+  dressLengthFieldLabel,
+} from '@/lib/dress-style-length';
 import type { SavedDress } from '@/lib/luxe-storage';
 
 type Section = 'hub' | 'reservations' | 'rentals' | 'cart' | 'favorites' | 'add' | 'edit' | 'profile';
@@ -168,6 +175,7 @@ function AccountPageContent() {
   const loadedViewDressRef = useRef<string | null>(null);
   const [addForm, setAddForm] = useState({
     name: '', price: '', size: '', city: 'ירושלים', color: '', event_type: 'single', listing_type: 'rent',
+    dress_style: DEFAULT_DRESS_STYLE, dress_length: DEFAULT_DRESS_LENGTH,
     deposit: '', pickup_method: 'pickup', includes_dry_cleaning: 'no', condition: 'new', description: '',
     owner_phone: '',
   });
@@ -626,6 +634,8 @@ function AccountPageContent() {
         size: addForm.size,
         city: addForm.city,
         color: addForm.color,
+        dress_style: addForm.dress_style,
+        dress_length: addForm.dress_length,
         owner_phone: addForm.owner_phone,
         owner_email: user?.email || profileForm.email,
         requireEmail: true,
@@ -1668,6 +1678,18 @@ function AccountPageContent() {
                 <label className="block text-xs font-bold text-[#8b6508] mb-1">שמלה בודדת או סט *</label>
                 <select required value={addForm.event_type} onChange={(e) => setAddForm({ ...addForm, event_type: e.target.value })} className="p-2.5 border border-[#decfa8] rounded-xl text-xs text-[#2c261a] bg-white w-full">
                   {DRESS_KIND_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-[#8b6508] mb-1">סגנון *</label>
+                <select required value={addForm.dress_style} onChange={(e) => setAddForm({ ...addForm, dress_style: e.target.value })} className="p-2.5 border border-[#decfa8] rounded-xl text-xs text-[#2c261a] bg-white w-full">
+                  {DRESS_STYLE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-[#8b6508] mb-1">{dressLengthFieldLabel(addForm.event_type)}</label>
+                <select required value={addForm.dress_length} onChange={(e) => setAddForm({ ...addForm, dress_length: e.target.value })} className="p-2.5 border border-[#decfa8] rounded-xl text-xs text-[#2c261a] bg-white w-full">
+                  {DRESS_LENGTH_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
                 </select>
               </div>
               <textarea

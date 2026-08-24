@@ -6,9 +6,11 @@ import { getDressSizeFilterGroups } from '@/lib/constants';
 import {
   DRESS_KIND_OPTIONS,
   LISTING_TYPE_OPTIONS,
-  dressKindLabel,
-  listingTypeLabel,
 } from '@/lib/dress-listing';
+import {
+  DRESS_LENGTH_OPTIONS,
+  DRESS_STYLE_OPTIONS,
+} from '@/lib/dress-style-length';
 import type { SortOption } from '@/lib/types';
 
 export type CatalogFilterPanelProps = {
@@ -23,6 +25,10 @@ export type CatalogFilterPanelProps = {
   setSelectedDressKinds: (value: string[]) => void;
   selectedListingTypes: string[];
   setSelectedListingTypes: (value: string[]) => void;
+  selectedDressStyles: string[];
+  setSelectedDressStyles: (value: string[]) => void;
+  selectedDressLengths: string[];
+  setSelectedDressLengths: (value: string[]) => void;
   sortBy: SortOption;
   setSortBy: (value: SortOption) => void;
   colorFilters: string[];
@@ -61,6 +67,10 @@ export default function CatalogFilterPanel({
   setSelectedDressKinds,
   selectedListingTypes,
   setSelectedListingTypes,
+  selectedDressStyles,
+  setSelectedDressStyles,
+  selectedDressLengths,
+  setSelectedDressLengths,
   sortBy,
   setSortBy,
   colorFilters,
@@ -123,6 +133,28 @@ export default function CatalogFilterPanel({
           options={DRESS_KIND_OPTIONS.map((o) => o.value)}
           optionLabels={Object.fromEntries(DRESS_KIND_OPTIONS.map((o) => [o.value, o.label]))}
           allLabel="הכל"
+        />
+      </FilterSection>
+
+      <FilterSection title="סגנון" defaultOpen={selectedDressStyles.length > 0}>
+        <MultiSelectFilterMenu
+          title="סגנון"
+          selected={selectedDressStyles}
+          onChange={setSelectedDressStyles}
+          options={DRESS_STYLE_OPTIONS.map((o) => o.value)}
+          optionLabels={Object.fromEntries(DRESS_STYLE_OPTIONS.map((o) => [o.value, o.label]))}
+          allLabel="כל הסגנונות"
+        />
+      </FilterSection>
+
+      <FilterSection title="אורך" defaultOpen={selectedDressLengths.length > 0}>
+        <MultiSelectFilterMenu
+          title="אורך"
+          selected={selectedDressLengths}
+          onChange={setSelectedDressLengths}
+          options={DRESS_LENGTH_OPTIONS.map((o) => o.value)}
+          optionLabels={Object.fromEntries(DRESS_LENGTH_OPTIONS.map((o) => [o.value, o.label]))}
+          allLabel="כל האורכים"
         />
       </FilterSection>
 

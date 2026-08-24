@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { normalizeDressKind, normalizeListingType } from '@/lib/dress-listing';
+import { normalizeDressLength, normalizeDressStyle } from '@/lib/dress-style-length';
 import { getDressColorFromRow, normalizeDressImages } from '@/lib/dress-pending-update';
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server';
 
@@ -23,6 +24,8 @@ function mapDress(row: Record<string, unknown>, bookedDates: string[] = []) {
     city: row.city || '',
     color,
     event_type: normalizeDressKind(String(row.event_type || '')),
+    dress_style: normalizeDressStyle(String(row.dress_style || '')),
+    dress_length: normalizeDressLength(String(row.dress_length || '')),
     listing_type: normalizeListingType(String(row.listing_type || 'rent')),
     owner_name: row.owner_name || '',
     owner_phone: row.owner_phone || '',

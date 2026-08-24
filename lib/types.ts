@@ -10,6 +10,10 @@ export type Dress = {
   color: string;
   /** single | set — שמלה בודדת או סט */
   event_type: string;
+  /** conservative | classic | modern */
+  dress_style?: string;
+  /** short | medium | long */
+  dress_length?: string;
   /** rent | sale */
   listing_type?: string;
   owner_name: string;

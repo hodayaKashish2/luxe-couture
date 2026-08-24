@@ -53,6 +53,17 @@ import { ownerWhatsAppLink, WHATSAPP_LINK } from '@/lib/site-config';
 import { consumeDetailsReturnDressId, peekDetailsReturnAccountSection, peekDetailsReturnSource, setDetailsReturnDressId } from '@/lib/details-return';
 import { Dress, Review, SortOption, PICKUP_METHODS } from '@/lib/types';
 import { DRESS_KIND_OPTIONS, LISTING_TYPE_OPTIONS, dressKindLabel, listingTypeLabel } from '@/lib/dress-listing';
+import {
+  DEFAULT_DRESS_LENGTH,
+  DEFAULT_DRESS_STYLE,
+  DRESS_LENGTH_OPTIONS,
+  DRESS_STYLE_OPTIONS,
+  dressLengthFieldLabel,
+  dressLengthLabel,
+  dressStyleLabel,
+  normalizeDressLength,
+  normalizeDressStyle,
+} from '@/lib/dress-style-length';
 import type { SavedDress } from '@/lib/luxe-storage';
 
 const ADD_DRESS_BTN =
@@ -92,6 +103,8 @@ export default function Home() {
   const [cityFilters, setCityFilters] = useState<string[]>([]);
   const [selectedDressKinds, setSelectedDressKinds] = useState<string[]>([]);
   const [selectedListingTypes, setSelectedListingTypes] = useState<string[]>([]);
+  const [selectedDressStyles, setSelectedDressStyles] = useState<string[]>([]);
+  const [selectedDressLengths, setSelectedDressLengths] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<SortOption>('recommended');
   const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -118,6 +131,8 @@ export default function Home() {
     city: '',
     event_type: 'single',
     listing_type: 'rent',
+    dress_style: DEFAULT_DRESS_STYLE,
+    dress_length: DEFAULT_DRESS_LENGTH,
     owner_name: '',
     owner_phone: '',
     owner_email: '',
@@ -432,6 +447,7 @@ export default function Home() {
     newDressData.images.forEach((url) => URL.revokeObjectURL(url));
     setNewDressData({
       name: '', price: '', size: '', color: '', city: '', event_type: 'single', listing_type: 'rent',
+      dress_style: DEFAULT_DRESS_STYLE, dress_length: DEFAULT_DRESS_LENGTH,
       owner_name: '', owner_phone: '', owner_email: '', deposit: '', pickup_method: 'pickup',
       includes_dry_cleaning: 'no',
       condition: 'new', description: '', images: [],
@@ -1208,6 +1224,8 @@ export default function Home() {
         size: newDressData.size,
         city: newDressData.city,
         color: newDressData.color,
+        dress_style: newDressData.dress_style,
+        dress_length: newDressData.dress_length,
         owner_name: newDressData.owner_name,
         owner_phone: newDressData.owner_phone,
         owner_email: newDressData.owner_email,
@@ -1237,6 +1255,8 @@ export default function Home() {
       formData.append('color', newDressData.color);
       formData.append('city', newDressData.city);
       formData.append('event_type', newDressData.event_type);
+      formData.append('dress_style', newDressData.dress_style);
+      formData.append('dress_length', newDressData.dress_length);
       formData.append('listing_type', newDressData.listing_type);
       formData.append('owner_name', newDressData.owner_name);
       formData.append('owner_phone', newDressData.owner_phone);
@@ -1283,8 +1303,14 @@ export default function Home() {
       const matchesListingType =
         !selectedListingTypes.length ||
         selectedListingTypes.includes(dress.listing_type || 'rent');
+      const matchesDressStyle =
+        !selectedDressStyles.length ||
+        selectedDressStyles.includes(normalizeDressStyle(dress.dress_style));
+      const matchesDressLength =
+        !selectedDressLengths.length ||
+        selectedDressLengths.includes(normalizeDressLength(dress.dress_length));
       const matchesFav = !showOnlyFavorites || isDressFavorite(dress.id);
-      return matchesSearch && matchesCity && matchesPrice && matchesSize && matchesColor && matchesDressKind && matchesListingType && matchesFav;
+      return matchesSearch && matchesCity && matchesPrice && matchesSize && matchesColor && matchesDressKind && matchesListingType && matchesDressStyle && matchesDressLength && matchesFav;
     })
     .sort((a, b) => compareDresses(a, b, sortBy));
 
@@ -1294,6 +1320,8 @@ export default function Home() {
     ...sizeFilters,
     ...selectedDressKinds,
     ...selectedListingTypes,
+    ...selectedDressStyles,
+    ...selectedDressLengths,
     ...colorFilters,
     maxPrice < 2000 ? 'price' : '',
   ].filter(Boolean).length;
@@ -1304,6 +1332,8 @@ export default function Home() {
     setSizeFilters([]);
     setSelectedDressKinds([]);
     setSelectedListingTypes([]);
+    setSelectedDressStyles([]);
+    setSelectedDressLengths([]);
     setColorFilters([]);
     setSortBy('recommended');
     setMaxPrice(2000);
@@ -1457,6 +1487,16 @@ export default function Home() {
                 {listingTypeLabel(listingType)}
               </span>
             ))}
+            {selectedDressStyles.map((style) => (
+              <span key={`style-${style}`} className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">
+                סגנון: {dressStyleLabel(style)}
+              </span>
+            ))}
+            {selectedDressLengths.map((length) => (
+              <span key={`length-${length}`} className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">
+                אורך: {dressLengthLabel(length)}
+              </span>
+            ))}
             {colorFilters.map((color) => (
               <span key={`color-${color}`} className="text-[10px] bg-[#f4ebd4] text-[#8b6508] px-2 py-0.5 rounded-full">
                 צבע: {color}
@@ -1488,6 +1528,10 @@ export default function Home() {
             setSelectedDressKinds={setSelectedDressKinds}
             selectedListingTypes={selectedListingTypes}
             setSelectedListingTypes={setSelectedListingTypes}
+            selectedDressStyles={selectedDressStyles}
+            setSelectedDressStyles={setSelectedDressStyles}
+            selectedDressLengths={selectedDressLengths}
+            setSelectedDressLengths={setSelectedDressLengths}
             sortBy={sortBy}
             setSortBy={setSortBy}
             colorFilters={colorFilters}
@@ -1659,6 +1703,10 @@ export default function Home() {
           setSelectedDressKinds={setSelectedDressKinds}
           selectedListingTypes={selectedListingTypes}
           setSelectedListingTypes={setSelectedListingTypes}
+          selectedDressStyles={selectedDressStyles}
+          setSelectedDressStyles={setSelectedDressStyles}
+          selectedDressLengths={selectedDressLengths}
+          setSelectedDressLengths={setSelectedDressLengths}
           sortBy={sortBy}
           setSortBy={setSortBy}
           colorFilters={colorFilters}
@@ -1774,6 +1822,21 @@ export default function Home() {
                   <label className="block text-xs font-bold text-[#8b6508] mb-1">שמלה בודדת או סט *</label>
                   <select required value={newDressData.event_type} onChange={(e) => setNewDressData({...newDressData, event_type: e.target.value})} className="w-full p-2.5 bg-white border border-[#decfa8] rounded-xl text-xs text-[#2c261a]">
                     {DRESS_KIND_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-[#8b6508] mb-1">סגנון *</label>
+                  <select required value={newDressData.dress_style} onChange={(e) => setNewDressData({...newDressData, dress_style: e.target.value})} className="w-full p-2.5 bg-white border border-[#decfa8] rounded-xl text-xs text-[#2c261a]">
+                    {DRESS_STYLE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-[#8b6508] mb-1">{dressLengthFieldLabel(newDressData.event_type)}</label>
+                  <select required value={newDressData.dress_length} onChange={(e) => setNewDressData({...newDressData, dress_length: e.target.value})} className="w-full p-2.5 bg-white border border-[#decfa8] rounded-xl text-xs text-[#2c261a]">
+                    {DRESS_LENGTH_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
                   </select>
                 </div>
               </div>

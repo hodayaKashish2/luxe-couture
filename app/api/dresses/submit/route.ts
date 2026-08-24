@@ -3,6 +3,7 @@ import { uploadDressImages } from '@/lib/dress-image-upload';
 import { notifyDressSubmittedInBackground } from '@/lib/dress-submit-notify';
 import { appendContactEmailToDescription } from '@/lib/dress-contact';
 import { isValidDressKind, isValidListingType } from '@/lib/dress-listing';
+import { isValidDressLength, isValidDressStyle } from '@/lib/dress-style-length';
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server';
 import {
   MAX_DRESS_IMAGES,
@@ -35,6 +36,8 @@ export async function POST(request: Request) {
     const city = String(formData.get('city') || '').trim();
     const dressKindRaw = String(formData.get('event_type') || 'single').trim();
     const listingTypeRaw = String(formData.get('listing_type') || 'rent').trim();
+    const dressStyleRaw = String(formData.get('dress_style') || 'classic').trim();
+    const dressLengthRaw = String(formData.get('dress_length') || 'long').trim();
     const ownerName = String(formData.get('owner_name') || '').trim();
     const ownerPhone = String(formData.get('owner_phone') || '').trim();
     const ownerEmail = String(formData.get('owner_email') || '').trim();
@@ -49,6 +52,8 @@ export async function POST(request: Request) {
       size,
       city,
       color,
+      dress_style: dressStyleRaw,
+      dress_length: dressLengthRaw,
       owner_name: ownerName,
       owner_phone: ownerPhone,
       owner_email: ownerEmail,
@@ -65,6 +70,12 @@ export async function POST(request: Request) {
     }
     if (!isValidListingType(listingTypeRaw)) {
       return NextResponse.json({ error: 'נא לבחור סוג פרסום — השכרה או מכירה' }, { status: 400 });
+    }
+    if (!isValidDressStyle(dressStyleRaw)) {
+      return NextResponse.json({ error: 'נא לבחור סגנון — שמרני, קלאסי או מודרני' }, { status: 400 });
+    }
+    if (!isValidDressLength(dressLengthRaw)) {
+      return NextResponse.json({ error: 'נא לבחור אורך — קצר, אמצע או ארוך' }, { status: 400 });
     }
 
     for (const file of files) {
@@ -95,6 +106,8 @@ export async function POST(request: Request) {
       city,
       event_type: dressKindRaw,
       listing_type: listingTypeRaw,
+      dress_style: dressStyleRaw,
+      dress_length: dressLengthRaw,
       owner_name: ownerName,
       owner_phone: ownerPhone,
       owner_email: ownerEmail,
@@ -130,6 +143,16 @@ export async function POST(request: Request) {
 
     if (error?.message?.includes('owner_email')) {
       delete insertPayload.owner_email;
+      ({ data, error } = await supabase
+        .from('dresses')
+        .insert([insertPayload])
+        .select('id, name, price, size, condition, description, images, status, created_at')
+        .single());
+    }
+
+    if (error?.message?.includes('dress_style') || error?.message?.includes('dress_length')) {
+      delete insertPayload.dress_style;
+      delete insertPayload.dress_length;
       ({ data, error } = await supabase
         .from('dresses')
         .insert([insertPayload])
