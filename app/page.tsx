@@ -1371,6 +1371,34 @@ export default function Home() {
   const noFilterMatches =
     !isLoadingDresses && dressesList.length > 0 && filteredDresses.length === 0 && hasActiveFilters;
 
+  useEffect(() => {
+    if (!hasActiveFilters) return;
+
+    const isVisible = (dressId: string) => filteredDresses.some((d) => d.id === dressId);
+
+    if (detailsDress && !isVisible(detailsDress.id)) {
+      setDetailsDress(null);
+    }
+    if (selectedDress && !isVisible(selectedDress.id)) {
+      setSelectedDress(null);
+      setOrderDate('');
+      setDateError('');
+      setPaymentStep(null);
+      setOwnerApprovalStep(null);
+      setIsOrdered(false);
+      setBookingError('');
+    }
+    if (coordinateDress && !isVisible(coordinateDress.id)) {
+      setCoordinateDress(null);
+      setCoordinateDate('');
+      setCoordinateChecked(false);
+      setCoordinateDisclaimerAccepted(false);
+    }
+    if (rateDress && !isVisible(rateDress.id)) {
+      setRateDress(null);
+    }
+  }, [filteredDresses, hasActiveFilters, detailsDress, selectedDress, coordinateDress, rateDress]);
+
   const catalogHighlights = getCatalogHighlights(filteredDresses);
 
   const coordinateDatePast = coordinateDate ? isPastDate(coordinateDate) : false;

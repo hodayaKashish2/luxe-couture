@@ -299,19 +299,16 @@ export default function OwnerDressesPanel({
   }, [activeDresses, ownerBookings, searchQuery, filter, sort]);
 
   useEffect(() => {
-    if (loading) return;
-    if (filteredDresses.length === 0) {
+    if (loading || !selectedDressId) return;
+    if (!filteredDresses.some((dress) => dress.id === selectedDressId)) {
       setSelectedDressId(null);
-      return;
-    }
-    if (!selectedDressId || !filteredDresses.some((dress) => dress.id === selectedDressId)) {
-      setSelectedDressId(filteredDresses[0].id);
     }
   }, [loading, filteredDresses, selectedDressId]);
 
-  const selectedDress = selectedDressId
-    ? activeDresses.find((d) => d.id === selectedDressId) ?? null
-    : null;
+  const selectedDress = useMemo(() => {
+    if (!selectedDressId) return null;
+    return filteredDresses.find((d) => d.id === selectedDressId) ?? null;
+  }, [selectedDressId, filteredDresses]);
 
   const selectedBookings = selectedDress
     ? getConfirmedBookings(getDressBookings(selectedDress.id, ownerBookings))
@@ -341,23 +338,28 @@ export default function OwnerDressesPanel({
   }
 
   function handleSelectDress(dressId: string) {
+    const inFilteredList = filteredDresses.some((d) => d.id === dressId);
+    if (!inFilteredList) {
+      setSearchQuery('');
+      setFilter('all');
+    }
     setSelectedDressId(dressId);
   }
 
   useEffect(() => {
-    if (loading || selectedDressId || activeDresses.length === 0) return;
-    const defaultId = pickDefaultDressId(activeDresses, ownerBookings);
+    if (loading || selectedDressId || filteredDresses.length === 0) return;
+    const defaultId = pickDefaultDressId(filteredDresses, ownerBookings);
     if (defaultId) setSelectedDressId(defaultId);
-  }, [loading, selectedDressId, activeDresses, ownerBookings]);
+  }, [loading, selectedDressId, filteredDresses, ownerBookings]);
 
   useEffect(() => {
-    if (!selectedDressId) return;
+    if (!selectedDressId || !selectedDress) return;
     setShowSelectedPastBookings(false);
     const row = rowRefs.current[selectedDressId];
     if (row) {
       row.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     }
-  }, [selectedDressId, filteredDresses]);
+  }, [selectedDressId, selectedDress]);
 
   if (loading) {
     return <p className="text-sm text-[#6e634c] animate-pulse">טוען שמלות...</p>;
@@ -759,7 +761,9 @@ export default function OwnerDressesPanel({
           </div>
         ) : (
           <div className="mt-4 lg:mt-0 bg-[#faf8f3] rounded-xl border border-dashed border-[#decfa8] p-4 text-center text-xs text-[#6e634c]">
-            טוען פרטי שמלה...
+            {filteredDresses.length === 0
+              ? 'אין שמלות שתואמות את הסינון — נסי לשנות את החיפוש או המסננים'
+              : 'בחרי שמלה מהרשימה לצפייה בלוח שנה והזמנות'}
           </div>
         )}
       </div>
