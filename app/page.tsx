@@ -46,6 +46,7 @@ import { isPastDate, todayDateString } from '@/lib/booking-dates';
 import { matchesAnyCatalogTextFilter } from '@/lib/catalog-text-filter';
 import { shareDressLink } from '@/lib/share-dress';
 import { OFF_PLATFORM_COORDINATE_NOTICE } from '@/lib/commission';
+import CatalogPlatformNotice from '@/components/CatalogPlatformNotice';
 import { fetchDressById, findDressInList } from '@/lib/dress-api';
 import { dressBelongsToCustomer } from '@/lib/self-dress-guard';
 import { ownerWhatsAppLink, WHATSAPP_LINK } from '@/lib/site-config';
@@ -1468,6 +1469,8 @@ export default function Home() {
           </div>
         )}
 
+        <CatalogPlatformNotice />
+
         <div className="lg:grid lg:grid-cols-[auto_minmax(0,1fr)] lg:gap-4 lg:items-start">
           <CatalogFilterSidebar
             collapsed={filtersSidebarCollapsed}
@@ -2332,9 +2335,22 @@ export default function Home() {
             )}
 
             {coordinateChecked && coordinateDate && !coordinateDatePast && coordinateAvailable && !coordinateDisclaimerAccepted && (
-              <div className="bg-gradient-to-l from-[#fffdf9] to-[#f4ebd4] border border-[#e6c687] rounded-xl p-4 space-y-3">
-                <p className="text-xs font-black text-[#8b6508]">{OFF_PLATFORM_COORDINATE_NOTICE.title}</p>
-                <p className="text-xs text-[#5c5037] leading-relaxed">{OFF_PLATFORM_COORDINATE_NOTICE.body}</p>
+              <div className="bg-gradient-to-l from-[#fffdf9] to-[#f4ebd4] border-2 border-[#e6c687] rounded-xl p-4 space-y-3">
+                <p className="text-sm font-black text-[#8b6508]">{OFF_PLATFORM_COORDINATE_NOTICE.title}</p>
+                <p className="text-xs text-[#5c5037] leading-relaxed">{OFF_PLATFORM_COORDINATE_NOTICE.intro}</p>
+                <ul className="space-y-2 text-xs text-[#5c5037] leading-relaxed">
+                  {OFF_PLATFORM_COORDINATE_NOTICE.bullets.map((line) => (
+                    <li key={line} className="flex gap-2 items-start">
+                      <span className="text-[#d4af37] shrink-0 font-black">•</span>
+                      <span>{line}</span>
+                    </li>
+                  ))}
+                </ul>
+                <div className="rounded-lg border border-[#e6c687]/70 bg-white/70 px-3 py-2">
+                  <p className="text-[11px] text-[#8b6508] font-bold leading-relaxed">
+                    {OFF_PLATFORM_COORDINATE_NOTICE.warning}
+                  </p>
+                </div>
                 <button
                   type="button"
                   onClick={() => setCoordinateDisclaimerAccepted(true)}
@@ -2342,6 +2358,7 @@ export default function Home() {
                 >
                   {OFF_PLATFORM_COORDINATE_NOTICE.cta}
                 </button>
+                <p className="text-[10px] text-center text-[#9a7b4f]">{OFF_PLATFORM_COORDINATE_NOTICE.footer}</p>
               </div>
             )}
 

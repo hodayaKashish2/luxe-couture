@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { COORDINATE_BUTTON_HINT } from '@/lib/commission';
 import type { Dress } from '@/lib/types';
 import DressImageFill from '@/components/DressImageFill';
 import DressImageSliderNav, { stepImageIndex } from '@/components/DressImageSliderNav';
@@ -170,13 +171,18 @@ export default function DressDetailsModal({
           {(onReserve || onToggleCart || onToggleFavorite || onCoordinate || onRate || onShare) && (
             <div className="p-5 sm:p-6 pt-0 space-y-2 border-t border-[#f0e2c3] bg-white/60">
               {onCoordinate && (
-                <button
-                  type="button"
-                  onClick={onCoordinate}
-                  className={`w-full py-2.5 border-2 border-[#decfa8] bg-white text-[#8b6508] text-xs font-bold rounded-xl ${actionBtnClass}`}
-                >
-                  📅 תיאום ומדידה עם המשכירה
-                </button>
+                <>
+                  <button
+                    type="button"
+                    onClick={onCoordinate}
+                    className={`w-full py-2.5 border-2 border-[#decfa8] bg-white text-[#8b6508] text-xs font-bold rounded-xl ${actionBtnClass}`}
+                  >
+                    📅 תיאום ומדידה עם המשכירה
+                  </button>
+                  <p className="text-[10px] text-center text-[#9a7b4f] leading-relaxed px-1 -mt-1">
+                    {COORDINATE_BUTTON_HINT}
+                  </p>
+                </>
               )}
               {onReserve && (
                 <>
