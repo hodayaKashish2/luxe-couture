@@ -1,6 +1,5 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
 import CatalogFilterPanel, { type CatalogFilterPanelProps } from '@/components/CatalogFilterPanel';
 
 type CatalogFilterSidebarProps = CatalogFilterPanelProps & {
@@ -11,7 +10,7 @@ type CatalogFilterSidebarProps = CatalogFilterPanelProps & {
 };
 
 const STICKY_PANEL =
-  'sticky top-3 z-20 w-full flex flex-col bg-white border border-[#eadaaf] rounded-xl shadow-sm self-start';
+  'sticky top-3 z-20 w-full flex flex-col max-h-[calc(100dvh-1.5rem)] bg-white border border-[#eadaaf] rounded-xl shadow-sm self-start';
 
 const COLLAPSED_PANEL =
   'sticky top-3 z-20 w-full flex flex-col bg-white border border-[#eadaaf] rounded-xl shadow-sm self-start min-h-[calc(100dvh-1.5rem)]';
@@ -23,112 +22,6 @@ export default function CatalogFilterSidebar({
   onClear,
   ...filterProps
 }: CatalogFilterSidebarProps) {
-  const asideRef = useRef<HTMLElement>(null);
-  const contentRef = useRef<HTMLDivElement>(null);
-  const innerRef = useRef<HTMLDivElement>(null);
-  const [hasOverflow, setHasOverflow] = useState(false);
-  const [contentMaxHeight, setContentMaxHeight] = useState<number | null>(null);
-
-  const updateOverflowState = useCallback(() => {
-    const aside = asideRef.current;
-    const inner = innerRef.current;
-    if (!aside || !inner) return;
-
-    const header = aside.querySelector<HTMLElement>('[data-filter-header]');
-    const footer = aside.querySelector<HTMLElement>('[data-filter-footer]');
-    const headerHeight = header?.offsetHeight ?? 0;
-    const footerHeight = footer?.offsetHeight ?? 0;
-    const viewportLimit = window.innerHeight - 12;
-    const maxContentHeight = Math.max(160, viewportLimit - headerHeight - footerHeight);
-    const needsScroll = inner.scrollHeight > maxContentHeight + 1;
-    const nextMaxHeight = needsScroll ? maxContentHeight : null;
-
-    setHasOverflow((prev) => (prev === needsScroll ? prev : needsScroll));
-    setContentMaxHeight((prev) => (prev === nextMaxHeight ? prev : nextMaxHeight));
-  }, []);
-
-  useEffect(() => {
-    if (collapsed) return;
-
-    let frame = 0;
-    const scheduleUpdate = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => updateOverflowState());
-    };
-
-    scheduleUpdate();
-
-    const inner = innerRef.current;
-    if (!inner) return;
-
-    const observer = new ResizeObserver(scheduleUpdate);
-    observer.observe(inner);
-
-    const onWindowResize = () => scheduleUpdate();
-    window.addEventListener('resize', onWindowResize);
-
-    return () => {
-      cancelAnimationFrame(frame);
-      observer.disconnect();
-      window.removeEventListener('resize', onWindowResize);
-    };
-  }, [collapsed, updateOverflowState]);
-
-  useEffect(() => {
-    if (collapsed || !hasOverflow) return;
-
-    const aside = asideRef.current;
-    const content = contentRef.current;
-    if (!aside || !content) return;
-
-    const onWheel = (event: WheelEvent) => {
-      if (!aside.contains(event.target as Node)) return;
-
-      let node = event.target instanceof HTMLElement ? event.target : null;
-      while (node && node !== content) {
-        const style = window.getComputedStyle(node);
-        const canScroll = node.scrollHeight > node.clientHeight + 1;
-        if (
-          canScroll &&
-          (style.overflowY === 'auto' || style.overflowY === 'scroll' || style.overflowY === 'overlay')
-        ) {
-          const { scrollTop, scrollHeight, clientHeight } = node;
-          const canScrollUp = scrollTop > 0;
-          const canScrollDown = scrollTop + clientHeight < scrollHeight - 1;
-          const scrollingDown = event.deltaY > 0;
-          const scrollingUp = event.deltaY < 0;
-
-          if ((scrollingDown && canScrollDown) || (scrollingUp && canScrollUp)) {
-            event.preventDefault();
-            node.scrollTop += event.deltaY;
-            return;
-          }
-
-          event.preventDefault();
-          return;
-        }
-        node = node.parentElement;
-      }
-
-      const { scrollTop, scrollHeight, clientHeight } = content;
-      const canScrollUp = scrollTop > 0;
-      const canScrollDown = scrollTop + clientHeight < scrollHeight - 1;
-      const scrollingDown = event.deltaY > 0;
-      const scrollingUp = event.deltaY < 0;
-
-      if ((scrollingDown && canScrollDown) || (scrollingUp && canScrollUp)) {
-        event.preventDefault();
-        content.scrollTop += event.deltaY;
-        return;
-      }
-
-      event.preventDefault();
-    };
-
-    aside.addEventListener('wheel', onWheel, { passive: false });
-    return () => aside.removeEventListener('wheel', onWheel);
-  }, [collapsed, hasOverflow]);
-
   if (collapsed) {
     return (
       <div className="hidden lg:block w-11 shrink-0">
@@ -162,11 +55,8 @@ export default function CatalogFilterSidebar({
 
   return (
     <div className="hidden lg:block w-56 xl:w-60 shrink-0">
-      <aside ref={asideRef} className={STICKY_PANEL}>
-        <div
-          data-filter-header
-          className="shrink-0 flex items-center justify-between gap-2 px-3 py-2.5 border-b border-[#f0e6cc] bg-[#fffdf8]"
-        >
+      <aside className={STICKY_PANEL}>
+        <div className="shrink-0 flex items-center justify-between gap-2 px-3 py-2.5 border-b border-[#f0e6cc] bg-[#fffdf8]">
           <div className="min-w-0">
             <h2 className="text-sm font-black text-[#3d2f24]">סינון</h2>
             {activeFilterCount > 0 && (
@@ -184,21 +74,12 @@ export default function CatalogFilterSidebar({
           </button>
         </div>
 
-        <div
-          ref={contentRef}
-          className={hasOverflow ? 'overflow-y-auto overscroll-contain px-3 pb-3' : 'px-3 pb-3'}
-          style={contentMaxHeight ? { maxHeight: contentMaxHeight } : undefined}
-        >
-          <div ref={innerRef}>
-            <CatalogFilterPanel {...filterProps} showSort={false} compact />
-          </div>
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-3 pb-3">
+          <CatalogFilterPanel {...filterProps} showSort={false} compact />
         </div>
 
         {activeFilterCount > 0 && (
-          <div
-            data-filter-footer
-            className="shrink-0 px-3 py-2.5 border-t border-[#f0e6cc] bg-[#fffdf8]"
-          >
+          <div className="shrink-0 px-3 py-2.5 border-t border-[#f0e6cc] bg-[#fffdf8]">
             <button
               type="button"
               onClick={(e) => {

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo, useDeferredValue } from 'react';
 import { useRouter } from 'next/navigation';
 import SiteFooter from '@/components/SiteFooter';
 import SiteHeader from '@/components/SiteHeader';
@@ -1290,30 +1290,6 @@ export default function Home() {
     }
   };
 
-  const filteredDresses = dressesList
-    .filter((dress) => {
-      const matchesSearch = dress.name.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesCity = matchesAnyCatalogTextFilter(dress.city, cityFilters);
-      const matchesPrice = dress.price <= maxPrice;
-      const matchesSize = dressSizeMatchesAnyFilter(dress.size, sizeFilters);
-      const matchesColor = matchesAnyCatalogTextFilter(dress.color, colorFilters);
-      const matchesDressKind =
-        !selectedDressKinds.length ||
-        (dress.event_type ? selectedDressKinds.includes(dress.event_type) : false);
-      const matchesListingType =
-        !selectedListingTypes.length ||
-        selectedListingTypes.includes(dress.listing_type || 'rent');
-      const matchesDressStyle =
-        !selectedDressStyles.length ||
-        selectedDressStyles.includes(normalizeDressStyle(dress.dress_style));
-      const matchesDressLength =
-        !selectedDressLengths.length ||
-        selectedDressLengths.includes(normalizeDressLength(dress.dress_length));
-      const matchesFav = !showOnlyFavorites || isDressFavorite(dress.id);
-      return matchesSearch && matchesCity && matchesPrice && matchesSize && matchesColor && matchesDressKind && matchesListingType && matchesDressStyle && matchesDressLength && matchesFav;
-    })
-    .sort((a, b) => compareDresses(a, b, sortBy));
-
   const activeFilterCount = [
     searchTerm,
     ...cityFilters,
@@ -1325,6 +1301,79 @@ export default function Home() {
     ...colorFilters,
     maxPrice < 2000 ? 'price' : '',
   ].filter(Boolean).length;
+
+  const catalogFilterSnapshot = useMemo(
+    () => ({
+      searchTerm,
+      maxPrice,
+      sortBy,
+      cityFilters,
+      sizeFilters,
+      colorFilters,
+      selectedDressKinds,
+      selectedListingTypes,
+      selectedDressStyles,
+      selectedDressLengths,
+      showOnlyFavorites,
+    }),
+    [
+      searchTerm,
+      maxPrice,
+      sortBy,
+      cityFilters,
+      sizeFilters,
+      colorFilters,
+      selectedDressKinds,
+      selectedListingTypes,
+      selectedDressStyles,
+      selectedDressLengths,
+      showOnlyFavorites,
+    ]
+  );
+
+  const deferredCatalogFilters = useDeferredValue(catalogFilterSnapshot);
+  const hasActiveFilters = activeFilterCount > 0;
+  const catalogFiltersPending =
+    hasActiveFilters && catalogFilterSnapshot !== deferredCatalogFilters;
+  const filtersForCatalog = catalogFiltersPending ? deferredCatalogFilters : catalogFilterSnapshot;
+
+  const filteredDresses = useMemo(() => {
+    const filters = filtersForCatalog;
+    return dressesList
+      .filter((dress) => {
+        const matchesSearch = dress.name.toLowerCase().includes(filters.searchTerm.toLowerCase());
+        const matchesCity = matchesAnyCatalogTextFilter(dress.city, filters.cityFilters);
+        const matchesPrice = dress.price <= filters.maxPrice;
+        const matchesSize = dressSizeMatchesAnyFilter(dress.size, filters.sizeFilters);
+        const matchesColor = matchesAnyCatalogTextFilter(dress.color, filters.colorFilters);
+        const matchesDressKind =
+          !filters.selectedDressKinds.length ||
+          (dress.event_type ? filters.selectedDressKinds.includes(dress.event_type) : false);
+        const matchesListingType =
+          !filters.selectedListingTypes.length ||
+          filters.selectedListingTypes.includes(dress.listing_type || 'rent');
+        const matchesDressStyle =
+          !filters.selectedDressStyles.length ||
+          filters.selectedDressStyles.includes(normalizeDressStyle(dress.dress_style));
+        const matchesDressLength =
+          !filters.selectedDressLengths.length ||
+          filters.selectedDressLengths.includes(normalizeDressLength(dress.dress_length));
+        const matchesFav = !filters.showOnlyFavorites || isDressFavorite(dress.id);
+        return (
+          matchesSearch &&
+          matchesCity &&
+          matchesPrice &&
+          matchesSize &&
+          matchesColor &&
+          matchesDressKind &&
+          matchesListingType &&
+          matchesDressStyle &&
+          matchesDressLength &&
+          matchesFav
+        );
+      })
+      .sort((a, b) => compareDresses(a, b, filters.sortBy));
+  }, [filtersForCatalog, dressesList, isDressFavorite]);
 
   const clearFilters = () => {
     setSearchTerm('');
@@ -1339,9 +1388,13 @@ export default function Home() {
     setMaxPrice(2000);
   };
 
-  const hasActiveFilters = activeFilterCount > 0;
   const catalogIsEmpty = !isLoadingDresses && dressesList.length === 0;
-  const noFilterMatches = !isLoadingDresses && dressesList.length > 0 && filteredDresses.length === 0;
+  const noFilterMatches =
+    !isLoadingDresses &&
+    dressesList.length > 0 &&
+    filteredDresses.length === 0 &&
+    hasActiveFilters &&
+    !catalogFiltersPending;
 
   const catalogHighlights = getCatalogHighlights(filteredDresses);
 
@@ -1565,8 +1618,10 @@ export default function Home() {
                   נקי סינון
                 </button>
               </div>
-            ) : (
-              <div className={`grid grid-cols-2 gap-2 sm:gap-3 lg:gap-4 ${filtersSidebarCollapsed ? 'lg:grid-cols-5' : 'md:grid-cols-3 lg:grid-cols-4'}`}>
+            ) : filteredDresses.length > 0 ? (
+              <div
+                className={`grid grid-cols-2 gap-2 sm:gap-3 lg:gap-4 transition-opacity duration-150 ${filtersSidebarCollapsed ? 'lg:grid-cols-5' : 'md:grid-cols-3 lg:grid-cols-4'} ${catalogFiltersPending ? 'opacity-60 pointer-events-none' : ''}`}
+              >
           {filteredDresses.map((dress) => {
             const currentImgIndex = currentImageIndexes[dress.id] || 0;
             const isFav = isDressFavorite(dress.id);
@@ -1680,8 +1735,8 @@ export default function Home() {
               </div>
             );
           })}
-        </div>
-            )}
+              </div>
+            ) : null}
           </div>
         </div>
 
