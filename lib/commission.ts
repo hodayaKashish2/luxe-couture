@@ -20,6 +20,8 @@ export const OWNER_COMMISSION_EXPLAINER = {
 export const CATALOG_PLATFORM_NOTICE = {
   headline: `עמלה של ${COMMISSION_PERCENT}% מהמשכירה בלבד — את משלמת מחיר השמלה המלא.`,
   subline: 'תיאום, שריון ותשלום דרך האתר בלבד.',
+  context: 'הושקע מאמץ, זמן וכסף רב בבניית האתר — בואי נשמר עליו יחד.',
+  warning: 'כל השכרה מחוץ לפלטפורמה פוגעת בשירות ומהווה גזל גמור של העבודה וההשקעה שלנו.',
   termsLabel: 'קראי עוד בתקנון',
 } as const;
 
