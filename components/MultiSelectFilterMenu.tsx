@@ -75,7 +75,10 @@ export default function MultiSelectFilterMenu({
         type="button"
         role="option"
         aria-selected={active}
-        onClick={() => onChange(toggleValue(selected, option))}
+        onClick={() => {
+          onChange(toggleValue(selected, option));
+          setOpen(false);
+        }}
         className={`w-full flex items-center justify-between gap-3 px-3 py-2.5 text-right rounded-lg transition-colors ${
           active ? 'bg-[#fff8e8] text-[#3d2f24]' : 'hover:bg-[#fffdf8] text-[#554a33]'
         }`}

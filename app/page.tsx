@@ -1541,7 +1541,7 @@ export default function Home() {
             setMaxPrice={setMaxPrice}
           />
 
-          <div className="min-w-0">
+          <div className="min-w-0 min-h-[min(60vh,640px)]">
             {isLoadingDresses ? (
               <div className="text-center py-16 text-[#8b6508] text-sm font-medium">טוענת קולקציה...</div>
             ) : catalogIsEmpty ? (

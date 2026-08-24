@@ -41,32 +41,38 @@ export default function CatalogFilterSidebar({
     const viewportLimit = window.innerHeight - 12;
     const maxContentHeight = Math.max(160, viewportLimit - headerHeight - footerHeight);
     const needsScroll = inner.scrollHeight > maxContentHeight + 1;
+    const nextMaxHeight = needsScroll ? maxContentHeight : null;
 
-    setHasOverflow(needsScroll);
-    setContentMaxHeight(needsScroll ? maxContentHeight : null);
+    setHasOverflow((prev) => (prev === needsScroll ? prev : needsScroll));
+    setContentMaxHeight((prev) => (prev === nextMaxHeight ? prev : nextMaxHeight));
   }, []);
 
   useEffect(() => {
     if (collapsed) return;
 
-    updateOverflowState();
+    let frame = 0;
+    const scheduleUpdate = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => updateOverflowState());
+    };
+
+    scheduleUpdate();
 
     const inner = innerRef.current;
     if (!inner) return;
 
-    const observer = new ResizeObserver(() => {
-      updateOverflowState();
-    });
+    const observer = new ResizeObserver(scheduleUpdate);
     observer.observe(inner);
 
-    const onWindowResize = () => updateOverflowState();
+    const onWindowResize = () => scheduleUpdate();
     window.addEventListener('resize', onWindowResize);
 
     return () => {
+      cancelAnimationFrame(frame);
       observer.disconnect();
       window.removeEventListener('resize', onWindowResize);
     };
-  }, [collapsed, activeFilterCount, updateOverflowState]);
+  }, [collapsed, updateOverflowState]);
 
   useEffect(() => {
     if (collapsed || !hasOverflow) return;
