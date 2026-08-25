@@ -56,9 +56,9 @@ import { Dress, Review, SortOption, PICKUP_METHODS } from '@/lib/types';
 import { DRESS_KIND_OPTIONS, LISTING_TYPE_OPTIONS, dressKindLabel, listingTypeLabel } from '@/lib/dress-listing';
 import {
   DEFAULT_DRESS_LENGTH,
-  DEFAULT_DRESS_STYLE,
   DRESS_LENGTH_OPTIONS,
   DRESS_STYLE_OPTIONS,
+  DRESS_STYLE_PLACEHOLDER,
   dressLengthFieldLabel,
   dressLengthLabel,
   dressStyleLabel,
@@ -140,7 +140,7 @@ export default function Home() {
     city: '',
     event_type: 'single',
     listing_type: 'rent',
-    dress_style: DEFAULT_DRESS_STYLE as string,
+    dress_style: '',
     dress_length: DEFAULT_DRESS_LENGTH as string,
     owner_name: '',
     owner_phone: '',
@@ -460,7 +460,7 @@ export default function Home() {
     newDressData.images.forEach((url) => URL.revokeObjectURL(url));
     setNewDressData({
       name: '', price: '', size: '', color: '', city: '', event_type: 'single', listing_type: 'rent',
-      dress_style: DEFAULT_DRESS_STYLE as string, dress_length: DEFAULT_DRESS_LENGTH as string,
+      dress_style: '', dress_length: DEFAULT_DRESS_LENGTH as string,
       owner_name: '', owner_phone: '', owner_email: '', deposit: '', pickup_method: 'pickup',
       includes_dry_cleaning: 'no',
       condition: 'new', description: '', images: [],
@@ -1901,6 +1901,7 @@ export default function Home() {
                 <div>
                   <label className="block text-xs font-bold text-[#8b6508] mb-1">סגנון *</label>
                   <select required value={newDressData.dress_style} onChange={(e) => setNewDressData({...newDressData, dress_style: e.target.value})} className="w-full p-2.5 bg-white border border-[#decfa8] rounded-xl text-xs text-[#2c261a]">
+                    <option value="">{DRESS_STYLE_PLACEHOLDER}</option>
                     {DRESS_STYLE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
                   </select>
                 </div>

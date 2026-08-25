@@ -17,6 +17,7 @@ export type DressLength = (typeof DRESS_LENGTH_OPTIONS)[number]['value'];
 
 export const DEFAULT_DRESS_STYLE: DressStyle = 'classic';
 export const DEFAULT_DRESS_LENGTH: DressLength = 'long';
+export const DRESS_STYLE_PLACEHOLDER = 'בחרי סגנון';
 
 export function normalizeDressStyle(value: string | null | undefined): DressStyle {
   if (value === 'conservative' || value === 'modern') return value;

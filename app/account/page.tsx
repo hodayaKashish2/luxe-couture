@@ -59,9 +59,9 @@ import type { Dress } from '@/lib/types';
 import { DRESS_KIND_OPTIONS, LISTING_TYPE_OPTIONS } from '@/lib/dress-listing';
 import {
   DEFAULT_DRESS_LENGTH,
-  DEFAULT_DRESS_STYLE,
   DRESS_LENGTH_OPTIONS,
   DRESS_STYLE_OPTIONS,
+  DRESS_STYLE_PLACEHOLDER,
   dressLengthFieldLabel,
 } from '@/lib/dress-style-length';
 import type { SavedDress } from '@/lib/luxe-storage';
@@ -192,7 +192,7 @@ function AccountPageContent() {
   const loadedViewDressRef = useRef<string | null>(null);
   const [addForm, setAddForm] = useState({
     name: '', price: '', size: '', city: 'ירושלים', color: '', event_type: 'single', listing_type: 'rent',
-    dress_style: DEFAULT_DRESS_STYLE as string,
+    dress_style: '',
     dress_length: DEFAULT_DRESS_LENGTH as string,
     deposit: '', pickup_method: 'pickup', includes_dry_cleaning: 'no', condition: 'new', description: '',
     owner_phone: '',
@@ -1724,6 +1724,7 @@ function AccountPageContent() {
               <div>
                 <label className="block text-xs font-bold text-[#8b6508] mb-1">סגנון *</label>
                 <select required value={addForm.dress_style} onChange={(e) => setAddForm({ ...addForm, dress_style: e.target.value })} className="p-2.5 border border-[#decfa8] rounded-xl text-xs text-[#2c261a] bg-white w-full">
+                  <option value="">{DRESS_STYLE_PLACEHOLDER}</option>
                   {DRESS_STYLE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
                 </select>
               </div>
