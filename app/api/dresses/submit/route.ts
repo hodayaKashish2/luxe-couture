@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { uploadDressImages } from '@/lib/dress-image-upload';
-import { notifyDressSubmittedInBackground } from '@/lib/dress-submit-notify';
+import { notifyDressSubmitted } from '@/lib/dress-submit-notify';
 import { appendContactEmailToDescription } from '@/lib/dress-contact';
 import { isValidDressKind, isValidListingType } from '@/lib/dress-listing';
 import { isValidDressLength, isValidDressStyle } from '@/lib/dress-style-length';
@@ -165,22 +165,28 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'שגיאה בשמירת השמלה' }, { status: 500 });
     }
 
-    notifyDressSubmittedInBackground({
-      dressId: data.id,
-      name,
-      price,
-      size,
-      city,
-      ownerName,
-      ownerPhone,
-      ownerEmail,
-      images: imageUrls,
-    });
+    let emailNotify: Awaited<ReturnType<typeof notifyDressSubmitted>> | null = null;
+    try {
+      emailNotify = await notifyDressSubmitted({
+        dressId: data.id,
+        name,
+        price,
+        size,
+        city,
+        ownerName,
+        ownerPhone,
+        ownerEmail,
+        images: imageUrls,
+      });
+    } catch (mailError) {
+      console.error('Dress submit notify failed:', mailError);
+    }
 
     return NextResponse.json({
       success: true,
       message: 'השמלה נשלחה לאישור! היא תופיע באתר לאחר אישור בדף הניהול.',
       data,
+      emailNotify,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'שגיאה בשליחת השמלה';

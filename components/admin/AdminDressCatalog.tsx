@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import AdminCollapsibleSection, { ADMIN_DRESS_GRID_CLASS } from '@/components/admin/AdminCollapsibleSection';
-import AdminDressDetailPanel from '@/components/admin/AdminDressDetailPanel';
+import AdminDressDetailModal from '@/components/admin/AdminDressDetailModal';
 import AdminDressGridCard from '@/components/admin/AdminDressGridCard';
 import AdminPagination from '@/components/admin/AdminPagination';
 import type { AdminDressRow, AdminDressSort } from '@/lib/admin-types';
@@ -38,7 +38,7 @@ export default function AdminDressCatalog({
   const [city, setCity] = useState('');
   const [featured, setFeatured] = useState<'all' | 'yes' | 'no'>(initialFeatured);
   const [busyId, setBusyId] = useState<number | null>(null);
-  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [detailDress, setDetailDress] = useState<AdminDressRow | null>(null);
 
   useEffect(() => {
     setFeatured(initialFeatured);
@@ -93,7 +93,7 @@ export default function AdminDressCatalog({
     const ok = await onAction(id, action);
     setBusyId(null);
     if (ok) {
-      if (action === 'delete') setExpandedId((prev) => (prev === id ? null : prev));
+      if (action === 'delete') setDetailDress((prev) => (prev?.id === id ? null : prev));
       setItems((prev) =>
         action === 'delete'
           ? prev.filter((d) => d.id !== id)
@@ -206,16 +206,14 @@ export default function AdminDressCatalog({
             <div className={ADMIN_DRESS_GRID_CLASS}>
               {items.map((dress) => {
                 const isFeatured = (dress.featured_boost || 0) > 0;
-                const isOpen = expandedId === dress.id;
                 const disabled = busyId === dress.id;
 
                 return (
                   <AdminDressGridCard
                     key={dress.id}
                     dress={dress}
-                    isOpen={isOpen}
                     disabled={disabled}
-                    onToggle={() => setExpandedId(isOpen ? null : dress.id)}
+                    onSelect={() => setDetailDress(dress)}
                     badge={
                       isFeatured ? (
                         <span className="text-[8px] font-bold text-[#8b6508] bg-[#fff8e8] px-1 py-0.5 rounded-full shrink-0">
@@ -223,42 +221,46 @@ export default function AdminDressCatalog({
                         </span>
                       ) : undefined
                     }
-                  >
-                    <AdminDressDetailPanel dress={dress}>
-                      <p className="text-[9px] text-[#8b6508]">
-                        {isFeatured ? 'חשיפה מועדפת' : 'רגילה'}
-                      </p>
-                      <div className="flex flex-wrap gap-1 pt-1">
-                        <button
-                          type="button"
-                          disabled={disabled}
-                          onClick={() => runAction(dress.id, 'toggle_featured')}
-                          className="px-1.5 py-1 text-[9px] rounded-lg border border-[#decfa8] font-bold disabled:opacity-50"
-                        >
-                          {isFeatured ? 'בטל' : 'חשיפה'}
-                        </button>
-                        <button
-                          type="button"
-                          disabled={disabled}
-                          onClick={() => runAction(dress.id, 'extend_featured')}
-                          className="px-1.5 py-1 text-[9px] rounded-lg border border-[#decfa8] disabled:opacity-50"
-                        >
-                          +30
-                        </button>
-                        <button
-                          type="button"
-                          disabled={disabled}
-                          onClick={() => runAction(dress.id, 'delete')}
-                          className="px-1.5 py-1 text-[9px] rounded-lg bg-red-600 text-white font-bold disabled:opacity-50"
-                        >
-                          הסר
-                        </button>
-                      </div>
-                    </AdminDressDetailPanel>
-                  </AdminDressGridCard>
+                  />
                 );
               })}
             </div>
+
+            {detailDress && (
+              <AdminDressDetailModal
+                dress={detailDress}
+                subtitle="קטלוג — שמלה מאושרת"
+                onClose={() => setDetailDress(null)}
+              >
+                <p className="w-full text-xs text-[#8b6508] mb-1">
+                  {(detailDress.featured_boost || 0) > 0 ? 'חשיפה מועדפת פעילה' : 'ללא חשיפה מועדפת'}
+                </p>
+                <button
+                  type="button"
+                  disabled={busyId === detailDress.id}
+                  onClick={() => runAction(detailDress.id, 'toggle_featured')}
+                  className="px-3 py-2 text-sm rounded-xl border border-[#decfa8] font-bold disabled:opacity-50"
+                >
+                  {(detailDress.featured_boost || 0) > 0 ? 'בטל חשיפה מועדפת' : 'הפעל חשיפה מועדפת'}
+                </button>
+                <button
+                  type="button"
+                  disabled={busyId === detailDress.id}
+                  onClick={() => runAction(detailDress.id, 'extend_featured')}
+                  className="px-3 py-2 text-sm rounded-xl border border-[#decfa8] disabled:opacity-50"
+                >
+                  הארכת חשיפה +30 יום
+                </button>
+                <button
+                  type="button"
+                  disabled={busyId === detailDress.id}
+                  onClick={() => runAction(detailDress.id, 'delete')}
+                  className="px-3 py-2 text-sm rounded-xl bg-red-600 text-white font-bold disabled:opacity-50"
+                >
+                  הסר מהאתר
+                </button>
+              </AdminDressDetailModal>
+            )}
 
             <div className="p-4 border-t border-[#eadaaf]">
               <AdminPagination

@@ -24,7 +24,7 @@ type AdminDressDetailPanelProps = {
 
 export default function AdminDressDetailPanel({ dress, large = false, children }: AdminDressDetailPanelProps) {
   const images = Array.isArray(dress.images) ? dress.images : [];
-  const textSize = large ? 'text-xs' : 'text-[9px]';
+  const textSize = large ? 'text-sm' : 'text-[9px]';
 
   if (dress.pending_update_kind === 'update' && dress.update_diff) {
     return (
@@ -103,7 +103,7 @@ export default function AdminDressDetailPanel({ dress, large = false, children }
               <DressImageFill
                 src={url}
                 alt=""
-                className={large ? 'w-full h-40 sm:h-48' : 'w-full h-16'}
+                className={large ? 'w-full h-48 sm:h-56' : 'w-full h-16'}
               />
             </a>
           ))}
