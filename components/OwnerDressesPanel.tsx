@@ -191,6 +191,10 @@ export default function OwnerDressesPanel({
   onEditDress,
   onRefresh,
 }: Props) {
+  const pendingSubmissionDresses = useMemo(
+    () => dresses.filter((d) => d.status === 'pending'),
+    [dresses]
+  );
   const activeDresses = useMemo(
     () => dresses.filter((d) => d.status !== 'removed' && d.status !== 'pending'),
     [dresses]
@@ -446,6 +450,53 @@ export default function OwnerDressesPanel({
           ➕ הוספת שמלה
         </button>
       </div>
+
+      {pendingSubmissionDresses.length > 0 && (
+        <div className="bg-amber-50 rounded-2xl border-2 border-amber-200 overflow-hidden">
+          <div className="px-4 py-3 border-b border-amber-200/80 bg-amber-100/50">
+            <h3 className="text-sm font-black text-amber-900">
+              ⏳ שמלות שממתינות לאישור ({pendingSubmissionDresses.length})
+            </h3>
+            <p className="text-[11px] text-amber-900/85 mt-1 leading-relaxed">
+              השמלות עדיין לא בקטלוג. ניתן לערוך פרטים ותמונות כאן — למשל להחליף תמונות — עד לאישור ההנהלה.
+            </p>
+          </div>
+          <ul className="divide-y divide-amber-200/60">
+            {pendingSubmissionDresses.map((dress) => (
+              <li key={dress.id} className="px-4 py-3 flex gap-3 items-center">
+                {dress.images?.[0] ? (
+                  <DressImageFill
+                    src={dress.images[0]}
+                    alt=""
+                    className="w-14 h-16 shrink-0 rounded-lg border border-amber-200"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="w-14 h-16 rounded-lg border border-dashed border-amber-300 bg-white flex items-center justify-center text-xl shrink-0">
+                    👗
+                  </div>
+                )}
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-bold text-[#3d2f24] truncate">{dress.name}</p>
+                  <p className="text-[10px] text-[#6e634c] mt-0.5">
+                    ₪{dress.price} · {dress.size} · {dress.city}
+                  </p>
+                  <span className="inline-block mt-1.5 text-[9px] bg-amber-200/80 text-amber-950 px-2 py-0.5 rounded-full font-bold">
+                    ממתינה לאישור
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => onEditDress(dress)}
+                  className="shrink-0 px-3 py-2 rounded-xl text-[11px] font-bold bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white border border-[#c9a227] hover:from-[#b8860b] hover:to-[#8b6508] transition-colors"
+                >
+                  ✏️ עריכה
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {onRefresh && (
         <OwnerBookingRequestsPanel requests={pendingOwnerRequests} onRefresh={onRefresh} />

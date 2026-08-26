@@ -42,7 +42,8 @@ export async function GET(request: Request) {
     const myDresses = filterRemovedDressesWithinRetention(
       (allDresses ?? []).filter((d) => userOwnsDress(d, user))
     );
-    const visibleDresses = myDresses.filter((d) => d.status !== 'pending');
+    const visibleDresses = myDresses.filter((d) => d.status !== 'rejected');
+    const approvedDressIds = myDresses.filter((d) => d.status === 'approved').map((d) => d.id);
 
     type OwnerBookingRow = {
       id: number;
@@ -59,7 +60,7 @@ export async function GET(request: Request) {
       dress_status: string;
     };
 
-    const dressIds = visibleDresses.map((d) => d.id);
+    const dressIds = approvedDressIds;
     const dressStatusById = Object.fromEntries(
       visibleDresses.map((d) => [String(d.id), String(d.status || 'approved')])
     );
@@ -115,7 +116,9 @@ export async function GET(request: Request) {
         throw bookingsError;
       }
 
-      const dressNames = Object.fromEntries(visibleDresses.map((d) => [String(d.id), d.name]));
+      const dressNames = Object.fromEntries(
+        myDresses.filter((d) => d.status === 'approved').map((d) => [String(d.id), d.name])
+      );
       const mappedOwnerBookings: OwnerBookingRow[] = (bookingRows ?? []).map((b) => ({
         ...(b as Omit<OwnerBookingRow, 'dress_name' | 'dress_status'>),
         dress_name: dressNames[String(b.dress_id)] || 'שמלה',

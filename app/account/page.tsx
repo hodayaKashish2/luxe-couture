@@ -221,6 +221,7 @@ function AccountPageContent() {
   const [editSuccessNotice, setEditSuccessNotice] = useState<{
     dressName: string;
     pendingApproval?: boolean;
+    isPendingSubmission?: boolean;
     emailWarning?: string;
   } | null>(null);
   const [editLoading, setEditLoading] = useState(false);
@@ -700,7 +701,11 @@ function AccountPageContent() {
         addImagePreviews.forEach((url) => URL.revokeObjectURL(url));
         setAddImagePreviews([]);
         if (addFileInputRef.current) addFileInputRef.current.value = '';
-        setToast({ message: 'השמלה נשלחה לאישור! נעדכן אותך כשתופיע בקטלוג.', variant: 'success' });
+        setToast({
+          message:
+            'השמלה נשלחה לאישור! תוכלי לערוך אותה תחת «שמלות שממתינות לאישור» ב«שמלות שלי».',
+          variant: 'success',
+        });
         navigateToSection('rentals', { replace: true });
         load();
       } else {
@@ -813,6 +818,7 @@ function AccountPageContent() {
         setEditSuccessNotice({
           dressName: editForm.name.trim() || editingDress.name,
           pendingApproval: Boolean(data.pendingApproval),
+          isPendingSubmission: editingDress.status === 'pending',
           emailWarning: (() => {
             const status = data.emailStatus;
             if (!status) return undefined;
@@ -837,6 +843,7 @@ function AccountPageContent() {
   }
 
   const activeDresses = dresses.filter((d) => d.status !== 'removed' && d.status !== 'pending');
+  const pendingSubmissionCount = dresses.filter((d) => d.status === 'pending').length;
   const sortedCancelledReservations = useMemo(
     () =>
       [...cancelledReservations].sort((a, b) => {
@@ -891,6 +898,11 @@ function AccountPageContent() {
 
   const rentalsHubSummary = (() => {
     const parts: string[] = [`${activeDresses.length} שמלות`];
+    if (pendingSubmissionCount > 0) {
+      parts.push(
+        `${pendingSubmissionCount} ממתינ${pendingSubmissionCount === 1 ? 'ה' : 'ות'} לאישור`
+      );
+    }
     if (pendingOwnerRequestsCount > 0) {
       parts.push(
         `${pendingOwnerRequestsCount} בקש${pendingOwnerRequestsCount === 1 ? 'ה' : 'ות'} ממתינ${pendingOwnerRequestsCount === 1 ? 'ה' : 'ות'}`
@@ -1526,6 +1538,12 @@ function AccountPageContent() {
               ← חזרה לשמלות שלי
             </button>
             <h2 className="font-black text-xl">✏️ עדכון שמלה</h2>
+            {editingDress.status === 'pending' ? (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-900 leading-relaxed">
+                <strong>ממתינה לאישור</strong> — השמלה עדיין לא בקטלוג. ניתן לעדכן תמונות ופרטים; לאחר
+                השמירה ההגשה תיבדק שוב על ידי ההנהלה.
+              </div>
+            ) : null}
             <p className="text-xs text-[#6e634c]">עורכת: <strong>{editingDress.name}</strong></p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <input required placeholder="שם השמלה *" value={editForm.name} onChange={(e) => { touchEditDraft(); setEditForm({ ...editForm, name: e.target.value }); }} className="p-2.5 border border-[#decfa8] rounded-xl text-xs col-span-1 sm:col-span-2" />
@@ -1891,13 +1909,19 @@ function AccountPageContent() {
           >
             <span className="text-4xl block mb-3">✨</span>
             <h3 className="text-xl font-black text-[#3d2f24] mb-2">
-              {editSuccessNotice.pendingApproval !== false ? 'העדכון נשלח לאישור!' : 'השמלה עודכנה!'}
+              {editSuccessNotice.isPendingSubmission
+                ? 'השמלה עודכנה!'
+                : editSuccessNotice.pendingApproval
+                  ? 'העדכון נשלח לאישור!'
+                  : 'השמלה עודכנה!'}
             </h3>
             <p className="text-sm text-[#6e634c] font-bold mb-1">{editSuccessNotice.dressName}</p>
             <p className="text-sm text-[#5c5037] leading-relaxed mb-4">
-              {editSuccessNotice.pendingApproval !== false
-                ? 'העדכון נשלח לאישור ההנהלה. עד לאישור — בקטלוג תמשיך להופיע הגרסה הנוכחית. נעדכן אותך במייל כשיאושר.'
-                : 'השינויים נשמרו בהצלחה.'}
+              {editSuccessNotice.isPendingSubmission
+                ? 'השינויים נשמרו. השמלה עדיין ממתינה לאישור ההנהלה — נעדכן אותך כשתופיע בקטלוג.'
+                : editSuccessNotice.pendingApproval
+                  ? 'העדכון נשלח לאישור ההנהלה. עד לאישור — בקטלוג תמשיך להופיע הגרסה הנוכחית. נעדכן אותך במייל כשיאושר.'
+                  : 'השינויים נשמרו בהצלחה.'}
             </p>
             {editSuccessNotice.emailWarning && (
               <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-4">
