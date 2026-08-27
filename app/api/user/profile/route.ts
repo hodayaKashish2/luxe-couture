@@ -73,17 +73,6 @@ export async function PATCH(request: Request) {
 
     const supabase = getSupabaseAdmin();
 
-    const { data: existingEmail } = await supabase
-      .from('site_users')
-      .select('id')
-      .ilike('email', email)
-      .neq('id', user.userId)
-      .maybeSingle();
-
-    if (existingEmail) {
-      return NextResponse.json({ error: 'האימייל כבר בשימוש בחשבון אחר' }, { status: 409 });
-    }
-
     const { data: phoneRows } = await supabase.from('site_users').select('id, phone');
     const existingPhone = (phoneRows ?? []).find(
       (row) => String(row.id) !== String(user.userId) && phonesMatch(String(row.phone || ''), phoneStored)

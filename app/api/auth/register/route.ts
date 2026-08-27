@@ -59,16 +59,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'שם המשתמש כבר תפוס — בחרי שם משתמש אחר' }, { status: 409 });
     }
 
-    const { data: existingEmail } = await supabase
-      .from('site_users')
-      .select('id')
-      .ilike('email', email)
-      .maybeSingle();
-
-    if (existingEmail) {
-      return NextResponse.json({ error: 'האימייל כבר רשום — התחברי או השתמשי באימייל אחר' }, { status: 409 });
-    }
-
     const { data: phoneRows } = await supabase.from('site_users').select('id, phone');
 
     const existingPhone = (phoneRows ?? []).find((row) =>
@@ -96,9 +86,6 @@ export async function POST(request: Request) {
     if (error?.message?.includes('duplicate') || error?.code === '23505') {
       if (error.message?.includes('phone')) {
         return NextResponse.json({ error: 'מספר הטלפון כבר רשום — התחברי או השתמשי במספר אחר' }, { status: 409 });
-      }
-      if (error.message?.includes('email')) {
-        return NextResponse.json({ error: 'האימייל כבר רשום — התחברי או השתמשי באימייל אחר' }, { status: 409 });
       }
       return NextResponse.json({ error: 'שם המשתמש כבר תפוס — בחרי שם משתמש אחר' }, { status: 409 });
     }
