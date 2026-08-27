@@ -51,8 +51,23 @@ export async function generateCatalogPdf(dresses: CatalogPdfDress[]): Promise<Bu
   try {
     const page = await browser.newPage();
     await page.setContent(html, {
-      waitUntil: 'networkidle0',
+      waitUntil: 'load',
       timeout: 180000,
+    });
+
+    await page.evaluate(async () => {
+      await document.fonts.ready;
+      await Promise.all(
+        Array.from(document.images).map(
+          (img) =>
+            img.complete
+              ? Promise.resolve()
+              : new Promise<void>((resolve) => {
+                  img.addEventListener('load', () => resolve(), { once: true });
+                  img.addEventListener('error', () => resolve(), { once: true });
+                }),
+        ),
+      );
     });
 
     const pdf = await page.pdf({
