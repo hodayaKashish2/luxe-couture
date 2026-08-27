@@ -3,7 +3,7 @@ import { existsSync } from 'node:fs';
 import path from 'node:path';
 
 const DEFAULT_CHROMIUM_PACK_URL =
-  'https://github.com/Sparticuz/chromium/releases/download/v149.0.0/chromium-v149.0.0-pack.tar';
+  'https://github.com/Sparticuz/chromium/releases/download/v149.0.0/chromium-v149.0.0-pack.x64.tar';
 
 function resolveLocalBrowserExecutable() {
   const fromEnv = process.env.PUPPETEER_EXECUTABLE_PATH?.trim();
@@ -27,7 +27,7 @@ function resolveLocalBrowserExecutable() {
 export async function launchCatalogPdfBrowser(): Promise<Browser> {
   const puppeteer = await import('puppeteer-core');
 
-  if (process.env.VERCEL) {
+  if (process.env.VERCEL === '1') {
     const chromium = (await import('@sparticuz/chromium-min')).default;
     const packUrl = process.env.CHROMIUM_REMOTE_EXEC_PATH?.trim() || DEFAULT_CHROMIUM_PACK_URL;
 
