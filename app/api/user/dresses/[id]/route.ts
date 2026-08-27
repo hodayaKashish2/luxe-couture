@@ -6,6 +6,7 @@ import {
   buildEditFormFromDress,
   buildPendingUpdatePayload,
   computeDressUpdateDiff,
+  conditionLabel,
   filterKeptDressImages,
   getAllowedDressImageUrls,
   getDressColorFromRow,
@@ -15,14 +16,10 @@ import {
   normalizeDressImages,
   normalizePrice,
 } from '@/lib/dress-pending-update';
+import { isValidDressKind, isValidListingType } from '@/lib/dress-listing';
+import { isValidDressLength, isValidDressStyle } from '@/lib/dress-style-length';
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server';
 import { MAX_DRESS_IMAGES, uploadDressImages } from '@/lib/dress-images';
-
-function conditionLabel(condition: string) {
-  if (condition === 'new') return 'חדש עם תווית';
-  if (condition === 'like-new') return 'כמו חדש';
-  return 'יד שנייה';
-}
 
 function parseJsonArray(raw: string | null) {
   if (!raw) return [];
@@ -32,6 +29,51 @@ function parseJsonArray(raw: string | null) {
   } catch {
     return [];
   }
+}
+
+function parseBooleanField(value: unknown) {
+  if (typeof value === 'boolean') return value;
+  const normalized = String(value ?? '').trim().toLowerCase();
+  return normalized === 'yes' || normalized === 'true' || normalized === '1';
+}
+
+function parseEditBody(raw: Record<string, unknown>) {
+  const eventType = String(raw.event_type ?? 'single').trim();
+  const listingType = String(raw.listing_type ?? 'rent').trim();
+  const dressStyle = String(raw.dress_style ?? '').trim();
+  const dressLength = String(raw.dress_length ?? '').trim();
+
+  if (!isValidDressKind(eventType)) {
+    return { error: 'נא לבחור סוג פריט — שמלה בודדת או סט' };
+  }
+  if (!isValidListingType(listingType)) {
+    return { error: 'נא לבחור השכרה או מכירה' };
+  }
+  if (!dressStyle || !isValidDressStyle(dressStyle)) {
+    return { error: 'נא לבחור סגנון — שמרני, קלאסי או מודרני' };
+  }
+  if (!dressLength || !isValidDressLength(dressLength)) {
+    return { error: 'נא לבחור אורך — קצר, אמצע או ארוך' };
+  }
+
+  return {
+    fields: {
+      name: String(raw.name ?? '').trim(),
+      price: normalizePrice(raw.price),
+      size: String(raw.size ?? '').trim(),
+      city: String(raw.city ?? '').trim(),
+      color: String(raw.color ?? '').trim(),
+      description: raw.description !== undefined ? String(raw.description).trim() : undefined,
+      event_type: eventType,
+      listing_type: listingType,
+      dress_style: dressStyle,
+      dress_length: dressLength,
+      condition: String(raw.condition ?? 'new').trim() || 'new',
+      deposit: normalizePrice(raw.deposit ?? 0),
+      pickup_method: String(raw.pickup_method ?? 'pickup').trim() || 'pickup',
+      includes_dry_cleaning: parseBooleanField(raw.includes_dry_cleaning),
+    },
+  };
 }
 
 async function getOwnedDress(id: string, user: Pick<SiteUser, 'userId' | 'phone' | 'email'>) {
@@ -90,6 +132,14 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         city: formData.get('city'),
         color: formData.get('color'),
         description: formData.get('description'),
+        event_type: formData.get('event_type'),
+        listing_type: formData.get('listing_type'),
+        dress_style: formData.get('dress_style'),
+        dress_length: formData.get('dress_length'),
+        condition: formData.get('condition'),
+        deposit: formData.get('deposit'),
+        pickup_method: formData.get('pickup_method'),
+        includes_dry_cleaning: formData.get('includes_dry_cleaning'),
       };
       keptImages = parseJsonArray(String(formData.get('kept_images') || '[]'));
       newFiles = formData.getAll('images').filter((item): item is File => item instanceof File && item.size > 0);
@@ -100,24 +150,21 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       }
     }
 
+    const parsed = parseEditBody(body);
+    if ('error' in parsed) {
+      return NextResponse.json({ error: parsed.error }, { status: 400 });
+    }
+    const fields = parsed.fields;
+
     const liveColor = getDressColorFromRow({
       color: dressRow.color as string | null,
       description: dressRow.description as string | null,
     });
 
-    const submittedColor = body.color !== undefined ? String(body.color).trim() : '';
-    const resolvedColor = submittedColor || liveColor;
+    const submittedColor = fields.color || liveColor;
 
-    const updates: Record<string, unknown> = {
-      name: String(body.name ?? live.name).trim(),
-      price: normalizePrice(body.price !== undefined && String(body.price).trim() !== '' ? body.price : live.price),
-      size: String(body.size ?? live.size).trim(),
-      city: String(body.city ?? live.city).trim(),
-      color: resolvedColor,
-    };
-
-    const condition = String(dressRow.condition || 'new');
-    const descriptionInput = body.description !== undefined ? String(body.description).trim() : '';
+    const condition = fields.condition;
+    const descriptionInput = fields.description !== undefined ? fields.description : '';
     const existingParts = String(dressRow.description || '')
       .split('|')
       .map((p: string) => p.trim())
@@ -129,13 +176,29 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       buildEditFormFromDress(live).description ||
       'אין תיאור זמין.';
 
-    updates.description = [
-      baseDescription,
-      resolvedColor ? `צבע: ${resolvedColor}` : '',
-      `מצב: ${conditionLabel(condition)}`,
-    ]
-      .filter(Boolean)
-      .join(' | ');
+    const updates: Record<string, unknown> = {
+      name: fields.name,
+      price: fields.price,
+      size: fields.size,
+      city: fields.city,
+      color: submittedColor,
+      event_type: fields.event_type,
+      listing_type: fields.listing_type,
+      dress_style: fields.dress_style,
+      dress_length: fields.dress_length,
+      condition,
+      deposit: fields.deposit,
+      pickup_method: fields.pickup_method,
+      includes_dry_cleaning: fields.includes_dry_cleaning,
+      description: [
+        baseDescription,
+        submittedColor ? `צבע: ${submittedColor}` : '',
+        `מצב: ${conditionLabel(condition)}`,
+        fields.includes_dry_cleaning ? 'כולל ניקוי יבש' : '',
+      ]
+        .filter(Boolean)
+        .join(' | '),
+    };
 
     const uploaded = newFiles.length > 0 ? await uploadDressImages(newFiles) : [];
     const allowedImages = getAllowedDressImageUrls(dressRow, live.images);

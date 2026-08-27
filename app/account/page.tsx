@@ -43,7 +43,10 @@ import {
   resolvePaymentDeadline,
 } from '@/lib/booking-payment-deadlines';
 import { shareDressLink } from '@/lib/share-dress';
-import { buildEditFormFromDress, normalizeDressImages } from '@/lib/dress-pending-update';
+import {
+  type DressEditFormFields,
+  normalizeDressImages,
+} from '@/lib/dress-pending-update';
 import { formatAccountPhone } from '@/lib/dress-ownership';
 import { countUpcomingConfirmed, splitBookingsByEventDate } from '@/lib/booking-dates';
 import {
@@ -55,7 +58,6 @@ import {
 import { fetchDressById, findDressInList, invalidateDressesCatalog, preloadDressesCatalog } from '@/lib/dress-api';
 import { resetModalStack } from '@/lib/modal-history';
 import { useScrollToError } from '@/hooks/use-scroll-to-error';
-import type { Dress } from '@/lib/types';
 import { DRESS_KIND_OPTIONS, LISTING_TYPE_OPTIONS } from '@/lib/dress-listing';
 import {
   DEFAULT_DRESS_LENGTH,
@@ -64,6 +66,7 @@ import {
   DRESS_STYLE_PLACEHOLDER,
   dressLengthFieldLabel,
 } from '@/lib/dress-style-length';
+import { PICKUP_METHODS, type Dress } from '@/lib/types';
 import type { SavedDress } from '@/lib/luxe-storage';
 
 type Section = 'hub' | 'reservations' | 'rentals' | 'cart' | 'favorites' | 'add' | 'edit' | 'profile';
@@ -88,14 +91,24 @@ type RentalDress = {
   rental_count: number;
   booked_dates: string[];
   has_pending_update?: boolean;
-  form?: {
-    name: string;
-    price: string;
-    size: string;
-    city: string;
-    color: string;
-    description: string;
-  };
+  form?: DressEditFormFields;
+};
+
+const EMPTY_EDIT_FORM: DressEditFormFields = {
+  name: '',
+  price: '',
+  size: '',
+  city: '',
+  color: '',
+  description: '',
+  event_type: 'single',
+  listing_type: 'rent',
+  dress_style: '',
+  dress_length: DEFAULT_DRESS_LENGTH,
+  condition: 'new',
+  deposit: '',
+  pickup_method: 'pickup',
+  includes_dry_cleaning: 'no',
 };
 
 type BookingRow = {
@@ -198,9 +211,7 @@ function AccountPageContent() {
     owner_phone: '',
   });
   const [editingDress, setEditingDress] = useState<RentalDress | null>(null);
-  const [editForm, setEditForm] = useState({
-    name: '', price: '', size: '', city: '', color: '', description: '',
-  });
+  const [editForm, setEditForm] = useState<DressEditFormFields>(EMPTY_EDIT_FORM);
   const [editImages, setEditImages] = useState<string[]>([]);
   const [editNewFiles, setEditNewFiles] = useState<File[]>([]);
   const [editNewPreviews, setEditNewPreviews] = useState<string[]>([]);
@@ -439,7 +450,7 @@ function AccountPageContent() {
     setEditLoadError('');
 
     if (seed && !editDraftTouchedRef.current) {
-      const form = seed.form ?? buildEditFormFromDress(seed);
+      const form = seed.form ?? EMPTY_EDIT_FORM;
       setEditingDress(seed);
       setEditForm(form);
       setEditImages(normalizeDressImages(seed.images));
@@ -465,7 +476,7 @@ function AccountPageContent() {
 
       if (!editDraftTouchedRef.current) {
         setEditingDress(dress);
-        setEditForm(dress.form ?? buildEditFormFromDress(dress));
+        setEditForm(dress.form ?? EMPTY_EDIT_FORM);
         setEditImages(normalizeDressImages(dress.images));
       } else {
         setEditingDress(dress);
@@ -746,7 +757,7 @@ function AccountPageContent() {
     setEditNewPreviews([]);
     if (editFileInputRef.current) editFileInputRef.current.value = '';
 
-    const form = dress.form ?? buildEditFormFromDress(dress);
+    const form = dress.form ?? EMPTY_EDIT_FORM;
     setEditingDress(dress);
     setEditForm(form);
     setEditImages(normalizeDressImages(dress.images));
@@ -787,6 +798,23 @@ function AccountPageContent() {
       return;
     }
 
+    const validationError = validateAddDressForm(
+      {
+        name: editForm.name,
+        price: editForm.price,
+        size: editForm.size,
+        city: editForm.city,
+        color: editForm.color,
+        dress_style: editForm.dress_style,
+        dress_length: editForm.dress_length,
+      },
+      editImages.length + editNewFiles.length
+    );
+    if (validationError) {
+      setToast({ message: validationError, variant: 'error' });
+      return;
+    }
+
     const token = getSiteToken();
     const formData = new FormData();
     formData.append('name', editForm.name);
@@ -795,6 +823,14 @@ function AccountPageContent() {
     formData.append('city', editForm.city);
     formData.append('color', editForm.color);
     formData.append('description', editForm.description);
+    formData.append('event_type', editForm.event_type);
+    formData.append('listing_type', editForm.listing_type);
+    formData.append('dress_style', editForm.dress_style);
+    formData.append('dress_length', editForm.dress_length);
+    formData.append('condition', editForm.condition);
+    formData.append('deposit', editForm.deposit);
+    formData.append('pickup_method', editForm.pickup_method);
+    formData.append('includes_dry_cleaning', editForm.includes_dry_cleaning);
     formData.append('kept_images', JSON.stringify(editImages));
     editNewFiles.forEach((file) => formData.append('images', file));
 
@@ -1566,6 +1602,56 @@ function AccountPageContent() {
                   onChange={(e) => { touchEditDraft(); setEditForm({ ...editForm, color: e.target.value }); }}
                   className="p-2.5 border border-[#decfa8] rounded-xl text-xs w-full"
                 />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-[#8b6508] mb-1">השכרה או מכירה *</label>
+                <select required value={editForm.listing_type} onChange={(e) => { touchEditDraft(); setEditForm({ ...editForm, listing_type: e.target.value }); }} className="p-2.5 border border-[#decfa8] rounded-xl text-xs w-full">
+                  {LISTING_TYPE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-[#8b6508] mb-1">שמלה בודדת או סט *</label>
+                <select required value={editForm.event_type} onChange={(e) => { touchEditDraft(); setEditForm({ ...editForm, event_type: e.target.value }); }} className="p-2.5 border border-[#decfa8] rounded-xl text-xs w-full">
+                  {DRESS_KIND_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-[#8b6508] mb-1">סגנון *</label>
+                <select required value={editForm.dress_style} onChange={(e) => { touchEditDraft(); setEditForm({ ...editForm, dress_style: e.target.value }); }} className="p-2.5 border border-[#decfa8] rounded-xl text-xs w-full">
+                  <option value="">{DRESS_STYLE_PLACEHOLDER}</option>
+                  {DRESS_STYLE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-[#8b6508] mb-1">{dressLengthFieldLabel(editForm.event_type)}</label>
+                <select required value={editForm.dress_length} onChange={(e) => { touchEditDraft(); setEditForm({ ...editForm, dress_length: e.target.value }); }} className="p-2.5 border border-[#decfa8] rounded-xl text-xs w-full">
+                  {DRESS_LENGTH_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-[#8b6508] mb-1">מצב השמלה</label>
+                <select value={editForm.condition} onChange={(e) => { touchEditDraft(); setEditForm({ ...editForm, condition: e.target.value }); }} className="p-2.5 border border-[#decfa8] rounded-xl text-xs w-full">
+                  <option value="new">חדש עם תווית</option>
+                  <option value="like-new">כמו חדש</option>
+                  <option value="used">יד שנייה</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-[#8b6508] mb-1">פיקדון (₪)</label>
+                <input type="number" min="0" placeholder="0" value={editForm.deposit} onChange={(e) => { touchEditDraft(); setEditForm({ ...editForm, deposit: e.target.value }); }} className="p-2.5 border border-[#decfa8] rounded-xl text-xs w-full" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-[#8b6508] mb-1">קבלת השמלה</label>
+                <select value={editForm.pickup_method} onChange={(e) => { touchEditDraft(); setEditForm({ ...editForm, pickup_method: e.target.value }); }} className="p-2.5 border border-[#decfa8] rounded-xl text-xs w-full">
+                  {PICKUP_METHODS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-[#8b6508] mb-1">ניקוי יבש</label>
+                <select value={editForm.includes_dry_cleaning} onChange={(e) => { touchEditDraft(); setEditForm({ ...editForm, includes_dry_cleaning: e.target.value as 'yes' | 'no' }); }} className="p-2.5 border border-[#decfa8] rounded-xl text-xs w-full">
+                  <option value="no">לא כולל</option>
+                  <option value="yes">כולל ניקוי יבש</option>
+                </select>
               </div>
               <textarea
                 placeholder="תיאור השמלה (אופציונלי)"
