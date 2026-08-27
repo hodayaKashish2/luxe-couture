@@ -60,6 +60,7 @@ export default function AdminPage() {
     action: 'reject' | 'delete';
   } | null>(null);
   const [rejectBusy, setRejectBusy] = useState(false);
+  const [catalogPdfBusy, setCatalogPdfBusy] = useState(false);
 
   useEffect(() => {
     const stored = sessionStorage.getItem('admin_token');
@@ -265,6 +266,43 @@ export default function AdminPage() {
     return handleAction('booking', id, 'approve_payment');
   }
 
+  async function downloadCatalogPdf() {
+    if (!savedToken || catalogPdfBusy) return;
+    setCatalogPdfBusy(true);
+    setError('');
+    setActionMsg('');
+
+    try {
+      const response = await fetch('/api/admin/catalog-pdf', {
+        headers: { 'x-admin-token': savedToken },
+      });
+
+      if (!response.ok) {
+        const data = (await response.json().catch(() => ({}))) as { error?: string };
+        throw new Error(data.error || 'יצירת הקטלוג נכשלה');
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = `catalog-dress-click-${new Date().toISOString().slice(0, 10)}.pdf`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+      setActionMsg(`✓ קטלוג PDF הורד (${overview?.stats.published ?? 'כל'} שמלות)`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'יצירת הקטלוג נכשלה');
+    } finally {
+      setCatalogPdfBusy(false);
+    }
+  }
+
+  function openCatalogPreview() {
+    if (!savedToken) return;
+    const url = `/api/admin/catalog-pdf/preview?token=${encodeURIComponent(savedToken)}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#fbf8f0] to-[#e8dcbd] text-[#332c1e]" dir="rtl">
       <SiteHeader />
@@ -306,7 +344,24 @@ export default function AdminPage() {
                 <span className="text-xs text-[#8b6508] font-bold">מחוברת ✓</span>
                 {actionMsg && <span className="text-xs font-bold text-[#b8860b]">{actionMsg}</span>}
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
+                <button
+                  type="button"
+                  onClick={openCatalogPreview}
+                  className="text-xs px-3 py-1.5 border border-[#decfa8] rounded-lg bg-white"
+                  title="פתיחת הקטלוג בדפדפן לפני הורדת PDF"
+                >
+                  👁 תצוגה מקדימה
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void downloadCatalogPdf()}
+                  disabled={catalogPdfBusy}
+                  className="text-xs px-3 py-1.5 border border-[#d4af37] rounded-lg bg-[#fff8e8] text-[#8b6508] font-bold disabled:opacity-60"
+                  title="ניסיוני — מקומי בלבד עד שתדחפי לפרודקשן"
+                >
+                  {catalogPdfBusy ? 'מייצר PDF...' : '📥 הורד קטלוג PDF'}
+                </button>
                 <button
                   type="button"
                   onClick={() => bumpRefresh()}

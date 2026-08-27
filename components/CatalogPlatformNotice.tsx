@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import CatalogPdfDownloadButton from '@/components/CatalogPdfDownloadButton';
 import { CATALOG_PLATFORM_NOTICE } from '@/lib/commission';
 
 /** שורת מידע קומפקטית בראש הקטלוג */
@@ -15,12 +16,15 @@ export default function CatalogPlatformNotice() {
           <p className="text-[11px] leading-relaxed text-[#5c5037] sm:text-xs">{message}</p>
         </div>
 
-        <Link
-          href="/terms"
-          className="shrink-0 self-center text-[11px] font-bold text-[#b8860b] underline underline-offset-[3px] transition-colors hover:text-[#8b6508] sm:self-start"
-        >
-          {termsLabel} →
-        </Link>
+        <div className="flex shrink-0 flex-col items-center gap-2 sm:items-end">
+          <CatalogPdfDownloadButton className="text-[11px] font-bold text-[#8b6508] px-3 py-1.5 border border-[#d4af37] rounded-lg bg-[#fff8e8] hover:bg-[#fff3d6] disabled:opacity-60" />
+          <Link
+            href="/terms"
+            className="text-[11px] font-bold text-[#b8860b] underline underline-offset-[3px] transition-colors hover:text-[#8b6508]"
+          >
+            {termsLabel} →
+          </Link>
+        </div>
       </div>
     </div>
   );
