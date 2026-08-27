@@ -3,7 +3,7 @@ import { fetchAllCatalogPdfDresses } from '@/lib/catalog-pdf/fetch-all-catalog-d
 import { generateCatalogPdf } from '@/lib/catalog-pdf/generate-catalog-pdf';
 
 export function isCatalogPdfEnabled() {
-  return process.env.CATALOG_PDF_ENABLED === 'true' || process.env.NODE_ENV === 'development';
+  return process.env.CATALOG_PDF_ENABLED !== 'false';
 }
 
 export async function createCatalogPdfResponse() {

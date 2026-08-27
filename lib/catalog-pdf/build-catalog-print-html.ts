@@ -39,14 +39,11 @@ export function buildCatalogPrintHtml(dresses: CatalogPdfDress[]) {
 <head>
   <meta charset="utf-8" />
   <title>${escapeHtml(SITE_NAME)} — קטלוג שמלות</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;600;800&display=swap" rel="stylesheet" />
   <style>
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      font-family: Heebo, Arial, sans-serif;
+      font-family: Arial, 'Segoe UI', Tahoma, sans-serif;
       background: #fbf8f0;
       color: #3d2f24;
       direction: rtl;

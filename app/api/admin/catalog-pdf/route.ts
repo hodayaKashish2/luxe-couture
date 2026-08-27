@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createCatalogPdfResponse } from '@/lib/catalog-pdf/create-catalog-pdf-response';
 
+export const maxDuration = 60;
+
 function verifyAdminToken(request: Request) {
   const token =
     request.headers.get('x-admin-token') ||
