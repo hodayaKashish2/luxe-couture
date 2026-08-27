@@ -6,7 +6,6 @@ import {
   hashPassword,
 } from '@/lib/user-auth';
 import { formatPhoneForStorage, phoneValidationMessage } from '@/lib/israeli-phone';
-import { phonesMatch } from '@/lib/owner-auth';
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server';
 import { formatSiteUsersDbError } from '@/lib/db-errors';
 
@@ -59,16 +58,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'שם המשתמש כבר תפוס — בחרי שם משתמש אחר' }, { status: 409 });
     }
 
-    const { data: phoneRows } = await supabase.from('site_users').select('id, phone');
-
-    const existingPhone = (phoneRows ?? []).find((row) =>
-      phonesMatch(String(row.phone || ''), phoneStored)
-    );
-
-    if (existingPhone) {
-      return NextResponse.json({ error: 'מספר הטלפון כבר רשום — התחברי או השתמשי במספר אחר' }, { status: 409 });
-    }
-
     const { data, error } = await supabase
       .from('site_users')
       .insert([
@@ -84,9 +73,6 @@ export async function POST(request: Request) {
       .single();
 
     if (error?.message?.includes('duplicate') || error?.code === '23505') {
-      if (error.message?.includes('phone')) {
-        return NextResponse.json({ error: 'מספר הטלפון כבר רשום — התחברי או השתמשי במספר אחר' }, { status: 409 });
-      }
       return NextResponse.json({ error: 'שם המשתמש כבר תפוס — בחרי שם משתמש אחר' }, { status: 409 });
     }
 

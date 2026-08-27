@@ -6,7 +6,6 @@ import {
   getUserFromRequest,
 } from '@/lib/user-auth';
 import { formatPhoneForStorage, phoneValidationMessage } from '@/lib/israeli-phone';
-import { phonesMatch } from '@/lib/owner-auth';
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server';
 import { formatSiteUsersDbError } from '@/lib/db-errors';
 
@@ -72,15 +71,6 @@ export async function PATCH(request: Request) {
     }
 
     const supabase = getSupabaseAdmin();
-
-    const { data: phoneRows } = await supabase.from('site_users').select('id, phone');
-    const existingPhone = (phoneRows ?? []).find(
-      (row) => String(row.id) !== String(user.userId) && phonesMatch(String(row.phone || ''), phoneStored)
-    );
-
-    if (existingPhone) {
-      return NextResponse.json({ error: 'מספר הטלפון כבר בשימוש בחשבון אחר' }, { status: 409 });
-    }
 
     const { data, error } = await supabase
       .from('site_users')
