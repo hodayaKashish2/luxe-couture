@@ -470,3 +470,26 @@ export function pendingUpdateToDressPatch(payload: PendingUpdatePayload) {
 export function isSchemaMissingPendingUpdate(message: string) {
   return message.includes('pending_update');
 }
+
+/** Effective images for admin edit (includes pending draft if present). */
+export function getEffectiveDressImages(row: Record<string, unknown>) {
+  const pending = row.pending_update as PendingUpdatePayload | null | undefined;
+  if (pending?.images?.length) return normalizeDressImages(pending.images);
+  return normalizeDressImages(row.images);
+}
+
+export function mapAdminDressForEdit(row: Record<string, unknown>) {
+  const form = buildEditFormFromDressRow(row);
+  const pending = row.pending_update as PendingUpdatePayload | null | undefined;
+
+  return {
+    id: String(row.id),
+    status: String(row.status || ''),
+    images: getEffectiveDressImages(row),
+    form,
+    owner_name: String(row.owner_name || ''),
+    owner_phone: String(row.owner_phone || ''),
+    owner_email: String(row.owner_email || ''),
+    has_pending_update: Boolean(pending),
+  };
+}

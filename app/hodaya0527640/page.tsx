@@ -469,8 +469,10 @@ export default function AdminPage() {
                         >
                           <AdminPendingDressesGrid
                             dresses={overview.pendingDresses.slice(0, 16)}
+                            token={savedToken}
                             onApprove={(id) => handleAction('dress', id, 'approve')}
                             onRejectRequest={(id, dressName) => openRejectPrompt('dress', id, dressName)}
+                            onSaved={bumpRefresh}
                           />
                         </AdminCollapsibleSection>
                       )}
@@ -610,6 +612,7 @@ export default function AdminPage() {
                 initialFeatured={catalogFeatured}
                 refreshKey={refreshKey}
                 onAction={(id, action) => handleAction('dress', id, action)}
+                onSaved={bumpRefresh}
               />
             )}
 
@@ -620,8 +623,10 @@ export default function AdminPage() {
                 </h2>
                 <AdminPendingDressesGrid
                   dresses={overview.pendingDresses}
+                  token={savedToken}
                   onApprove={(id) => handleAction('dress', id, 'approve')}
                   onRejectRequest={(id, dressName) => openRejectPrompt('dress', id, dressName)}
+                  onSaved={bumpRefresh}
                 />
               </section>
             )}

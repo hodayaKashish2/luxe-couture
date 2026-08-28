@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import AdminCollapsibleSection, { ADMIN_DRESS_GRID_CLASS } from '@/components/admin/AdminCollapsibleSection';
 import AdminDressDetailModal from '@/components/admin/AdminDressDetailModal';
+import AdminDressEditModal from '@/components/admin/AdminDressEditModal';
 import AdminDressGridCard from '@/components/admin/AdminDressGridCard';
 import AdminPagination from '@/components/admin/AdminPagination';
 import type { AdminDressRow, AdminDressSort } from '@/lib/admin-types';
@@ -16,6 +17,7 @@ type AdminDressCatalogProps = {
     action: 'delete' | 'toggle_featured' | 'extend_featured'
   ) => Promise<boolean>;
   refreshKey?: number;
+  onSaved?: () => void;
 };
 
 export default function AdminDressCatalog({
@@ -24,6 +26,7 @@ export default function AdminDressCatalog({
   initialFeatured = 'all',
   onAction,
   refreshKey = 0,
+  onSaved,
 }: AdminDressCatalogProps) {
   const [items, setItems] = useState<AdminDressRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,6 +42,7 @@ export default function AdminDressCatalog({
   const [featured, setFeatured] = useState<'all' | 'yes' | 'no'>(initialFeatured);
   const [busyId, setBusyId] = useState<number | null>(null);
   const [detailDress, setDetailDress] = useState<AdminDressRow | null>(null);
+  const [editingDress, setEditingDress] = useState<AdminDressRow | null>(null);
 
   useEffect(() => {
     setFeatured(initialFeatured);
@@ -237,6 +241,16 @@ export default function AdminDressCatalog({
                 </p>
                 <button
                   type="button"
+                  onClick={() => {
+                    setEditingDress(detailDress);
+                    setDetailDress(null);
+                  }}
+                  className="px-3 py-2 text-sm rounded-xl border border-[#d4af37] text-[#8b6508] font-bold"
+                >
+                  ✏️ עריכה
+                </button>
+                <button
+                  type="button"
                   disabled={busyId === detailDress.id}
                   onClick={() => runAction(detailDress.id, 'toggle_featured')}
                   className="px-3 py-2 text-sm rounded-xl border border-[#decfa8] font-bold disabled:opacity-50"
@@ -260,6 +274,19 @@ export default function AdminDressCatalog({
                   הסר מהאתר
                 </button>
               </AdminDressDetailModal>
+            )}
+
+            {editingDress && (
+              <AdminDressEditModal
+                dressId={editingDress.id}
+                dressName={editingDress.name}
+                token={token}
+                onClose={() => setEditingDress(null)}
+                onSaved={() => {
+                  setEditingDress(null);
+                  onSaved?.();
+                }}
+              />
             )}
 
             <div className="p-4 border-t border-[#eadaaf]">
