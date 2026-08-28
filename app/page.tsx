@@ -25,6 +25,7 @@ import FittingConfirmationModal from '@/components/FittingConfirmationModal';
 import LoginRequiredNoticeModal from '@/components/LoginRequiredNoticeModal';
 import type { PaymentMethod } from '@/lib/payment-methods';
 import { FAQS, FINAL_OWNER_APPROVAL_BUTTON_LABEL, FINAL_OWNER_APPROVAL_HINT } from '@/lib/constants';
+import { getReserveButtonCopy } from '@/lib/booking-reserve-button';
 import { validateAddDressForm, validateDressImageFiles } from '@/lib/form-validation';
 import { notifyBookingUpdated } from '@/lib/booking-events';
 import { getStoredSiteUser } from '@/lib/session-user';
@@ -866,36 +867,7 @@ export default function Home() {
     };
   }, [detailsDress]);
 
-  const detailsReserveButton = (() => {
-    if (!detailsDressBooking) {
-      return {
-        label: FINAL_OWNER_APPROVAL_BUTTON_LABEL,
-        hint: FINAL_OWNER_APPROVAL_HINT,
-      };
-    }
-    if (detailsDressBooking.canPay) {
-      return {
-        label: '💳 השלימי תשלום — המשכירה אישרה',
-        hint: 'המשכירה אישרה את הבקשה — נשאר רק להשלים את התשלום דרך האתר.',
-      };
-    }
-    if (detailsDressBooking.awaitingAdmin) {
-      return {
-        label: 'ממתינה לאישור תשלום',
-        hint: 'דיווח התשלום התקבל — נעדכן אותך במייל ברגע שהאישור יושלם.',
-      };
-    }
-    if (detailsDressBooking.awaitingOwner) {
-      return {
-        label: 'בקשה נשלחה — ממתינה לאישור',
-        hint: 'פרטי המשכירה מופיעים ב«ההזמנות שלי» באזור האישי, תחת הזמנות ממתינות.',
-      };
-    }
-    return {
-      label: FINAL_OWNER_APPROVAL_BUTTON_LABEL,
-      hint: FINAL_OWNER_APPROVAL_HINT,
-    };
-  })();
+  const detailsReserveButton = getReserveButtonCopy(detailsDressBooking);
 
   const handleDetailsReserve = (dress: Dress, imageIndex?: number) => {
     void openFinalApprovalFlow(dress, imageIndex);

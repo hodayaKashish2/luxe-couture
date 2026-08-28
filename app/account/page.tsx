@@ -56,6 +56,7 @@ import {
   BOOKINGS_PAST_SECTION_TITLE,
 } from '@/lib/retention';
 import { fetchDressById, findDressInList, invalidateDressesCatalog, preloadDressesCatalog } from '@/lib/dress-api';
+import { getReserveButtonCopy, getSavedDressActionLabel } from '@/lib/booking-reserve-button';
 import { resetModalStack } from '@/lib/modal-history';
 import { useScrollToError } from '@/hooks/use-scroll-to-error';
 import { DRESS_KIND_OPTIONS, LISTING_TYPE_OPTIONS } from '@/lib/dress-listing';
@@ -161,6 +162,16 @@ function AccountPageContent() {
     reconcileWithCatalog,
   } = useLuxeStorage();
   const [detailsDress, setDetailsDress] = useState<Dress | null>(null);
+  const [detailsDressBooking, setDetailsDressBooking] = useState<{
+    id: number;
+    eventDate: string;
+    amount: number;
+    platformFee: number;
+    ownerPayout: number;
+    canPay: boolean;
+    awaitingOwner: boolean;
+    awaitingAdmin: boolean;
+  } | null>(null);
   const [rateDress, setRateDress] = useState<Dress | null>(null);
   const [ratedDressIds, setRatedDressIds] = useState<Set<string>>(() => new Set());
   const [ownDressNotice, setOwnDressNotice] = useState<{
@@ -294,6 +305,7 @@ function AccountPageContent() {
 
   const closeDetailsDress = useCallback(() => {
     setDetailsDress(null);
+    setDetailsDressBooking(null);
     setRateDress(null);
     pendingViewDressRef.current = null;
     loadedViewDressRef.current = null;
@@ -440,7 +452,7 @@ function AccountPageContent() {
   useEffect(() => {
     if (prevSectionRef.current === section) return;
     prevSectionRef.current = section;
-    if (section === 'reservations' || section === 'rentals') {
+    if (section === 'reservations' || section === 'rentals' || section === 'cart' || section === 'favorites') {
       void load({ silent: true });
     }
   }, [section, load]);
@@ -907,6 +919,15 @@ function AccountPageContent() {
   const pendingReservationsCount = activeReservations.filter((r) =>
     renterPendingStatuses.has(r.status)
   ).length;
+  const pendingBookingStatusByDressId = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const reservation of activeReservations) {
+      if (renterPendingStatuses.has(reservation.status)) {
+        map.set(String(reservation.dress_id), reservation.status);
+      }
+    }
+    return map;
+  }, [activeReservations]);
   const confirmedReservationsCount = countUpcomingConfirmed(activeReservations);
   const pendingOwnerRequestsCount = ownerBookings.filter(
     (b) => b.status === 'pending_owner_approval'
@@ -1037,6 +1058,51 @@ function AccountPageContent() {
     });
   }, [searchParams, section, openPaymentForBookingId, router, dataReady]);
 
+  useEffect(() => {
+    if (!detailsDress) {
+      setDetailsDressBooking(null);
+      return;
+    }
+
+    let cancelled = false;
+    const dressId = detailsDress.id;
+
+    async function loadActiveBooking() {
+      try {
+        const token = getSiteToken();
+        const response = await fetch(`/api/bookings?dressId=${encodeURIComponent(dressId)}`, {
+          headers: token ? { 'x-user-token': token } : {},
+        });
+        const data = await response.json();
+        if (cancelled) return;
+
+        if (response.ok && data.success && data.booking) {
+          setDetailsDressBooking({
+            id: data.booking.id,
+            eventDate: data.booking.eventDate,
+            amount: data.booking.amount,
+            platformFee: data.booking.platformFee,
+            ownerPayout: data.booking.ownerPayout,
+            canPay: Boolean(data.booking.canPay),
+            awaitingOwner: Boolean(data.booking.awaitingOwner),
+            awaitingAdmin: Boolean(data.booking.awaitingAdmin),
+          });
+        } else {
+          setDetailsDressBooking(null);
+        }
+      } catch {
+        if (!cancelled) setDetailsDressBooking(null);
+      }
+    }
+
+    void loadActiveBooking();
+    return () => {
+      cancelled = true;
+    };
+  }, [detailsDress]);
+
+  const detailsReserveButton = getReserveButtonCopy(detailsDressBooking);
+
   const fetchActiveBookingForDress = useCallback(async (dressId: string) => {
     try {
       const token = getSiteToken();
@@ -1092,16 +1158,50 @@ function AccountPageContent() {
         setOwnDressNotice({ dressName: dress.name, variant: 'booking' });
         return;
       }
+
+      const knownBooking =
+        detailsDress?.id === dress.id ? detailsDressBooking : null;
+
+      if (knownBooking && (knownBooking.canPay || knownBooking.awaitingOwner || knownBooking.awaitingAdmin)) {
+        openAccountBookingWithResume(dress, knownBooking);
+        return;
+      }
+
       closeDetailsDress();
       setFittingConfirm(dress);
       void fetchActiveBookingForDress(dress.id).then((booking) => {
         if (!booking) return;
         if (booking.canPay || booking.awaitingOwner || booking.awaitingAdmin) {
+          setFittingConfirm((current) => (current?.id === dress.id ? null : current));
           openAccountBookingWithResume(dress, booking);
         }
       });
     },
-    [closeDetailsDress, fetchActiveBookingForDress, openAccountBookingWithResume]
+    [
+      closeDetailsDress,
+      detailsDress,
+      detailsDressBooking,
+      fetchActiveBookingForDress,
+      openAccountBookingWithResume,
+    ]
+  );
+
+  const handleSavedDressBookingAction = useCallback(
+    async (item: SavedDress) => {
+      let dress = await fetchDressById(item.id);
+      if (!dress) {
+        const list = await preloadDressesCatalog();
+        dress = findDressInList(list, item.id);
+      }
+      if (!dress) {
+        if (section === 'cart') removeFromCart(item.id);
+        if (section === 'favorites') removeFromFavorites(item.id);
+        setToast({ message: 'השמלה הוסרה מהאתר — הורדנו אותה מהרשימה', variant: 'error' });
+        return;
+      }
+      beginAccountFinalApproval(dress);
+    },
+    [beginAccountFinalApproval, removeFromCart, removeFromFavorites, section]
   );
 
   const confirmAccountFitting = useCallback(() => {
@@ -1507,20 +1607,10 @@ function AccountPageContent() {
               onRemove={removeFromCart}
               onViewDetails={openSavedDressDetails}
               showTotal
-              actionLabel="בקשת אישור סופי"
-              onAction={async (item) => {
-                let dress = await fetchDressById(item.id);
-                if (!dress) {
-                  const list = await preloadDressesCatalog();
-                  dress = findDressInList(list, item.id);
-                }
-                if (!dress) {
-                  removeFromCart(item.id);
-                  setToast({ message: 'השמלה הוסרה מהאתר — הורדנו אותה מהסל', variant: 'error' });
-                  return;
-                }
-                beginAccountFinalApproval(dress);
-              }}
+              getActionLabel={(item) =>
+                getSavedDressActionLabel(pendingBookingStatusByDressId.get(item.id))
+              }
+              onAction={(item) => void handleSavedDressBookingAction(item)}
             />
           </div>
         )}
@@ -1534,6 +1624,10 @@ function AccountPageContent() {
               emptyMessage="אין מועדפים עדיין — לחצי ❤️ על שמלה בקטלוג"
               onRemove={removeFromFavorites}
               onViewDetails={openSavedDressDetails}
+              getActionLabel={(item) =>
+                getSavedDressActionLabel(pendingBookingStatusByDressId.get(item.id))
+              }
+              onAction={(item) => void handleSavedDressBookingAction(item)}
             />
           </div>
         )}
@@ -1914,6 +2008,8 @@ function AccountPageContent() {
           onToggleCart={() => toggleCart(detailsDress)}
           onToggleFavorite={() => toggleFavorite(detailsDress)}
           onReserve={() => beginAccountFinalApproval(detailsDress)}
+          reserveButtonLabel={detailsReserveButton.label}
+          reserveButtonHint={detailsReserveButton.hint}
           onCoordinate={() => {
             const dressId = detailsDress.id;
             if (isOwnDressForUser(detailsDress)) {

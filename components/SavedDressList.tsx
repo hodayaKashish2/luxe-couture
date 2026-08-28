@@ -10,6 +10,7 @@ type Props = {
   onRemove: (id: string) => void;
   showTotal?: boolean;
   actionLabel?: string;
+  getActionLabel?: (item: SavedDress) => string;
   onAction?: (item: SavedDress) => void;
   onViewDetails?: (item: SavedDress) => void;
 };
@@ -22,6 +23,7 @@ export default function SavedDressList({
   onRemove,
   showTotal = false,
   actionLabel,
+  getActionLabel,
   onAction,
   onViewDetails,
 }: Props) {
@@ -96,13 +98,13 @@ export default function SavedDressList({
 
               <div className="flex flex-col justify-end shrink-0">
                 <div className="flex flex-col gap-2">
-                  {actionLabel && onAction && (
+                  {(actionLabel || getActionLabel) && onAction && (
                     <button
                       type="button"
                       onClick={() => onAction(item)}
                       className="px-3 py-1.5 rounded-lg bg-[#2c261a] hover:bg-[#b8860b] text-white text-[10px] font-bold transition-colors"
                     >
-                      {actionLabel}
+                      {getActionLabel ? getActionLabel(item) : actionLabel}
                     </button>
                   )}
                   <Link
