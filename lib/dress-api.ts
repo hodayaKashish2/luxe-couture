@@ -56,8 +56,17 @@ export function invalidateDressesCatalog() {
 }
 
 export async function fetchDressById(id: string): Promise<Dress | null> {
-  const list = await preloadDressesCatalog();
-  return findDressInList(list, id);
+  const cached = catalogCache ? findDressInList(catalogCache, id) : null;
+  if (cached) return cached;
+
+  try {
+    const response = await fetch(`/api/dresses/${encodeURIComponent(id)}`);
+    if (!response.ok) return null;
+    const data = (await response.json()) as Dress;
+    return normalizeDress(data);
+  } catch {
+    return null;
+  }
 }
 
 export function findDressInList(list: Dress[], id: string): Dress | null {
