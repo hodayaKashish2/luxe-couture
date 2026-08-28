@@ -1,6 +1,6 @@
 import { Resend } from 'resend';
 import nodemailer from 'nodemailer';
-import { DEFAULT_ADMIN_EMAIL, getSiteAdminEmail, getServerAppUrl, accountAddDressUrl, accountReservationsUrl, accountRentalsUrl, completeBookingUrl, adminPanelUrl } from '@/lib/site-config';
+import { DEFAULT_ADMIN_EMAIL, getSiteAdminEmail, getServerAppUrl, accountAddDressUrl, accountReservationsUrl, accountRentalsUrl, completeBookingUrl, adminPanelUrl, dressPageUrl } from '@/lib/site-config';
 import { PAYMENT_DEADLINE_DAYS } from '@/lib/booking-payment-deadlines';
 import { buildDressUpdateDiffHtml } from '@/lib/dress-update-diff-html';
 
@@ -995,9 +995,7 @@ export async function sendDressUpdateApprovedOwnerEmail(params: {
   }
 
   const diffHtml = params.diff ? buildDressUpdateDiffHtml(params.diff) : '';
-  const catalogUrl = params.dressId
-    ? `${getAppUrl()}/?dress=${params.dressId}`
-    : `${getAppUrl()}/`;
+  const catalogUrl = params.dressId ? dressPageUrl(String(params.dressId)) : `${getAppUrl()}/`;
 
   return sendEmailTo(
     params.to,

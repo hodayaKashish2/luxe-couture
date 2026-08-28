@@ -167,7 +167,6 @@ export default function Home() {
   const [coordinateChecked, setCoordinateChecked] = useState(false);
   const [coordinateDisclaimerAccepted, setCoordinateDisclaimerAccepted] = useState(false);
   const [detailsDress, setDetailsDress] = useState<Dress | null>(null);
-  const [openingSharedDress, setOpeningSharedDress] = useState(false);
   const [detailsDressBooking, setDetailsDressBooking] = useState<{
     id: number;
     eventDate: string;
@@ -241,42 +240,6 @@ export default function Home() {
     }
 
     void loadRatedDressIds();
-  }, []);
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const dressId = params.get('dress');
-    if (!dressId) return;
-
-    setOpeningSharedDress(true);
-    let cancelled = false;
-
-    async function openSharedDress() {
-      try {
-        const fromList = findDressInList(dressesList, dressId!);
-        const dress = fromList ?? (await fetchDressById(dressId!));
-        if (cancelled) return;
-
-        if (dress) {
-          setDetailsDress(dress);
-        } else {
-          setToast({ message: 'השמלה לא נמצאה או שהוסרה מהאתר', variant: 'error' });
-        }
-      } finally {
-        if (!cancelled) setOpeningSharedDress(false);
-      }
-
-      const cleanParams = new URLSearchParams(window.location.search);
-      cleanParams.delete('dress');
-      cleanParams.delete('text');
-      const next = cleanParams.toString() ? `/?${cleanParams}` : '/';
-      window.history.replaceState(null, '', next);
-    }
-
-    void openSharedDress();
-    return () => {
-      cancelled = true;
-    };
   }, []);
 
   useEffect(() => {
@@ -817,7 +780,7 @@ export default function Home() {
   const tryRateDress = useCallback(
     (dress: Dress) => {
       if (!isLoggedIn()) {
-        setLoginRequiredNext(`/?dress=${dress.id}`);
+        setLoginRequiredNext(`/dress/${dress.id}`);
         setLoginRequiredNotice('rate');
         return;
       }
@@ -1468,7 +1431,6 @@ export default function Home() {
       <SiteHeader />
 
       {/* Hero */}
-      {!openingSharedDress && (
       <section className="relative z-10 max-w-4xl mx-auto px-4 pt-6 sm:pt-8 pb-0 text-center">
         <p className="mb-2 text-[11px] tracking-[0.28em] text-[#9a7b4f] font-[family-name:var(--font-luxury)]">
           ✦ תיווך השכרת שמלות בין בנות ✦
@@ -1493,14 +1455,8 @@ export default function Home() {
           </a>
         </div>
       </section>
-      )}
 
       {/* 👗 קטלוג + סינון בצד (SHEIN-style) */}
-      {openingSharedDress && !detailsDress ? (
-        <section className="max-w-7xl mx-auto px-3 sm:px-4 mb-14 relative z-10 pt-16 sm:pt-24">
-          <div className="text-center py-24 text-[#8b6508] text-sm font-medium">טוענת שמלה...</div>
-        </section>
-      ) : (
       <section id="catalog" ref={catalogRef} className="max-w-7xl mx-auto px-3 sm:px-4 mb-14 relative z-10 pt-1 sm:pt-2">
         <div className="flex items-center justify-between gap-2 mb-2">
           <p className="text-[11px] sm:text-xs text-[#9a7b4f]">
@@ -1787,7 +1743,6 @@ export default function Home() {
           setMaxPrice={setMaxPrice}
         />
       </section>
-      )}
 
       {/* ✨ ממודאל חדש: שאלון הוספת שמלה לאתר ✨ */}
       {isAddDressOpen && (

@@ -82,11 +82,11 @@ export function completeBookingUrl(bookingId: number | string) {
 
 export function dressShareUrl(dressName: string, dressId: string) {
   const base = getPublicAppUrl();
-  return `${base}/?dress=${dressId}&text=${encodeURIComponent(`שמתי לב לשמלה "${dressName}" באתר ${SITE_NAME}`)}`;
+  return `${base}/dress/${encodeURIComponent(dressId)}?text=${encodeURIComponent(`שמתי לב לשמלה "${dressName}" באתר ${SITE_NAME}`)}`;
 }
 
 export function dressPageUrl(dressId: string) {
-  return `${getPublicAppUrl()}/?dress=${dressId}`;
+  return `${getPublicAppUrl()}/dress/${encodeURIComponent(dressId)}`;
 }
 
 export function ownerWhatsAppLink(phone: string, dressName: string) {
