@@ -9,6 +9,7 @@ import FormError from '@/components/FormError';
 import CatalogFilterDrawer from '@/components/CatalogFilterDrawer';
 import CatalogFilterSidebar from '@/components/CatalogFilterSidebar';
 import DressHighlightBadge from '@/components/DressHighlightBadge';
+import DressCatalogMeta from '@/components/DressCatalogMeta';
 import DressDetailsModal from '@/components/DressDetailsModal';
 import DressImageFill from '@/components/DressImageFill';
 import DressImageSliderNav, { stepImageIndex } from '@/components/DressImageSliderNav';
@@ -1689,6 +1690,8 @@ export default function Home() {
                   >
                     {dress.name}
                   </button>
+
+                  <DressCatalogMeta city={dress.city} listingType={dress.listing_type} />
 
                   <div className="flex items-center justify-between gap-1">
                     <span className="text-neutral-900 font-black text-xs sm:text-sm leading-none">₪{dress.price}</span>

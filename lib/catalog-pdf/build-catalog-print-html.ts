@@ -10,6 +10,24 @@ function escapeHtml(value: string) {
 }
 
 function dressCard(dress: CatalogPdfDress) {
+  const metaParts: string[] = [];
+  const city = dress.city.trim();
+  if (city && city !== '—') metaParts.push(city);
+  if (dress.listingLabel) metaParts.push(dress.listingLabel);
+  const metaLine = metaParts.length
+    ? `<p class="dress-meta">${metaParts.map((part, index) => {
+        const isListing = index === metaParts.length - 1 && dress.listingLabel === part;
+        const listingClass = isListing
+          ? part === 'מכירה'
+            ? ' listing-sale'
+            : ' listing-rent'
+          : '';
+        const separator =
+          index > 0 ? '<span class="meta-sep" aria-hidden="true">·</span>' : '';
+        return `${separator}<span class="meta-part${listingClass}">${escapeHtml(part)}</span>`;
+      }).join('')}</p>`
+    : '';
+
   return `
     <article class="dress-card">
       <div class="dress-image-wrap">
@@ -22,6 +40,7 @@ function dressCard(dress: CatalogPdfDress) {
       </div>
       <div class="dress-body">
         <p class="dress-name">${escapeHtml(dress.name)}</p>
+        ${metaLine}
         <p class="dress-price">₪${dress.price.toLocaleString('he-IL')}</p>
       </div>
     </article>
@@ -124,7 +143,7 @@ export function buildCatalogPrintHtml(dresses: CatalogPdfDress[]) {
       background: #fff;
     }
     .dress-name {
-      margin: 0 0 2px;
+      margin: 0 0 1px;
       font-size: 7px;
       font-weight: 600;
       line-height: 1.25;
@@ -134,6 +153,27 @@ export function buildCatalogPrintHtml(dresses: CatalogPdfDress[]) {
       -webkit-box-orient: vertical;
       overflow: hidden;
       min-height: calc(7px * 1.25 * 2);
+    }
+    .dress-meta {
+      margin: 0 0 2px;
+      font-size: 6px;
+      line-height: 1.2;
+      color: #9a7b4f;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .meta-sep {
+      margin: 0 2px;
+      color: #decfa8;
+    }
+    .meta-part.listing-rent {
+      font-weight: 700;
+      color: #8b6508;
+    }
+    .meta-part.listing-sale {
+      font-weight: 700;
+      color: #047857;
     }
     .dress-price {
       margin: 0;
