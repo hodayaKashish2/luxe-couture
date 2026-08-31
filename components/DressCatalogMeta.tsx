@@ -23,10 +23,10 @@ export default function DressCatalogMeta({ city, listingType }: Props) {
       )}
       {typeLabel && (
         <span
-          className={`inline-flex shrink-0 px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-black border shadow-sm ${
+          className={`inline-flex shrink-0 items-center rounded-full border px-2.5 py-1 text-[11px] sm:text-xs font-black tracking-wide shadow-sm ${
             type === 'sale'
-              ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
-              : 'bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white border-[#c9a227]'
+              ? 'border-[#d4af37] bg-white text-[#b8860b]'
+              : 'border-[#8b6508] bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white shadow-[0_1px_2px_rgba(92,69,16,0.25)]'
           }`}
         >
           {typeLabel}

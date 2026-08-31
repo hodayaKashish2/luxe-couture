@@ -215,12 +215,18 @@ export function buildCatalogPrintHtml(
     .meta-rent {
       background: linear-gradient(90deg, #d4af37, #b8860b);
       color: #fff;
-      border-color: #c9a227;
+      border-color: #8b6508;
+      font-size: 7px;
+      padding: 2px 5px;
+      letter-spacing: 0.02em;
     }
     .meta-sale {
-      background: #d1fae5;
-      color: #047857;
-      border-color: #6ee7b7;
+      background: #fff;
+      color: #b8860b;
+      border-color: #d4af37;
+      font-size: 7px;
+      padding: 2px 5px;
+      letter-spacing: 0.02em;
     }
     .dress-price {
       margin: 0;
