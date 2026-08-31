@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { useSafeModalBackdropClose } from '@/hooks/use-safe-modal-backdrop-close';
 
 type Step = 'form' | 'loading' | 'success' | 'error';
 
@@ -23,11 +24,26 @@ export default function CatalogEmailModal({ open, onClose, onError }: CatalogEma
     }
   }, [open]);
 
+  function handleClose() {
+    if (step === 'loading') return;
+    onClose();
+  }
+
+  const stableClose = useCallback(() => {
+    if (step === 'loading') return;
+    onClose();
+  }, [onClose, step]);
+
+  const { onBackdropMouseDown, onPanelMouseDown, onBackdropClick } = useSafeModalBackdropClose(
+    stableClose,
+    step !== 'loading',
+  );
+
   useEffect(() => {
     if (step !== 'success') return;
-    const timer = window.setTimeout(onClose, 2800);
+    const timer = window.setTimeout(stableClose, 2800);
     return () => window.clearTimeout(timer);
-  }, [step, onClose]);
+  }, [step, stableClose]);
 
   if (!open) return null;
 
@@ -60,19 +76,16 @@ export default function CatalogEmailModal({ open, onClose, onError }: CatalogEma
     }
   }
 
-  function handleClose() {
-    if (step === 'loading') return;
-    onClose();
-  }
-
   return (
     <div
       className="fixed inset-0 z-[85] flex items-center justify-center bg-neutral-900/60 p-4 backdrop-blur-md"
-      onClick={handleClose}
+      onMouseDown={onBackdropMouseDown}
+      onClick={onBackdropClick}
     >
       <div
         className="relative w-full max-w-sm rounded-2xl border-2 border-[#d4af37] bg-white p-6 shadow-2xl"
         dir="rtl"
+        onMouseDown={onPanelMouseDown}
         onClick={(event) => event.stopPropagation()}
         role="dialog"
         aria-modal="true"

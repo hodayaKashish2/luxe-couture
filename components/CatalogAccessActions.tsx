@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import CatalogEmailModal from '@/components/CatalogEmailModal';
 
 const actionBtnClass =
@@ -14,6 +14,7 @@ export default function CatalogAccessActions({ onError }: CatalogAccessActionsPr
   const [downloadBusy, setDownloadBusy] = useState(false);
   const [downloadError, setDownloadError] = useState('');
   const [emailModalOpen, setEmailModalOpen] = useState(false);
+  const closeEmailModal = useCallback(() => setEmailModalOpen(false), []);
 
   async function downloadCatalogPdf() {
     if (downloadBusy) return;
@@ -102,7 +103,7 @@ export default function CatalogAccessActions({ onError }: CatalogAccessActionsPr
 
       <CatalogEmailModal
         open={emailModalOpen}
-        onClose={() => setEmailModalOpen(false)}
+        onClose={closeEmailModal}
         onError={onError}
       />
     </>

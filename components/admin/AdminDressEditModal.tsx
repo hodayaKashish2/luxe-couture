@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import DressImageFill from '@/components/DressImageFill';
 import DressSizeInput from '@/components/DressSizeInput';
 import FormError from '@/components/FormError';
+import { useSafeModalBackdropClose } from '@/hooks/use-safe-modal-backdrop-close';
 import { validateAddDressForm, validateDressImageFiles } from '@/lib/form-validation';
 import { DRESS_KIND_OPTIONS, LISTING_TYPE_OPTIONS } from '@/lib/dress-listing';
 import {
@@ -68,6 +69,11 @@ export default function AdminDressEditModal({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const stableClose = useCallback(() => {
+    if (saving) return;
+    onClose();
+  }, [onClose, saving]);
+  const { onBackdropMouseDown, onPanelMouseDown, onBackdropClick } = useSafeModalBackdropClose(stableClose, !saving);
   const [error, setError] = useState('');
   const [status, setStatus] = useState('');
   const [hasPendingUpdate, setHasPendingUpdate] = useState(false);
@@ -220,10 +226,12 @@ export default function AdminDressEditModal({
       className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/60 p-3 sm:p-6"
       role="dialog"
       aria-modal="true"
-      onClick={onClose}
+      onMouseDown={onBackdropMouseDown}
+      onClick={onBackdropClick}
     >
       <div
         className="w-full max-w-3xl max-h-[92vh] overflow-y-auto rounded-2xl border-2 border-[#d4af37] bg-[#fffdf8] shadow-2xl"
+        onMouseDown={onPanelMouseDown}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-[#eadaaf] bg-[#fffdf8] px-4 py-3">
