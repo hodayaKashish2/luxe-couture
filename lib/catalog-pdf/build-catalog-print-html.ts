@@ -10,23 +10,24 @@ function escapeHtml(value: string) {
 }
 
 function dressCard(dress: CatalogPdfDress) {
-  const metaParts: string[] = [];
   const city = dress.city.trim();
-  if (city && city !== '—') metaParts.push(city);
-  if (dress.listingLabel) metaParts.push(dress.listingLabel);
-  const metaLine = metaParts.length
-    ? `<p class="dress-meta">${metaParts.map((part, index) => {
-        const isListing = index === metaParts.length - 1 && dress.listingLabel === part;
-        const listingClass = isListing
-          ? part === 'מכירה'
-            ? ' listing-sale'
-            : ' listing-rent'
-          : '';
-        const separator =
-          index > 0 ? '<span class="meta-sep" aria-hidden="true">·</span>' : '';
-        return `${separator}<span class="meta-part${listingClass}">${escapeHtml(part)}</span>`;
-      }).join('')}</p>`
-    : '';
+  const hasCity = city && city !== '—';
+  const listingLabel = dress.listingLabel.trim();
+  const isSale = listingLabel === 'מכירה';
+
+  const metaLine =
+    hasCity || listingLabel
+      ? `<div class="dress-meta">${[
+          hasCity
+            ? `<span class="meta-badge meta-city">${escapeHtml(city)}</span>`
+            : '',
+          listingLabel
+            ? `<span class="meta-badge ${isSale ? 'meta-sale' : 'meta-rent'}">${escapeHtml(listingLabel)}</span>`
+            : '',
+        ]
+          .filter(Boolean)
+          .join('')}</div>`
+      : '';
 
   return `
     <article class="dress-card">
@@ -155,25 +156,39 @@ export function buildCatalogPrintHtml(dresses: CatalogPdfDress[]) {
       min-height: calc(7px * 1.25 * 2);
     }
     .dress-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2px;
       margin: 0 0 2px;
-      font-size: 6px;
-      line-height: 1.2;
-      color: #9a7b4f;
-      white-space: nowrap;
+    }
+    .meta-badge {
+      display: inline-flex;
+      align-items: center;
+      font-size: 6.5px;
+      font-weight: 800;
+      line-height: 1;
+      padding: 2px 4px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      max-width: 100%;
       overflow: hidden;
       text-overflow: ellipsis;
+      white-space: nowrap;
     }
-    .meta-sep {
-      margin: 0 2px;
-      color: #decfa8;
+    .meta-city {
+      background: #f4ebd4;
+      color: #5c4510;
+      border-color: #decfa8;
     }
-    .meta-part.listing-rent {
-      font-weight: 700;
-      color: #8b6508;
+    .meta-rent {
+      background: linear-gradient(90deg, #d4af37, #b8860b);
+      color: #fff;
+      border-color: #c9a227;
     }
-    .meta-part.listing-sale {
-      font-weight: 700;
+    .meta-sale {
+      background: #d1fae5;
       color: #047857;
+      border-color: #6ee7b7;
     }
     .dress-price {
       margin: 0;

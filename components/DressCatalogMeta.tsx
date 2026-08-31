@@ -5,7 +5,7 @@ type Props = {
   listingType?: string;
 };
 
-/** עיר + השכרה/מכירה — שורה דקה בכרטיס קטלוג */
+/** עיר + השכרה/מכירה — תגיות בולטות בכרטיס קטלוג */
 export default function DressCatalogMeta({ city, listingType }: Props) {
   const trimmedCity = city?.trim();
   const type = normalizeListingType(listingType);
@@ -14,22 +14,24 @@ export default function DressCatalogMeta({ city, listingType }: Props) {
   if (!trimmedCity && !typeLabel) return null;
 
   return (
-    <p className="flex items-center gap-1 min-w-0 text-[9px] sm:text-[10px] leading-tight">
+    <div className="flex flex-wrap items-center gap-1 min-w-0">
       {trimmedCity && (
-        <span className="truncate min-w-0 text-[#9a7b4f]">{trimmedCity}</span>
-      )}
-      {trimmedCity && typeLabel && (
-        <span className="shrink-0 text-[#decfa8]" aria-hidden>
-          ·
+        <span className="inline-flex items-center gap-0.5 max-w-full truncate bg-[#f4ebd4] text-[#5c4510] px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-bold border border-[#decfa8] shadow-sm">
+          <span aria-hidden>📍</span>
+          <span className="truncate">{trimmedCity}</span>
         </span>
       )}
-      <span
-        className={`shrink-0 font-bold ${
-          type === 'sale' ? 'text-emerald-700' : 'text-[#8b6508]'
-        }`}
-      >
-        {typeLabel}
-      </span>
-    </p>
+      {typeLabel && (
+        <span
+          className={`inline-flex shrink-0 px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-black border shadow-sm ${
+            type === 'sale'
+              ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+              : 'bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white border-[#c9a227]'
+          }`}
+        >
+          {typeLabel}
+        </span>
+      )}
+    </div>
   );
 }
