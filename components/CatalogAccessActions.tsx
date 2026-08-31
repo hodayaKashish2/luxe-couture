@@ -78,13 +78,18 @@ export default function CatalogAccessActions({
       const data = (await response.json().catch(() => ({}))) as {
         error?: string;
         message?: string;
+        linkOnly?: boolean;
       };
 
       if (!response.ok) {
         throw new Error(data.error || 'שליחת המייל נכשלה');
       }
 
-      const successMessage = data.message || 'הקטלוג נשלח בהצלחה!';
+      const successMessage =
+        data.message ||
+        (data.linkOnly
+          ? 'שלחנו קישור לצפייה בקטלוג — בדקי את המייל (גם בספאם).'
+          : 'הקטלוג נשלח בהצלחה!');
       setEmailMessage(successMessage);
       onEmailSuccess?.(successMessage);
       setEmail('');

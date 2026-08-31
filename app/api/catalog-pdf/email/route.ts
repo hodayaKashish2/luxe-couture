@@ -60,7 +60,11 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      message: `הקטלוג נשלח ל-${email}. בדקי גם בתיקיית הספאם.`,
+      linkOnly: 'linkOnly' in result ? Boolean(result.linkOnly) : false,
+      message:
+        'message' in result && result.message
+          ? result.message
+          : `הקטלוג נשלח ל-${email}. בדקי גם בתיקיית הספאם.`,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'שגיאה בשליחת הקטלוג';

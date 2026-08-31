@@ -120,6 +120,9 @@ function isPlaceholderFrom(from: string) {
 
 function formatResendError(message: string) {
   const lower = message.toLowerCase();
+  if (lower.includes('size limit') || lower.includes('exceeded the size')) {
+    return 'הקובץ גדול מדי לשליחה במייל — נסי «צפייה בקטלוג» בדפדפן';
+  }
   if (
     lower.includes('only send testing emails') ||
     lower.includes('verify a domain') ||
@@ -371,10 +374,20 @@ export async function sendEmailWithAttachmentTo(
     };
   }
 
+  const attachmentBytes = attachments?.[0]?.content.length ?? 0;
+  const resendMaxBytes = 38 * 1024 * 1024;
+
   if (smtp) {
     const result = await sendViaSmtp(recipient, subject, html, attachments);
     if (result?.success) return result;
     if (result && !resend) return result;
+  }
+
+  if (resend && attachmentBytes > resendMaxBytes) {
+    return {
+      success: false as const,
+      error: 'הקובץ גדול מדי לשליחה במייל — השתמשי ב«צפייה בקטלוג» בדפדפן',
+    };
   }
 
   if (resend) {

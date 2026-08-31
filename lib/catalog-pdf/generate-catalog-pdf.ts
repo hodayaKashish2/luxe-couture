@@ -1,13 +1,23 @@
 import { buildCatalogPrintHtml } from '@/lib/catalog-pdf/build-catalog-print-html';
+import { withCompactCatalogImages } from '@/lib/catalog-pdf/catalog-image-url';
 import { launchCatalogPdfBrowser } from '@/lib/catalog-pdf/launch-catalog-pdf-browser';
 import type { CatalogPdfDress } from '@/lib/catalog-pdf/types';
 
-export async function generateCatalogPdf(dresses: CatalogPdfDress[]): Promise<Buffer> {
+export type GenerateCatalogPdfOptions = {
+  /** תמונות דחוסות — לשליחה במייל */
+  compactImages?: boolean;
+};
+
+export async function generateCatalogPdf(
+  dresses: CatalogPdfDress[],
+  options?: GenerateCatalogPdfOptions,
+): Promise<Buffer> {
   if (dresses.length === 0) {
     throw new Error('אין שמלות מאושרות בקטלוג');
   }
 
-  const html = buildCatalogPrintHtml(dresses);
+  const prepared = options?.compactImages ? withCompactCatalogImages(dresses) : dresses;
+  const html = buildCatalogPrintHtml(prepared);
   const browser = await launchCatalogPdfBrowser();
 
   try {
