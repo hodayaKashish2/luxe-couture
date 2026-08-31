@@ -48,6 +48,7 @@ import { matchesAnyCatalogTextFilter } from '@/lib/catalog-text-filter';
 import { shareDressLink } from '@/lib/share-dress';
 import { OFF_PLATFORM_COORDINATE_NOTICE } from '@/lib/commission';
 import CatalogPlatformNotice from '@/components/CatalogPlatformNotice';
+import DressImageRightsNotice from '@/components/DressImageRightsNotice';
 import RemovedFromListsNotice from '@/components/RemovedFromListsNotice';
 import { fetchDressById, findDressInList } from '@/lib/dress-api';
 import { dressBelongsToCustomer } from '@/lib/self-dress-guard';
@@ -1924,13 +1925,14 @@ export default function Home() {
               </div>
               <div>
                 <label className="block text-xs font-bold text-[#8b6508] mb-1">העלאת תמונות של השמלה</label>
+                <DressImageRightsNotice />
                 <input 
                   ref={newDressFileInputRef}
                   type="file" 
                   multiple 
                   accept="image/*"
                   onChange={handleImageUpload}
-                  className="w-full p-2 bg-neutral-50 border border-dashed border-[#decfa8] rounded-xl text-xs file:ml-4 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-[#f4ebd4] file:text-[#8b6508] hover:file:bg-[#eadaaf] cursor-pointer"
+                  className="w-full p-2 bg-neutral-50 border border-dashed border-[#decfa8] rounded-xl text-xs file:ml-4 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-[#f4ebd4] file:text-[#8b6508] hover:file:bg-[#eadaaf] cursor-pointer mt-2"
                 />
                 {newDressData.images.length > 0 && (
                   <div className="flex gap-2 flex-wrap mt-2 bg-neutral-50 p-2 rounded-xl border border-neutral-100">

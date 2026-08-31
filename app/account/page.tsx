@@ -19,6 +19,7 @@ import CancelReservationConfirmModal from '@/components/CancelReservationConfirm
 import FormError from '@/components/FormError';
 import SiteToast, { type SiteToastVariant } from '@/components/SiteToast';
 import DressImageFill from '@/components/DressImageFill';
+import DressImageRightsNotice from '@/components/DressImageRightsNotice';
 import OwnerDressesPanel from '@/components/OwnerDressesPanel';
 import DressSizeInput from '@/components/DressSizeInput';
 import { validateAddDressForm, validateDressImageFiles, validateUpdateProfileForm } from '@/lib/form-validation';
@@ -1947,10 +1948,11 @@ function AccountPageContent() {
 
             <div>
               <label className="block text-xs font-bold text-[#8b6508] mb-2">העלאת תמונות של השמלה *</label>
+              <DressImageRightsNotice />
               <button
                 type="button"
                 onClick={() => addFileInputRef.current?.click()}
-                className="w-full p-6 border-2 border-dashed border-[#d4af37] rounded-2xl bg-[#fffdf8] hover:bg-[#f4ebd4] transition-colors text-center"
+                className="w-full p-6 border-2 border-dashed border-[#d4af37] rounded-2xl bg-[#fffdf8] hover:bg-[#f4ebd4] transition-colors text-center mt-2"
               >
                 <span className="text-3xl block mb-2">📷</span>
                 <span className="text-xs font-bold text-[#8b6508] block">לחצי כאן לצירוף תמונות</span>
