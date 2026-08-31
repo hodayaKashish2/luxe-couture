@@ -48,7 +48,15 @@ function dressCard(dress: CatalogPdfDress) {
   `;
 }
 
-export function buildCatalogPrintHtml(dresses: CatalogPdfDress[]) {
+export type CatalogPrintHtmlOptions = {
+  showBackLink?: boolean;
+};
+
+export function buildCatalogPrintHtml(
+  dresses: CatalogPdfDress[],
+  options?: CatalogPrintHtmlOptions,
+) {
+  const showBackLink = options?.showBackLink ?? false;
   const generatedAt = new Date().toLocaleString('he-IL', {
     dateStyle: 'long',
     timeStyle: 'short',
@@ -67,6 +75,30 @@ export function buildCatalogPrintHtml(dresses: CatalogPdfDress[]) {
       background: #fbf8f0;
       color: #3d2f24;
       direction: rtl;
+    }
+    .catalog-back-bar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 8px 12px;
+      background: linear-gradient(90deg, #fffdf9, #faf6eb);
+      border-bottom: 1px solid #e6c687;
+      box-shadow: 0 1px 4px rgba(212, 175, 55, 0.12);
+    }
+    .catalog-back-bar a {
+      color: #8b6508;
+      font-size: 11px;
+      font-weight: 800;
+      text-decoration: none;
+    }
+    .catalog-back-bar span {
+      color: #6e634c;
+      font-size: 9px;
+      font-weight: 600;
     }
     .page-header {
       padding: 10px 12px 8px;
@@ -199,6 +231,7 @@ export function buildCatalogPrintHtml(dresses: CatalogPdfDress[]) {
     }
     @media print {
       body { background: white; }
+      .catalog-back-bar { display: none; }
       .page-header {
         padding: 8px 10px 6px;
       }
@@ -210,6 +243,14 @@ export function buildCatalogPrintHtml(dresses: CatalogPdfDress[]) {
   </style>
 </head>
 <body>
+  ${
+    showBackLink
+      ? `<nav class="catalog-back-bar">
+          <a href="/">← חזרה לאתר</a>
+          <span>גלילה בקטלוג — בלי הורדת קובץ</span>
+        </nav>`
+      : ''
+  }
   <header class="page-header">
     <h1>${escapeHtml(SITE_NAME)}</h1>
     <p>קטלוג מלא — ${dresses.length} שמלות · עודכן ${escapeHtml(generatedAt)} · ניתן לשמור ולשתף</p>

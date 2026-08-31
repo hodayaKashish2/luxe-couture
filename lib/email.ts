@@ -134,13 +134,28 @@ function formatResendError(message: string) {
   return message;
 }
 
-async function sendViaSmtp(to: string, subject: string, html: string) {
+async function sendViaSmtp(
+  to: string,
+  subject: string,
+  html: string,
+  attachments?: EmailAttachment[],
+) {
   const transport = getSmtpTransport();
   if (!transport) return null;
 
   const from = getFromAddress();
   try {
-    await transport.sendMail({ from, to, subject, html });
+    await transport.sendMail({
+      from,
+      to,
+      subject,
+      html,
+      attachments: attachments?.map((attachment) => ({
+        filename: attachment.filename,
+        content: attachment.content,
+        contentType: attachment.contentType || 'application/octet-stream',
+      })),
+    });
     return { success: true as const, sentTo: to, provider: 'smtp' as const };
   } catch (error) {
     smtpTransport = null;
@@ -150,12 +165,26 @@ async function sendViaSmtp(to: string, subject: string, html: string) {
   }
 }
 
-async function sendViaResend(to: string, subject: string, html: string) {
+async function sendViaResend(
+  to: string,
+  subject: string,
+  html: string,
+  attachments?: EmailAttachment[],
+) {
   const resend = getResendClient();
   if (!resend) return null;
 
   const from = getFromAddress();
-  const { error } = await resend.emails.send({ from, to, subject, html });
+  const { error } = await resend.emails.send({
+    from,
+    to,
+    subject,
+    html,
+    attachments: attachments?.map((attachment) => ({
+      filename: attachment.filename,
+      content: attachment.content,
+    })),
+  });
 
   if (error) {
     console.error('Resend error:', error);
@@ -305,6 +334,62 @@ export async function sendEmailTo(to: string, subject: string, html: string) {
     }
 
     const result = await sendViaResend(recipient, subject, html);
+    if (result) return result;
+  }
+
+  return { success: false as const, error: 'שליחת המייל נכשלה' };
+}
+
+export type EmailAttachment = {
+  filename: string;
+  content: Buffer;
+  contentType?: string;
+};
+
+/** שליחת מייל עם קובץ מצורף — SMTP (Gmail) קודם, אחר כך Resend */
+export async function sendEmailWithAttachmentTo(
+  to: string,
+  subject: string,
+  html: string,
+  attachment: EmailAttachment,
+) {
+  const recipient = to.trim().toLowerCase();
+
+  if (!isValidEmail(recipient)) {
+    return { success: false as const, error: 'כתובת אימייל לא תקינה' };
+  }
+
+  const smtp = getSmtpTransport();
+  const resend = getResendClient();
+  const attachments = [attachment];
+
+  if (!smtp && !resend) {
+    return {
+      success: false as const,
+      error:
+        `חסרה הגדרת מיילים. הוסיפי ב-Vercel: SMTP_PASSWORD (סיסמת אפליקציה של Gmail) ו-SMTP_USER=${DEFAULT_ADMIN_EMAIL}`,
+    };
+  }
+
+  if (smtp) {
+    const result = await sendViaSmtp(recipient, subject, html, attachments);
+    if (result?.success) return result;
+    if (result && !resend) return result;
+  }
+
+  if (resend) {
+    const from = getFromAddress();
+    if (isResendSandboxFrom(from) && recipient !== getAdminEmail()) {
+      return {
+        success: false as const,
+        error:
+          'Resend במצב בדיקה — שולח רק ל-' +
+          getAdminEmail() +
+          '. הוסיפי SMTP_PASSWORD (סיסמת אפליקציה של Gmail) ב-Vercel Environment Variables.',
+      };
+    }
+
+    const result = await sendViaResend(recipient, subject, html, attachments);
     if (result) return result;
   }
 

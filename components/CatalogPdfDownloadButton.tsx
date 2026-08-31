@@ -21,7 +21,7 @@ export default function CatalogPdfDownloadButton({
   const [error, setError] = useState('');
 
   function openPreview() {
-    window.open('/api/catalog-pdf/preview', '_blank', 'noopener,noreferrer');
+    window.open('/catalog', '_blank', 'noopener,noreferrer');
   }
 
   async function downloadCatalogPdf() {
