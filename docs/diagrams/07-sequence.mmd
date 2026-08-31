@@ -1,0 +1,24 @@
+sequenceDiagram
+    participant R as שוכרת
+    participant SYS as מערכת
+    participant O as משכירה
+    participant A as אדמין
+    R->>SYS: בקשת שריון
+    SYS->>O: מייל בקשה
+    SYS->>R: מייל אישור קבלה
+    SYS->>A: מייל הודעה
+    Note over O: עד 48 שעות
+    SYS->>O: תזכורת 24ש
+    alt משכירה מאשרת
+        O->>SYS: אישור
+        SYS->>R: קישור תשלום
+        R->>SYS: דיווח ביט/העברה
+        SYS->>A: לאישור
+        A->>SYS: אישור תשלום
+        SYS->>R: הזמנה מאושרת
+    else משכירה דוחה
+        O->>SYS: דחייה
+        SYS->>R: נדחית
+    else 48 שעות ללא מענה
+        SYS->>R: בוטלה אוטומטית
+    end

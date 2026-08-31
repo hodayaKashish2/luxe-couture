@@ -1,0 +1,10 @@
+flowchart TD
+    POA[בקשה חדשה pending_owner_approval] --> WAIT[ממתין להחלטת משכירה]
+    WAIT --> DECIDE{משכירה בוחרת}
+    DECIDE -->|אישור| APPROVE[pending_payment]
+    APPROVE --> WIN[שוכרת שאושרה ממשיכה]
+    APPROVE --> LOSE[בקשות אחרות לאותו תאריך → cancelled]
+    DECIDE -->|דחייה + סיבה| REJECT[cancelled + מייל לשוכרת]
+    DECIDE -->|48 שעות ללא מענה| TIMEOUT[cancelled + מייל timeout]
+    POA --> REM24[אחרי 24 שעות]
+    REM24 --> REMMAIL[תזכורת למשכירה]

@@ -1966,7 +1966,7 @@ export default function Home() {
                 {isSubmittingDress ? 'שולחת לאישור...' : 'שלחי לאישור ✨'}
               </button>
               <p className="text-[10px] text-[#8b6508] text-center leading-relaxed">
-                השמלה תישלח אלייך למייל לאישור לפני פרסום.
+                השמלה תישלח לאישור ההנהלה לפני פרסום בקטלוג.
               </p>
             </form>
           </div>

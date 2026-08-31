@@ -1,0 +1,7 @@
+flowchart TD
+    AAA[awaiting_admin_approval] --> ADMIN{אדמין}
+    ADMIN -->|מאשר תשלום| CHECK{תאריך פנוי?}
+    CHECK -->|כן| CONF[confirmed]
+    CHECK -->|לא| ERR409[שגיאה 409]
+    CONF --> ACTIONS[rental_count+1, מייל אישור]
+    ADMIN -->|דחיית תשלום| NOREJECT[אין בקוד — רק אישור]

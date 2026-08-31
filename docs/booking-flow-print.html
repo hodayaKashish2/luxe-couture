@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>תרשימי זרימה — שמלה בקליק</title>
+  <style>
+    @page { size: A4; margin: 14mm; }
+    body {
+      font-family: "Segoe UI", Arial, sans-serif;
+      color: #1a1a1a;
+      line-height: 1.5;
+      margin: 0;
+      padding: 20px 24px;
+    }
+    h1 { font-size: 22px; border-bottom: 3px solid #c9a87c; padding-bottom: 8px; }
+    h2 { font-size: 16px; color: #5c4a32; margin: 24px 0 10px; page-break-after: avoid; }
+    .subtitle { color: #666; margin-bottom: 20px; font-size: 13px; }
+    table { width: 100%; border-collapse: collapse; margin: 10px 0 18px; font-size: 12px; page-break-inside: avoid; }
+    th, td { border: 1px solid #ddd; padding: 6px 8px; text-align: right; }
+    th { background: #f7f3ee; }
+    img { max-width: 100%; height: auto; display: block; margin: 0 auto; page-break-inside: avoid; }
+    .block { margin-bottom: 24px; page-break-inside: avoid; }
+    .page-break { page-break-before: always; }
+    footer { margin-top: 24px; font-size: 11px; color: #888; border-top: 1px solid #ddd; padding-top: 8px; }
+  </style>
+</head>
+<body>
+  <h1>תרשימי זרימה — כל תרחישי ההזמנה</h1>
+  <p class="subtitle">שמלה בקליק · dress-click.co.il · עודכן: אוגוסט 2026</p>
+
+  <h2>סטטוסים במערכת</h2>
+  <table>
+    <tr><th>סטטוס</th><th>משמעות</th></tr>
+    <tr><td>pending_owner_approval</td><td>ממתין לאישור משכירה</td></tr>
+    <tr><td>pending_payment</td><td>המשכירה אישרה — ממתין לתשלום</td></tr>
+    <tr><td>awaiting_admin_approval</td><td>דיווח תשלום — ממתין לאישור אדמין</td></tr>
+    <tr><td>confirmed</td><td>הזמנה סופית</td></tr>
+    <tr><td>cancelled</td><td>בוטלה</td></tr>
+    <tr><td>failed</td><td>כשל תשלום (לא פעיל ב-UI)</td></tr>
+  </table>
+
+  <h2>מי מאשר מה ומתי</h2>
+  <table>
+    <tr><th>שלב</th><th>מי</th><th>מתי</th><th>תוצאה</th></tr>
+    <tr><td>בקשת שריון</td><td>שוכרת</td><td>מיד</td><td>pending_owner_approval</td></tr>
+    <tr><td>אישור משכירה</td><td>משכירה</td><td>עד 48 שעות</td><td>pending_payment / cancelled</td></tr>
+    <tr><td>תשלום</td><td>שוכרת</td><td>אחרי אישור משכירה</td><td>awaiting_admin_approval</td></tr>
+    <tr><td>אישור תשלום</td><td>אדמין</td><td>אחרי דיווח</td><td>confirmed</td></tr>
+    <tr><td>ביטול</td><td>שוכרת (עם חשבון)</td><td>לפני confirmed</td><td>cancelled</td></tr>
+    <tr><td>תזכורת</td><td>מערכת</td><td>+24 שעות</td><td>מייל למשכירה</td></tr>
+    <tr><td>timeout</td><td>מערכת</td><td>+48 שעות</td><td>cancelled + מייל</td></tr>
+  </table>
+
+  <h2>מיילים לפי שלב</h2>
+  <table>
+    <tr><th>שלב</th><th>נמענים</th></tr>
+    <tr><td>בקשה חדשה</td><td>משכירה + שוכרת + אדמין</td></tr>
+    <tr><td>+24 שעות</td><td>משכירה (תזכורת)</td></tr>
+    <tr><td>משכירה אישרה</td><td>שוכרת (קישור תשלום)</td></tr>
+    <tr><td>משכירה דחתה</td><td>שוכרת (עם סיבה)</td></tr>
+    <tr><td>48 שעות timeout</td><td>שוכרת</td></tr>
+    <tr><td>דיווח ביט/העברה</td><td>אדמין + שוכרת</td></tr>
+    <tr><td>אישור סופי</td><td>שוכרת</td></tr>
+  </table>
+
+  <div class="page-break"></div>
+  
+    <section class="block">
+      <h2>1. תרשים ראשי — כל הזרימה</h2>
+      <img src="diagrams/01-main-flow.png" alt="1. תרשים ראשי — כל הזרימה" />
+    </section>
+
+    <section class="block">
+      <h2>2. שוכרת עם חשבון vs בלי חשבון</h2>
+      <img src="diagrams/02-account-vs-guest.png" alt="2. שוכרת עם חשבון vs בלי חשבון" />
+    </section>
+
+    <section class="block">
+      <h2>3. שלב 1 — אישור משכירה (עד 48 שעות)</h2>
+      <img src="diagrams/03-owner-approval.png" alt="3. שלב 1 — אישור משכירה (עד 48 שעות)" />
+    </section>
+
+    <section class="block">
+      <h2>4. שלב 2 — תשלום (ביט / העברה בנקאית)</h2>
+      <img src="diagrams/04-payment.png" alt="4. שלב 2 — תשלום (ביט / העברה בנקאית)" />
+    </section>
+
+    <section class="block">
+      <h2>5. שלב 3 — אישור אדמין</h2>
+      <img src="diagrams/05-admin.png" alt="5. שלב 3 — אישור אדמין" />
+    </section>
+
+    <section class="block">
+      <h2>6. כל נקודות הקצה</h2>
+      <img src="diagrams/06-edge-cases.png" alt="6. כל נקודות הקצה" />
+    </section>
+
+  <div class="page-break"></div>
+  <section class="block">
+    <h2>7. Sequence — לפי שחקן</h2>
+    <img src="diagrams/07-sequence.png" alt="Sequence diagram" />
+  </section>
+
+  <footer>שמלה בקליק · תרשימי זרימת הזמנה · dress-click.co.il</footer>
+</body>
+</html>

@@ -1,0 +1,16 @@
+flowchart TD
+    subgraph SUCCESS["הצלחה"]
+        S1[confirmed]
+    end
+    subgraph CANCEL["ביטול / דחייה"]
+        C1[משכירה דחתה]
+        C2[48 שעות timeout]
+        C3[שוכרת ביטלה — עם חשבון]
+        C4[אושרה בקשה אחרת]
+        C5[תאריך תפוס]
+    end
+    subgraph SPECIAL["מקרים מיוחדים"]
+        SP1[Legacy DB — confirmed מיד]
+        SP2[חזרה לבקשה קיימת]
+        SP3[אורחת — לא יכולה לבטל]
+    end

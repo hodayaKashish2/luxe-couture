@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>תרשימי זרימה — הזמנת שמלה | שמלה בקליק</title>
+  <style>
+    @page { size: A4; margin: 18mm 14mm; }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", Arial, sans-serif;
+      color: #1a1a1a;
+      line-height: 1.55;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 24px;
+      background: #fff;
+    }
+    h1 {
+      font-size: 1.75rem;
+      border-bottom: 3px solid #c9a87c;
+      padding-bottom: 10px;
+      margin-bottom: 8px;
+    }
+    h2 {
+      font-size: 1.25rem;
+      color: #5c4a32;
+      margin-top: 32px;
+      page-break-after: avoid;
+    }
+    h3 { font-size: 1rem; margin-top: 20px; page-break-after: avoid; }
+    .subtitle { color: #666; margin-bottom: 24px; font-size: 0.95rem; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0 20px;
+      font-size: 0.88rem;
+      page-break-inside: avoid;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px 10px;
+      text-align: right;
+    }
+    th { background: #f7f3ee; font-weight: 600; }
+    .diagram {
+      margin: 16px 0 28px;
+      padding: 12px;
+      background: #fafafa;
+      border: 1px solid #eee;
+      border-radius: 8px;
+      overflow: visible;
+      page-break-inside: avoid;
+    }
+    .diagram .mermaid { text-align: center; }
+    .page-break { page-break-before: always; }
+    footer {
+      margin-top: 40px;
+      padding-top: 12px;
+      border-top: 1px solid #ddd;
+      font-size: 0.8rem;
+      color: #888;
+    }
+    ul { padding-right: 20px; }
+    li { margin-bottom: 4px; }
+  </style>
+</head>
+<body>
+  <h1>תרשימי זרימה — כל תרחישי ההזמנה</h1>
+  <p class="subtitle">שמלה בקליק · dress-click.co.il · עודכן: אוגוסט 2026</p>
+
+  <h2>סטטוסים במערכת</h2>
+  <table>
+    <thead>
+      <tr><th>סטטוס</th><th>משמעות</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>pending_owner_approval</code></td><td>ממתין לאישור משכירה</td></tr>
+      <tr><td><code>pending_payment</code></td><td>המשכירה אישרה — ממתין לתשלום</td></tr>
+      <tr><td><code>awaiting_admin_approval</code></td><td>דיווח תשלום — ממתין לאישור אדמין</td></tr>
+      <tr><td><code>confirmed</code></td><td>הזמנה סופית ✅</td></tr>
+      <tr><td><code>cancelled</code></td><td>בוטלה ❌</td></tr>
+      <tr><td><code>failed</code></td><td>כשל תשלום (לא פעיל ב-UI)</td></tr>
+    </tbody>
+  </table>
+
+  <h2>1. תרשים ראשי — כל הזרימה</h2>
+  <div class="diagram">
+    <pre class="mermaid">
+flowchart TD
+    START([שוכרת בוחרת שמלה + תאריך + פרטים]) --> CHECK{תאריך תפוס?}
+    CHECK -->|כן| ERR409[שגיאה: התאריך תפוס]
+    CHECK -->|לא| SUBMIT[שליחת בקשת שריון]
+    SUBMIT --> POA[pending_owner_approval]
+    POA --> MAIL1[מייל למשכירה + שוכרת + אדמין]
+    POA --> T24{עברו 24 שעות?}
+    T24 -->|כן| REMIND[תזכורת למשכירה]
+    T24 -->|לא| OWNER{החלטת משכירה}
+    REMIND --> OWNER
+    OWNER -->|מאשרת| PP[pending_payment]
+    OWNER -->|דוחה| CANC1[cancelled]
+    OWNER -->|48 שעות ללא מענה| CANC2[cancelled timeout]
+    OWNER -->|שוכרת מבטלת| CANC3[cancelled]
+    PP --> MAIL2[מייל: קישור לתשלום]
+    PP --> PAY{שוכרת משלמת}
+    PAY -->|ביט / העברה| AAA[awaiting_admin_approval]
+    PAY -->|שוכרת מבטלת| CANC4[cancelled]
+    AAA --> MAIL3[מייל לאדמין + שוכרת]
+    AAA --> ADMIN{אדמין מאשר?}
+    ADMIN -->|כן| CONF[confirmed]
+    ADMIN -->|שוכרת מבטלת| CANC5[cancelled]
+    CONF --> END([הזמנה סופית])
+    CANC1 --> ENDC([בוטלה])
+    CANC2 --> ENDC
+    CANC3 --> ENDC
+    CANC4 --> ENDC
+    CANC5 --> ENDC
+    </pre>
+  </div>
+
+  <div class="page-break"></div>
+  <h2>2. שוכרת עם חשבון vs בלי חשבון</h2>
+  <div class="diagram">
+    <pre class="mermaid">
+flowchart LR
+    subgraph WITH["שוכרת עם חשבון"]
+        W1[פרטים מתמלאים אוטומטית] --> W2[site_user_id נשמר]
+        W2 --> W3[מעקב בהזמנות שלי]
+        W3 --> W4[יכולה לבטל]
+        W4 --> W5[תשלום: אזור אישי או קישור]
+    end
+    subgraph WITHOUT["שוכרת בלי חשבון"]
+        G1[ממלאה פרטים ידנית] --> G2[ללא site_user_id]
+        G2 --> G3[מעקב במיילים בלבד]
+        G3 --> G4[לא יכולה לבטל]
+        G4 --> G5[תשלום: קישור מהמייל]
+    end
+    WITH --> SAME[אותה זרימת אישורים]
+    WITHOUT --> SAME
+    </pre>
+  </div>
+
+  <h2>3. שלב 1 — אישור משכירה (עד 48 שעות)</h2>
+  <div class="diagram">
+    <pre class="mermaid">
+flowchart TD
+    POA[בקשה חדשה pending_owner_approval] --> WAIT[ממתין להחלטת משכירה]
+    WAIT --> DECIDE{משכירה בוחרת}
+    DECIDE -->|אישור| APPROVE[pending_payment]
+    APPROVE --> WIN[שוכרת שאושרה ממשיכה]
+    APPROVE --> LOSE[בקשות אחרות לאותו תאריך → cancelled]
+    DECIDE -->|דחייה + סיבה| REJECT[cancelled + מייל לשוכרת]
+    DECIDE -->|48 שעות ללא מענה| TIMEOUT[cancelled + מייל timeout]
+    POA --> REM24[אחרי 24 שעות]
+    REM24 --> REMMAIL[תזכורת למשכירה]
+    </pre>
+  </div>
+
+  <div class="page-break"></div>
+  <h2>4. שלב 2 — תשלום (ביט / העברה בנקאית)</h2>
+  <div class="diagram">
+    <pre class="mermaid">
+flowchart TD
+    PP[pending_payment] --> CHOOSE{בחירת אמצעי}
+    CHOOSE -->|ביט| BIT[אפליקציית Bit]
+    CHOOSE -->|העברה| BANK[העברה בנקאית]
+    BIT --> REPORT[אישור תשלום]
+    BANK --> REPORT
+    REPORT --> AAA[awaiting_admin_approval]
+    AAA --> MAILS[מייל לאדמין + שוכרת]
+    PP --> BLOCK{תשלום לפני אישור משכירה?}
+    BLOCK -->|כן| ERR400[שגיאה 400]
+    </pre>
+  </div>
+
+  <h2>5. שלב 3 — אישור אדמין</h2>
+  <div class="diagram">
+    <pre class="mermaid">
+flowchart TD
+    AAA[awaiting_admin_approval] --> ADMIN{אדמין}
+    ADMIN -->|מאשר תשלום| CHECK{תאריך פנוי?}
+    CHECK -->|כן| CONF[confirmed]
+    CHECK -->|לא| ERR409[שגיאה 409]
+    CONF --> ACTIONS[rental_count+1, מייל אישור]
+    ADMIN -->|דחיית תשלום| NOREJECT[אין בקוד — רק אישור]
+    </pre>
+  </div>
+
+  <h2>6. כל נקודות הקצה</h2>
+  <div class="diagram">
+    <pre class="mermaid">
+flowchart TD
+    subgraph SUCCESS["הצלחה"]
+        S1[confirmed]
+    end
+    subgraph CANCEL["ביטול / דחייה"]
+        C1[משכירה דחתה]
+        C2[48 שעות timeout]
+        C3[שוכרת ביטלה — עם חשבון]
+        C4[אושרה בקשה אחרת]
+        C5[תאריך תפוס]
+    end
+    subgraph SPECIAL["מקרים מיוחדים"]
+        SP1[Legacy DB — confirmed מיד]
+        SP2[חזרה לבקשה קיימת]
+        SP3[אורחת — לא יכולה לבטל]
+    end
+    </pre>
+  </div>
+
+  <div class="page-break"></div>
+  <h2>7. מי מאשר מה ומתי</h2>
+  <table>
+    <thead>
+      <tr><th>שלב</th><th>מי</th><th>מתי</th><th>תוצאה</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>בקשת שריון</td><td>שוכרת</td><td>מיד</td><td>pending_owner_approval</td></tr>
+      <tr><td>אישור משכירה</td><td>משכירה</td><td>עד 48 שעות</td><td>pending_payment / cancelled</td></tr>
+      <tr><td>תשלום</td><td>שוכרת</td><td>אחרי אישור משכירה</td><td>awaiting_admin_approval</td></tr>
+      <tr><td>אישור תשלום</td><td>אדמין</td><td>אחרי דיווח</td><td>confirmed</td></tr>
+      <tr><td>ביטול</td><td>שוכרת (עם חשבון)</td><td>לפני confirmed</td><td>cancelled</td></tr>
+      <tr><td>תזכורת</td><td>מערכת</td><td>+24 שעות</td><td>מייל למשכירה</td></tr>
+      <tr><td>timeout</td><td>מערכת</td><td>+48 שעות</td><td>cancelled + מייל</td></tr>
+    </tbody>
+  </table>
+
+  <h2>8. מיילים לפי שלב</h2>
+  <table>
+    <thead>
+      <tr><th>שלב</th><th>נמענים</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>בקשה חדשה</td><td>משכירה + שוכרת + אדמין</td></tr>
+      <tr><td>+24 שעות</td><td>משכירה (תזכורת)</td></tr>
+      <tr><td>משכירה אישרה</td><td>שוכרת (קישור תשלום)</td></tr>
+      <tr><td>משכירה דחתה</td><td>שוכרת (עם סיבה)</td></tr>
+      <tr><td>48 שעות timeout</td><td>שוכרת</td></tr>
+      <tr><td>דיווח ביט/העברה</td><td>אדמין + שוכרת</td></tr>
+      <tr><td>אישור סופי</td><td>שוכרת</td></tr>
+    </tbody>
+  </table>
+
+  <h2>9. Sequence — לפי שחקן</h2>
+  <div class="diagram">
+    <pre class="mermaid">
+sequenceDiagram
+    participant R as שוכרת
+    participant SYS as מערכת
+    participant O as משכירה
+    participant A as אדמין
+    R->>SYS: בקשת שריון
+    SYS->>O: מייל בקשה
+    SYS->>R: מייל אישור קבלה
+    SYS->>A: מייל הודעה
+    Note over O: עד 48 שעות
+    SYS->>O: תזכורת 24ש
+    alt משכירה מאשרת
+        O->>SYS: אישור
+        SYS->>R: קישור תשלום
+        R->>SYS: דיווח ביט/העברה
+        SYS->>A: לאישור
+        A->>SYS: אישור תשלום
+        SYS->>R: הזמנה מאושרת
+    else משכירה דוחה
+        O->>SYS: דחייה
+        SYS->>R: נדחית
+    else 48 שעות ללא מענה
+        SYS->>R: בוטלה אוטומטית
+    end
+    </pre>
+  </div>
+
+  <footer>שמלה בקליק · תרשימי זרימת הזמנה · dress-click.co.il</footer>
+
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'default',
+      flowchart: { useMaxWidth: true, htmlLabels: true, curve: 'basis' },
+      sequence: { useMaxWidth: true, wrap: true },
+    });
+    await mermaid.run({ querySelector: '.mermaid' });
+    document.body.dataset.mermaidReady = 'true';
+  </script>
+</body>
+</html>

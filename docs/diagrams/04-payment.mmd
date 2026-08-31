@@ -1,0 +1,10 @@
+flowchart TD
+    PP[pending_payment] --> CHOOSE{בחירת אמצעי}
+    CHOOSE -->|ביט| BIT[אפליקציית Bit]
+    CHOOSE -->|העברה| BANK[העברה בנקאית]
+    BIT --> REPORT[אישור תשלום]
+    BANK --> REPORT
+    REPORT --> AAA[awaiting_admin_approval]
+    AAA --> MAILS[מייל לאדמין + שוכרת]
+    PP --> BLOCK{תשלום לפני אישור משכירה?}
+    BLOCK -->|כן| ERR400[שגיאה 400]

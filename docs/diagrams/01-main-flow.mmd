@@ -1,0 +1,28 @@
+flowchart TD
+    START([שוכרת בוחרת שמלה + תאריך + פרטים]) --> CHECK{תאריך תפוס?}
+    CHECK -->|כן| ERR409[שגיאה: התאריך תפוס]
+    CHECK -->|לא| SUBMIT[שליחת בקשת שריון]
+    SUBMIT --> POA[pending_owner_approval]
+    POA --> MAIL1[מייל למשכירה + שוכרת + אדמין]
+    POA --> T24{עברו 24 שעות?}
+    T24 -->|כן| REMIND[תזכורת למשכירה]
+    T24 -->|לא| OWNER{החלטת משכירה}
+    REMIND --> OWNER
+    OWNER -->|מאשרת| PP[pending_payment]
+    OWNER -->|דוחה| CANC1[cancelled]
+    OWNER -->|48 שעות ללא מענה| CANC2[cancelled timeout]
+    OWNER -->|שוכרת מבטלת| CANC3[cancelled]
+    PP --> MAIL2[מייל: קישור לתשלום]
+    PP --> PAY{שוכרת משלמת}
+    PAY -->|ביט / העברה| AAA[awaiting_admin_approval]
+    PAY -->|שוכרת מבטלת| CANC4[cancelled]
+    AAA --> MAIL3[מייל לאדמין + שוכרת]
+    AAA --> ADMIN{אדמין מאשר?}
+    ADMIN -->|כן| CONF[confirmed]
+    ADMIN -->|שוכרת מבטלת| CANC5[cancelled]
+    CONF --> END([הזמנה סופית])
+    CANC1 --> ENDC([בוטלה])
+    CANC2 --> ENDC
+    CANC3 --> ENDC
+    CANC4 --> ENDC
+    CANC5 --> ENDC
