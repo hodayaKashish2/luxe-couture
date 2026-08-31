@@ -196,10 +196,10 @@ export function buildCatalogPrintHtml(
     .meta-badge {
       display: inline-flex;
       align-items: center;
-      font-size: 6.5px;
-      font-weight: 800;
+      font-size: 6px;
+      font-weight: 700;
       line-height: 1;
-      padding: 2px 4px;
+      padding: 1px 3px;
       border-radius: 999px;
       border: 1px solid transparent;
       max-width: 100%;
@@ -215,18 +215,12 @@ export function buildCatalogPrintHtml(
     .meta-rent {
       background: linear-gradient(90deg, #d4af37, #b8860b);
       color: #fff;
-      border-color: #8b6508;
-      font-size: 7px;
-      padding: 2px 5px;
-      letter-spacing: 0.02em;
+      border-color: #c9a227;
     }
     .meta-sale {
       background: #fff;
       color: #b8860b;
       border-color: #d4af37;
-      font-size: 7px;
-      padding: 2px 5px;
-      letter-spacing: 0.02em;
     }
     .dress-price {
       margin: 0;

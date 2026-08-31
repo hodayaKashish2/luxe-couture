@@ -1682,7 +1682,7 @@ export default function Home() {
                 </div>
 
                 {/* פרטים — רצועה דקה כמו SHEIN (~15% מהכרטיס) */}
-                <div className="px-2 py-1.5 sm:px-2.5 sm:py-2 bg-white space-y-1.5">
+                <div className="px-2 py-1.5 sm:px-2.5 sm:py-2 bg-white space-y-1">
                   <button
                     type="button"
                     onClick={() => setDetailsDress(dress)}
