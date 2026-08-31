@@ -3,6 +3,11 @@ import { Frank_Ruhl_Libre, Geist, Geist_Mono } from "next/font/google";
 import AuthProvider from "@/components/AuthProvider";
 import { AuthModalProvider } from "@/components/AuthModalProvider";
 import { LuxeStorageProvider } from "@/components/LuxeStorageProvider";
+import {
+  SITE_SEO_DESCRIPTION,
+  SITE_SEO_KEYWORDS,
+  SITE_SEO_TITLE,
+} from "@/lib/site-config";
 import "./globals.css";
 
 export const viewport: Viewport = {
@@ -28,12 +33,13 @@ const frankRuhlLibre = Frank_Ruhl_Libre({
 });
 
 export const metadata: Metadata = {
-  title: 'שמלה בקליק — תיווך השכרת שמלות בין בנות',
-  description: 'פרסמי שמלה מהארון או מצאי שמלה לאירוע. פלטפורמה להשכרת שמלות ערב.',
+  title: SITE_SEO_TITLE,
+  description: SITE_SEO_DESCRIPTION,
+  keywords: SITE_SEO_KEYWORDS,
   icons: { icon: '/logo.svg' },
   openGraph: {
-    title: 'שמלה בקליק',
-    description: 'תיווך השכרת שמלות בין משכירות לשוכרות',
+    title: SITE_SEO_TITLE,
+    description: SITE_SEO_DESCRIPTION,
     locale: 'he_IL',
   },
 };

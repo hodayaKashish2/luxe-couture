@@ -52,7 +52,7 @@ import DressImageRightsNotice from '@/components/DressImageRightsNotice';
 import RemovedFromListsNotice from '@/components/RemovedFromListsNotice';
 import { fetchDressById, findDressInList } from '@/lib/dress-api';
 import { dressBelongsToCustomer } from '@/lib/self-dress-guard';
-import { ownerWhatsAppLink, WHATSAPP_LINK } from '@/lib/site-config';
+import { ownerWhatsAppLink, WHATSAPP_LINK, SITE_HERO_TAGLINE, SITE_SEO_DESCRIPTION } from '@/lib/site-config';
 import { consumeDetailsReturnDressId, peekDetailsReturnAccountSection, peekDetailsReturnSource, setDetailsReturnDressId } from '@/lib/details-return';
 import { Dress, Review, SortOption, PICKUP_METHODS } from '@/lib/types';
 import { DRESS_KIND_OPTIONS, LISTING_TYPE_OPTIONS, dressKindLabel, listingTypeLabel } from '@/lib/dress-listing';
@@ -1434,14 +1434,14 @@ export default function Home() {
       {/* Hero */}
       <section className="relative z-10 max-w-4xl mx-auto px-4 pt-6 sm:pt-8 pb-0 text-center">
         <p className="mb-2 text-[11px] tracking-[0.28em] text-[#9a7b4f] font-[family-name:var(--font-luxury)]">
-          ✦ תיווך השכרת שמלות בין בנות ✦
+          ✦ {SITE_HERO_TAGLINE} ✦
         </p>
         <h1 className="font-[family-name:var(--font-luxury)] text-3xl sm:text-4xl md:text-5xl text-[#3d2f24] leading-tight px-2">
           <span className="font-light">שמלה</span>{' '}
           <span className="bg-gradient-to-l from-[#c9a227] via-[#e8c547] to-[#a67c00] bg-clip-text text-transparent">בקליק</span>
         </h1>
         <p className="mt-3 text-sm text-[#554a33] max-w-xl mx-auto leading-relaxed">
-          יש לך שמלה בארון? פרסמי אותה — שמלות חדשות ומומלצות מקבלות חשיפה מוגברת, ותשלום מאובטח דרך האתר מחזק את המיקום שלך בקטלוג.
+          {SITE_SEO_DESCRIPTION}
         </p>
         <div className="flex flex-wrap justify-center gap-3 mt-4 mb-0">
           <button

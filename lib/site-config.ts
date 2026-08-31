@@ -1,5 +1,25 @@
 export const SITE_NAME = 'שמלה בקליק';
 
+/** כותרת ברירת מחדל לדפדפן ולתוצאות חיפוש */
+export const SITE_SEO_TITLE = 'שמלה בקליק | שמלות ערב צנועות — תיווך השכרה ומכירה';
+
+export const SITE_SEO_DESCRIPTION =
+  'תיווך שמלות ערב צנועות בין בנות — השכרה ומכירה. פרסמי שמלה מהארון או מצאי שמלת ערב צנועה לאירוע שלך.';
+
+export const SITE_SEO_KEYWORDS = [
+  'שמלות ערב צנועות',
+  'שמלת ערב צנועה',
+  'השכרת שמלות ערב',
+  'מכירת שמלות ערב',
+  'שמלות צנועות',
+  'תיווך שמלות',
+  'השכרת שמלות',
+  'מכירת שמלות',
+  'שמלה בקליק',
+];
+
+export const SITE_HERO_TAGLINE = 'שמלות ערב צנועות — תיווך השכרה ומכירה';
+
 export const DEFAULT_ADMIN_EMAIL = 'dressbclick@gmail.com';
 
 export const LEGACY_ADMIN_EMAIL = 'hodayaka1212@gmail.com';
