@@ -10,10 +10,10 @@ type CatalogFilterSidebarProps = CatalogFilterPanelProps & {
 };
 
 const STICKY_PANEL =
-  'sticky top-3 z-20 w-full flex flex-col max-h-[calc(100dvh-1.5rem)] bg-white border border-[#eadaaf] rounded-xl shadow-sm self-start';
+  'sticky top-4 z-30 w-full flex flex-col max-h-[calc(100dvh-2rem)] bg-white border border-[#eadaaf] rounded-xl shadow-sm self-start';
 
 const COLLAPSED_PANEL =
-  'sticky top-3 z-20 w-full flex flex-col bg-white border border-[#eadaaf] rounded-xl shadow-sm self-start min-h-[calc(100dvh-1.5rem)]';
+  'sticky top-4 z-30 w-full flex flex-col bg-white border border-[#eadaaf] rounded-xl shadow-sm self-start min-h-[calc(100dvh-2rem)]';
 
 export default function CatalogFilterSidebar({
   collapsed,
