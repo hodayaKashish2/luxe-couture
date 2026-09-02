@@ -166,9 +166,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const submittedColor = fields.color || liveColor;
 
     const condition =
-      fields.condition ?? String(dressRow.condition ?? 'new').trim() || 'new';
+      fields.condition ?? (String(dressRow.condition ?? 'new').trim() || 'new');
     const pickupMethod =
-      fields.pickup_method ?? String(dressRow.pickup_method ?? 'pickup').trim() || 'pickup';
+      fields.pickup_method ?? (String(dressRow.pickup_method ?? 'pickup').trim() || 'pickup');
     const descriptionInput = fields.description !== undefined ? fields.description : '';
     const existingParts = String(dressRow.description || '')
       .split('|')

@@ -256,6 +256,7 @@ export default function AdminPage() {
       pending_payments: overview.stats.pendingPayments,
       pending_comments: overview.stats.pendingReviews + overview.stats.pendingRatings,
       bookings: 0,
+      emails: 0,
     };
   }, [overview]);
 
