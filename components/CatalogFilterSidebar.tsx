@@ -9,11 +9,10 @@ type CatalogFilterSidebarProps = CatalogFilterPanelProps & {
   onClear: () => void;
 };
 
-const STICKY_PANEL =
-  'sticky top-4 z-30 w-full flex flex-col max-h-[calc(100dvh-2rem)] bg-white border border-[#eadaaf] rounded-xl shadow-sm self-start';
+const WRAPPER_BASE = 'hidden lg:block shrink-0 self-stretch min-h-0';
 
-const COLLAPSED_PANEL =
-  'sticky top-4 z-30 w-full flex flex-col bg-white border border-[#eadaaf] rounded-xl shadow-sm self-start min-h-[calc(100dvh-2rem)]';
+const PANEL =
+  'flex flex-col bg-white border border-[#eadaaf] rounded-xl shadow-sm sticky top-4 z-40 max-h-[calc(100dvh-2rem)]';
 
 export default function CatalogFilterSidebar({
   collapsed,
@@ -24,12 +23,12 @@ export default function CatalogFilterSidebar({
 }: CatalogFilterSidebarProps) {
   if (collapsed) {
     return (
-      <div className="hidden lg:block w-11 shrink-0">
-        <aside className={COLLAPSED_PANEL}>
+      <div className={`${WRAPPER_BASE} w-11`}>
+        <aside className={`${PANEL} w-11 min-h-[calc(100dvh-2rem)]`}>
           <button
             type="button"
             onClick={onToggleCollapse}
-            className="h-full w-full flex flex-col items-center justify-center gap-3 py-6 bg-[#fffdf8] text-[#8b6508] hover:bg-[#f4ebd4] transition-colors"
+            className="h-full w-full flex flex-col items-center justify-center gap-3 py-6 bg-[#fffdf8] text-[#8b6508] hover:bg-[#f4ebd4] transition-colors rounded-xl"
             aria-label="פתח סינון"
             title="פתח סינון"
           >
@@ -54,9 +53,9 @@ export default function CatalogFilterSidebar({
   }
 
   return (
-    <div className="hidden lg:block w-56 xl:w-60 shrink-0">
-      <aside className={STICKY_PANEL}>
-        <div className="shrink-0 flex items-center justify-between gap-2 px-3 py-2.5 border-b border-[#f0e6cc] bg-[#fffdf8]">
+    <div className={`${WRAPPER_BASE} w-56 xl:w-60`}>
+      <aside className={PANEL}>
+        <div className="shrink-0 flex items-center justify-between gap-2 px-3 py-2.5 border-b border-[#f0e6cc] bg-[#fffdf8] rounded-t-xl">
           <div className="min-w-0">
             <h2 className="text-sm font-black text-[#3d2f24]">סינון</h2>
             {activeFilterCount > 0 && (
@@ -79,7 +78,7 @@ export default function CatalogFilterSidebar({
         </div>
 
         {activeFilterCount > 0 && (
-          <div className="shrink-0 px-3 py-2.5 border-t border-[#f0e6cc] bg-[#fffdf8]">
+          <div className="shrink-0 px-3 py-2.5 border-t border-[#f0e6cc] bg-[#fffdf8] rounded-b-xl">
             <button
               type="button"
               onClick={(e) => {

@@ -1538,7 +1538,7 @@ export default function Home() {
 
         <CatalogPlatformNotice />
 
-        <div className="lg:grid lg:grid-cols-[auto_minmax(0,1fr)] lg:gap-4 lg:items-start">
+        <div className="lg:grid lg:grid-cols-[auto_minmax(0,1fr)] lg:gap-4">
           <CatalogFilterSidebar
             collapsed={filtersSidebarCollapsed}
             onToggleCollapse={() => setFiltersSidebarCollapsed((v) => !v)}
