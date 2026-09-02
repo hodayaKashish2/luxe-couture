@@ -1,9 +1,9 @@
 /** Shared copy for marketing / site-update email opt-in (registration + profile). */
 export const MARKETING_EMAIL_OPT_IN_TITLE =
-  'כן! רוצה לקבל עדכונים על האתר במייל ✨';
+  'כן! רוצה עדכונים על האתר ישר למייל ✨';
 
 export const MARKETING_EMAIL_OPT_IN_BODY =
-  'שמלות חדשות בקטלוג, חדשות מהקהילה וטיפים — כדי שלא תפספסי כלום חשוב.';
+  'מתי נכנסות שמלות חדשות לקטלוג, מה חדש באתר, עדכונים חשובים, חדשות מהקהילה וטיפים — כדי שתמיד תדעי ראשונה.';
 
 export const MARKETING_EMAIL_OPT_IN_FOOTER =
   'לא חובה · אפשר לבטל בכל עת באזור האישי → פרטי חשבון';
@@ -14,4 +14,4 @@ export const MARKETING_EMAIL_OPT_IN_LEGAL =
 
 /** Footer line in opt-in broadcast emails. */
 export const MARKETING_EMAIL_BROADCAST_FOOTER =
-  'קיבלת את המייל כי אישרת לקבל דברי דואר מהאתר.';
+  'קיבלת את המייל כי אישרת לקבל עדכונים על האתר.';
