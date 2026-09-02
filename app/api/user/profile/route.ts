@@ -8,9 +8,32 @@ import {
 import { formatPhoneForStorage, phoneValidationMessage } from '@/lib/israeli-phone';
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server';
 import { formatSiteUsersDbError } from '@/lib/db-errors';
+import {
+  marketingOptInUpgradeHint,
+  selectSiteUserProfile,
+  updateSiteUserProfile,
+} from '@/lib/site-user-profile';
 
 function formatPhoneStored(phone: string) {
   return formatPhoneForStorage(phone);
+}
+
+function mapProfileResponse(profile: {
+  id: string;
+  username: string;
+  display_name: string;
+  phone: string;
+  email: string;
+  marketing_emails_opt_in: boolean;
+}) {
+  return {
+    userId: profile.id,
+    username: profile.username,
+    displayName: profile.display_name,
+    phone: profile.phone,
+    email: profile.email,
+    marketing_emails_opt_in: profile.marketing_emails_opt_in,
+  };
 }
 
 export async function GET(request: Request) {
@@ -20,28 +43,17 @@ export async function GET(request: Request) {
 
   try {
     const supabase = getSupabaseAdmin();
-    const { data, error } = await supabase
-      .from('site_users')
-      .select('id, username, display_name, phone, email, marketing_emails_opt_in')
-      .eq('id', user.userId)
-      .maybeSingle();
+    const { profile } = await selectSiteUserProfile(supabase, user.userId);
 
-    if (error) throw error;
-    if (!data) return NextResponse.json({ error: 'משתמש לא נמצא' }, { status: 404 });
+    if (!profile) return NextResponse.json({ error: 'משתמש לא נמצא' }, { status: 404 });
 
-    return NextResponse.json({
-      user: {
-        userId: String(data.id),
-        username: data.username,
-        displayName: data.display_name,
-        phone: data.phone,
-        email: data.email,
-        marketing_emails_opt_in: Boolean(data.marketing_emails_opt_in),
-      },
-    });
+    return NextResponse.json({ user: mapProfileResponse(profile) });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'שגיאה';
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json(
+      { error: formatSiteUsersDbError(message) },
+      { status: 500 }
+    );
   }
 }
 
@@ -76,52 +88,39 @@ export async function PATCH(request: Request) {
     }
 
     const supabase = getSupabaseAdmin();
-
-    const updates: Record<string, unknown> = {
+    const result = await updateSiteUserProfile(supabase, user.userId, {
       display_name: displayName,
       phone: phoneStored,
       email,
-    };
-    if (marketingOptIn !== undefined) {
-      updates.marketing_emails_opt_in = marketingOptIn;
-    }
-
-    const { data, error } = await supabase
-      .from('site_users')
-      .update(updates)
-      .eq('id', user.userId)
-      .select('id, username, display_name, phone, email, marketing_emails_opt_in')
-      .single();
-
-    if (error) {
-      return NextResponse.json(
-        { error: formatSiteUsersDbError(error.message, error.code) },
-        { status: 503 }
-      );
-    }
+      marketing_emails_opt_in: marketingOptIn,
+    });
 
     const updatedUser = {
-      userId: String(data.id),
-      username: data.username,
-      displayName: data.display_name,
-      phone: data.phone,
-      email: data.email,
+      userId: result.profile.id,
+      username: result.profile.username,
+      displayName: result.profile.display_name,
+      phone: result.profile.phone,
+      email: result.profile.email,
     };
 
     const token = createUserToken(updatedUser);
     const response = NextResponse.json({
       success: true,
-      message: 'פרטי החשבון עודכנו',
+      message: result.marketingOptInSkipped
+        ? `פרטי החשבון עודכנו. ${marketingOptInUpgradeHint()}`
+        : 'פרטי החשבון עודכנו',
       token,
       user: {
-        ...updatedUser,
-        marketing_emails_opt_in: Boolean(data.marketing_emails_opt_in),
+        ...mapProfileResponse(result.profile),
       },
     });
     response.cookies.set(AUTH_COOKIE, token, authCookieOptions());
     return response;
   } catch (error) {
     const message = error instanceof Error ? error.message : 'שגיאה';
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json(
+      { error: formatSiteUsersDbError(message) },
+      { status: 503 }
+    );
   }
 }

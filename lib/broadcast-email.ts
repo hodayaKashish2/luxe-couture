@@ -1,5 +1,6 @@
 import { getAppUrl, sendEmailTo } from '@/lib/email';
 import { MARKETING_EMAIL_BROADCAST_FOOTER } from '@/lib/marketing-email-copy';
+import { isMissingMarketingOptInColumn } from '@/lib/site-user-profile';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 export type BroadcastAudience = 'all' | 'opt_in';
@@ -50,6 +51,12 @@ export function dedupeBroadcastRecipients(
   return recipients;
 }
 
+type SiteUserEmailRow = {
+  email?: string | null;
+  display_name?: string | null;
+  marketing_emails_opt_in?: boolean | null;
+};
+
 export async function fetchBroadcastRecipients(
   supabase: SupabaseClient,
   audience: BroadcastAudience
@@ -60,22 +67,44 @@ export async function fetchBroadcastRecipients(
     query = query.eq('marketing_emails_opt_in', true);
   }
 
-  const { data, error } = await query;
-  if (error) throw error;
+  let { data, error } = await query;
+  let rows = (data || []) as SiteUserEmailRow[];
 
-  return dedupeBroadcastRecipients(data || []);
+  if (error && isMissingMarketingOptInColumn(error.message)) {
+    if (audience === 'opt_in') {
+      return [];
+    }
+    const legacy = await supabase.from('site_users').select('email, display_name');
+    if (legacy.error) throw legacy.error;
+    rows = (legacy.data || []) as SiteUserEmailRow[];
+  } else if (error) {
+    throw error;
+  }
+
+  return dedupeBroadcastRecipients(rows);
 }
 
 export async function fetchBroadcastStats(supabase: SupabaseClient) {
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from('site_users')
     .select('email, display_name, marketing_emails_opt_in');
 
-  if (error) throw error;
+  let rows = (data || []) as SiteUserEmailRow[];
 
-  const all = dedupeBroadcastRecipients(data || []);
+  if (error && isMissingMarketingOptInColumn(error.message)) {
+    const legacy = await supabase.from('site_users').select('email, display_name');
+    if (legacy.error) throw legacy.error;
+    rows = ((legacy.data || []) as SiteUserEmailRow[]).map((row) => ({
+      ...row,
+      marketing_emails_opt_in: false,
+    }));
+  } else if (error) {
+    throw error;
+  }
+
+  const all = dedupeBroadcastRecipients(rows);
   const optIn = dedupeBroadcastRecipients(
-    (data || []).filter((row) => Boolean(row.marketing_emails_opt_in))
+    rows.filter((row) => Boolean(row.marketing_emails_opt_in))
   );
 
   return {

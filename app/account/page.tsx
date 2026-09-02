@@ -412,9 +412,23 @@ function AccountPageContent() {
     if (!token) return;
 
     let cancelled = false;
+
+    function fillFromSessionUser() {
+      const stored = getStoredSiteUser();
+      if (!stored) return;
+      setProfileForm({
+        display_name: stored.displayName || stored.display_name || '',
+        phone: formatAccountPhone(stored.phone || ''),
+        email: stored.email || '',
+        username: stored.username || '',
+        marketing_emails_opt_in: false,
+      });
+    }
+
     async function loadProfile() {
       setProfileLoading(true);
       setProfileError('');
+      fillFromSessionUser();
       try {
         const res = await fetch('/api/user/profile', {
           headers: { 'x-user-token': token || '' },
@@ -429,6 +443,7 @@ function AccountPageContent() {
           username: data.user.username || '',
           marketing_emails_opt_in: Boolean(data.user.marketing_emails_opt_in),
         });
+        setProfileError('');
       } catch (err) {
         if (!cancelled) {
           setProfileError(err instanceof Error ? err.message : 'שגיאה');

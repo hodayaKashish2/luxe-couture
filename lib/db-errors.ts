@@ -9,6 +9,10 @@ export function formatSiteUsersDbError(message: string, code?: string): string {
     return 'טבלת site_users לא קיימת. הריצי את הקובץ supabase/fix-site-users.sql ב-SQL Editor.';
   }
 
+  if (m.includes('marketing_emails_opt_in')) {
+    return 'חסרה עמודת עדכונים במייל. הריצי את supabase/upgrade-v15-marketing-opt-in.sql ב-Supabase SQL Editor.';
+  }
+
   if (
     m.includes('password_hash') ||
     m.includes('display_name') ||

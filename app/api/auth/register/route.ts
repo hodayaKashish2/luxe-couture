@@ -59,20 +59,43 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'שם המשתמש כבר תפוס — בחרי שם משתמש אחר' }, { status: 409 });
     }
 
-    const { data, error } = await supabase
+    const insertPayload = {
+      username,
+      password_hash: hashPassword(password),
+      display_name: displayName,
+      phone: phoneStored,
+      email,
+      marketing_emails_opt_in: marketingOptIn,
+    };
+
+    let data: {
+      id: string;
+      username: string;
+      display_name: string;
+      phone: string;
+      email: string;
+    } | null = null;
+    let error: { message?: string; code?: string } | null = null;
+
+    const firstInsert = await supabase
       .from('site_users')
-      .insert([
-        {
-          username,
-          password_hash: hashPassword(password),
-          display_name: displayName,
-          phone: phoneStored,
-          email,
-          marketing_emails_opt_in: marketingOptIn,
-        },
-      ])
+      .insert([insertPayload])
       .select('id, username, display_name, phone, email, marketing_emails_opt_in')
       .single();
+
+    data = firstInsert.data;
+    error = firstInsert.error;
+
+    if (error?.message?.includes('marketing_emails_opt_in')) {
+      const { marketing_emails_opt_in: _ignored, ...legacyInsert } = insertPayload;
+      const legacyResult = await supabase
+        .from('site_users')
+        .insert([legacyInsert])
+        .select('id, username, display_name, phone, email')
+        .single();
+      data = legacyResult.data;
+      error = legacyResult.error;
+    }
 
     if (error?.message?.includes('duplicate') || error?.code === '23505') {
       return NextResponse.json({ error: 'שם המשתמש כבר תפוס — בחרי שם משתמש אחר' }, { status: 409 });
@@ -80,9 +103,13 @@ export async function POST(request: Request) {
 
     if (error) {
       return NextResponse.json(
-        { error: formatSiteUsersDbError(error.message, error.code) },
+        { error: formatSiteUsersDbError(error.message || '', error.code) },
         { status: 503 }
       );
+    }
+
+    if (!data) {
+      return NextResponse.json({ error: 'יצירת חשבון נכשלה' }, { status: 503 });
     }
 
     const token = createUserToken({
