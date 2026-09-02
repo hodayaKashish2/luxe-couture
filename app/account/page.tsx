@@ -68,7 +68,7 @@ import {
   DRESS_STYLE_PLACEHOLDER,
   dressLengthFieldLabel,
 } from '@/lib/dress-style-length';
-import { PICKUP_METHODS, type Dress } from '@/lib/types';
+import { type Dress } from '@/lib/types';
 import type { SavedDress } from '@/lib/luxe-storage';
 
 type Section = 'hub' | 'reservations' | 'rentals' | 'cart' | 'favorites' | 'add' | 'edit' | 'profile';
@@ -840,9 +840,7 @@ function AccountPageContent() {
     formData.append('listing_type', editForm.listing_type);
     formData.append('dress_style', editForm.dress_style);
     formData.append('dress_length', editForm.dress_length);
-    formData.append('condition', editForm.condition);
     formData.append('deposit', editForm.deposit);
-    formData.append('pickup_method', editForm.pickup_method);
     formData.append('includes_dry_cleaning', editForm.includes_dry_cleaning);
     formData.append('kept_images', JSON.stringify(editImages));
     editNewFiles.forEach((file) => formData.append('images', file));
@@ -1724,22 +1722,8 @@ function AccountPageContent() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-bold text-[#8b6508] mb-1">מצב השמלה</label>
-                <select value={editForm.condition} onChange={(e) => { touchEditDraft(); setEditForm({ ...editForm, condition: e.target.value }); }} className="p-2.5 border border-[#decfa8] rounded-xl text-xs w-full">
-                  <option value="new">חדש עם תווית</option>
-                  <option value="like-new">כמו חדש</option>
-                  <option value="used">יד שנייה</option>
-                </select>
-              </div>
-              <div>
                 <label className="block text-xs font-bold text-[#8b6508] mb-1">פיקדון (₪)</label>
                 <input type="number" min="0" placeholder="0" value={editForm.deposit} onChange={(e) => { touchEditDraft(); setEditForm({ ...editForm, deposit: e.target.value }); }} className="p-2.5 border border-[#decfa8] rounded-xl text-xs w-full" />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-[#8b6508] mb-1">קבלת השמלה</label>
-                <select value={editForm.pickup_method} onChange={(e) => { touchEditDraft(); setEditForm({ ...editForm, pickup_method: e.target.value }); }} className="p-2.5 border border-[#decfa8] rounded-xl text-xs w-full">
-                  {PICKUP_METHODS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
-                </select>
               </div>
               <div>
                 <label className="block text-xs font-bold text-[#8b6508] mb-1">ניקוי יבש</label>

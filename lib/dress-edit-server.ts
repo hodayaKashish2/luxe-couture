@@ -62,9 +62,11 @@ export function parseDressEditBody(raw: Record<string, unknown>) {
       listing_type: listingType,
       dress_style: dressStyle,
       dress_length: dressLength,
-      condition: String(raw.condition ?? 'new').trim() || 'new',
+      condition:
+        raw.condition != null ? String(raw.condition).trim() || 'new' : undefined,
       deposit: String(normalizePrice(raw.deposit ?? 0)),
-      pickup_method: String(raw.pickup_method ?? 'pickup').trim() || 'pickup',
+      pickup_method:
+        raw.pickup_method != null ? String(raw.pickup_method).trim() || 'pickup' : undefined,
       includes_dry_cleaning: parseBooleanField(raw.includes_dry_cleaning) ? 'yes' as const : 'no' as const,
     },
   };
@@ -143,7 +145,10 @@ export async function buildDressUpdatesFromEditRequest(
     description: dressRow.description as string | null,
   });
   const submittedColor = fields.color || liveColor;
-  const condition = fields.condition;
+  const condition =
+    fields.condition ?? String(dressRow.condition ?? 'new').trim() || 'new';
+  const pickupMethod =
+    fields.pickup_method ?? String(dressRow.pickup_method ?? 'pickup').trim() || 'pickup';
   const descriptionInput = fields.description !== undefined ? fields.description : '';
   const existingParts = String(dressRow.description || '')
     .split('|')
@@ -168,7 +173,7 @@ export async function buildDressUpdatesFromEditRequest(
     dress_length: fields.dress_length,
     condition,
     deposit: normalizePrice(fields.deposit),
-    pickup_method: fields.pickup_method,
+    pickup_method: pickupMethod,
     includes_dry_cleaning: fields.includes_dry_cleaning === 'yes',
     description: [
       baseDescription,

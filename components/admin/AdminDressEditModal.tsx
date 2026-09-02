@@ -14,7 +14,6 @@ import {
   DRESS_STYLE_PLACEHOLDER,
 } from '@/lib/dress-style-length';
 import { normalizeDressImages, type DressEditFormFields } from '@/lib/dress-pending-update';
-import { PICKUP_METHODS } from '@/lib/types';
 
 const EMPTY_FORM: DressEditFormFields = {
   name: '',
@@ -192,9 +191,7 @@ export default function AdminDressEditModal({
     formData.append('listing_type', form.listing_type);
     formData.append('dress_style', form.dress_style);
     formData.append('dress_length', form.dress_length);
-    formData.append('condition', form.condition);
     formData.append('deposit', form.deposit);
-    formData.append('pickup_method', form.pickup_method);
     formData.append('includes_dry_cleaning', form.includes_dry_cleaning);
     formData.append('owner_name', ownerName);
     formData.append('owner_phone', ownerPhone);
@@ -353,15 +350,6 @@ export default function AdminDressEditModal({
                     </option>
                   ))}
                 </select>
-                <select
-                  value={form.condition}
-                  onChange={(e) => setForm({ ...form, condition: e.target.value })}
-                  className="p-2.5 border border-[#decfa8] rounded-xl text-xs w-full bg-white"
-                >
-                  <option value="new">חדש עם תווית</option>
-                  <option value="like-new">כמו חדש</option>
-                  <option value="used">יד שנייה</option>
-                </select>
                 <input
                   type="number"
                   min="0"
@@ -370,17 +358,6 @@ export default function AdminDressEditModal({
                   onChange={(e) => setForm({ ...form, deposit: e.target.value })}
                   className="p-2.5 border border-[#decfa8] rounded-xl text-xs bg-white"
                 />
-                <select
-                  value={form.pickup_method}
-                  onChange={(e) => setForm({ ...form, pickup_method: e.target.value })}
-                  className="p-2.5 border border-[#decfa8] rounded-xl text-xs w-full bg-white"
-                >
-                  {PICKUP_METHODS.map((m) => (
-                    <option key={m.value} value={m.value}>
-                      {m.label}
-                    </option>
-                  ))}
-                </select>
                 <select
                   value={form.includes_dry_cleaning}
                   onChange={(e) =>

@@ -55,7 +55,7 @@ import { fetchDressById, findDressInList } from '@/lib/dress-api';
 import { dressBelongsToCustomer } from '@/lib/self-dress-guard';
 import { ownerWhatsAppLink, WHATSAPP_LINK, SITE_HERO_TAGLINE, SITE_SEO_DESCRIPTION } from '@/lib/site-config';
 import { consumeDetailsReturnDressId, peekDetailsReturnAccountSection, peekDetailsReturnSource, setDetailsReturnDressId } from '@/lib/details-return';
-import { Dress, Review, SortOption, PICKUP_METHODS } from '@/lib/types';
+import { Dress, Review, SortOption } from '@/lib/types';
 import { DRESS_KIND_OPTIONS, LISTING_TYPE_OPTIONS, dressKindLabel, listingTypeLabel } from '@/lib/dress-listing';
 import {
   DEFAULT_DRESS_LENGTH,
@@ -1901,12 +1901,6 @@ export default function Home() {
                 <div>
                   <label className="block text-xs font-bold text-[#8b6508] mb-1">פיקדון (₪)</label>
                   <input type="number" min="0" placeholder="0" value={newDressData.deposit} onChange={(e) => setNewDressData({...newDressData, deposit: e.target.value})} className="w-full p-2.5 bg-white border border-[#decfa8] rounded-xl text-xs text-[#2c261a] placeholder:text-[#9a7b4f]" />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-[#8b6508] mb-1">קבלת השמלה</label>
-                  <select value={newDressData.pickup_method} onChange={(e) => setNewDressData({...newDressData, pickup_method: e.target.value})} className="w-full p-2.5 bg-white border border-[#decfa8] rounded-xl text-xs text-[#2c261a] placeholder:text-[#9a7b4f]">
-                    {PICKUP_METHODS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
-                  </select>
                 </div>
               </div>
 
