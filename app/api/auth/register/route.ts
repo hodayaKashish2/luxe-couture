@@ -27,6 +27,7 @@ export async function POST(request: Request) {
     const displayName = String(body.display_name || '').trim();
     const phone = String(body.phone || '').trim();
     const email = String(body.email || '').trim().toLowerCase();
+    const marketingOptIn = Boolean(body.marketing_emails_opt_in);
 
     if (!username || username.length < 3) {
       return NextResponse.json({ error: 'שם משתמש — לפחות 3 תווים' }, { status: 400 });
@@ -67,9 +68,10 @@ export async function POST(request: Request) {
           display_name: displayName,
           phone: phoneStored,
           email,
+          marketing_emails_opt_in: marketingOptIn,
         },
       ])
-      .select('id, username, display_name, phone, email')
+      .select('id, username, display_name, phone, email, marketing_emails_opt_in')
       .single();
 
     if (error?.message?.includes('duplicate') || error?.code === '23505') {

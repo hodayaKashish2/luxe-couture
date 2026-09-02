@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { SITE_NAME } from '@/lib/site-config';
 import FormError from '@/components/FormError';
+import MarketingEmailOptInCheckbox from '@/components/MarketingEmailOptInCheckbox';
 import { validateRegisterForm } from '@/lib/form-validation';
 import { notifySiteAuthChange } from '@/lib/site-auth-events';
 import { persistSiteSession } from '@/lib/site-session';
@@ -20,6 +21,7 @@ function RegisterForm() {
     display_name: '',
     phone: '',
     email: '',
+    marketing_emails_opt_in: false,
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -71,6 +73,12 @@ function RegisterForm() {
           <input placeholder="שם מלא *" value={form.display_name} onChange={(e) => setForm({ ...form, display_name: e.target.value })} className="w-full p-2.5 border-2 border-[#decfa8] rounded-xl text-sm text-[#2c261a] placeholder:text-[#9a7b4f] bg-white focus:border-[#d4af37] focus:outline-none" />
           <input type="tel" placeholder="טלפון (0501234567) *" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="w-full p-2.5 border-2 border-[#decfa8] rounded-xl text-sm text-[#2c261a] placeholder:text-[#9a7b4f] bg-white focus:border-[#d4af37] focus:outline-none" dir="ltr" />
           <input type="text" inputMode="email" autoComplete="email" placeholder="אימייל (חובה)" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="w-full p-2.5 border-2 border-[#decfa8] rounded-xl text-sm text-[#2c261a] placeholder:text-[#9a7b4f] bg-white focus:border-[#d4af37] focus:outline-none" dir="ltr" required />
+
+          <MarketingEmailOptInCheckbox
+            checked={form.marketing_emails_opt_in}
+            onChange={(marketing_emails_opt_in) => setForm({ ...form, marketing_emails_opt_in })}
+            compact
+          />
 
           {error && <FormError message={error} />}
 

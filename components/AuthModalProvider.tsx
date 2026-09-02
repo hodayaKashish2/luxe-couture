@@ -12,6 +12,7 @@ import {
 } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import FormError from '@/components/FormError';
+import MarketingEmailOptInCheckbox from '@/components/MarketingEmailOptInCheckbox';
 import { AUTH_MODAL_COPY, type AuthModalReason } from '@/lib/auth-modal-copy';
 import {
   buildAuthModalUrl,
@@ -52,6 +53,7 @@ const emptyRegisterForm = {
   display_name: '',
   phone: '',
   email: '',
+  marketing_emails_opt_in: false,
 };
 
 function ModalShell({
@@ -452,6 +454,14 @@ function AuthModalProviderInner({ children }: { children: ReactNode }) {
               className={AUTH_INPUT_CLASS}
               dir="ltr"
               required
+            />
+
+            <MarketingEmailOptInCheckbox
+              checked={registerForm.marketing_emails_opt_in}
+              onChange={(marketing_emails_opt_in) =>
+                setRegisterForm({ ...registerForm, marketing_emails_opt_in })
+              }
+              compact
             />
 
             {error && <FormError message={error} />}

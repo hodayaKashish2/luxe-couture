@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import AdminBroadcastEmail from '@/components/admin/AdminBroadcastEmail';
 import AdminBookingsGrid from '@/components/admin/AdminBookingsGrid';
 import AdminRejectReasonModal from '@/components/admin/AdminRejectReasonModal';
 import AdminDressCatalog from '@/components/admin/AdminDressCatalog';
@@ -25,6 +26,7 @@ const TABS: { id: AdminTab; label: string }[] = [
   { id: 'pending_payments', label: 'אישור תשלום' },
   { id: 'pending_comments', label: 'תגובות ממתינות' },
   { id: 'bookings', label: 'הזמנות מאושרות' },
+  { id: 'emails', label: 'מיילים' },
 ];
 
 export default function AdminPage() {
@@ -712,6 +714,10 @@ export default function AdminPage() {
                   </>
                 )}
               </section>
+            )}
+
+            {tab === 'emails' && savedToken && (
+              <AdminBroadcastEmail token={savedToken} />
             )}
           </div>
         )}

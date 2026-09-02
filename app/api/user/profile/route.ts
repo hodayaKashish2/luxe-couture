@@ -22,7 +22,7 @@ export async function GET(request: Request) {
     const supabase = getSupabaseAdmin();
     const { data, error } = await supabase
       .from('site_users')
-      .select('id, username, display_name, phone, email')
+      .select('id, username, display_name, phone, email, marketing_emails_opt_in')
       .eq('id', user.userId)
       .maybeSingle();
 
@@ -36,6 +36,7 @@ export async function GET(request: Request) {
         displayName: data.display_name,
         phone: data.phone,
         email: data.email,
+        marketing_emails_opt_in: Boolean(data.marketing_emails_opt_in),
       },
     });
   } catch (error) {
@@ -54,6 +55,10 @@ export async function PATCH(request: Request) {
     const displayName = String(body.display_name || '').trim();
     const phone = String(body.phone || '').trim();
     const email = String(body.email || '').trim().toLowerCase();
+    const marketingOptIn =
+      body.marketing_emails_opt_in !== undefined
+        ? Boolean(body.marketing_emails_opt_in)
+        : undefined;
 
     if (!displayName) {
       return NextResponse.json({ error: 'יש להזין שם מלא' }, { status: 400 });
@@ -72,15 +77,20 @@ export async function PATCH(request: Request) {
 
     const supabase = getSupabaseAdmin();
 
+    const updates: Record<string, unknown> = {
+      display_name: displayName,
+      phone: phoneStored,
+      email,
+    };
+    if (marketingOptIn !== undefined) {
+      updates.marketing_emails_opt_in = marketingOptIn;
+    }
+
     const { data, error } = await supabase
       .from('site_users')
-      .update({
-        display_name: displayName,
-        phone: phoneStored,
-        email,
-      })
+      .update(updates)
       .eq('id', user.userId)
-      .select('id, username, display_name, phone, email')
+      .select('id, username, display_name, phone, email, marketing_emails_opt_in')
       .single();
 
     if (error) {
@@ -103,7 +113,10 @@ export async function PATCH(request: Request) {
       success: true,
       message: 'פרטי החשבון עודכנו',
       token,
-      user: updatedUser,
+      user: {
+        ...updatedUser,
+        marketing_emails_opt_in: Boolean(data.marketing_emails_opt_in),
+      },
     });
     response.cookies.set(AUTH_COOKIE, token, authCookieOptions());
     return response;

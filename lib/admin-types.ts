@@ -105,7 +105,8 @@ export type AdminTab =
   | 'pending'
   | 'pending_payments'
   | 'pending_comments'
-  | 'bookings';
+  | 'bookings'
+  | 'emails';
 
 export type AdminDressAction =
   | 'approve'

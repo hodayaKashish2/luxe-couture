@@ -17,6 +17,7 @@ import OwnerPlatformNotice from '@/components/OwnerPlatformNotice';
 import OwnDressNoticeModal from '@/components/OwnDressNoticeModal';
 import CancelReservationConfirmModal from '@/components/CancelReservationConfirmModal';
 import FormError from '@/components/FormError';
+import MarketingEmailOptInCheckbox from '@/components/MarketingEmailOptInCheckbox';
 import SiteToast, { type SiteToastVariant } from '@/components/SiteToast';
 import DressImageFill from '@/components/DressImageFill';
 import DressImageRightsNotice from '@/components/DressImageRightsNotice';
@@ -236,7 +237,9 @@ function AccountPageContent() {
     phone: '',
     email: '',
     username: '',
+    marketing_emails_opt_in: false,
   });
+  const [profileLoading, setProfileLoading] = useState(false);
   const [profileError, setProfileError] = useState('');
   const [profileSaving, setProfileSaving] = useState(false);
   const [cancellingId, setCancellingId] = useState<number | null>(null);
@@ -403,15 +406,43 @@ function AccountPageContent() {
   }, []);
 
   useEffect(() => {
-    if (section === 'profile' && user) {
-      setProfileForm({
-        display_name: user.displayName || '',
-        phone: formatAccountPhone(user.phone || ''),
-        email: user.email || '',
-        username: user.username || '',
-      });
+    if (section !== 'profile' || !hasSession) return;
+
+    const token = getSiteToken();
+    if (!token) return;
+
+    let cancelled = false;
+    async function loadProfile() {
+      setProfileLoading(true);
+      setProfileError('');
+      try {
+        const res = await fetch('/api/user/profile', {
+          headers: { 'x-user-token': token || '' },
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'שגיאה');
+        if (cancelled) return;
+        setProfileForm({
+          display_name: data.user.displayName || '',
+          phone: formatAccountPhone(data.user.phone || ''),
+          email: data.user.email || '',
+          username: data.user.username || '',
+          marketing_emails_opt_in: Boolean(data.user.marketing_emails_opt_in),
+        });
+      } catch (err) {
+        if (!cancelled) {
+          setProfileError(err instanceof Error ? err.message : 'שגיאה');
+        }
+      } finally {
+        if (!cancelled) setProfileLoading(false);
+      }
     }
-  }, [section, user]);
+
+    void loadProfile();
+    return () => {
+      cancelled = true;
+    };
+  }, [section, hasSession]);
 
   useEffect(() => {
     if (section === 'add') {
@@ -646,6 +677,7 @@ function AccountPageContent() {
         display_name: profileForm.display_name,
         phone: profileForm.phone,
         email: profileForm.email,
+        marketing_emails_opt_in: profileForm.marketing_emails_opt_in,
       }),
     });
     const data = await res.json();
@@ -1810,6 +1842,7 @@ function AccountPageContent() {
           <form onSubmit={submitProfile} className="bg-white rounded-2xl border border-[#eadaaf] p-4 sm:p-6 space-y-4">
             <h2 className="font-black text-xl">👤 פרטי חשבון</h2>
             <p className="text-xs text-[#6e634c]">עדכני שם, טלפון ואימייל — הפרטים ישמשו להזמנות ולשמלות שפרסמת.</p>
+            {profileLoading && <p className="text-xs text-[#9a7b4f]">טוען פרטים…</p>}
             {profileError && <FormError message={profileError} />}
             <div className="space-y-3">
               <div>
@@ -1848,10 +1881,16 @@ function AccountPageContent() {
                 className="w-full p-2.5 border border-[#decfa8] rounded-xl text-xs text-[#2c261a] bg-white"
                 dir="ltr"
               />
+              <MarketingEmailOptInCheckbox
+                checked={profileForm.marketing_emails_opt_in}
+                onChange={(marketing_emails_opt_in) =>
+                  setProfileForm({ ...profileForm, marketing_emails_opt_in })
+                }
+              />
             </div>
             <button
               type="submit"
-              disabled={profileSaving}
+              disabled={profileSaving || profileLoading}
               className="w-full py-3 bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white rounded-xl text-xs font-black shadow-md disabled:opacity-60"
             >
               {profileSaving ? 'שומרת...' : 'שמרי פרטים'}
