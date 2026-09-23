@@ -165,17 +165,7 @@ export default function CatalogEmailModal({ open, onClose, onError }: CatalogEma
 
         {step === 'error' && (
           <div className="space-y-4 pt-1">
-            <div className="space-y-2 text-center sm:text-right">
-              <p className="text-sm font-bold text-red-600">{error}</p>
-              <a
-                href="/catalog"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-block text-xs font-bold text-[#8b6508] underline"
-              >
-                אפשר גם לצפות בקטלוג בדפדפן
-              </a>
-            </div>
+            <p className="text-sm font-bold text-red-600 text-center sm:text-right">{error}</p>
             <div className="flex gap-2">
               <button
                 type="button"
