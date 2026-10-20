@@ -112,7 +112,7 @@ export default function CatalogEmailModal({ open, onClose, onError }: CatalogEma
                 שליחת הקטלוג במייל
               </h3>
               <p className="text-xs leading-relaxed text-[#6e634c]">
-                הזיני כתובת אימייל — נשלח אלייך את הקטלוג המלא.
+                הזיני כתובת אימייל — נשלח אלייך את הקטלוג. אם הוא גדול, יישלחו כמה מיילים עם חלקים נפרדים.
               </p>
             </div>
             <input
@@ -137,7 +137,7 @@ export default function CatalogEmailModal({ open, onClose, onError }: CatalogEma
         {step === 'loading' && (
           <div className="space-y-3 py-4 text-center">
             <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-[#decfa8] border-t-[#b8860b]" />
-            <p className="text-sm font-bold text-[#3d2f24]">מכינים את הקובץ ושולחים למייל...</p>
+            <p className="text-sm font-bold text-[#3d2f24]">מכינים את הקבצים ושולחים למייל...</p>
             <p className="text-xs text-[#6e634c]">זה עלול לקחת כדקה — אל תסגרי את החלון</p>
           </div>
         )}
@@ -150,7 +150,7 @@ export default function CatalogEmailModal({ open, onClose, onError }: CatalogEma
             <p className="text-sm font-bold leading-relaxed text-emerald-800">
               הקטלוג נשלח למייל
               <span className="block text-xs font-semibold text-[#6e634c] mt-1">
-                (בדקי גם בתיקיית ספאם)
+                אם הקטלוג גדול ייתכן כמה מיילים. בדקי גם בספאם.
               </span>
             </p>
             <button

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { isCatalogPdfEnabled } from '@/lib/catalog-pdf/create-catalog-pdf-response';
 import { sendCatalogPdfByEmail } from '@/lib/catalog-pdf/send-catalog-by-email';
 
-export const maxDuration = 60;
+export const maxDuration = 120;
 
 const COOLDOWN_MS = 5 * 60 * 1000;
 const recentRequests = new Map<string, number>();

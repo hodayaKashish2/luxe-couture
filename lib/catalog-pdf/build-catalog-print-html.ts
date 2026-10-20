@@ -50,6 +50,8 @@ function dressCard(dress: CatalogPdfDress) {
 
 export type CatalogPrintHtmlOptions = {
   showBackLink?: boolean;
+  /** למשל: «חלק 1 מתוך 2» */
+  partLabel?: string;
 };
 
 export function buildCatalogPrintHtml(
@@ -57,6 +59,7 @@ export function buildCatalogPrintHtml(
   options?: CatalogPrintHtmlOptions,
 ) {
   const showBackLink = options?.showBackLink ?? false;
+  const partLabel = options?.partLabel?.trim();
   const generatedAt = new Date().toLocaleString('he-IL', {
     dateStyle: 'long',
     timeStyle: 'short',
@@ -253,7 +256,7 @@ export function buildCatalogPrintHtml(
   }
   <header class="page-header">
     <h1>${escapeHtml(SITE_NAME)}</h1>
-    <p>קטלוג מלא — ${dresses.length} שמלות · עודכן ${escapeHtml(generatedAt)} · ניתן לשמור ולשתף</p>
+    <p>${partLabel ? `${escapeHtml(partLabel)} · ` : ''}קטלוג — ${dresses.length} שמלות · עודכן ${escapeHtml(generatedAt)}</p>
   </header>
   <main class="grid">
     ${dresses.map(dressCard).join('')}
