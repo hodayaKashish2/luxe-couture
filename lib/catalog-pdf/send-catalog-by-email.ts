@@ -54,7 +54,6 @@ function buildCatalogEmailHtml(params: {
              <ul style="line-height:1.7;color:#554a33;padding-right:18px;">${partsList}</ul>`
           : `<p style="line-height:1.7;color:#554a33;">מצורף קובץ PDF עם ${totalDresses} שמלות מהקטלוג.</p>`
       }
-      <p style="line-height:1.7;color:#6e634c;font-size:13px;margin-top:16px;">אם הקובץ לא נפתח — פתחי את המייל באפליקציית Gmail בטלפון. בדקי גם בתיקיית הספאם.</p>
     </div>
   `;
 }
