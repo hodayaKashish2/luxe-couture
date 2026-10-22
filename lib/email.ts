@@ -349,12 +349,12 @@ export type EmailAttachment = {
   contentType?: string;
 };
 
-/** שליחת מייל עם קובץ אחד או כמה קבצים מצורפים — SMTP (Gmail) קודם, אחר כך Resend */
+/** שליחת מייל עם קובץ מצורף — SMTP (Gmail) קודם, אחר כך Resend */
 export async function sendEmailWithAttachmentTo(
   to: string,
   subject: string,
   html: string,
-  attachment: EmailAttachment | EmailAttachment[],
+  attachment: EmailAttachment,
 ) {
   const recipient = to.trim().toLowerCase();
 
@@ -364,7 +364,7 @@ export async function sendEmailWithAttachmentTo(
 
   const smtp = getSmtpTransport();
   const resend = getResendClient();
-  const attachments = Array.isArray(attachment) ? attachment : [attachment];
+  const attachments = [attachment];
 
   if (!smtp && !resend) {
     return {
@@ -374,7 +374,7 @@ export async function sendEmailWithAttachmentTo(
     };
   }
 
-  const attachmentBytes = attachments.reduce((sum, file) => sum + file.content.length, 0);
+  const attachmentBytes = attachments?.[0]?.content.length ?? 0;
   const resendMaxBytes = 38 * 1024 * 1024;
 
   if (smtp) {
@@ -386,7 +386,7 @@ export async function sendEmailWithAttachmentTo(
   if (resend && attachmentBytes > resendMaxBytes) {
     return {
       success: false as const,
-      error: 'הקבצים גדולים מדי לשליחה במייל',
+      error: 'הקובץ גדול מדי לשליחה במייל — השתמשי ב«צפייה בקטלוג» בדפדפן',
     };
   }
 
