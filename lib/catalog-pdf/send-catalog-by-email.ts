@@ -1,4 +1,4 @@
-import { sendEmailWithAttachmentTo } from '@/lib/email';
+import { isEmailSizeError, sendEmailWithAttachmentTo } from '@/lib/email';
 import { SITE_NAME } from '@/lib/site-config';
 import { fetchAllCatalogPdfDresses } from '@/lib/catalog-pdf/fetch-all-catalog-dresses';
 import { generateCatalogPdf } from '@/lib/catalog-pdf/generate-catalog-pdf';
@@ -98,31 +98,71 @@ export async function sendCatalogPdfByEmail(to: string) {
       ? `${SITE_NAME} — קטלוג שמלות מלא`
       : `${SITE_NAME} — קטלוג שמלות (${partCount} קבצי PDF)`;
 
-  const attachmentResult = await sendEmailWithAttachmentTo(
-    to,
-    subject,
-    buildCatalogEmailHtml({
-      totalDresses,
-      partCount,
-      parts: numberedParts.map((part, i) => ({
-        partIndex: i + 1,
-        fromIndex: part.fromIndex,
-        toIndex: part.toIndex,
-      })),
-    }),
-    attachments,
-  );
+  const html = buildCatalogEmailHtml({
+    totalDresses,
+    partCount,
+    parts: numberedParts.map((part, i) => ({
+      partIndex: i + 1,
+      fromIndex: part.fromIndex,
+      toIndex: part.toIndex,
+    })),
+  });
 
-  if (!attachmentResult.success) {
-    return attachmentResult;
+  const attachmentResult = await sendEmailWithAttachmentTo(to, subject, html, attachments);
+
+  if (attachmentResult.success) {
+    return {
+      success: true as const,
+      linkOnly: false as const,
+      message:
+        partCount === 1
+          ? `הקטלוג נשלח ל-${to} כ-PDF.`
+          : `הקטלוג נשלח ל-${to} במייל אחד עם ${partCount} קבצי PDF.`,
+    };
   }
 
-  return {
-    success: true as const,
-    linkOnly: false as const,
-    message:
-      partCount === 1
-        ? `הקטלוג נשלח ל-${to} כ-PDF.`
-        : `הקטלוג נשלח ל-${to} במייל אחד עם ${partCount} קבצי PDF.`,
-  };
+  if (partCount > 1 && isEmailSizeError(attachmentResult.error)) {
+    let sent = 0;
+    for (let i = 0; i < numberedParts.length; i++) {
+      const part = numberedParts[i];
+      const partIndex = i + 1;
+      const partResult = await sendEmailWithAttachmentTo(
+        to,
+        `${SITE_NAME} — קטלוג שמלות (חלק ${partIndex} מתוך ${partCount})`,
+        buildCatalogEmailHtml({
+          totalDresses,
+          partCount: 1,
+          parts: [
+            {
+              partIndex: 1,
+              fromIndex: part.fromIndex,
+              toIndex: part.toIndex,
+            },
+          ],
+        }),
+        {
+          filename: attachments[i].filename,
+          content: part.pdf,
+          contentType: 'application/pdf',
+        },
+      );
+
+      if (!partResult.success) {
+        if (sent === 0) return partResult;
+        return {
+          success: false as const,
+          error: `נשלחו ${sent} מתוך ${partCount} חלקים, ואז השליחה נכשלה. נסי שוב בעוד כמה דקות.`,
+        };
+      }
+      sent += 1;
+    }
+
+    return {
+      success: true as const,
+      linkOnly: false as const,
+      message: `הקטלוג נשלח ל-${to} ב-${partCount} מיילים, כי קובץ אחד משולב היה גדול מדי.`,
+    };
+  }
+
+  return attachmentResult;
 }

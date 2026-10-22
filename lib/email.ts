@@ -118,21 +118,44 @@ function isPlaceholderFrom(from: string) {
   return isResendSandboxFrom(from) || isInvalidResendFrom(from);
 }
 
+function isGmailFrom(from: string) {
+  const lower = from.toLowerCase();
+  return lower.includes('@gmail.com') || lower.includes('@googlemail.com');
+}
+
+/** Resend לא יכול לשלוח מ-Gmail / דומיין לא מאומת */
+function canUseResendFrom(from: string) {
+  if (!from) return false;
+  if (isResendSandboxFrom(from) || isInvalidResendFrom(from)) return false;
+  if (isGmailFrom(from)) return false;
+  return true;
+}
+
+export function isEmailSizeError(message: string | undefined) {
+  const lower = (message || '').toLowerCase();
+  return (
+    lower.includes('size') ||
+    lower.includes('too large') ||
+    lower.includes('message exceeds') ||
+    lower.includes('552') ||
+    lower.includes('quota') ||
+    lower.includes('גדול מדי')
+  );
+}
+
 function formatResendError(message: string) {
   const lower = message.toLowerCase();
   if (lower.includes('size limit') || lower.includes('exceeded the size')) {
-    return 'הקובץ גדול מדי לשליחה במייל — נסי «צפייה בקטלוג» בדפדפן';
+    return 'הקובץ גדול מדי לשליחה במייל';
   }
   if (
     lower.includes('only send testing emails') ||
     lower.includes('verify a domain') ||
+    lower.includes('domain is not verified') ||
+    lower.includes('not verified') ||
     lower.includes('403')
   ) {
-    return (
-      'Resend במצב בדיקה — לא ניתן לשלוח ללקוחות. ' +
-      'הוסיפי SMTP_PASSWORD (סיסמת אפליקציה של Gmail) ב-Vercel, ' +
-      'או אמתי דומיין ב-resend.com/domains ועדכני RESEND_FROM.'
-    );
+    return 'שליחת המייל נכשלה. נסי שוב בעוד כמה דקות.';
   }
   return message;
 }
@@ -321,12 +344,13 @@ export async function sendEmailTo(to: string, subject: string, html: string) {
     const result = await sendViaSmtp(recipient, subject, html);
     if (result?.success) return result;
     if (result && !resend) return result;
+    if (result && !canUseResendFrom(getFromAddress())) return result;
   }
 
   // Resend sandbox — רק עם דומיין מאומת (לא onboarding@resend.dev)
   if (resend) {
     const from = getFromAddress();
-    if (isResendSandboxFrom(from) && recipient !== getAdminEmail()) {
+    if (!canUseResendFrom(from) && recipient !== getAdminEmail()) {
       return {
         success: false as const,
         error:
@@ -381,6 +405,7 @@ export async function sendEmailWithAttachmentTo(
     const result = await sendViaSmtp(recipient, subject, html, attachments);
     if (result?.success) return result;
     if (result && !resend) return result;
+    if (result && !canUseResendFrom(getFromAddress())) return result;
   }
 
   if (resend && attachmentBytes > resendMaxBytes) {
@@ -392,7 +417,7 @@ export async function sendEmailWithAttachmentTo(
 
   if (resend) {
     const from = getFromAddress();
-    if (isResendSandboxFrom(from) && recipient !== getAdminEmail()) {
+    if (!canUseResendFrom(from) && recipient !== getAdminEmail()) {
       return {
         success: false as const,
         error:
