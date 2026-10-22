@@ -6,16 +6,11 @@ import { launchCatalogPdfBrowser } from '@/lib/catalog-pdf/launch-catalog-pdf-br
 import type { CatalogPdfDress } from '@/lib/catalog-pdf/types';
 
 /**
- * 90 שמלות כבר נשלחו בהצלחה במייל; 120 נכשלו.
- * זה גם חיתוך ראשוני לפני מדידת גודל הקובץ.
+ * 90 שמלות כבר נשלחו בהצלחה כקובץ אחד.
+ * 120 כקובץ אחד נכשל. לכן כל PDF מכיל עד 90 שמלות.
+ * לא מפצלים לפי 15MB — זה יצר קבצים של 45 שמלות בטעות.
  */
 const DRESSES_PER_PDF = 90;
-
-/**
- * Gmail ~25MB אחרי קידוד base64 (~33% תוספת).
- * 15MB לקובץ גולמי נשאר מתחת למגבלה בפועל.
- */
-const MAX_EMAIL_ATTACHMENT_BYTES = 15 * 1024 * 1024;
 
 type CatalogPdfPart = {
   pdf: Buffer;
@@ -30,26 +25,29 @@ function chunkDresses<T>(items: T[], size: number): T[][] {
   return chunks;
 }
 
-function buildPartEmailHtml(params: {
+function buildCatalogEmailHtml(params: {
   totalDresses: number;
-  partIndex: number;
   partCount: number;
-  fromIndex: number;
-  toIndex: number;
+  parts: { partIndex: number; fromIndex: number; toIndex: number }[];
 }) {
-  const { totalDresses, partIndex, partCount, fromIndex, toIndex } = params;
+  const { totalDresses, partCount, parts } = params;
   const isMulti = partCount > 1;
+  const partsList = parts
+    .map(
+      (part) =>
+        `<li>חלק ${part.partIndex} מתוך ${partCount} — שמלות ${part.fromIndex}–${part.toIndex}</li>`,
+    )
+    .join('');
 
   return `
     <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #eadaaf;border-radius:16px;background:#fffdf8;">
       <h2 style="color:#3d2f24;margin-top:0;">קטלוג ${SITE_NAME}</h2>
       ${
         isMulti
-          ? `<p style="line-height:1.7;color:#554a33;">מצורף <strong>חלק ${partIndex} מתוך ${partCount}</strong> של הקטלוג (שמלות ${fromIndex}–${toIndex} מתוך ${totalDresses}).</p>
-             <p style="line-height:1.7;color:#554a33;">הקטלוג פוצל לכמה קבצים כדי שכל מייל יישלח בהצלחה. בדקי שקיבלת את כל החלקים.</p>`
+          ? `<p style="line-height:1.7;color:#554a33;">מצורפים <strong>${partCount} קבצי PDF</strong> עם ${totalDresses} שמלות מהקטלוג.</p>
+             <ul style="line-height:1.7;color:#554a33;padding-right:18px;">${partsList}</ul>`
           : `<p style="line-height:1.7;color:#554a33;">מצורף קובץ PDF עם ${totalDresses} שמלות מהקטלוג.</p>`
       }
-      <p style="line-height:1.7;color:#6e634c;font-size:13px;margin-top:16px;">אם הקובץ לא נפתח — פתחי את המייל באפליקציית Gmail בטלפון. בדקי גם בתיקיית הספאם.</p>
     </div>
   `;
 }
@@ -67,8 +65,11 @@ export async function sendCatalogPdfByEmail(to: string) {
 
   try {
     for (const chunk of chunkDresses(dresses, DRESSES_PER_PDF)) {
-      const fitted = await splitChunkToEmailSize(chunk, browser);
-      parts.push(...fitted);
+      const pdf = await generateCatalogPdf(chunk, {
+        compactImages: true,
+        browser,
+      });
+      parts.push({ pdf, dresses: chunk });
     }
   } finally {
     await browser.close();
@@ -83,47 +84,37 @@ export async function sendCatalogPdfByEmail(to: string) {
   });
 
   const partCount = numberedParts.length;
-  let sent = 0;
-
-  for (let i = 0; i < numberedParts.length; i++) {
-    const part = numberedParts[i];
-    const partIndex = i + 1;
-    const filename =
+  const attachments = numberedParts.map((part, i) => ({
+    filename:
       partCount === 1
         ? `catalog-dress-click-${date}.pdf`
-        : `catalog-dress-click-${date}-part-${partIndex}-of-${partCount}.pdf`;
+        : `catalog-dress-click-${date}-part-${i + 1}-of-${partCount}.pdf`,
+    content: part.pdf,
+    contentType: 'application/pdf',
+  }));
 
-    const subject =
-      partCount === 1
-        ? `${SITE_NAME} — קטלוג שמלות מלא`
-        : `${SITE_NAME} — קטלוג שמלות (חלק ${partIndex} מתוך ${partCount})`;
+  const subject =
+    partCount === 1
+      ? `${SITE_NAME} — קטלוג שמלות מלא`
+      : `${SITE_NAME} — קטלוג שמלות (${partCount} קבצי PDF)`;
 
-    const attachmentResult = await sendEmailWithAttachmentTo(
-      to,
-      subject,
-      buildPartEmailHtml({
-        totalDresses,
-        partIndex,
-        partCount,
+  const attachmentResult = await sendEmailWithAttachmentTo(
+    to,
+    subject,
+    buildCatalogEmailHtml({
+      totalDresses,
+      partCount,
+      parts: numberedParts.map((part, i) => ({
+        partIndex: i + 1,
         fromIndex: part.fromIndex,
         toIndex: part.toIndex,
-      }),
-      {
-        filename,
-        content: part.pdf,
-        contentType: 'application/pdf',
-      },
-    );
+      })),
+    }),
+    attachments,
+  );
 
-    if (!attachmentResult.success) {
-      if (sent === 0) return attachmentResult;
-      return {
-        success: false as const,
-        error: `נשלחו ${sent} מתוך ${partCount} חלקים למייל, ואז השליחה נכשלה. נסי שוב בעוד כמה דקות.`,
-      };
-    }
-
-    sent += 1;
+  if (!attachmentResult.success) {
+    return attachmentResult;
   }
 
   return {
@@ -131,26 +122,7 @@ export async function sendCatalogPdfByEmail(to: string) {
     linkOnly: false as const,
     message:
       partCount === 1
-        ? `הקטלוג נשלח ל-${to} כ-PDF. בדקי גם בתיקיית הספאם.`
-        : `הקטלוג נשלח ל-${to} ב-${partCount} מיילים (קבצי PDF נפרדים). בדקי גם בתיקיית הספאם.`,
+        ? `הקטלוג נשלח ל-${to} כ-PDF.`
+        : `הקטלוג נשלח ל-${to} במייל אחד עם ${partCount} קבצי PDF.`,
   };
-}
-
-async function splitChunkToEmailSize(
-  dresses: CatalogPdfDress[],
-  browser: Awaited<ReturnType<typeof launchCatalogPdfBrowser>>,
-): Promise<CatalogPdfPart[]> {
-  const pdf = await generateCatalogPdf(dresses, {
-    compactImages: true,
-    browser,
-  });
-
-  if (pdf.length <= MAX_EMAIL_ATTACHMENT_BYTES || dresses.length === 1) {
-    return [{ pdf, dresses }];
-  }
-
-  const mid = Math.ceil(dresses.length / 2);
-  const left = await splitChunkToEmailSize(dresses.slice(0, mid), browser);
-  const right = await splitChunkToEmailSize(dresses.slice(mid), browser);
-  return [...left, ...right];
 }
