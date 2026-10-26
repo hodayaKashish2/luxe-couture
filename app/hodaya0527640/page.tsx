@@ -18,7 +18,7 @@ import type {
   AdminTab,
 } from '@/lib/admin-types';
 import { BOOKING_STATUS_LABELS } from '@/lib/admin-types';
-import { downloadCatalogPdf as saveCatalogPdf } from '@/lib/catalog-pdf/download-catalog-pdf-client';
+import { DEFAULT_ADMIN_EMAIL } from '@/lib/site-config';
 
 const TABS: { id: AdminTab; label: string }[] = [
   { id: 'overview', label: 'סקירה' },
@@ -64,7 +64,6 @@ export default function AdminPage() {
   } | null>(null);
   const [rejectBusy, setRejectBusy] = useState(false);
   const [catalogPdfBusy, setCatalogPdfBusy] = useState(false);
-  const [catalogPdfProgress, setCatalogPdfProgress] = useState('');
 
   useEffect(() => {
     const stored = sessionStorage.getItem('admin_token');
@@ -271,28 +270,26 @@ export default function AdminPage() {
     return handleAction('booking', id, 'approve_payment');
   }
 
-  async function downloadAdminCatalogPdf() {
+  async function sendAdminCatalogEmail() {
     if (!savedToken || catalogPdfBusy) return;
     setCatalogPdfBusy(true);
-    setCatalogPdfProgress('מייצר PDF...');
     setError('');
     setActionMsg('');
 
     try {
-      const result = await saveCatalogPdf({
-        endpoint: '/api/admin/catalog-pdf',
+      const response = await fetch('/api/admin/catalog-pdf/email', {
+        method: 'POST',
         headers: { 'x-admin-token': savedToken },
-        onProgress: (part, parts) => {
-          setCatalogPdfProgress(parts > 1 ? `מייצר PDF ${part}/${parts}...` : 'מייצר PDF...');
-        },
       });
-      const count = result.total || overview?.stats.published;
-      setActionMsg(`✓ קטלוג PDF הורד${count ? ` (${count} שמלות)` : ''}`);
+      const data = (await response.json().catch(() => ({}))) as { error?: string; message?: string };
+      if (!response.ok) {
+        throw new Error(data.error || 'שליחת המייל נכשלה');
+      }
+      setActionMsg(data.message || `✓ הקטלוג נשלח ל-${DEFAULT_ADMIN_EMAIL}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'יצירת הקטלוג נכשלה');
+      setError(err instanceof Error ? err.message : 'שליחת המייל נכשלה');
     } finally {
       setCatalogPdfBusy(false);
-      setCatalogPdfProgress('');
     }
   }
 
@@ -354,12 +351,12 @@ export default function AdminPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => void downloadAdminCatalogPdf()}
+                  onClick={() => void sendAdminCatalogEmail()}
                   disabled={catalogPdfBusy}
                   className="text-xs px-3 py-1.5 border border-[#d4af37] rounded-lg bg-[#fff8e8] text-[#8b6508] font-bold disabled:opacity-60"
-                  title="הורדת כל השמלות המאושרות כקובץ PDF"
+                  title={`שליחת קבצי הקטלוג ל-${DEFAULT_ADMIN_EMAIL}`}
                 >
-                  {catalogPdfBusy ? catalogPdfProgress || 'מייצר PDF...' : '📥 הורד קטלוג PDF'}
+                  {catalogPdfBusy ? 'שולחת את הקטלוג...' : '📧 שליחת הקטלוג למייל'}
                 </button>
                 <button
                   type="button"
