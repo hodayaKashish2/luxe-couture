@@ -2,6 +2,6 @@ import { createCatalogPdfResponse } from '@/lib/catalog-pdf/create-catalog-pdf-r
 
 export const maxDuration = 60;
 
-export async function GET() {
-  return createCatalogPdfResponse();
+export async function GET(request: Request) {
+  return createCatalogPdfResponse(request);
 }

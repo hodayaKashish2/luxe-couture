@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { downloadCatalogPdf as saveCatalogPdf } from '@/lib/catalog-pdf/download-catalog-pdf-client';
 
 type CatalogPdfDownloadButtonProps = {
   className?: string;
@@ -18,6 +19,7 @@ export default function CatalogPdfDownloadButton({
   onSuccess,
 }: CatalogPdfDownloadButtonProps) {
   const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState('');
   const [error, setError] = useState('');
 
   function openPreview() {
@@ -30,29 +32,12 @@ export default function CatalogPdfDownloadButton({
     setError('');
 
     try {
-      const response = await fetch('/api/catalog-pdf');
-
-      if (!response.ok) {
-        const data = (await response.json().catch(() => ({}))) as { error?: string };
-        throw new Error(data.error || 'יצירת הקטלוג נכשלה');
-      }
-
-      const contentType = response.headers.get('content-type') || '';
-      if (!contentType.includes('application/pdf')) {
-        throw new Error('השרת לא החזיר קובץ PDF תקין');
-      }
-
-      const blob = await response.blob();
-      if (blob.size < 1000) {
-        throw new Error('קובץ ה-PDF ריק או פגום');
-      }
-
-      const url = URL.createObjectURL(blob);
-      const anchor = document.createElement('a');
-      anchor.href = url;
-      anchor.download = `catalog-dress-click-${new Date().toISOString().slice(0, 10)}.pdf`;
-      anchor.click();
-      URL.revokeObjectURL(url);
+      await saveCatalogPdf({
+        endpoint: '/api/catalog-pdf',
+        onProgress: (part, parts) => {
+          setProgress(parts > 1 ? `מייצר PDF ${part}/${parts}...` : busyLabel);
+        },
+      });
       onSuccess?.();
     } catch (err) {
       const message = err instanceof Error ? err.message : 'יצירת הקטלוג נכשלה';
@@ -60,6 +45,7 @@ export default function CatalogPdfDownloadButton({
       onError?.(message);
     } finally {
       setBusy(false);
+      setProgress('');
     }
   }
 
@@ -72,7 +58,7 @@ export default function CatalogPdfDownloadButton({
         className={className}
         title="קטלוג מלא לשמירה ושיתוף — לבנות בלי גישה לאתר"
       >
-        {busy ? busyLabel : label}
+        {busy ? progress || busyLabel : label}
       </button>
       {error && (
         <p className="max-w-[220px] text-center text-[10px] leading-snug text-red-600 sm:text-right">

@@ -30,11 +30,13 @@ export async function launchCatalogPdfBrowser(): Promise<Browser> {
   if (process.env.VERCEL === '1') {
     const chromium = (await import('@sparticuz/chromium-min')).default;
     const packUrl = process.env.CHROMIUM_REMOTE_EXEC_PATH?.trim() || DEFAULT_CHROMIUM_PACK_URL;
+    // PDF doesn't need WebGL. Leaving graphics on makes Chromium look for SwiftShader and fail to launch.
+    chromium.setGraphicsMode = false;
 
     return puppeteer.default.launch({
       args: chromium.args,
       executablePath: await chromium.executablePath(packUrl),
-      headless: true,
+      headless: 'shell',
     });
   }
 

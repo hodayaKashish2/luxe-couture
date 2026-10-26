@@ -15,5 +15,5 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'לא מורשה' }, { status: 401 });
   }
 
-  return createCatalogPdfResponse();
+  return createCatalogPdfResponse(request);
 }

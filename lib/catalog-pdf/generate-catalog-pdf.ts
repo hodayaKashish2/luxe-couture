@@ -28,13 +28,14 @@ export async function generateCatalogPdf(
   try {
     const page = await browser.newPage();
     try {
+      const imageTimeoutMs = Math.min(45_000, 8_000 + dresses.length * 500);
       await page.setContent(html, {
-        waitUntil: 'load',
-        timeout: 180000,
+        waitUntil: 'domcontentloaded',
+        timeout: 30_000,
       });
 
-      await page.evaluate(async () => {
-        await Promise.all(
+      await page.evaluate(async (timeoutMs) => {
+        const imagesLoaded = Promise.all(
           Array.from(document.images).map((img) =>
             img.complete
               ? Promise.resolve()
@@ -44,7 +45,13 @@ export async function generateCatalogPdf(
                 }),
           ),
         );
-      });
+        await Promise.race([
+          imagesLoaded,
+          new Promise<void>((resolve) => {
+            setTimeout(resolve, timeoutMs);
+          }),
+        ]);
+      }, imageTimeoutMs);
 
       const pdf = await page.pdf({
         format: 'A4',

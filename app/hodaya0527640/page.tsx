@@ -18,6 +18,7 @@ import type {
   AdminTab,
 } from '@/lib/admin-types';
 import { BOOKING_STATUS_LABELS } from '@/lib/admin-types';
+import { downloadCatalogPdf as saveCatalogPdf } from '@/lib/catalog-pdf/download-catalog-pdf-client';
 
 const TABS: { id: AdminTab; label: string }[] = [
   { id: 'overview', label: 'סקירה' },
@@ -63,6 +64,7 @@ export default function AdminPage() {
   } | null>(null);
   const [rejectBusy, setRejectBusy] = useState(false);
   const [catalogPdfBusy, setCatalogPdfBusy] = useState(false);
+  const [catalogPdfProgress, setCatalogPdfProgress] = useState('');
 
   useEffect(() => {
     const stored = sessionStorage.getItem('admin_token');
@@ -269,34 +271,28 @@ export default function AdminPage() {
     return handleAction('booking', id, 'approve_payment');
   }
 
-  async function downloadCatalogPdf() {
+  async function downloadAdminCatalogPdf() {
     if (!savedToken || catalogPdfBusy) return;
     setCatalogPdfBusy(true);
+    setCatalogPdfProgress('מייצר PDF...');
     setError('');
     setActionMsg('');
 
     try {
-      const response = await fetch('/api/admin/catalog-pdf', {
+      const result = await saveCatalogPdf({
+        endpoint: '/api/admin/catalog-pdf',
         headers: { 'x-admin-token': savedToken },
+        onProgress: (part, parts) => {
+          setCatalogPdfProgress(parts > 1 ? `מייצר PDF ${part}/${parts}...` : 'מייצר PDF...');
+        },
       });
-
-      if (!response.ok) {
-        const data = (await response.json().catch(() => ({}))) as { error?: string };
-        throw new Error(data.error || 'יצירת הקטלוג נכשלה');
-      }
-
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      const anchor = document.createElement('a');
-      anchor.href = url;
-      anchor.download = `catalog-dress-click-${new Date().toISOString().slice(0, 10)}.pdf`;
-      anchor.click();
-      URL.revokeObjectURL(url);
-      setActionMsg(`✓ קטלוג PDF הורד (${overview?.stats.published ?? 'כל'} שמלות)`);
+      const count = result.total || overview?.stats.published;
+      setActionMsg(`✓ קטלוג PDF הורד${count ? ` (${count} שמלות)` : ''}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'יצירת הקטלוג נכשלה');
     } finally {
       setCatalogPdfBusy(false);
+      setCatalogPdfProgress('');
     }
   }
 
@@ -358,12 +354,12 @@ export default function AdminPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => void downloadCatalogPdf()}
+                  onClick={() => void downloadAdminCatalogPdf()}
                   disabled={catalogPdfBusy}
                   className="text-xs px-3 py-1.5 border border-[#d4af37] rounded-lg bg-[#fff8e8] text-[#8b6508] font-bold disabled:opacity-60"
-                  title="ניסיוני — מקומי בלבד עד שתדחפי לפרודקשן"
+                  title="הורדת כל השמלות המאושרות כקובץ PDF"
                 >
-                  {catalogPdfBusy ? 'מייצר PDF...' : '📥 הורד קטלוג PDF'}
+                  {catalogPdfBusy ? catalogPdfProgress || 'מייצר PDF...' : '📥 הורד קטלוג PDF'}
                 </button>
                 <button
                   type="button"
