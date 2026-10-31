@@ -46,16 +46,16 @@ export async function POST(request: Request) {
     await sendAdminEmail(
       `💬 תגובה חדשה: ${name}`,
       `
-        <div dir="rtl" style="font-family: sans-serif; max-width: 640px; margin: 0 auto; padding: 24px; border: 1px solid #eadaaf; border-radius: 16px; background: #fffdf8;">
+        <div dir="rtl" style="font-family: sans-serif; max-width: 640px; margin: 0 auto; padding: 24px; border: 1px solid #ead8dc; border-radius: 16px; background: #fffdf8;">
           <h2 style="color: #3d2f24; margin-top: 0;">תגובה חדשה לאישור</h2>
           <p><strong>שם:</strong> ${name}</p>
           <p><strong>תפקיד:</strong> ${role}</p>
           <p><strong>דירוג:</strong> ${starsHtml} (${stars}/5)</p>
-          <blockquote style="margin: 0; padding: 12px 16px; background: #faf6eb; border-right: 3px solid #d4af37; font-style: italic;">
+          <blockquote style="margin: 0; padding: 12px 16px; background: #faf6eb; border-right: 3px solid #6b2340; font-style: italic;">
             "${text}"
           </blockquote>
           <p style="margin-top: 24px;">
-            <a href="${approveUrl}" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
+            <a href="${approveUrl}" style="display:inline-block;background:#6b2340;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
               ✅ אשר ופרסמי
             </a>
           </p>

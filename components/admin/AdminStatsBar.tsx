@@ -35,11 +35,11 @@ export default function AdminStatsBar({ stats, onNavigate }: AdminStatsBarProps)
             type="button"
             onClick={() => onNavigate(card.tab, card.featured)}
             className={`text-right rounded-xl border p-3 transition-shadow hover:shadow-md ${
-              isAlert ? 'bg-amber-50 border-amber-300' : 'bg-white border-[#eadaaf]'
+              isAlert ? 'bg-amber-50 border-amber-300' : 'bg-white border-[#ead8dc]'
             }`}
           >
-            <p className="text-[10px] text-[#6e634c] mb-1">{card.label}</p>
-            <p className={`text-2xl font-black ${isAlert ? 'text-amber-800' : 'text-[#3d2f24]'}`}>
+            <p className="text-[10px] text-[#6e5e62] mb-1">{card.label}</p>
+            <p className={`text-2xl font-black ${isAlert ? 'text-amber-800' : 'text-[#2c2426]'}`}>
               {value}
             </p>
           </button>

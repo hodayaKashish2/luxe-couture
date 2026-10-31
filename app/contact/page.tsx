@@ -33,13 +33,13 @@ export default function ContactPage() {
         </p>
         <p>
           <strong>אימייל:</strong>{' '}
-          <a href={`mailto:${CONTACT_EMAIL}`} className="text-[#b8860b] hover:underline">
+          <a href={`mailto:${CONTACT_EMAIL}`} className="text-[#6b2340] hover:underline">
             {CONTACT_EMAIL}
           </a>
         </p>
       </div>
 
-      <p className="text-xs text-[#9a7b4f] pt-2">
+      <p className="text-xs text-[#7a5e64] pt-2">
         זמן מענה משוער: עד 24 שעות בימי חול.
       </p>
     </ContentPage>

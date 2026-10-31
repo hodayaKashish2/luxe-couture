@@ -4,7 +4,7 @@ import { useCallback, useState } from 'react';
 import CatalogEmailModal from '@/components/CatalogEmailModal';
 
 const actionBtnClass =
-  'text-[11px] font-bold text-[#8b6508] px-3 py-1.5 border border-[#d4af37] rounded-lg bg-[#fff8e8] hover:bg-[#fff3d6] transition-colors';
+  'text-[11px] font-bold text-[#6b2340] px-3 py-1.5 border border-[#6b2340] rounded-lg bg-[#f6eef1] hover:bg-[#f0e0e5] transition-colors';
 
 type CatalogAccessActionsProps = {
   onError?: (message: string) => void;

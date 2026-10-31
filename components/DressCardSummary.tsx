@@ -7,27 +7,26 @@ type Props = {
   onShowDetails: () => void;
 };
 
-/** תצוגה קצרה בכרטיס — ללא מידה (מוצגת על התמונה) */
 export default function DressCardSummary({ dress, onShowDetails }: Props) {
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap gap-1.5 text-[10px]">
         <RentalCountBadge dress={dress} />
         {dress.city && (
-          <span className="bg-[#f4ebd4] text-[#8b6508] px-2.5 py-0.5 rounded-full font-bold">
-            📍 {dress.city}
+          <span className="rounded-full bg-[#f6eef1] px-2.5 py-0.5 font-bold text-[#6b2340]">
+            {dress.city}
           </span>
         )}
         {dress.listing_type === 'sale' ? (
-          <span className="bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full font-bold">
+          <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 font-bold text-emerald-800">
             {listingTypeLabel(dress.listing_type)}
           </span>
         ) : (
-          <span className="bg-[#f4ebd4] text-[#8b6508] px-2.5 py-0.5 rounded-full font-bold">
+          <span className="rounded-full bg-[#f6eef1] px-2.5 py-0.5 font-bold text-[#6b2340]">
             {listingTypeLabel(dress.listing_type)}
           </span>
         )}
-        <span className="bg-neutral-100 text-[#6e634c] px-2.5 py-0.5 rounded-full">
+        <span className="rounded-full bg-neutral-100 px-2.5 py-0.5 text-[#6e5e62]">
           {dressKindLabel(dress.event_type)}
         </span>
       </div>
@@ -37,9 +36,9 @@ export default function DressCardSummary({ dress, onShowDetails }: Props) {
           e.stopPropagation();
           onShowDetails();
         }}
-        className="text-[11px] font-bold text-[#b8860b] hover:text-[#8b6508] underline underline-offset-2 cursor-pointer transition-colors hover:drop-shadow-sm"
+        className="cursor-pointer text-[11px] font-bold text-[#6b2340] underline underline-offset-2 transition-colors hover:text-[#4a152c]"
       >
-        ℹ️ פרטים מלאים
+        פרטים מלאים
       </button>
     </div>
   );

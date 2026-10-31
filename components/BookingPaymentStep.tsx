@@ -75,13 +75,13 @@ export default function BookingPaymentStep({
       <h3 className="text-lg font-black text-neutral-900">
         {ownerApproved ? '✅ המשכירה אישרה — השלימי תשלום' : '💳 בחירת אמצעי תשלום'}
       </h3>
-      <p className="text-xs text-[#5c5037] leading-relaxed">
+      <p className="text-xs text-[#6e5e62] leading-relaxed">
         {ownerApproved
           ? 'הבקשה אושרה על ידי המשכירה. בחרי ביט או העברה בנקאית, בצעי את התשלום, ואז אשרי עם פרטי מבצעת ההעברה.'
           : 'ההזמנה נשמרה. בחרי ביט או העברה בנקאית — השלימי את התשלום, ואז אשרי עם פרטי מבצעת ההעברה.'}
       </p>
 
-      <div className="bg-white border border-[#decfa8] rounded-xl p-4 text-xs">
+      <div className="bg-white border border-[#e3cfd3] rounded-xl p-4 text-xs">
         <div className="flex justify-between font-black text-neutral-900">
           <span>סה״כ לתשלום</span>
           <span>₪{amount}</span>
@@ -95,7 +95,7 @@ export default function BookingPaymentStep({
           className={`py-3 px-3 rounded-xl border text-xs font-black transition-colors ${
             method === 'bit'
               ? 'bg-[#2c261a] text-white border-[#2c261a]'
-              : 'bg-white border-[#decfa8] text-neutral-900 hover:border-[#b8860b]'
+              : 'bg-white border-[#e3cfd3] text-neutral-900 hover:border-[#6b2340]'
           }`}
         >
           📱 תשלום בביט
@@ -106,7 +106,7 @@ export default function BookingPaymentStep({
           className={`py-3 px-3 rounded-xl border text-xs font-black transition-colors ${
             method === 'bank'
               ? 'bg-[#2c261a] text-white border-[#2c261a]'
-              : 'bg-white border-[#decfa8] text-neutral-900 hover:border-[#b8860b]'
+              : 'bg-white border-[#e3cfd3] text-neutral-900 hover:border-[#6b2340]'
           }`}
         >
           {method === 'bank' && showBankDetails ? '🏦 הסתרת פרטי בנק' : '🏦 העברה בנקאית'}
@@ -114,7 +114,7 @@ export default function BookingPaymentStep({
       </div>
 
       {method === 'bit' && (
-        <div className="bg-[#f4ebd4]/60 border border-[#decfa8] rounded-xl p-3 text-xs text-[#5c5037] space-y-1">
+        <div className="bg-[#f3e9ec]/60 border border-[#e3cfd3] rounded-xl p-3 text-xs text-[#6e5e62] space-y-1">
           <p className="font-bold text-neutral-900">תשלום בביט</p>
           <p>
             האפליקציה אמורה להיפתח על עמוד ההעברה ל-<strong dir="ltr">{BIT_PHONE_DISPLAY}</strong> בסכום{' '}
@@ -123,7 +123,7 @@ export default function BookingPaymentStep({
           <button
             type="button"
             onClick={() => openBitPayment(amount)}
-            className="mt-1 text-[#8b6508] font-bold underline"
+            className="mt-1 text-[#6b2340] font-bold underline"
           >
             פתיחה מחדש של ביט להעברה
           </button>
@@ -131,18 +131,18 @@ export default function BookingPaymentStep({
       )}
 
       {method === 'bank' && showBankDetails && (
-        <div className="bg-white border border-[#decfa8] rounded-xl p-4 text-xs space-y-2">
+        <div className="bg-white border border-[#e3cfd3] rounded-xl p-4 text-xs space-y-2">
           <div className="flex items-center justify-between gap-2">
             <p className="font-black text-neutral-900">פרטי העברה בנקאית</p>
             <button
               type="button"
               onClick={() => setShowBankDetails(false)}
-              className="text-[10px] font-bold text-[#8b6508] hover:underline shrink-0"
+              className="text-[10px] font-bold text-[#6b2340] hover:underline shrink-0"
             >
               ✕ סגירה
             </button>
           </div>
-          <div className="space-y-1 text-[#5c5037]">
+          <div className="space-y-1 text-[#6e5e62]">
             <p>
               <span className="font-bold text-neutral-800">שם: </span>
               {BANK_TRANSFER_DETAILS.accountName}
@@ -170,16 +170,16 @@ export default function BookingPaymentStep({
         <button
           type="button"
           onClick={handleStartConfirm}
-          className="w-full py-3.5 bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white text-xs font-black rounded-xl shadow-lg"
+          className="w-full py-3.5 bg-gradient-to-r from-[#6b2340] to-[#4a152c] text-white text-xs font-black rounded-xl shadow-lg"
         >
           {`✓ ביצעתי תשלום (${METHOD_LABELS[method]}) — המשך`}
         </button>
       )}
 
       {method && showSenderForm && (
-        <div className="bg-white border border-[#decfa8] rounded-xl p-4 text-xs space-y-3">
+        <div className="bg-white border border-[#e3cfd3] rounded-xl p-4 text-xs space-y-3">
           <p className="font-black text-neutral-900">פרטי מבצעת ההעברה</p>
-          <p className="text-[#5c5037] leading-relaxed">
+          <p className="text-[#6e5e62] leading-relaxed">
             מי ביצעה את התשלום ב{METHOD_LABELS[method]}? הפרטים יישלחו לאישור המערכת.
           </p>
           <input
@@ -187,14 +187,14 @@ export default function BookingPaymentStep({
             placeholder="שם מלא של מבצעת ההעברה"
             value={senderName}
             onChange={(e) => setSenderName(e.target.value)}
-            className="w-full p-3 bg-[#fffdf8] border border-[#decfa8] rounded-xl text-xs font-medium focus:outline-none focus:border-[#d4af37]"
+            className="w-full p-3 bg-[#fffafb] border border-[#e3cfd3] rounded-xl text-xs font-medium focus:outline-none focus:border-[#6b2340]"
           />
           <input
             type="tel"
             placeholder="טלפון של מבצעת ההעברה"
             value={senderPhone}
             onChange={(e) => setSenderPhone(e.target.value)}
-            className="w-full p-3 bg-[#fffdf8] border border-[#decfa8] rounded-xl text-xs font-medium focus:outline-none focus:border-[#d4af37]"
+            className="w-full p-3 bg-[#fffafb] border border-[#e3cfd3] rounded-xl text-xs font-medium focus:outline-none focus:border-[#6b2340]"
           />
           {senderError && (
             <p className="text-[11px] text-red-600 font-bold bg-red-50 p-2 rounded-lg border border-red-200">
@@ -205,14 +205,14 @@ export default function BookingPaymentStep({
             type="button"
             onClick={handleSubmitPayment}
             disabled={isConfirming}
-            className="w-full py-3.5 bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white text-xs font-black rounded-xl shadow-lg disabled:opacity-60"
+            className="w-full py-3.5 bg-gradient-to-r from-[#6b2340] to-[#4a152c] text-white text-xs font-black rounded-xl shadow-lg disabled:opacity-60"
           >
             {isConfirming ? 'שולחת...' : '✓ אישור תשלום ושליחה לאישור'}
           </button>
         </div>
       )}
 
-      <button type="button" onClick={onBack} className="text-xs text-[#8b6508] hover:underline">
+      <button type="button" onClick={onBack} className="text-xs text-[#6b2340] hover:underline">
         ← חזרה
       </button>
     </div>

@@ -12,12 +12,10 @@ import { navigateAccountHub } from '@/lib/account-hub-nav';
 import { isLoggedIn } from '@/lib/require-login';
 
 const links = [
-  { href: '/', label: 'קטלוג', icon: '🏠' },
-  { href: '/account', label: 'האזור שלי', icon: '👤' },
-  { href: '/how-it-works', label: 'איך זה עובד', icon: '✨' },
-  { href: '/terms', label: 'תקנון', icon: '📋' },
-  { href: '/privacy', label: 'פרטיות', icon: '🔒' },
-  { href: '/contact', label: 'צור קשר', icon: '💬' },
+  { href: '/', label: 'קטלוג' },
+  { href: '/account', label: 'האזור שלי' },
+  { href: '/how-it-works', label: 'איך זה עובד' },
+  { href: '/contact', label: 'צור קשר' },
 ];
 
 function isActive(pathname: string, href: string) {
@@ -25,34 +23,70 @@ function isActive(pathname: string, href: string) {
   return pathname.startsWith(href);
 }
 
+function CartIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M4 5h1.6l1.2 9.2a2 2 0 0 0 2 1.8h8.5a2 2 0 0 0 2-1.6L21 8H7" />
+      <circle cx="9.2" cy="19.2" r="1.4" fill="currentColor" stroke="none" />
+      <circle cx="17.2" cy="19.2" r="1.4" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+function HeartIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M12 20s-7-4.35-7-9.2A4.1 4.1 0 0 1 12 7.4 4.1 4.1 0 0 1 19 10.8C19 15.65 12 20 12 20z"
+      />
+    </svg>
+  );
+}
+
 function NavLink({
   link,
   active,
   onClick,
-  variant = 'tab',
+  variant = 'bar',
   guestOnClick,
   forceHub,
+  overlay = false,
 }: {
   link: (typeof links)[number];
   active: boolean;
   onClick?: () => void;
-  variant?: 'tab' | 'menu';
+  variant?: 'bar' | 'menu';
   guestOnClick?: () => void;
   forceHub?: boolean;
+  overlay?: boolean;
 }) {
-  const classNameMenu = `flex items-center gap-3 px-4 py-3.5 min-h-[3rem] rounded-xl text-sm font-bold transition-colors ${
-    active
-      ? 'bg-[#fffdf8] text-[#8b6508] border-2 border-[#d4af37]'
-      : 'bg-white text-[#5c5037] border border-[#eadaaf] hover:border-[#d4af37]'
-  }`;
-  const classNameTab = `group relative inline-flex items-center gap-1.5 px-3 lg:px-5 py-2.5 lg:py-3 text-[11px] lg:text-xs font-bold whitespace-nowrap shrink-0 rounded-t-xl transition-all duration-200 border border-b-0 ${
-    active
-      ? 'bg-white text-[#8b6508] border-[#d4af37] shadow-[0_-4px_16px_rgba(212,175,55,0.18)] z-10 -mb-px'
-      : 'bg-transparent text-[#7a6f58] border-transparent hover:bg-white/90 hover:text-[#b8860b] hover:border-[#decfa8] hover:shadow-[0_-2px_10px_rgba(212,175,55,0.12)] hover:-translate-y-0.5'
-  }`;
+  const className =
+    variant === 'menu'
+      ? `block rounded-xl px-4 py-3 text-sm font-bold ${
+          active ? 'bg-[#f6eef1] text-[#6b2340]' : 'text-[#2c2426] hover:bg-[#faf7f5]'
+        }`
+      : `relative py-1 text-[13px] font-semibold tracking-wide transition-colors ${
+          overlay
+            ? active
+              ? 'text-white'
+              : 'text-white/80 hover:text-white'
+            : active
+              ? 'text-[#6b2340]'
+              : 'text-[#4a3d41] hover:text-[#6b2340]'
+        }`;
+
+  const label = (
+    <>
+      {link.label}
+      {variant === 'bar' && active && (
+        <span className={`absolute -bottom-2 right-0 left-0 h-px ${overlay ? 'bg-white' : 'bg-[#6b2340]'}`} />
+      )}
+    </>
+  );
 
   if (forceHub) {
-    const cls = variant === 'menu' ? classNameMenu : classNameTab;
     return (
       <button
         type="button"
@@ -60,59 +94,31 @@ function NavLink({
           navigateAccountHub();
           onClick?.();
         }}
-        className={cls}
+        className={className}
       >
-        <span aria-hidden className={`text-sm ${variant === 'tab' ? 'transition-transform duration-200 group-hover:scale-125' : 'text-lg'}`}>
-          {link.icon}
-        </span>
-        {link.label}
+        {label}
       </button>
     );
   }
 
   if (guestOnClick) {
-    const cls = variant === 'menu' ? classNameMenu : classNameTab;
     return (
-      <button type="button" onClick={() => { guestOnClick(); onClick?.(); }} className={cls}>
-        <span aria-hidden className={`text-sm ${variant === 'tab' ? 'transition-transform duration-200 group-hover:scale-125' : 'text-lg'}`}>
-          {link.icon}
-        </span>
-        {link.label}
+      <button
+        type="button"
+        onClick={() => {
+          guestOnClick();
+          onClick?.();
+        }}
+        className={className}
+      >
+        {label}
       </button>
     );
   }
 
-  if (variant === 'menu') {
-    return (
-      <Link href={link.href} onClick={onClick} className={classNameMenu}>
-        <span className="text-lg">{link.icon}</span>
-        {link.label}
-      </Link>
-    );
-  }
-
   return (
-    <Link href={link.href} onClick={onClick} className={classNameTab}>
-      <span
-        aria-hidden
-        className={`text-sm transition-transform duration-200 ${
-          active ? 'scale-110' : 'group-hover:scale-125 group-hover:drop-shadow-sm'
-        }`}
-      >
-        {link.icon}
-      </span>
-      <span
-        className={
-          active
-            ? 'underline decoration-[#d4af37] decoration-2 underline-offset-4'
-            : 'group-hover:underline group-hover:decoration-[#decfa8] group-hover:underline-offset-4'
-        }
-      >
-        {link.label}
-      </span>
-      {active && (
-        <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-gradient-to-l from-[#d4af37] to-[#b8860b] rounded-full" />
-      )}
+    <Link href={link.href} onClick={onClick} className={className}>
+      {label}
     </Link>
   );
 }
@@ -124,18 +130,20 @@ export default function SiteHeader() {
   const [userName, setUserName] = useState(() => getStoredDisplayName());
   const [loggedIn, setLoggedIn] = useState(() => isLoggedIn());
   const [mobileOpen, setMobileOpen] = useState(false);
+  const overlay = false;
 
   const closeMobileMenu = () => setMobileOpen(false);
+  const openAccountAuth = () => openAuthModal({ reason: 'account', next: '/account' });
+  const openCartAuth = () => openAuthModal({ reason: 'cart', next: '/account?section=cart' });
+  const openFavAuth = () => openAuthModal({ reason: 'favorites', next: '/account?section=favorites' });
 
-  const openAccountAuth = () =>
-    openAuthModal({ reason: 'account', next: '/account' });
-  const openCartAuth = () =>
-    openAuthModal({ reason: 'cart', next: '/account?section=cart' });
-  const openFavAuth = () =>
-    openAuthModal({ reason: 'favorites', next: '/account?section=favorites' });
+  const iconBtn = overlay
+    ? 'relative inline-flex h-10 w-10 items-center justify-center gap-1.5 rounded-full border border-white/35 bg-white/10 px-0 text-[11px] font-semibold text-white hover:bg-white/20 transition-colors sm:w-auto sm:px-3'
+    : 'relative inline-flex h-10 w-10 items-center justify-center gap-1.5 rounded-full border border-[#ead8dc] bg-white px-0 text-[11px] font-semibold text-[#6b2340] hover:border-[#6b2340] transition-colors sm:w-auto sm:px-3';
 
-  const actionBtnClass =
-    'inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl text-[10px] sm:text-[11px] font-bold border-2 border-[#decfa8] bg-[#fffdf8] text-[#8b6508] hover:border-[#d4af37] transition-colors';
+  const countBadge = overlay
+    ? 'absolute -top-1 -left-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-white px-1 text-[10px] font-bold text-[#6b2340]'
+    : 'absolute -top-1 -left-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#6b2340] px-1 text-[10px] font-bold text-white';
 
   useEffect(() => {
     const syncAuth = () => {
@@ -168,165 +176,177 @@ export default function SiteHeader() {
   }, [mobileOpen]);
 
   return (
-    <header className="relative z-30 border-b-2 border-[#e6c687]/70 bg-white/95 backdrop-blur-md shadow-sm w-full max-w-[100vw]">
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 py-3 sm:py-4">
-        <div className="flex items-center justify-between gap-2 sm:gap-3 min-w-0">
-          <Link href="/" className="flex items-center gap-2 sm:gap-3 shrink min-w-0">
-            <img
-              src="/logo.svg"
-              alt={SITE_NAME}
-              className="w-9 h-9 sm:w-11 sm:h-11 shrink-0 drop-shadow-[0_4px_14px_rgba(184,134,11,0.28)]"
-            />
-            <div className="min-w-0">
-              <span className="font-[family-name:var(--font-luxury)] text-sm sm:text-lg tracking-[0.06em] sm:tracking-[0.1em] text-[#4a3728] font-medium block truncate">
-                {SITE_NAME.split(' ')[0]}{' '}
-                <span className="text-[#a67c00] font-light">{SITE_NAME.split(' ').slice(1).join(' ')}</span>
+    <>
+    <header
+      className={`fixed top-0 z-30 w-full max-w-[100vw] transition-all duration-300 ${
+        overlay
+          ? 'border-transparent bg-gradient-to-b from-black/35 to-transparent'
+          : 'border-b border-[#ead8dc] bg-white/95 shadow-sm backdrop-blur-md'
+      }`}
+    >
+      <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-3 py-3 sm:px-6">
+        <Link href="/" className="flex min-w-0 items-center gap-2.5">
+          <img src="/logo.svg?v=8" alt="" className="h-10 w-10 shrink-0 sm:h-11 sm:w-11" />
+          <div className="min-w-0">
+            <span
+              className={`block truncate font-[family-name:var(--font-luxury)] text-lg leading-none sm:text-xl ${
+                overlay ? 'text-white' : 'text-[#2c2426]'
+              }`}
+            >
+              {SITE_NAME}
+            </span>
+            {userName && (
+              <span className={`mt-1 block truncate text-[11px] ${overlay ? 'text-white/70' : 'text-[#7a5e64]'}`}>
+                שלום, {userName}
               </span>
-              {userName && (
-                <span className="text-[10px] text-[#9a7b4f] truncate block">שלום, {userName}</span>
-              )}
-            </div>
-          </Link>
-
-          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            {!loggedIn && (
-              <div className="hidden sm:flex items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => openAuthModal({ reason: 'general', initialView: 'login' })}
-                  className="px-3 py-2 rounded-xl text-[10px] font-bold border-2 border-[#decfa8] bg-white text-[#8b6508] hover:border-[#d4af37] transition-colors"
-                >
-                  התחברות
-                </button>
-                <button
-                  type="button"
-                  onClick={() => openAuthModal({ reason: 'general', initialView: 'register' })}
-                  className="px-3 py-2 rounded-xl text-[10px] font-bold bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white shadow-sm hover:shadow-md transition-shadow"
-                >
-                  הרשמה חינם
-                </button>
-              </div>
             )}
-            {loggedIn ? (
-              <Link href="/account?section=cart" className={actionBtnClass}>
-                🛍️
-                <span className="hidden sm:inline">סל קניות</span>
-                <span className="sm:hidden">סל</span>
-                {cartCount > 0 && (
-                  <span className="min-w-[1.1rem] px-1 py-0.5 rounded-full bg-[#d4af37] text-white text-[9px] sm:text-[10px] text-center leading-none">
-                    {cartCount}
-                  </span>
-                )}
-              </Link>
-            ) : (
-              <button type="button" onClick={openCartAuth} className={actionBtnClass}>
-                🛍️
-                <span className="hidden sm:inline">סל קניות</span>
-                <span className="sm:hidden">סל</span>
-              </button>
-            )}
-            {loggedIn ? (
-              <Link href="/account?section=favorites" className={actionBtnClass}>
-                ❤️
-                <span className="hidden sm:inline">מועדפים</span>
-                {favCount > 0 && (
-                  <span className="min-w-[1.1rem] px-1 py-0.5 rounded-full bg-[#d4af37] text-white text-[9px] sm:text-[10px] text-center leading-none">
-                    {favCount}
-                  </span>
-                )}
-              </Link>
-            ) : (
-              <button type="button" onClick={openFavAuth} className={actionBtnClass}>
-                ❤️
-                <span className="hidden sm:inline">מועדפים</span>
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={() => setMobileOpen((open) => !open)}
-              className="md:hidden inline-flex items-center justify-center w-10 h-10 rounded-xl border-2 border-[#decfa8] bg-[#fffdf8] text-[#8b6508] font-bold text-lg"
-              aria-expanded={mobileOpen}
-              aria-label={mobileOpen ? 'סגירת תפריט' : 'פתיחת תפריט'}
-            >
-              {mobileOpen ? '✕' : '☰'}
-            </button>
           </div>
-        </div>
+        </Link>
 
-        {/* תפריט נייד — כל הטאבים */}
-        {mobileOpen && (
-          <>
-            <button
-              type="button"
-              className="md:hidden fixed inset-x-0 bottom-0 top-[4.5rem] z-[90] bg-black/30"
-              aria-label="סגירת תפריט"
-              onClick={closeMobileMenu}
-            />
-            <nav
-              className="md:hidden fixed inset-x-0 top-[4.5rem] z-[100] bg-white/98 backdrop-blur-md border-b-2 border-[#e6c687] shadow-xl px-3 py-3 pb-5 max-h-[calc(100dvh-4.5rem)] overflow-y-auto"
-              aria-label="ניווט נייד"
-              role="dialog"
-              aria-modal="true"
-            >
-              <div className="grid grid-cols-1 gap-2">
-                {links.map((link) => (
-                  <NavLink
-                    key={link.href}
-                    link={link}
-                    active={isActive(pathname, link.href)}
-                    onClick={closeMobileMenu}
-                    variant="menu"
-                    guestOnClick={!loggedIn && link.href === '/account' ? openAccountAuth : undefined}
-                    forceHub={loggedIn && link.href === '/account'}
-                  />
-                ))}
-              </div>
-              {!loggedIn && (
-                <div className="grid grid-cols-2 gap-2 pt-3">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      closeMobileMenu();
-                      openAuthModal({ reason: 'general', initialView: 'login' });
-                    }}
-                    className="px-4 py-3 rounded-xl text-sm font-bold border-2 border-[#decfa8] bg-white text-[#8b6508]"
-                  >
-                    התחברות
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      closeMobileMenu();
-                      openAuthModal({ reason: 'general', initialView: 'register' });
-                    }}
-                    className="px-4 py-3 rounded-xl text-sm font-bold bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white"
-                  >
-                    הרשמה חינם
-                  </button>
-                </div>
-              )}
-            </nav>
-          </>
-        )}
-
-        {/* טאבים — מחשב וטאבלט */}
-        <nav
-          className="hidden md:flex mt-3 gap-1 overflow-x-auto scrollbar-hide bg-[#f7f0de]/80 rounded-t-2xl px-1 lg:px-2 pt-1 border border-b-0 border-[#eadaaf] snap-x snap-mandatory"
-          aria-label="ניווט ראשי"
-        >
+        <nav className="hidden items-center gap-7 md:flex" aria-label="ניווט ראשי">
           {links.map((link) => (
             <NavLink
               key={link.href}
               link={link}
               active={isActive(pathname, link.href)}
-              variant="tab"
+              overlay={overlay}
               guestOnClick={!loggedIn && link.href === '/account' ? openAccountAuth : undefined}
               forceHub={loggedIn && link.href === '/account'}
             />
           ))}
         </nav>
-        <div className="hidden md:block h-px bg-gradient-to-l from-transparent via-[#d4af37]/60 to-transparent -mt-px" />
+
+        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+          {!loggedIn && (
+            <div className="hidden items-center gap-1.5 sm:flex">
+              <button
+                type="button"
+                onClick={() => openAuthModal({ reason: 'general', initialView: 'login' })}
+                className={`rounded-full px-3 py-2 text-[12px] font-bold ${
+                  overlay ? 'text-white hover:bg-white/15' : 'text-[#6b2340] hover:bg-[#f6eef1]'
+                }`}
+              >
+                התחברות
+              </button>
+              <button
+                type="button"
+                onClick={() => openAuthModal({ reason: 'general', initialView: 'register' })}
+                className={`rounded-full px-3.5 py-2 text-[12px] font-bold ${
+                  overlay ? 'bg-white text-[#6b2340] hover:bg-[#f6eef1]' : 'bg-[#6b2340] text-white hover:bg-[#4a152c]'
+                }`}
+              >
+                הרשמה
+              </button>
+            </div>
+          )}
+          {loggedIn ? (
+            <Link href="/account?section=cart" className={iconBtn} aria-label="סל קניות">
+              <CartIcon />
+              <span className="hidden sm:inline">סל קניות</span>
+              {cartCount > 0 && <span className={countBadge}>{cartCount}</span>}
+            </Link>
+          ) : (
+            <button type="button" onClick={openCartAuth} className={iconBtn} aria-label="סל קניות">
+              <CartIcon />
+              <span className="hidden sm:inline">סל קניות</span>
+            </button>
+          )}
+          {loggedIn ? (
+            <Link href="/account?section=favorites" className={iconBtn} aria-label="מועדפים">
+              <HeartIcon />
+              <span className="hidden sm:inline">מועדפים</span>
+              {favCount > 0 && <span className={countBadge}>{favCount}</span>}
+            </Link>
+          ) : (
+            <button type="button" onClick={openFavAuth} className={iconBtn} aria-label="מועדפים">
+              <HeartIcon />
+              <span className="hidden sm:inline">מועדפים</span>
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => setMobileOpen((open) => !open)}
+            className={`inline-flex h-10 w-10 items-center justify-center rounded-full border md:hidden ${
+              overlay ? 'border-white/40 text-white' : 'border-[#ead8dc] text-[#6b2340]'
+            }`}
+            aria-expanded={mobileOpen}
+            aria-label={mobileOpen ? 'סגירת תפריט' : 'פתיחת תפריט'}
+          >
+            {mobileOpen ? '✕' : '☰'}
+          </button>
+        </div>
       </div>
+
+      {mobileOpen && (
+        <>
+          <button
+            type="button"
+            className="fixed inset-x-0 bottom-0 top-[3.6rem] z-[90] bg-black/25 md:hidden"
+            aria-label="סגירת תפריט"
+            onClick={closeMobileMenu}
+          />
+          <nav
+            className="fixed inset-x-0 top-[3.6rem] z-[100] max-h-[calc(100dvh-3.6rem)] overflow-y-auto border-b border-[#ead8dc] bg-white px-3 py-3 shadow-xl md:hidden"
+            aria-label="ניווט נייד"
+            role="dialog"
+            aria-modal="true"
+          >
+            <div className="grid gap-1">
+              {links.map((link) => (
+                <NavLink
+                  key={link.href}
+                  link={link}
+                  active={isActive(pathname, link.href)}
+                  onClick={closeMobileMenu}
+                  variant="menu"
+                  guestOnClick={!loggedIn && link.href === '/account' ? openAccountAuth : undefined}
+                  forceHub={loggedIn && link.href === '/account'}
+                />
+              ))}
+              <Link
+                href="/terms"
+                onClick={closeMobileMenu}
+                className="rounded-xl px-4 py-3 text-sm font-bold text-[#2c2426] hover:bg-[#faf7f5]"
+              >
+                תקנון
+              </Link>
+              <Link
+                href="/privacy"
+                onClick={closeMobileMenu}
+                className="rounded-xl px-4 py-3 text-sm font-bold text-[#2c2426] hover:bg-[#faf7f5]"
+              >
+                פרטיות
+              </Link>
+            </div>
+            {!loggedIn && (
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    closeMobileMenu();
+                    openAuthModal({ reason: 'general', initialView: 'login' });
+                  }}
+                  className="rounded-xl border border-[#ead8dc] px-4 py-3 text-sm font-bold text-[#6b2340]"
+                >
+                  התחברות
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    closeMobileMenu();
+                    openAuthModal({ reason: 'general', initialView: 'register' });
+                  }}
+                  className="rounded-xl bg-[#6b2340] px-4 py-3 text-sm font-bold text-white"
+                >
+                  הרשמה
+                </button>
+              </div>
+            )}
+          </nav>
+        </>
+      )}
     </header>
+    {!overlay && <div className="h-[3.85rem] sm:h-[4.15rem]" aria-hidden />}
+    </>
   );
 }

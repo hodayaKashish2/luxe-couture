@@ -445,7 +445,7 @@ export async function sendBookingConfirmationEmail(params: {
     params.to,
     `✨ אישור הזמנה: ${params.dressName}`,
     `
-      <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #eadaaf;border-radius:16px;background:#fffdf8;">
+      <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #ead8dc;border-radius:16px;background:#fffdf8;">
         <h2 style="color:#3d2f24;margin-top:0;">שלום ${params.customerName}!</h2>
         <p style="line-height:1.7;color:#554a33;">ההזמנה שלך נקלטה בהצלחה.</p>
         <p style="line-height:1.7;color:#554a33;"><strong>שמלה:</strong> ${params.dressName}</p>
@@ -453,7 +453,7 @@ export async function sendBookingConfirmationEmail(params: {
         <p style="line-height:1.7;color:#554a33;"><strong>סכום:</strong> ₪${params.amount}</p>
         <p style="line-height:1.7;color:#554a33;margin-top:16px;">ההזמנה נקלטה. לתיאום מסירת השמלה — צרי קשר ישירות עם המשכירה; פרטיה מופיעים ב<strong>«ההזמנות שלי»</strong> באזור האישי.</p>
         <p style="margin-top:24px;">
-          <a href="${getAppUrl()}/account" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
+          <a href="${getAppUrl()}/account" style="display:inline-block;background:#6b2340;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
             לאזור האישי →
           </a>
         </p>
@@ -475,7 +475,7 @@ export async function sendBookingPendingEmail(params: {
     params.to,
     `💳 הגיע הזמן לשלם: ${params.dressName}`,
     `
-      <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #eadaaf;border-radius:16px;background:#fffdf8;">
+      <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #ead8dc;border-radius:16px;background:#fffdf8;">
         <h2 style="color:#3d2f24;margin-top:0;">שלום ${escapeHtml(params.customerName)}!</h2>
         <p style="line-height:1.7;color:#554a33;">המשכירה אישרה את בקשת השריון שלך 🎉</p>
         <p style="line-height:1.7;color:#554a33;"><strong>שמלה:</strong> ${escapeHtml(params.dressName)}</p>
@@ -484,7 +484,7 @@ export async function sendBookingPendingEmail(params: {
         <p style="line-height:1.7;color:#554a33;margin-top:16px;">יש לך <strong>${PAYMENT_DEADLINE_DAYS} ימים</strong> להשלים את התשלום. אחרי מועד זה הבקשה תבוטל והתאריך ישוחרר.</p>
         <p style="line-height:1.7;color:#554a33;">השלימי את התשלום ב<strong>ביט</strong> או <strong>העברה בנקאית</strong> דרך האתר, ואז לחצי <strong>אישור תשלום</strong>.</p>
         <p style="margin-top:24px;">
-          <a href="${payLink}" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
+          <a href="${payLink}" style="display:inline-block;background:#6b2340;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
             להשלמת התשלום →
           </a>
         </p>
@@ -504,7 +504,7 @@ export async function sendBookingRequestSubmittedEmail(params: {
     params.to,
     `📨 בקשת השריון נשלחה: ${params.dressName}`,
     `
-      <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #eadaaf;border-radius:16px;background:#fffdf8;">
+      <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #ead8dc;border-radius:16px;background:#fffdf8;">
         <h2 style="color:#3d2f24;margin-top:0;">שלום ${escapeHtml(params.customerName)}!</h2>
         <p style="line-height:1.7;color:#554a33;">קיבלנו את בקשת השריון שלך והעברנו אותה למשכירה לאישור.</p>
         <p style="line-height:1.7;color:#554a33;"><strong>שמלה:</strong> ${escapeHtml(params.dressName)}</p>
@@ -512,7 +512,7 @@ export async function sendBookingRequestSubmittedEmail(params: {
         <p style="line-height:1.7;color:#554a33;"><strong>סכום משוער:</strong> ₪${params.amount}</p>
         <p style="line-height:1.7;color:#554a33;margin-top:16px;">תקבלי מייל עם תשובה האם השריון אושר <strong>עד 72 שעות</strong> מרגע שליחת הבקשה (ברוב המקרים הרבה לפני כן). אם תאושר — תוכלי להמשיך ולהשלים את התשלום.</p>
         <p style="margin-top:24px;">
-          <a href="${accountReservationsUrl()}" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
+          <a href="${accountReservationsUrl()}" style="display:inline-block;background:#6b2340;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
             מעקב באזור האישי →
           </a>
         </p>
@@ -535,10 +535,10 @@ export async function sendBookingOwnerRequestEmail(params: {
     params.to,
     `⏳ בקשת שריון חדשה: ${params.dressName}`,
     `
-      <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #eadaaf;border-radius:16px;background:#fffdf8;">
+      <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #ead8dc;border-radius:16px;background:#fffdf8;">
         <h2 style="color:#3d2f24;margin-top:0;">שלום ${escapeHtml(params.ownerName)}!</h2>
         <p style="line-height:1.7;color:#554a33;">יש לך <strong>בקשת שריון חדשה</strong> שממתינה לתשובתך.</p>
-        <div style="margin:16px 0;padding:14px 16px;background:#faf6eb;border-radius:12px;border:1px solid #eadaaf;">
+        <div style="margin:16px 0;padding:14px 16px;background:#faf6eb;border-radius:12px;border:1px solid #ead8dc;">
           <p style="margin:0 0 8px;"><strong>שמלה:</strong> ${escapeHtml(params.dressName)}</p>
           <p style="margin:0 0 8px;"><strong>תאריך:</strong> ${escapeHtml(params.eventDate)}</p>
           <p style="margin:0 0 8px;"><strong>שוכרת:</strong> ${escapeHtml(params.customerName)}</p>
@@ -546,11 +546,11 @@ export async function sendBookingOwnerRequestEmail(params: {
           <p style="margin:0;"><strong>סכום:</strong> ₪${params.amount}</p>
         </div>
         <p style="line-height:1.7;color:#554a33;">יש לך <strong>עד 48 שעות</strong> מרגע קבלת הבקשה לאשר או לדחות אותה. נשמח שתגיבי בהקדם — כדי שהשוכרת תדע אם היא יכולה להמשיך בתהליך.</p>
-        <p style="line-height:1.7;color:#554a33;font-size:13px;background:#faf6eb;padding:12px 14px;border-radius:10px;border:1px solid #eadaaf;margin-top:14px;">
+        <p style="line-height:1.7;color:#554a33;font-size:13px;background:#faf6eb;padding:12px 14px;border-radius:10px;border:1px solid #ead8dc;margin-top:14px;">
           💡 <strong>שימי לב:</strong> הביטול האוטומטי מתבצע על ידי המערכת, ולכן עלול להתרחש עם סטייה של מספר שעות — לעיתים כבר לאחר <strong>כ-45 שעות</strong>. כדי שלא תפספסי, מומלץ לא לחכות לרגע האחרון.
         </p>
         <p style="margin-top:24px;">
-          <a href="${params.accountUrl}" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
+          <a href="${params.accountUrl}" style="display:inline-block;background:#6b2340;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
             לאישור הבקשה באתר →
           </a>
         </p>
@@ -572,7 +572,7 @@ export async function sendBookingOwnerReminderEmail(params: {
     params.to,
     `🔔 תזכורת: בקשת שריון ממתינה — ${params.dressName}`,
     `
-      <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #eadaaf;border-radius:16px;background:#fffdf8;">
+      <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #ead8dc;border-radius:16px;background:#fffdf8;">
         <h2 style="color:#3d2f24;margin-top:0;">שלום ${escapeHtml(params.ownerName)}!</h2>
         <p style="line-height:1.7;color:#554a33;">לפני כ-<strong>24 שעות</strong> התקבלה בקשת שריון לשמלה <strong>${escapeHtml(params.dressName)}</strong>, ועדיין לא הגבת.</p>
         <p style="line-height:1.7;color:#554a33;"><strong>שוכרת:</strong> ${escapeHtml(params.customerName)} · <strong>תאריך:</strong> ${escapeHtml(params.eventDate)}</p>
@@ -613,10 +613,10 @@ export async function sendBookingOwnerApprovedAdminEmail(params: {
   return sendAdminEmail(
     `✅ המשכירה אישרה — ממתין לתשלום: ${params.dressName}`,
     `
-      <div dir="rtl" style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px;border:1px solid #eadaaf;border-radius:16px;background:#fffdf8;">
+      <div dir="rtl" style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px;border:1px solid #ead8dc;border-radius:16px;background:#fffdf8;">
         <h2 style="color:#3d2f24;margin-top:0;">המשכירה אישרה בקשת שריון</h2>
         <p style="line-height:1.7;color:#554a33;">השוכרת קיבלה מייל עם קישור לתשלום. ההזמנה ממתינה לתשלום מהשוכרת.</p>
-        <div style="margin:16px 0;padding:14px 16px;background:#faf6eb;border-radius:12px;border:1px solid #eadaaf;">
+        <div style="margin:16px 0;padding:14px 16px;background:#faf6eb;border-radius:12px;border:1px solid #ead8dc;">
           <p style="margin:0 0 8px;"><strong>מס׳ הזמנה:</strong> ${params.bookingId}</p>
           <p style="margin:0 0 8px;"><strong>שמלה:</strong> ${escapeHtml(params.dressName)}</p>
           <p style="margin:0 0 8px;"><strong>תאריך אירוע:</strong> ${escapeHtml(params.eventDate)}</p>
@@ -626,7 +626,7 @@ export async function sendBookingOwnerApprovedAdminEmail(params: {
           <p style="margin:0;"><strong>סכום:</strong> ₪${params.amount}</p>
         </div>
         <p style="margin-top:24px;">
-          <a href="${adminPanelLink}" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
+          <a href="${adminPanelLink}" style="display:inline-block;background:#6b2340;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
             לפאנל הניהול →
           </a>
         </p>
@@ -646,14 +646,14 @@ export async function sendBookingCancelledByRenterEmail(params: {
     params.to,
     `ההזמנה בוטלה: ${params.dressName}`,
     `
-      <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #eadaaf;border-radius:16px;background:#fffdf8;">
+      <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #ead8dc;border-radius:16px;background:#fffdf8;">
         <h2 style="color:#3d2f24;margin-top:0;">שלום ${escapeHtml(params.customerName)}!</h2>
         <p style="line-height:1.7;color:#554a33;">ההזמנה שלך לשמלה <strong>${escapeHtml(params.dressName)}</strong> לתאריך <strong>${escapeHtml(params.eventDate)}</strong> <strong>בוטלה</strong> בהצלחה.</p>
-        <div style="margin:16px 0;padding:14px 16px;border-right:4px solid #d4af37;background:#fff8e8;border-radius:10px;">
+        <div style="margin:16px 0;padding:14px 16px;border-right:4px solid #6b2340;background:#fff8e8;border-radius:10px;">
           <p style="margin:0;line-height:1.7;color:#554a33;">התאריך שוחרר — אפשר לחפש שמלה או תאריך אחר בקטלוג.</p>
         </div>
         <p style="margin-top:24px;">
-          <a href="${accountReservationsUrl()}" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
+          <a href="${accountReservationsUrl()}" style="display:inline-block;background:#6b2340;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
             לאזור האישי →
           </a>
         </p>
@@ -673,14 +673,14 @@ export async function sendBookingCancelledOwnerNoticeEmail(params: {
     params.to,
     `הזמנה בוטלה: ${params.dressName}`,
     `
-      <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #eadaaf;border-radius:16px;background:#fffdf8;">
+      <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #ead8dc;border-radius:16px;background:#fffdf8;">
         <h2 style="color:#3d2f24;margin-top:0;">שלום ${escapeHtml(params.ownerName)}!</h2>
         <p style="line-height:1.7;color:#554a33;">השוכרת <strong>${escapeHtml(params.customerName)}</strong> ביטלה את ההזמנה לשמלה <strong>${escapeHtml(params.dressName)}</strong> לתאריך <strong>${escapeHtml(params.eventDate)}</strong>.</p>
-        <div style="margin:16px 0;padding:14px 16px;border-right:4px solid #d4af37;background:#fff8e8;border-radius:10px;">
+        <div style="margin:16px 0;padding:14px 16px;border-right:4px solid #6b2340;background:#fff8e8;border-radius:10px;">
           <p style="margin:0;line-height:1.7;color:#554a33;">התאריך שוב פנוי לשריון — אפשר לקבל בקשות חדשות מהאתר.</p>
         </div>
         <p style="margin-top:24px;">
-          <a href="${accountRentalsUrl()}" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
+          <a href="${accountRentalsUrl()}" style="display:inline-block;background:#6b2340;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
             ל«השמלות שלי» →
           </a>
         </p>
@@ -700,16 +700,16 @@ export async function sendBookingOwnerRejectedEmail(params: {
     params.to,
     `לא אושר: ${params.dressName}`,
     `
-      <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #eadaaf;border-radius:16px;background:#fffdf8;">
+      <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #ead8dc;border-radius:16px;background:#fffdf8;">
         <h2 style="color:#3d2f24;margin-top:0;">שלום ${escapeHtml(params.customerName)}!</h2>
         <p style="line-height:1.7;color:#554a33;">לצערנו, המשכירה לא אישרה את בקשת השריון לשמלה <strong>${escapeHtml(params.dressName)}</strong> לתאריך ${escapeHtml(params.eventDate)}.</p>
-        <div style="margin:16px 0;padding:14px 16px;border-right:4px solid #d4af37;background:#fff8e8;border-radius:10px;">
-          <p style="margin:0 0 6px;font-weight:bold;color:#8b6508;">פרטים:</p>
+        <div style="margin:16px 0;padding:14px 16px;border-right:4px solid #6b2340;background:#fff8e8;border-radius:10px;">
+          <p style="margin:0 0 6px;font-weight:bold;color:#6b2340;">פרטים:</p>
           <p style="margin:0;line-height:1.7;color:#554a33;">${escapeHtml(params.reason)}</p>
         </div>
         <p style="line-height:1.7;color:#554a33;">אפשר לחפש שמלה אחרת בקטלוג — מקווים שתמצאי את המראה המושלם 💛</p>
         <p style="margin-top:24px;">
-          <a href="${getAppUrl()}/" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
+          <a href="${getAppUrl()}/" style="display:inline-block;background:#6b2340;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
             חזרה לקטלוג →
           </a>
         </p>
@@ -728,14 +728,14 @@ export async function sendBookingSlotTakenEmail(params: {
     params.to,
     `התאריך נתפס: ${params.dressName}`,
     `
-      <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #eadaaf;border-radius:16px;background:#fffdf8;">
+      <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #ead8dc;border-radius:16px;background:#fffdf8;">
         <h2 style="color:#3d2f24;margin-top:0;">שלום ${escapeHtml(params.customerName)}!</h2>
         <p style="line-height:1.7;color:#554a33;">לצערנו, השמלה <strong>${escapeHtml(params.dressName)}</strong> שוריינה על ידי שוכרת אחרת לתאריך <strong>${escapeHtml(params.eventDate)}</strong>.</p>
-        <div style="margin:16px 0;padding:14px 16px;border-right:4px solid #d4af37;background:#fff8e8;border-radius:10px;">
+        <div style="margin:16px 0;padding:14px 16px;border-right:4px solid #6b2340;background:#fff8e8;border-radius:10px;">
           <p style="margin:0;line-height:1.7;color:#554a33;">הבקשה שלך בוטלה — התאריך כבר לא זמין. אפשר לחפש תאריך אחר או שמלה אחרת בקטלוג.</p>
         </div>
         <p style="margin-top:24px;">
-          <a href="${getAppUrl()}/" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
+          <a href="${getAppUrl()}/" style="display:inline-block;background:#6b2340;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
             חזרה לקטלוג →
           </a>
         </p>
@@ -754,14 +754,14 @@ export async function sendBookingPaymentExpiredEmail(params: {
     params.to,
     `פג מועד התשלום: ${params.dressName}`,
     `
-      <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #eadaaf;border-radius:16px;background:#fffdf8;">
+      <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #ead8dc;border-radius:16px;background:#fffdf8;">
         <h2 style="color:#3d2f24;margin-top:0;">שלום ${escapeHtml(params.customerName)}!</h2>
         <p style="line-height:1.7;color:#554a33;">בקשת השריון לשמלה <strong>${escapeHtml(params.dressName)}</strong> לתאריך ${escapeHtml(params.eventDate)} <strong>בוטלה</strong> כי לא הושלם התשלום בזמן.</p>
-        <div style="margin:16px 0;padding:14px 16px;border-right:4px solid #d4af37;background:#fff8e8;border-radius:10px;">
+        <div style="margin:16px 0;padding:14px 16px;border-right:4px solid #6b2340;background:#fff8e8;border-radius:10px;">
           <p style="margin:0;line-height:1.7;color:#554a33;">התאריך שוחרר לשוכרות אחרות. אם השמלה עדיין מעניינת אותך — אפשר לשלוח בקשה חדשה (לאחר תיאום ומדידה).</p>
         </div>
         <p style="margin-top:24px;">
-          <a href="${getAppUrl()}/" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
+          <a href="${getAppUrl()}/" style="display:inline-block;background:#6b2340;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
             חזרה לקטלוג →
           </a>
         </p>
@@ -780,15 +780,15 @@ export async function sendBookingOwnerTimeoutEmail(params: {
     params.to,
     `הבקשה בוטלה: ${params.dressName}`,
     `
-      <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #eadaaf;border-radius:16px;background:#fffdf8;">
+      <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #ead8dc;border-radius:16px;background:#fffdf8;">
         <h2 style="color:#3d2f24;margin-top:0;">שלום ${escapeHtml(params.customerName)}!</h2>
         <p style="line-height:1.7;color:#554a33;">בקשת השריון לשמלה <strong>${escapeHtml(params.dressName)}</strong> לתאריך ${escapeHtml(params.eventDate)} <strong>בוטלה</strong>.</p>
-        <div style="margin:16px 0;padding:14px 16px;border-right:4px solid #c9a227;background:#fff8e8;border-radius:10px;">
+        <div style="margin:16px 0;padding:14px 16px;border-right:4px solid #8a3a55;background:#fff8e8;border-radius:10px;">
           <p style="margin:0;line-height:1.7;color:#554a33;">המשכירה לא הגיבה לבקשה בתוך <strong>48 שעות</strong>, ולכן לא ניתן להמשיך בתהליך השריון.</p>
         </div>
         <p style="line-height:1.7;color:#554a33;">אפשר לנסות תאריך אחר או לבחור שמלה אחרת בקטלוג.</p>
         <p style="margin-top:24px;">
-          <a href="${getAppUrl()}/" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
+          <a href="${getAppUrl()}/" style="display:inline-block;background:#6b2340;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
             חזרה לקטלוג →
           </a>
         </p>
@@ -808,7 +808,7 @@ export async function sendPaymentConfirmationEmail(params: {
     params.to,
     `✅ אישור תשלום: ${params.dressName}`,
     `
-      <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #eadaaf;border-radius:16px;background:#fffdf8;">
+      <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #ead8dc;border-radius:16px;background:#fffdf8;">
         <h2 style="color:#3d2f24;margin-top:0;">שלום ${params.customerName}!</h2>
         <p style="line-height:1.7;color:#554a33;">התשלום שלך התקבל וההזמנה מאושרת!</p>
         <p style="line-height:1.7;color:#554a33;"><strong>שמלה:</strong> ${params.dressName}</p>
@@ -816,7 +816,7 @@ export async function sendPaymentConfirmationEmail(params: {
         <p style="line-height:1.7;color:#554a33;"><strong>סכום ששולם:</strong> ₪${params.amount}</p>
         <p style="line-height:1.7;color:#554a33;margin-top:16px;">ההזמנה אושרה והתאריך שמור עבורך. לתיאום מסירת השמלה — צרי קשר ישירות עם המשכירה; פרטיה מופיעים ב<strong>«ההזמנות שלי»</strong> באזור האישי.</p>
         <p style="margin-top:24px;">
-          <a href="${accountReservationsUrl()}" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
+          <a href="${accountReservationsUrl()}" style="display:inline-block;background:#6b2340;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
             להזמנות שלי →
           </a>
         </p>
@@ -838,17 +838,17 @@ export async function sendBookingConfirmedOwnerEmail(params: {
     params.to,
     `✅ שריון מאושר ושולם: ${params.dressName}`,
     `
-      <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #eadaaf;border-radius:16px;background:#fffdf8;">
+      <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #ead8dc;border-radius:16px;background:#fffdf8;">
         <h2 style="color:#3d2f24;margin-top:0;">שלום ${escapeHtml(params.ownerName)}!</h2>
         <p style="line-height:1.7;color:#554a33;">התשלום עבור השמלה <strong>${escapeHtml(params.dressName)}</strong> אושר — השריון לתאריך <strong>${escapeHtml(params.eventDate)}</strong> סגור.</p>
-        <div style="margin:16px 0;padding:14px 16px;background:#faf6eb;border-radius:12px;border:1px solid #eadaaf;">
+        <div style="margin:16px 0;padding:14px 16px;background:#faf6eb;border-radius:12px;border:1px solid #ead8dc;">
           <p style="margin:0 0 8px;"><strong>שוכרת:</strong> ${escapeHtml(params.customerName)}</p>
           <p style="margin:0 0 8px;"><strong>טלפון:</strong> <span dir="ltr">${escapeHtml(params.customerPhone)}</span></p>
           <p style="margin:0;"><strong>סכום:</strong> ₪${params.amount}</p>
         </div>
         <p style="line-height:1.7;color:#554a33;">כדאי ליצור קשר עם השוכרת לתיאום מסירת השמלה. ניתן לראות את ההזמנה ב<strong>«השמלות שלי»</strong> באזור האישי.</p>
         <p style="margin-top:24px;">
-          <a href="${accountRentalsUrl()}" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
+          <a href="${accountRentalsUrl()}" style="display:inline-block;background:#6b2340;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
             ל«השמלות שלי» →
           </a>
         </p>
@@ -875,7 +875,7 @@ export async function sendPaymentReportedAdminEmail(params: {
   const senderBlock =
     params.paymentSenderName || params.paymentSenderPhone
       ? `
-        <div style="background:#fff8e8;border:2px solid #d4af37;border-radius:12px;padding:16px;margin:16px 0;">
+        <div style="background:#fff8e8;border:2px solid #6b2340;border-radius:12px;padding:16px;margin:16px 0;">
           <p style="margin:0 0 8px;font-size:13px;color:#6e634c;font-weight:bold;">פרטי מבצעת ההעברה (לפי דיווח השוכרת):</p>
           ${params.paymentSenderName ? `<p style="margin:0 0 6px;line-height:1.7;color:#554a33;"><strong>שם:</strong> ${escapeHtml(params.paymentSenderName)}</p>` : ''}
           ${params.paymentSenderPhone ? `<p style="margin:0;line-height:1.7;color:#554a33;"><strong>טלפון:</strong> <span dir="ltr">${escapeHtml(params.paymentSenderPhone)}</span></p>` : ''}
@@ -886,9 +886,9 @@ export async function sendPaymentReportedAdminEmail(params: {
   return sendAdminEmail(
     `💰 דיווח תשלום — ${params.paymentMethodLabel}: ${params.dressName}`,
     `
-      <div dir="rtl" style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px;border:1px solid #eadaaf;border-radius:16px;background:#fffdf8;">
+      <div dir="rtl" style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px;border:1px solid #ead8dc;border-radius:16px;background:#fffdf8;">
         <h2 style="color:#3d2f24;margin-top:0;">לקוחה דיווחה על ביצוע תשלום</h2>
-        <div style="background:#f4ebd4;border:2px solid #d4af37;border-radius:12px;padding:16px;margin:16px 0;">
+        <div style="background:#f4ebd4;border:2px solid #6b2340;border-radius:12px;padding:16px;margin:16px 0;">
           <p style="margin:0;font-size:13px;color:#6e634c;">אמצעי התשלום שבו שילמה:</p>
           <p style="margin:8px 0 0;font-size:20px;font-weight:bold;color:#3d2f24;">${params.paymentMethodLabel}</p>
         </div>
@@ -905,7 +905,7 @@ export async function sendPaymentReportedAdminEmail(params: {
           </a>
         </p>
         <p style="margin-top:12px;">
-          <a href="${adminPanelLink}" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
+          <a href="${adminPanelLink}" style="display:inline-block;background:#6b2340;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
             לפאנל הניהול →
           </a>
         </p>
@@ -927,7 +927,7 @@ export async function sendPaymentReportedCustomerEmail(params: {
     params.to,
     `✅ דיווח התשלום התקבל: ${params.dressName}`,
     `
-      <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #eadaaf;border-radius:16px;background:#fffdf8;">
+      <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #ead8dc;border-radius:16px;background:#fffdf8;">
         <h2 style="color:#3d2f24;margin-top:0;">שלום ${params.customerName}!</h2>
         <p style="line-height:1.7;color:#554a33;">קיבלנו את דיווח התשלום שלך ב<strong>${params.paymentMethodLabel}</strong> — תודה!</p>
         <p style="line-height:1.7;color:#554a33;">בקרוב תישלח אלייך הודעת אישור סופית במייל עם פרטי ההזמנה.</p>
@@ -956,14 +956,14 @@ export async function sendDressPendingAdminEmail(params: {
     .slice(0, 4)
     .map(
       (url) =>
-        `<img src="${url}" alt="" style="width:120px;height:160px;object-fit:contain;border-radius:8px;border:1px solid #eadaaf;margin:4px;" />`
+        `<img src="${url}" alt="" style="width:120px;height:160px;object-fit:contain;border-radius:8px;border:1px solid #ead8dc;margin:4px;" />`
     )
     .join('');
 
   return sendAdminEmail(
     `👗 שמלה חדשה לאישור: ${params.name}`,
     `
-      <div dir="rtl" style="font-family:sans-serif;max-width:640px;margin:0 auto;padding:24px;border:1px solid #eadaaf;border-radius:16px;background:#fffdf8;">
+      <div dir="rtl" style="font-family:sans-serif;max-width:640px;margin:0 auto;padding:24px;border:1px solid #ead8dc;border-radius:16px;background:#fffdf8;">
         <h2 style="color:#3d2f24;margin-top:0;">שמלה חדשה ממתינה לאישור</h2>
         <p><strong>שם:</strong> ${params.name}</p>
         <p><strong>מחיר:</strong> ₪${params.price}</p>
@@ -972,10 +972,10 @@ export async function sendDressPendingAdminEmail(params: {
         <p><strong>משכירה:</strong> ${params.ownerName} · ${params.ownerPhone}${params.ownerEmail ? ` · ${params.ownerEmail}` : ''}</p>
         ${imagesHtml ? `<div style="margin:16px 0;">${imagesHtml}</div>` : ''}
         <p style="margin-top:24px;">
-          <a href="${approveUrl}" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;margin-left:8px;">
+          <a href="${approveUrl}" style="display:inline-block;background:#6b2340;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;margin-left:8px;">
             ✅ אשר והוסף לאתר
           </a>
-          <a href="${adminPanelLink}" style="display:inline-block;background:#fff;color:#8b6508;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;border:2px solid #decfa8;">
+          <a href="${adminPanelLink}" style="display:inline-block;background:#fff;color:#6b2340;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;border:2px solid #e3cfd3;">
             דף ניהול
           </a>
         </p>
@@ -997,12 +997,12 @@ export async function sendDressPendingOwnerEmail(params: {
     params.to,
     `👗 השמלה התקבלה: ${params.dressName}`,
     `
-      <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #eadaaf;border-radius:16px;background:#fffdf8;">
+      <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #ead8dc;border-radius:16px;background:#fffdf8;">
         <h2 style="color:#3d2f24;margin-top:0;">שלום ${params.ownerName}!</h2>
         <p style="line-height:1.7;color:#554a33;">קיבלנו את השמלה <strong>${params.dressName}</strong> והיא ממתינה לאישור ההנהלה.</p>
         <p style="line-height:1.7;color:#554a33;">נעדכן אותך במייל ברגע שהשמלה תאושר ותופיע בקטלוג האתר.</p>
         <p style="margin-top:24px;">
-          <a href="${accountRentalsUrl()}" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
+          <a href="${accountRentalsUrl()}" style="display:inline-block;background:#6b2340;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
             לאזור האישי →
           </a>
         </p>
@@ -1024,11 +1024,11 @@ export async function sendDressApprovedOwnerEmail(params: {
     params.to,
     `✅ השמלה שלך אושרה: ${params.dressName}`,
     `
-      <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #eadaaf;border-radius:16px;background:#fffdf8;">
+      <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #ead8dc;border-radius:16px;background:#fffdf8;">
         <h2 style="color:#3d2f24;margin-top:0;">שלום ${params.ownerName}!</h2>
         <p style="line-height:1.7;color:#554a33;">השמלה <strong>${params.dressName}</strong> אושרה ומופיעה עכשיו בקטלוג באתר שמלה בקליק.</p>
         <p style="margin-top:24px;">
-          <a href="${getAppUrl()}/" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
+          <a href="${getAppUrl()}/" style="display:inline-block;background:#6b2340;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
             לצפייה בקטלוג →
           </a>
         </p>
@@ -1050,14 +1050,14 @@ export async function sendDressUpdatePendingAdminEmail(params: {
   return sendAdminEmail(
     `✏️ עדכון שמלה לאישור: ${params.dressName}`,
     `
-      <div dir="rtl" style="font-family:sans-serif;max-width:640px;margin:0 auto;padding:24px;border:1px solid #eadaaf;border-radius:16px;background:#fffdf8;">
+      <div dir="rtl" style="font-family:sans-serif;max-width:640px;margin:0 auto;padding:24px;border:1px solid #ead8dc;border-radius:16px;background:#fffdf8;">
         <h2 style="color:#3d2f24;margin-top:0;">עדכון שמלה ממתין לאישור</h2>
         <p style="line-height:1.7;color:#554a33;">משכירה <strong>${escapeHtml(params.ownerName)}</strong> עדכנה את השמלה <strong>${escapeHtml(params.dressName)}</strong>.</p>
         <p style="line-height:1.7;color:#554a33;">להלן <strong>רק השינויים</strong> שביקשה (בקטלוג עדיין מופיעה הגרסה הנוכחית):</p>
         ${diffHtml}
         <p style="line-height:1.7;color:#554a33;margin-top:16px;"><strong>משכירה:</strong> ${escapeHtml(params.ownerName)}${params.ownerEmail ? ` · ${escapeHtml(params.ownerEmail)}` : ''}</p>
         <p style="margin-top:24px;">
-          <a href="${adminPanelLink}" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
+          <a href="${adminPanelLink}" style="display:inline-block;background:#6b2340;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
             לאישור בדף הניהול →
           </a>
         </p>
@@ -1082,14 +1082,14 @@ export async function sendDressUpdatePendingOwnerEmail(params: {
     params.to,
     `✏️ העדכון התקבל: ${params.dressName}`,
     `
-      <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #eadaaf;border-radius:16px;background:#fffdf8;">
+      <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #ead8dc;border-radius:16px;background:#fffdf8;">
         <h2 style="color:#3d2f24;margin-top:0;">שלום ${escapeHtml(params.ownerName)}!</h2>
         <p style="line-height:1.7;color:#554a33;">קיבלנו את העדכון לשמלה <strong>${escapeHtml(params.dressName)}</strong> והוא ממתין לאישור ההנהלה.</p>
         <p style="line-height:1.7;color:#554a33;">זה מה שביקשת לשנות:</p>
         ${diffHtml}
         <p style="line-height:1.7;color:#554a33;margin-top:16px;">עד לאישור — בקטלוג תמשיך להופיע הגרסה הקודמת. נעדכן אותך במייל ברגע שהעדכון יאושר.</p>
         <p style="margin-top:24px;">
-          <a href="${accountRentalsUrl()}" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
+          <a href="${accountRentalsUrl()}" style="display:inline-block;background:#6b2340;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
             לאזור האישי →
           </a>
         </p>
@@ -1124,7 +1124,7 @@ export async function sendDressUpdateApprovedOwnerEmail(params: {
     params.to,
     `✅ העדכון אושר — ${params.dressName} live בקטלוג`,
     `
-      <div dir="rtl" style="font-family:sans-serif;max-width:580px;margin:0 auto;padding:28px;border:1px solid #eadaaf;border-radius:16px;background:#fffdf8;">
+      <div dir="rtl" style="font-family:sans-serif;max-width:580px;margin:0 auto;padding:28px;border:1px solid #ead8dc;border-radius:16px;background:#fffdf8;">
         <h2 style="color:#3d2f24;margin-top:0;">שלום ${escapeHtml(params.ownerName)}! 💛</h2>
         <p style="line-height:1.8;color:#554a33;font-size:15px;">
           חדשות טובות — העדכון ששלחת לשמלה <strong>${escapeHtml(params.dressName)}</strong>
@@ -1136,10 +1136,10 @@ export async function sendDressUpdateApprovedOwnerEmail(params: {
         ${diffHtml ? `<p style="line-height:1.7;color:#554a33;margin-top:16px;font-weight:bold;">השינויים שאושרו:</p>${diffHtml}` : ''}
         <p style="line-height:1.7;color:#554a33;margin-top:20px;">תודה שאת איתנו — בהצלחה עם ההשכרות! ✨</p>
         <p style="margin-top:28px;display:flex;flex-wrap:wrap;gap:12px;">
-          <a href="${catalogUrl}" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
+          <a href="${catalogUrl}" style="display:inline-block;background:#6b2340;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
             לצפייה בשמלה בקטלוג →
           </a>
-          <a href="${accountRentalsUrl()}" style="display:inline-block;background:#fff;color:#8b6508;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;border:2px solid #decfa8;">
+          <a href="${accountRentalsUrl()}" style="display:inline-block;background:#fff;color:#6b2340;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;border:2px solid #e3cfd3;">
             לאזור האישי →
           </a>
         </p>
@@ -1159,8 +1159,8 @@ export async function sendDressUpdateRejectedOwnerEmail(params: {
   }
 
   const reasonBlock = params.reason?.trim()
-    ? `<div style="margin:16px 0;padding:14px 16px;border-right:4px solid #d4af37;background:#fff8e8;border-radius:10px;">
-        <p style="margin:0 0 6px;font-weight:bold;color:#8b6508;">סיבת הדחייה:</p>
+    ? `<div style="margin:16px 0;padding:14px 16px;border-right:4px solid #6b2340;background:#fff8e8;border-radius:10px;">
+        <p style="margin:0 0 6px;font-weight:bold;color:#6b2340;">סיבת הדחייה:</p>
         <p style="margin:0;line-height:1.7;color:#554a33;">${escapeHtml(params.reason.trim())}</p>
       </div>`
     : '';
@@ -1169,13 +1169,13 @@ export async function sendDressUpdateRejectedOwnerEmail(params: {
     params.to,
     `❌ העדכון לא אושר: ${params.dressName}`,
     `
-      <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #eadaaf;border-radius:16px;background:#fffdf8;">
+      <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #ead8dc;border-radius:16px;background:#fffdf8;">
         <h2 style="color:#3d2f24;margin-top:0;">שלום ${escapeHtml(params.ownerName)}!</h2>
         <p style="line-height:1.7;color:#554a33;">העדכון ששלחת לשמלה <strong>${escapeHtml(params.dressName)}</strong> לא אושר על ידי ההנהלה.</p>
         ${reasonBlock}
         <p style="line-height:1.7;color:#554a33;">בקטלוג תמשיך להופיע הגרסה הקודמת. אפשר לערוך שוב ולשלוח מחדש מאזור האישי.</p>
         <p style="margin-top:24px;">
-          <a href="${accountRentalsUrl()}" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
+          <a href="${accountRentalsUrl()}" style="display:inline-block;background:#6b2340;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
             לעריכה באזור האישי →
           </a>
         </p>
@@ -1194,16 +1194,16 @@ export async function sendDressRejectedOwnerEmail(params: {
     params.to,
     `❌ השמלה לא אושרה: ${params.dressName}`,
     `
-      <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #eadaaf;border-radius:16px;background:#fffdf8;">
+      <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #ead8dc;border-radius:16px;background:#fffdf8;">
         <h2 style="color:#3d2f24;margin-top:0;">שלום ${escapeHtml(params.ownerName)}!</h2>
         <p style="line-height:1.7;color:#554a33;">השמלה <strong>${escapeHtml(params.dressName)}</strong> ששלחת לאישור לא אושרה על ידי ההנהלה.</p>
-        <div style="margin:16px 0;padding:14px 16px;border-right:4px solid #d4af37;background:#fff8e8;border-radius:10px;">
-          <p style="margin:0 0 6px;font-weight:bold;color:#8b6508;">סיבת הדחייה:</p>
+        <div style="margin:16px 0;padding:14px 16px;border-right:4px solid #6b2340;background:#fff8e8;border-radius:10px;">
+          <p style="margin:0 0 6px;font-weight:bold;color:#6b2340;">סיבת הדחייה:</p>
           <p style="margin:0;line-height:1.7;color:#554a33;">${escapeHtml(params.reason)}</p>
         </div>
         <p style="line-height:1.7;color:#554a33;">אפשר לשלוח שמלה מחדש עם תיקונים — לחצי «הוספת שמלה» באתר.</p>
         <p style="margin-top:24px;">
-          <a href="${accountAddDressUrl()}" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
+          <a href="${accountAddDressUrl()}" style="display:inline-block;background:#6b2340;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
             להוספת שמלה →
           </a>
         </p>
@@ -1222,11 +1222,11 @@ export async function sendDressRatingRejectedEmail(params: {
     params.to,
     `❌ הדירוג לא אושר: ${params.dressName}`,
     `
-      <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #eadaaf;border-radius:16px;background:#fffdf8;">
+      <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #ead8dc;border-radius:16px;background:#fffdf8;">
         <h2 style="color:#3d2f24;margin-top:0;">שלום ${escapeHtml(params.customerName)}!</h2>
         <p style="line-height:1.7;color:#554a33;">הדירוג ששלחת על השמלה <strong>${escapeHtml(params.dressName)}</strong> לא אושר.</p>
-        <div style="margin:16px 0;padding:14px 16px;border-right:4px solid #d4af37;background:#fff8e8;border-radius:10px;">
-          <p style="margin:0 0 6px;font-weight:bold;color:#8b6508;">סיבת הדחייה:</p>
+        <div style="margin:16px 0;padding:14px 16px;border-right:4px solid #6b2340;background:#fff8e8;border-radius:10px;">
+          <p style="margin:0 0 6px;font-weight:bold;color:#6b2340;">סיבת הדחייה:</p>
           <p style="margin:0;line-height:1.7;color:#554a33;">${escapeHtml(params.reason)}</p>
         </div>
         <p style="line-height:1.7;color:#554a33;">תודה על ההבנה 💛</p>

@@ -137,7 +137,7 @@ export async function notifyDressApproved(supabase: SupabaseClient, dress: Dress
   await sendAdminEmail(
     `✅ שמלה אושרה: ${dress.name}`,
     `
-      <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #eadaaf;border-radius:16px;background:#fffdf8;">
+      <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #ead8dc;border-radius:16px;background:#fffdf8;">
         <h2 style="color:#3d2f24;margin-top:0;">סיכום אישור שמלה</h2>
         <p><strong>שם:</strong> ${dress.name}</p>
         <p><strong>משכירה:</strong> ${ownerName}</p>

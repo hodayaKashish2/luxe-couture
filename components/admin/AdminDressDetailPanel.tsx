@@ -45,11 +45,11 @@ export default function AdminDressDetailPanel({ dress, large = false, children }
 
   return (
     <div className="space-y-2 pt-1">
-      <p className={`${textSize} text-[#6e634c]`}>
+      <p className={`${textSize} text-[#6e5e62]`}>
         #{dress.id} · {dress.size} · {dress.city}
         {dress.color ? ` · ${dress.color}` : ''}
       </p>
-      <p className={`${textSize} text-[#6e634c]`}>
+      <p className={`${textSize} text-[#6e5e62]`}>
         משכירה: {dress.owner_name}
         {dress.owner_phone ? (
           <>
@@ -59,34 +59,34 @@ export default function AdminDressDetailPanel({ dress, large = false, children }
         ) : null}
       </p>
       {dress.owner_email && (
-        <p className={`${textSize} text-[#6e634c]`} dir="ltr">
+        <p className={`${textSize} text-[#6e5e62]`} dir="ltr">
           {dress.owner_email}
         </p>
       )}
       {dress.condition && (
-        <p className={`${textSize} text-[#6e634c]`}>
+        <p className={`${textSize} text-[#6e5e62]`}>
           מצב: {CONDITION_LABELS[dress.condition] || dress.condition}
         </p>
       )}
       {dress.listing_type && (
-        <p className={`${textSize} text-[#6e634c]`}>סוג פרסום: {listingTypeLabel(dress.listing_type)}</p>
+        <p className={`${textSize} text-[#6e5e62]`}>סוג פרסום: {listingTypeLabel(dress.listing_type)}</p>
       )}
       {dress.event_type && (
-        <p className={`${textSize} text-[#6e634c]`}>סוג פריט: {dressKindLabel(dress.event_type)}</p>
+        <p className={`${textSize} text-[#6e5e62]`}>סוג פריט: {dressKindLabel(dress.event_type)}</p>
       )}
       {dress.deposit != null && dress.deposit > 0 && (
-        <p className={`${textSize} text-[#6e634c]`}>פיקדון: ₪{dress.deposit}</p>
+        <p className={`${textSize} text-[#6e5e62]`}>פיקדון: ₪{dress.deposit}</p>
       )}
       {dress.pickup_method && (
-        <p className={`${textSize} text-[#6e634c]`}>
+        <p className={`${textSize} text-[#6e5e62]`}>
           איסוף: {PICKUP_LABELS[dress.pickup_method] || dress.pickup_method}
         </p>
       )}
       {dress.includes_dry_cleaning && (
-        <p className={`${textSize} text-[#8b6508] font-bold`}>✓ ניקוי יבש כלול</p>
+        <p className={`${textSize} text-[#6b2340] font-bold`}>✓ ניקוי יבש כלול</p>
       )}
       {dress.description && (
-        <p className={`${textSize} text-[#6e634c] leading-relaxed whitespace-pre-wrap`}>
+        <p className={`${textSize} text-[#6e5e62] leading-relaxed whitespace-pre-wrap`}>
           {dress.description}
         </p>
       )}
@@ -98,7 +98,7 @@ export default function AdminDressDetailPanel({ dress, large = false, children }
               href={url}
               target="_blank"
               rel="noopener noreferrer"
-              className="block rounded-lg overflow-hidden border border-[#eadaaf] hover:border-[#d4af37]"
+              className="block rounded-lg overflow-hidden border border-[#ead8dc] hover:border-[#6b2340]"
             >
               <DressImageFill
                 src={url}
@@ -110,7 +110,7 @@ export default function AdminDressDetailPanel({ dress, large = false, children }
         </div>
       )}
       {dress.created_at && (
-        <p className={`${large ? 'text-[10px]' : 'text-[8px]'} text-[#9a7b4f]`}>
+        <p className={`${large ? 'text-[10px]' : 'text-[8px]'} text-[#7a5e64]`}>
           נשלחה: {new Date(dress.created_at).toLocaleString('he-IL')}
         </p>
       )}

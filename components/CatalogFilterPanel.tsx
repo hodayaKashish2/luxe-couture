@@ -41,7 +41,7 @@ export type CatalogFilterPanelProps = {
 };
 
 const fieldClass =
-  'w-full p-2 bg-neutral-50 border border-[#dfc48c] rounded-lg text-xs text-[#2c261a] focus:outline-none focus:border-[#d4af37]';
+  'w-full p-2 bg-neutral-50 border border-[#e3cfd3] rounded-lg text-xs text-[#2c261a] focus:outline-none focus:border-[#6b2340]';
 
 const sizeFilterGroups = getDressSizeFilterGroups();
 
@@ -185,7 +185,7 @@ export default function CatalogFilterPanel({
       )}
 
       <FilterSection title="מחיר" defaultOpen={maxPrice < 2000}>
-        <div className="flex justify-between text-[11px] font-bold text-[#8b6508] mb-2">
+        <div className="flex justify-between text-[11px] font-bold text-[#6b2340] mb-2">
           <span>מקסימום</span>
           <span>₪{maxPrice}</span>
         </div>
@@ -196,11 +196,11 @@ export default function CatalogFilterPanel({
           step="50"
           value={maxPrice}
           onChange={(e) => setMaxPrice(Number(e.target.value))}
-          className="w-full accent-[#d4af37]"
+          className="w-full accent-[#6b2340]"
         />
       </FilterSection>
 
-      <p className="text-[10px] text-[#9a7b4f] leading-relaxed py-3">{sortHint(sortBy)}</p>
+      <p className="text-[10px] text-[#7a5e64] leading-relaxed py-3">{sortHint(sortBy)}</p>
     </div>
   );
 }

@@ -1265,14 +1265,14 @@ function AccountPageContent() {
   }, [load]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#fbf8f0] to-[#e8dcbd] text-[#332c1e]" dir="rtl">
+    <div className="flex min-h-screen flex-col bg-gradient-to-b from-[#faf7f5] to-[#ead8dc] text-[#332c1e]" dir="rtl">
       <SiteHeader />
 
       <main className="max-w-6xl mx-auto px-3 sm:px-4 py-6 sm:py-8 w-full min-w-0">
         <div className="flex flex-wrap justify-between items-start gap-3 mb-8">
           <div>
-            <p className="text-[10px] tracking-widest text-[#9a7b4f] font-bold">✦ האזור האישי ✦</p>
-            <h1 className="font-[family-name:var(--font-luxury)] text-2xl sm:text-3xl text-[#3d2f24]">
+            <p className="text-[10px] tracking-widest text-[#7a5e64] font-bold">✦ האזור האישי ✦</p>
+            <h1 className="text-2xl font-bold text-[#2c2426] sm:text-3xl">
               שלום, {user?.displayName || (loading ? '...' : 'אורחת')}
             </h1>
           </div>
@@ -1287,16 +1287,16 @@ function AccountPageContent() {
               <button
                 type="button"
                 onClick={() => navigateToSection('reservations')}
-                className="text-right p-4 sm:p-6 rounded-2xl border-2 border-[#decfa8] bg-white hover:border-[#d4af37] hover:shadow-lg transition-all group"
+                className="text-right p-4 sm:p-6 rounded-2xl border-2 border-[#e3cfd3] bg-white hover:border-[#6b2340] hover:shadow-lg transition-all group"
               >
                 <span className="text-2xl sm:text-3xl">📅</span>
-                <h2 className="font-black text-base sm:text-lg mt-2 sm:mt-3 text-[#3d2f24] group-hover:text-[#b8860b]">ההזמנות שלי</h2>
-                <p className="text-[10px] sm:text-xs text-[#6e634c] mt-1 leading-relaxed hidden sm:block">
+                <h2 className="font-black text-base sm:text-lg mt-2 sm:mt-3 text-[#2c2426] group-hover:text-[#6b2340]">ההזמנות שלי</h2>
+                <p className="text-[10px] sm:text-xs text-[#6e5e62] mt-1 leading-relaxed hidden sm:block">
                   שמלות שהזמנת — לוח שנה ופרטי האירועים שלך
                 </p>
-                <p className="text-[10px] text-[#b8860b] font-bold mt-2 sm:mt-3">
+                <p className="text-[10px] text-[#6b2340] font-bold mt-2 sm:mt-3">
                   {!dataReady ? (
-                    <span className="text-[#9a7b4f] animate-pulse">טוען...</span>
+                    <span className="text-[#7a5e64] animate-pulse">טוען...</span>
                   ) : (
                     reservationHubSummary
                   )}
@@ -1306,16 +1306,16 @@ function AccountPageContent() {
               <button
                 type="button"
                 onClick={() => navigateToSection('rentals')}
-                className="text-right p-4 sm:p-6 rounded-2xl border-2 border-[#decfa8] bg-white hover:border-[#d4af37] hover:shadow-lg transition-all group"
+                className="text-right p-4 sm:p-6 rounded-2xl border-2 border-[#e3cfd3] bg-white hover:border-[#6b2340] hover:shadow-lg transition-all group"
               >
                 <span className="text-2xl sm:text-3xl">👗</span>
-                <h2 className="font-black text-base sm:text-lg mt-2 sm:mt-3 text-[#3d2f24] group-hover:text-[#b8860b]">השמלות שלי</h2>
-                <p className="text-[10px] sm:text-xs text-[#6e634c] mt-1 leading-relaxed hidden sm:block">
+                <h2 className="font-black text-base sm:text-lg mt-2 sm:mt-3 text-[#2c2426] group-hover:text-[#6b2340]">השמלות שלי</h2>
+                <p className="text-[10px] sm:text-xs text-[#6e5e62] mt-1 leading-relaxed hidden sm:block">
                   השמלות שפרסמת — רשימה מסודרת לניהול שמלות
                 </p>
-                <p className="text-[10px] text-[#b8860b] font-bold mt-2 sm:mt-3">
+                <p className="text-[10px] text-[#6b2340] font-bold mt-2 sm:mt-3">
                   {!dataReady ? (
-                    <span className="text-[#9a7b4f] animate-pulse">טוען...</span>
+                    <span className="text-[#7a5e64] animate-pulse">טוען...</span>
                   ) : (
                     rentalsHubSummary
                   )}
@@ -1336,23 +1336,23 @@ function AccountPageContent() {
                   onClick={() => navigateToSection(item.id)}
                   className={`p-2.5 sm:p-4 rounded-xl border-2 text-center transition-all duration-200 cursor-pointer hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] ${
                     item.id === 'add'
-                      ? 'border-[#d4af37] bg-gradient-to-b from-[#fff8e7] to-[#f4ebd4] hover:from-[#f4ebd4] hover:to-[#e8d4a8] ring-1 ring-[#d4af37]/40'
-                      : 'border-[#eadaaf] bg-white/90 hover:bg-[#fffdf8] hover:border-[#d4af37]'
+                      ? 'border-[#6b2340] bg-gradient-to-b from-[#fff8e7] to-[#f3e9ec] hover:from-[#f4ebd4] hover:to-[#e8d4a8] ring-1 ring-[#6b2340]/40'
+                      : 'border-[#ead8dc] bg-white/90 hover:bg-[#fffafb] hover:border-[#6b2340]'
                   }`}
                 >
                   <span className="text-lg sm:text-xl block">{item.icon}</span>
-                  <p className="text-[9px] sm:text-[11px] font-bold mt-1 text-[#8b6508] leading-tight">{item.label}</p>
+                  <p className="text-[9px] sm:text-[11px] font-bold mt-1 text-[#6b2340] leading-tight">{item.label}</p>
                   {item.count !== null && (
-                    <p className="text-[9px] text-[#9a7b4f]">{item.count}</p>
+                    <p className="text-[9px] text-[#7a5e64]">{item.count}</p>
                   )}
                 </button>
               ))}
               <Link
                 href="/"
-                className="p-2.5 sm:p-4 rounded-xl border border-[#eadaaf] bg-gradient-to-b from-[#fffdf8] to-[#f4ebd4] hover:shadow text-center flex flex-col items-center justify-center"
+                className="p-2.5 sm:p-4 rounded-xl border border-[#ead8dc] bg-gradient-to-b from-[#fffdf8] to-[#f3e9ec] hover:shadow text-center flex flex-col items-center justify-center"
               >
                 <span className="text-lg sm:text-xl">🏠</span>
-                <p className="text-[9px] sm:text-[11px] font-bold mt-1 text-[#8b6508] leading-tight">לקטלוג</p>
+                <p className="text-[9px] sm:text-[11px] font-bold mt-1 text-[#6b2340] leading-tight">לקטלוג</p>
               </Link>
             </div>
           </div>
@@ -1373,7 +1373,7 @@ function AccountPageContent() {
                 goToAccountHub();
               }
             }}
-            className="mb-4 text-xs text-[#8b6508] font-bold hover:underline"
+            className="mb-4 text-xs text-[#6b2340] font-bold hover:underline"
           >
             ←{' '}
             {section === 'edit'
@@ -1392,16 +1392,16 @@ function AccountPageContent() {
           <div className="space-y-6">
             <h2 className="font-black text-xl">📅 ההזמנות שלי</h2>
             {!hasSession ? (
-              <p className="text-sm text-[#6e634c] animate-pulse">מתחברת...</p>
+              <p className="text-sm text-[#6e5e62] animate-pulse">מתחברת...</p>
             ) : !dataReady ? (
-              <p className="text-sm text-[#6e634c] animate-pulse">טוען הזמנות...</p>
+              <p className="text-sm text-[#6e5e62] animate-pulse">טוען הזמנות...</p>
             ) : upcomingReservations.length === 0 &&
               pastReservations.length === 0 &&
               removedReservations.length === 0 &&
               sortedCancelledReservations.length === 0 ? (
-              <div className="bg-white rounded-2xl border border-[#eadaaf] p-8 text-center">
-                <p className="text-sm text-[#6e634c]">עדיין אין הזמנות. מצאי שמלה בקטלוג ושלחי בקשת שריון!</p>
-                <Link href="/" className="inline-block mt-4 px-4 py-2 bg-[#b8860b] text-white rounded-xl text-xs font-bold">
+              <div className="bg-white rounded-2xl border border-[#ead8dc] p-8 text-center">
+                <p className="text-sm text-[#6e5e62]">עדיין אין הזמנות. מצאי שמלה בקטלוג ושלחי בקשת שריון!</p>
+                <Link href="/" className="inline-block mt-4 px-4 py-2 bg-[#6b2340] text-white rounded-xl text-xs font-bold">
                   לקטלוג →
                 </Link>
               </div>
@@ -1409,20 +1409,20 @@ function AccountPageContent() {
               <>
                 {upcomingReservations.length > 0 && (
                   <>
-                    <div className="bg-white rounded-2xl border border-[#eadaaf] p-5">
-                      <h3 className="text-xs font-black text-[#8b6508] mb-3">לוח התאריכים שלך</h3>
+                    <div className="bg-white rounded-2xl border border-[#ead8dc] p-5">
+                      <h3 className="text-xs font-black text-[#6b2340] mb-3">לוח התאריכים שלך</h3>
                       <DressCalendar bookedDates={reservationDates} />
                     </div>
                     <ul className="space-y-3">
                       {upcomingReservations.map((r) => (
-                    <li key={r.id} className="bg-white rounded-xl border border-[#eadaaf] p-4">
+                    <li key={r.id} className="bg-white rounded-xl border border-[#ead8dc] p-4">
                       <div className="flex justify-between gap-2 flex-wrap">
                         <strong>{r.dress_name}</strong>
-                        <span className="text-[10px] bg-[#f4ebd4] px-2 py-0.5 rounded-full">{STATUS[r.status] || r.status}</span>
+                        <span className="text-[10px] bg-[#f3e9ec] px-2 py-0.5 rounded-full">{STATUS[r.status] || r.status}</span>
                       </div>
-                      <p className="text-sm text-[#8b6508] font-bold mt-1">📅 {r.event_date}</p>
+                      <p className="text-sm text-[#6b2340] font-bold mt-1">📅 {r.event_date}</p>
                       {r.status === 'pending_owner_approval' && (
-                        <p className="text-xs text-[#6e634c] mt-2 leading-relaxed">
+                        <p className="text-xs text-[#6e5e62] mt-2 leading-relaxed">
                           הבקשה אצל המשכירה. תקבלי מייל עם תשובה האם השריון אושר עד 72 שעות.
                         </p>
                       )}
@@ -1434,7 +1434,7 @@ function AccountPageContent() {
                               r.owner_responded_at
                             );
                             return deadline ? (
-                              <p className="text-xs text-[#6e634c] mt-2 leading-relaxed">
+                              <p className="text-xs text-[#6e5e62] mt-2 leading-relaxed">
                                 יש להשלים תשלום עד{' '}
                                 <strong>{formatPaymentDeadlineHebrew(deadline)}</strong> ({PAYMENT_DEADLINE_DAYS}{' '}
                                 ימים מרגע אישור המשכירה).
@@ -1444,7 +1444,7 @@ function AccountPageContent() {
                           <button
                             type="button"
                             onClick={() => void openPaymentForBookingId(r.id)}
-                            className="inline-block mt-3 px-4 py-2.5 bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white text-xs font-black rounded-xl shadow-md"
+                            className="inline-block mt-3 px-4 py-2.5 bg-gradient-to-r from-[#6b2340] to-[#4a152c] text-white text-xs font-black rounded-xl shadow-md"
                           >
                             💳 השלימי תשלום עכשיו
                           </button>
@@ -1453,9 +1453,9 @@ function AccountPageContent() {
                       {(r.owner_name || r.owner_phone) && r.status !== 'cancelled' && (
                         <div className="mt-3">
                           {revealedOwnerIds.has(r.id) ? (
-                            <div className="p-3 bg-[#fffdf8] border border-[#decfa8] rounded-xl space-y-1.5">
+                            <div className="p-3 bg-[#fffafb] border border-[#e3cfd3] rounded-xl space-y-1.5">
                               <div className="flex items-center justify-between gap-2">
-                                <p className="text-[10px] font-black text-[#8b6508]">פרטי המשכירה</p>
+                                <p className="text-[10px] font-black text-[#6b2340]">פרטי המשכירה</p>
                                 <button
                                   type="button"
                                   onClick={() =>
@@ -1465,18 +1465,18 @@ function AccountPageContent() {
                                       return next;
                                     })
                                   }
-                                  className="text-[10px] font-bold text-[#8b6508] hover:underline"
+                                  className="text-[10px] font-bold text-[#6b2340] hover:underline"
                                 >
                                   הסתרה
                                 </button>
                               </div>
                               {r.owner_name && (
-                                <p className="text-xs font-bold text-[#3d2f24]">{r.owner_name}</p>
+                                <p className="text-xs font-bold text-[#2c2426]">{r.owner_name}</p>
                               )}
                               {r.owner_phone && (
                                 <a
                                   href={`tel:${r.owner_phone}`}
-                                  className="text-xs text-[#6e634c] hover:underline block"
+                                  className="text-xs text-[#6e5e62] hover:underline block"
                                   dir="ltr"
                                 >
                                   📞 {r.owner_phone}
@@ -1503,14 +1503,14 @@ function AccountPageContent() {
                                   return next;
                                 })
                               }
-                              className="px-3 py-2 bg-[#f4ebd4] border border-[#decfa8] rounded-xl text-[10px] font-black text-[#8b6508] hover:bg-[#ebdcb6] transition-colors"
+                              className="px-3 py-2 bg-[#f3e9ec] border border-[#e3cfd3] rounded-xl text-[10px] font-black text-[#6b2340] hover:bg-[#ebdcb6] transition-colors"
                             >
                               הצגת פרטי המשכירה
                             </button>
                           )}
                         </div>
                       )}
-                      <div className="mt-4 pt-3 border-t border-[#f0e6cc]">
+                      <div className="mt-4 pt-3 border-t border-[#ead8dc]">
                         {r.status !== 'cancelled' && (
                         <button
                           type="button"
@@ -1529,8 +1529,8 @@ function AccountPageContent() {
                 )}
 
                 {upcomingReservations.length === 0 && pastReservations.length > 0 && (
-                  <div className="bg-[#fffdf8] rounded-2xl border border-[#eadaaf] p-5 text-center">
-                    <p className="text-sm text-[#6e634c]">אין הזמנות קרובות כרגע.</p>
+                  <div className="bg-[#fffafb] rounded-2xl border border-[#ead8dc] p-5 text-center">
+                    <p className="text-sm text-[#6e5e62]">אין הזמנות קרובות כרגע.</p>
                   </div>
                 )}
 
@@ -1544,7 +1544,7 @@ function AccountPageContent() {
                       <span>🗓️ {BOOKINGS_PAST_SECTION_TITLE} ({pastReservations.length})</span>
                       <span>{showPastReservations ? '▲' : '▼'}</span>
                     </button>
-                    <p className="px-4 py-3 text-[11px] text-[#6e634c] leading-relaxed border-t border-neutral-200 bg-white/60">
+                    <p className="px-4 py-3 text-[11px] text-[#6e5e62] leading-relaxed border-t border-neutral-200 bg-white/60">
                       {BOOKINGS_PAST_RETENTION_NOTE}
                     </p>
                     {showPastReservations && (
@@ -1575,7 +1575,7 @@ function AccountPageContent() {
                       <span>✕ {BOOKINGS_CANCELLED_SECTION_TITLE} ({sortedCancelledReservations.length})</span>
                       <span>{showCancelledReservations ? '▲' : '▼'}</span>
                     </button>
-                    <p className="px-4 py-3 text-[11px] text-[#6e634c] leading-relaxed border-t border-red-100 bg-white/70">
+                    <p className="px-4 py-3 text-[11px] text-[#6e5e62] leading-relaxed border-t border-red-100 bg-white/70">
                       {BOOKINGS_CANCELLED_RETENTION_NOTE}
                     </p>
                     {showCancelledReservations && (
@@ -1583,12 +1583,12 @@ function AccountPageContent() {
                         {sortedCancelledReservations.map((r) => (
                           <li key={r.id} className="px-4 py-3">
                             <div className="flex justify-between gap-2 flex-wrap">
-                              <strong className="text-[#3d2f24]">{r.dress_name}</strong>
+                              <strong className="text-[#2c2426]">{r.dress_name}</strong>
                               <span className="text-[10px] bg-red-100 text-red-900 px-2 py-0.5 rounded-full font-bold">
                                 בוטלה
                               </span>
                             </div>
-                            <p className="text-sm text-[#8b6508] font-bold mt-1">📅 {r.event_date}</p>
+                            <p className="text-sm text-[#6b2340] font-bold mt-1">📅 {r.event_date}</p>
                             <p className="text-xs text-red-800/90 mt-2 leading-relaxed bg-red-50/80 border border-red-100 rounded-lg px-3 py-2">
                               {cancelledReservationDetail(r)}
                             </p>
@@ -1679,8 +1679,8 @@ function AccountPageContent() {
         )}
 
         {section === 'edit' && editLoading && (
-          <div className="bg-white rounded-2xl border border-[#eadaaf] p-8 text-center">
-            <p className="text-sm text-[#6e634c] animate-pulse">טוען פרטי שמלה לעריכה...</p>
+          <div className="bg-white rounded-2xl border border-[#ead8dc] p-8 text-center">
+            <p className="text-sm text-[#6e5e62] animate-pulse">טוען פרטי שמלה לעריכה...</p>
           </div>
         )}
 
@@ -1694,7 +1694,7 @@ function AccountPageContent() {
                 editDraftTouchedRef.current = false;
                 void loadEditDress(dressId);
               }}
-              className="px-4 py-2 bg-[#b8860b] text-white rounded-xl text-xs font-bold"
+              className="px-4 py-2 bg-[#6b2340] text-white rounded-xl text-xs font-bold"
             >
               נסי שוב
             </button>
@@ -1702,14 +1702,14 @@ function AccountPageContent() {
         )}
 
         {section === 'edit' && editingDress && !editLoading && (
-          <form onSubmit={submitEditDress} className="bg-white rounded-2xl border border-[#eadaaf] p-4 sm:p-6 space-y-4">
+          <form onSubmit={submitEditDress} className="bg-white rounded-2xl border border-[#ead8dc] p-4 sm:p-6 space-y-4">
             <button
               type="button"
               onClick={() => {
                 setEditingDress(null);
                 navigateToSection('rentals', { replace: true });
               }}
-              className="text-xs text-[#8b6508] font-bold hover:underline"
+              className="text-xs text-[#6b2340] font-bold hover:underline"
             >
               ← חזרה לשמלות שלי
             </button>
@@ -1720,61 +1720,61 @@ function AccountPageContent() {
                 השמירה ההגשה תיבדק שוב על ידי ההנהלה.
               </div>
             ) : null}
-            <p className="text-xs text-[#6e634c]">עורכת: <strong>{editingDress.name}</strong></p>
+            <p className="text-xs text-[#6e5e62]">עורכת: <strong>{editingDress.name}</strong></p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <input required placeholder="שם השמלה *" value={editForm.name} onChange={(e) => { touchEditDraft(); setEditForm({ ...editForm, name: e.target.value }); }} className="p-2.5 border border-[#decfa8] rounded-xl text-xs col-span-1 sm:col-span-2" />
-              <input required type="number" placeholder="מחיר *" value={editForm.price} onChange={(e) => { touchEditDraft(); setEditForm({ ...editForm, price: e.target.value }); }} className="p-2.5 border border-[#decfa8] rounded-xl text-xs" />
+              <input required placeholder="שם השמלה *" value={editForm.name} onChange={(e) => { touchEditDraft(); setEditForm({ ...editForm, name: e.target.value }); }} className="p-2.5 border border-[#e3cfd3] rounded-xl text-xs col-span-1 sm:col-span-2" />
+              <input required type="number" placeholder="מחיר *" value={editForm.price} onChange={(e) => { touchEditDraft(); setEditForm({ ...editForm, price: e.target.value }); }} className="p-2.5 border border-[#e3cfd3] rounded-xl text-xs" />
               <div>
-                <label className="block text-xs font-bold text-[#8b6508] mb-1">מידה *</label>
+                <label className="block text-xs font-bold text-[#6b2340] mb-1">מידה *</label>
                 <DressSizeInput
                   required
                   value={editForm.size}
                   onChange={(size) => { touchEditDraft(); setEditForm({ ...editForm, size }); }}
-                  className="p-2.5 border border-[#decfa8] rounded-xl text-xs w-full"
+                  className="p-2.5 border border-[#e3cfd3] rounded-xl text-xs w-full"
                 />
               </div>
-              <input required placeholder="עיר *" value={editForm.city} onChange={(e) => { touchEditDraft(); setEditForm({ ...editForm, city: e.target.value }); }} className="p-2.5 border border-[#decfa8] rounded-xl text-xs" />
+              <input required placeholder="עיר *" value={editForm.city} onChange={(e) => { touchEditDraft(); setEditForm({ ...editForm, city: e.target.value }); }} className="p-2.5 border border-[#e3cfd3] rounded-xl text-xs" />
               <div>
-                <label className="block text-xs font-bold text-[#8b6508] mb-1">צבע</label>
+                <label className="block text-xs font-bold text-[#6b2340] mb-1">צבע</label>
                 <input
                   placeholder="למשל: לבן, שמפניה, כחול כהה"
                   value={editForm.color}
                   onChange={(e) => { touchEditDraft(); setEditForm({ ...editForm, color: e.target.value }); }}
-                  className="p-2.5 border border-[#decfa8] rounded-xl text-xs w-full"
+                  className="p-2.5 border border-[#e3cfd3] rounded-xl text-xs w-full"
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-[#8b6508] mb-1">השכרה או מכירה *</label>
-                <select required value={editForm.listing_type} onChange={(e) => { touchEditDraft(); setEditForm({ ...editForm, listing_type: e.target.value }); }} className="p-2.5 border border-[#decfa8] rounded-xl text-xs w-full">
+                <label className="block text-xs font-bold text-[#6b2340] mb-1">השכרה או מכירה *</label>
+                <select required value={editForm.listing_type} onChange={(e) => { touchEditDraft(); setEditForm({ ...editForm, listing_type: e.target.value }); }} className="p-2.5 border border-[#e3cfd3] rounded-xl text-xs w-full">
                   {LISTING_TYPE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-bold text-[#8b6508] mb-1">שמלה בודדת או סט *</label>
-                <select required value={editForm.event_type} onChange={(e) => { touchEditDraft(); setEditForm({ ...editForm, event_type: e.target.value }); }} className="p-2.5 border border-[#decfa8] rounded-xl text-xs w-full">
+                <label className="block text-xs font-bold text-[#6b2340] mb-1">שמלה בודדת או סט *</label>
+                <select required value={editForm.event_type} onChange={(e) => { touchEditDraft(); setEditForm({ ...editForm, event_type: e.target.value }); }} className="p-2.5 border border-[#e3cfd3] rounded-xl text-xs w-full">
                   {DRESS_KIND_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-bold text-[#8b6508] mb-1">סגנון *</label>
-                <select required value={editForm.dress_style} onChange={(e) => { touchEditDraft(); setEditForm({ ...editForm, dress_style: e.target.value }); }} className="p-2.5 border border-[#decfa8] rounded-xl text-xs w-full">
+                <label className="block text-xs font-bold text-[#6b2340] mb-1">סגנון *</label>
+                <select required value={editForm.dress_style} onChange={(e) => { touchEditDraft(); setEditForm({ ...editForm, dress_style: e.target.value }); }} className="p-2.5 border border-[#e3cfd3] rounded-xl text-xs w-full">
                   <option value="">{DRESS_STYLE_PLACEHOLDER}</option>
                   {DRESS_STYLE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-bold text-[#8b6508] mb-1">{dressLengthFieldLabel(editForm.event_type)}</label>
-                <select required value={editForm.dress_length} onChange={(e) => { touchEditDraft(); setEditForm({ ...editForm, dress_length: e.target.value }); }} className="p-2.5 border border-[#decfa8] rounded-xl text-xs w-full">
+                <label className="block text-xs font-bold text-[#6b2340] mb-1">{dressLengthFieldLabel(editForm.event_type)}</label>
+                <select required value={editForm.dress_length} onChange={(e) => { touchEditDraft(); setEditForm({ ...editForm, dress_length: e.target.value }); }} className="p-2.5 border border-[#e3cfd3] rounded-xl text-xs w-full">
                   {DRESS_LENGTH_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-bold text-[#8b6508] mb-1">פיקדון (₪)</label>
-                <input type="number" min="0" placeholder="0" value={editForm.deposit} onChange={(e) => { touchEditDraft(); setEditForm({ ...editForm, deposit: e.target.value }); }} className="p-2.5 border border-[#decfa8] rounded-xl text-xs w-full" />
+                <label className="block text-xs font-bold text-[#6b2340] mb-1">פיקדון (₪)</label>
+                <input type="number" min="0" placeholder="0" value={editForm.deposit} onChange={(e) => { touchEditDraft(); setEditForm({ ...editForm, deposit: e.target.value }); }} className="p-2.5 border border-[#e3cfd3] rounded-xl text-xs w-full" />
               </div>
               <div>
-                <label className="block text-xs font-bold text-[#8b6508] mb-1">ניקוי יבש</label>
-                <select value={editForm.includes_dry_cleaning} onChange={(e) => { touchEditDraft(); setEditForm({ ...editForm, includes_dry_cleaning: e.target.value as 'yes' | 'no' }); }} className="p-2.5 border border-[#decfa8] rounded-xl text-xs w-full">
+                <label className="block text-xs font-bold text-[#6b2340] mb-1">ניקוי יבש</label>
+                <select value={editForm.includes_dry_cleaning} onChange={(e) => { touchEditDraft(); setEditForm({ ...editForm, includes_dry_cleaning: e.target.value as 'yes' | 'no' }); }} className="p-2.5 border border-[#e3cfd3] rounded-xl text-xs w-full">
                   <option value="no">לא כולל</option>
                   <option value="yes">כולל ניקוי יבש</option>
                 </select>
@@ -1784,19 +1784,19 @@ function AccountPageContent() {
                 value={editForm.description}
                 onChange={(e) => { touchEditDraft(); setEditForm({ ...editForm, description: e.target.value }); }}
                 rows={3}
-                className="p-2.5 border border-[#decfa8] rounded-xl text-xs col-span-1 sm:col-span-2 resize-none"
+                className="p-2.5 border border-[#e3cfd3] rounded-xl text-xs col-span-1 sm:col-span-2 resize-none"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-[#8b6508] mb-2">תמונות השמלה</label>
-              <p className="text-[10px] text-[#9a7b4f] mb-2">ניתן למחוק תמונות קיימות או להוסיף חדשות (עד 6 סה״כ)</p>
+              <label className="block text-xs font-bold text-[#6b2340] mb-2">תמונות השמלה</label>
+              <p className="text-[10px] text-[#7a5e64] mb-2">ניתן למחוק תמונות קיימות או להוסיף חדשות (עד 6 סה״כ)</p>
 
               {(editImages.length > 0 || editNewPreviews.length > 0) && (
-                <div className="flex gap-2 flex-wrap mb-3 bg-neutral-50 p-3 rounded-xl border border-[#eadaaf]">
+                <div className="flex gap-2 flex-wrap mb-3 bg-neutral-50 p-3 rounded-xl border border-[#ead8dc]">
                   {editImages.map((img) => (
                     <div key={img} className="relative">
-                      <DressImageFill src={img} alt="" className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl border-2 border-[#decfa8]" />
+                      <DressImageFill src={img} alt="" className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl border-2 border-[#e3cfd3]" />
                       <button
                         type="button"
                         onClick={() => removeEditExistingImage(img)}
@@ -1809,8 +1809,8 @@ function AccountPageContent() {
                   ))}
                   {editNewPreviews.map((img, index) => (
                     <div key={`${img}-${index}`} className="relative">
-                      <DressImageFill src={img} alt="" className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl border-2 border-[#d4af37]" />
-                      <span className="absolute bottom-1 right-1 text-[8px] bg-[#d4af37] text-white px-1 rounded">חדש</span>
+                      <DressImageFill src={img} alt="" className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl border-2 border-[#6b2340]" />
+                      <span className="absolute bottom-1 right-1 text-[8px] bg-[#6b2340] text-white px-1 rounded">חדש</span>
                       <button
                         type="button"
                         onClick={() => removeEditNewImage(index)}
@@ -1827,9 +1827,9 @@ function AccountPageContent() {
               <button
                 type="button"
                 onClick={() => editFileInputRef.current?.click()}
-                className="w-full p-4 border-2 border-dashed border-[#d4af37] rounded-xl bg-[#fffdf8] hover:bg-[#f4ebd4] transition-colors text-center"
+                className="w-full p-4 border-2 border-dashed border-[#6b2340] rounded-xl bg-[#fffafb] hover:bg-[#f3e9ec] transition-colors text-center"
               >
-                <span className="text-xs font-bold text-[#8b6508]">➕ הוספת תמונות</span>
+                <span className="text-xs font-bold text-[#6b2340]">➕ הוספת תמונות</span>
               </button>
               <input
                 ref={editFileInputRef}
@@ -1844,7 +1844,7 @@ function AccountPageContent() {
             <button
               type="submit"
               disabled={editSaving}
-              className={`w-full py-3 bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white rounded-xl text-xs font-black shadow-md transition-all disabled:opacity-60 disabled:cursor-wait ${
+              className={`w-full py-3 bg-gradient-to-r from-[#6b2340] to-[#4a152c] text-white rounded-xl text-xs font-black shadow-md transition-all disabled:opacity-60 disabled:cursor-wait ${
                 editSaving ? 'scale-[0.98] shadow-inner' : 'hover:brightness-105 active:scale-[0.98]'
               }`}
             >
@@ -1854,28 +1854,28 @@ function AccountPageContent() {
         )}
 
         {section === 'profile' && (
-          <form onSubmit={submitProfile} className="bg-white rounded-2xl border border-[#eadaaf] p-4 sm:p-6 space-y-4">
+          <form onSubmit={submitProfile} className="bg-white rounded-2xl border border-[#ead8dc] p-4 sm:p-6 space-y-4">
             <h2 className="font-black text-xl">👤 פרטי חשבון</h2>
-            <p className="text-xs text-[#6e634c]">עדכני שם, טלפון ואימייל — הפרטים ישמשו להזמנות ולשמלות שפרסמת.</p>
-            {profileLoading && <p className="text-xs text-[#9a7b4f]">טוען פרטים…</p>}
+            <p className="text-xs text-[#6e5e62]">עדכני שם, טלפון ואימייל — הפרטים ישמשו להזמנות ולשמלות שפרסמת.</p>
+            {profileLoading && <p className="text-xs text-[#7a5e64]">טוען פרטים…</p>}
             {profileError && <FormError message={profileError} />}
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-bold text-[#8b6508] mb-1">שם משתמש</label>
+                <label className="block text-xs font-bold text-[#6b2340] mb-1">שם משתמש</label>
                 <input
                   readOnly
                   value={profileForm.username}
-                  className="w-full p-2.5 border border-[#decfa8] rounded-xl text-xs text-[#6e634c] bg-[#faf8f3]"
+                  className="w-full p-2.5 border border-[#e3cfd3] rounded-xl text-xs text-[#6e5e62] bg-[#faf7f5]"
                   dir="ltr"
                 />
-                <p className="text-[10px] text-[#9a7b4f] mt-1">לא ניתן לשנות שם משתמש</p>
+                <p className="text-[10px] text-[#7a5e64] mt-1">לא ניתן לשנות שם משתמש</p>
               </div>
               <input
                 required
                 placeholder="שם מלא *"
                 value={profileForm.display_name}
                 onChange={(e) => setProfileForm({ ...profileForm, display_name: e.target.value })}
-                className="w-full p-2.5 border border-[#decfa8] rounded-xl text-xs text-[#2c261a] bg-white"
+                className="w-full p-2.5 border border-[#e3cfd3] rounded-xl text-xs text-[#2c261a] bg-white"
               />
               <input
                 required
@@ -1883,17 +1883,17 @@ function AccountPageContent() {
                 placeholder="טלפון (0501234567) *"
                 value={profileForm.phone}
                 onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
-                className="w-full p-2.5 border border-[#decfa8] rounded-xl text-xs text-[#2c261a] bg-white"
+                className="w-full p-2.5 border border-[#e3cfd3] rounded-xl text-xs text-[#2c261a] bg-white"
                 dir="ltr"
               />
-              <p className="text-[10px] text-[#9a7b4f] -mt-1">10 ספרות, מתחיל ב-0 — למשל 0501234567</p>
+              <p className="text-[10px] text-[#7a5e64] -mt-1">10 ספרות, מתחיל ב-0 — למשל 0501234567</p>
               <input
                 required
                 type="email"
                 placeholder="אימייל *"
                 value={profileForm.email}
                 onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })}
-                className="w-full p-2.5 border border-[#decfa8] rounded-xl text-xs text-[#2c261a] bg-white"
+                className="w-full p-2.5 border border-[#e3cfd3] rounded-xl text-xs text-[#2c261a] bg-white"
                 dir="ltr"
               />
               <MarketingEmailOptInCheckbox
@@ -1906,7 +1906,7 @@ function AccountPageContent() {
             <button
               type="submit"
               disabled={profileSaving || profileLoading}
-              className="w-full py-3 bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white rounded-xl text-xs font-black shadow-md disabled:opacity-60"
+              className="w-full py-3 bg-gradient-to-r from-[#6b2340] to-[#4a152c] text-white rounded-xl text-xs font-black shadow-md disabled:opacity-60"
             >
               {profileSaving ? 'שומרת...' : 'שמרי פרטים'}
             </button>
@@ -1914,25 +1914,25 @@ function AccountPageContent() {
         )}
 
         {section === 'add' && (
-          <form onSubmit={submitDress} className="bg-white rounded-2xl border border-[#eadaaf] p-4 sm:p-6 space-y-4">
+          <form onSubmit={submitDress} className="bg-white rounded-2xl border border-[#ead8dc] p-4 sm:p-6 space-y-4">
             <h2 className="font-black text-xl">➕ הוספת שמלה</h2>
             <OwnerPlatformNotice />
             <div ref={addFormErrorRef}>
               {addFormError && <FormError message={addFormError} />}
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <input required placeholder="שם השמלה *" value={addForm.name} onChange={(e) => setAddForm({ ...addForm, name: e.target.value })} className="p-2.5 border border-[#decfa8] rounded-xl text-xs text-[#2c261a] placeholder:text-[#9a7b4f] bg-white col-span-1 sm:col-span-2" />
-              <input required type="number" placeholder="מחיר *" value={addForm.price} onChange={(e) => setAddForm({ ...addForm, price: e.target.value })} className="p-2.5 border border-[#decfa8] rounded-xl text-xs text-[#2c261a] placeholder:text-[#9a7b4f] bg-white" />
+              <input required placeholder="שם השמלה *" value={addForm.name} onChange={(e) => setAddForm({ ...addForm, name: e.target.value })} className="p-2.5 border border-[#e3cfd3] rounded-xl text-xs text-[#2c261a] placeholder:text-[#7a5e64] bg-white col-span-1 sm:col-span-2" />
+              <input required type="number" placeholder="מחיר *" value={addForm.price} onChange={(e) => setAddForm({ ...addForm, price: e.target.value })} className="p-2.5 border border-[#e3cfd3] rounded-xl text-xs text-[#2c261a] placeholder:text-[#7a5e64] bg-white" />
               <div>
-                <label className="block text-xs font-bold text-[#8b6508] mb-1">מידה *</label>
+                <label className="block text-xs font-bold text-[#6b2340] mb-1">מידה *</label>
                 <DressSizeInput
                   required
                   value={addForm.size}
                   onChange={(size) => setAddForm({ ...addForm, size })}
-                  className="p-2.5 border border-[#decfa8] rounded-xl text-xs text-[#2c261a] bg-white w-full"
+                  className="p-2.5 border border-[#e3cfd3] rounded-xl text-xs text-[#2c261a] bg-white w-full"
                 />
               </div>
-              <input required placeholder="עיר *" value={addForm.city} onChange={(e) => setAddForm({ ...addForm, city: e.target.value })} className="p-2.5 border border-[#decfa8] rounded-xl text-xs text-[#2c261a] placeholder:text-[#9a7b4f] bg-white" />
+              <input required placeholder="עיר *" value={addForm.city} onChange={(e) => setAddForm({ ...addForm, city: e.target.value })} className="p-2.5 border border-[#e3cfd3] rounded-xl text-xs text-[#2c261a] placeholder:text-[#7a5e64] bg-white" />
               <div className="col-span-1 sm:col-span-2">
                 <input
                   required
@@ -1940,34 +1940,34 @@ function AccountPageContent() {
                   type="tel"
                   placeholder="טלפון ליצירת קשר *"
                   value={addForm.owner_phone}
-                  className="p-2.5 border border-[#decfa8] rounded-xl text-xs text-[#2c261a] bg-[#faf8f3] w-full"
+                  className="p-2.5 border border-[#e3cfd3] rounded-xl text-xs text-[#2c261a] bg-[#faf7f5] w-full"
                   dir="ltr"
                 />
-                <p className="text-[10px] text-[#9a7b4f] mt-1">טלפון החשבון שלך — לפיו מוצגות השמלות באזור האישי</p>
+                <p className="text-[10px] text-[#7a5e64] mt-1">טלפון החשבון שלך — לפיו מוצגות השמלות באזור האישי</p>
               </div>
-              <input placeholder="צבע *" required value={addForm.color} onChange={(e) => setAddForm({ ...addForm, color: e.target.value })} className="p-2.5 border border-[#decfa8] rounded-xl text-xs text-[#2c261a] placeholder:text-[#9a7b4f] bg-white" />
+              <input placeholder="צבע *" required value={addForm.color} onChange={(e) => setAddForm({ ...addForm, color: e.target.value })} className="p-2.5 border border-[#e3cfd3] rounded-xl text-xs text-[#2c261a] placeholder:text-[#7a5e64] bg-white" />
               <div>
-                <label className="block text-xs font-bold text-[#8b6508] mb-1">השכרה או מכירה *</label>
-                <select required value={addForm.listing_type} onChange={(e) => setAddForm({ ...addForm, listing_type: e.target.value })} className="p-2.5 border border-[#decfa8] rounded-xl text-xs text-[#2c261a] bg-white w-full">
+                <label className="block text-xs font-bold text-[#6b2340] mb-1">השכרה או מכירה *</label>
+                <select required value={addForm.listing_type} onChange={(e) => setAddForm({ ...addForm, listing_type: e.target.value })} className="p-2.5 border border-[#e3cfd3] rounded-xl text-xs text-[#2c261a] bg-white w-full">
                   {LISTING_TYPE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-bold text-[#8b6508] mb-1">שמלה בודדת או סט *</label>
-                <select required value={addForm.event_type} onChange={(e) => setAddForm({ ...addForm, event_type: e.target.value })} className="p-2.5 border border-[#decfa8] rounded-xl text-xs text-[#2c261a] bg-white w-full">
+                <label className="block text-xs font-bold text-[#6b2340] mb-1">שמלה בודדת או סט *</label>
+                <select required value={addForm.event_type} onChange={(e) => setAddForm({ ...addForm, event_type: e.target.value })} className="p-2.5 border border-[#e3cfd3] rounded-xl text-xs text-[#2c261a] bg-white w-full">
                   {DRESS_KIND_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-bold text-[#8b6508] mb-1">סגנון *</label>
-                <select required value={addForm.dress_style} onChange={(e) => setAddForm({ ...addForm, dress_style: e.target.value })} className="p-2.5 border border-[#decfa8] rounded-xl text-xs text-[#2c261a] bg-white w-full">
+                <label className="block text-xs font-bold text-[#6b2340] mb-1">סגנון *</label>
+                <select required value={addForm.dress_style} onChange={(e) => setAddForm({ ...addForm, dress_style: e.target.value })} className="p-2.5 border border-[#e3cfd3] rounded-xl text-xs text-[#2c261a] bg-white w-full">
                   <option value="">{DRESS_STYLE_PLACEHOLDER}</option>
                   {DRESS_STYLE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-bold text-[#8b6508] mb-1">{dressLengthFieldLabel(addForm.event_type)}</label>
-                <select required value={addForm.dress_length} onChange={(e) => setAddForm({ ...addForm, dress_length: e.target.value })} className="p-2.5 border border-[#decfa8] rounded-xl text-xs text-[#2c261a] bg-white w-full">
+                <label className="block text-xs font-bold text-[#6b2340] mb-1">{dressLengthFieldLabel(addForm.event_type)}</label>
+                <select required value={addForm.dress_length} onChange={(e) => setAddForm({ ...addForm, dress_length: e.target.value })} className="p-2.5 border border-[#e3cfd3] rounded-xl text-xs text-[#2c261a] bg-white w-full">
                   {DRESS_LENGTH_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
                 </select>
               </div>
@@ -1976,25 +1976,25 @@ function AccountPageContent() {
                 value={addForm.description}
                 onChange={(e) => setAddForm({ ...addForm, description: e.target.value })}
                 rows={3}
-                className="p-2.5 border border-[#decfa8] rounded-xl text-xs col-span-1 sm:col-span-2 resize-none"
+                className="p-2.5 border border-[#e3cfd3] rounded-xl text-xs col-span-1 sm:col-span-2 resize-none"
               />
             </div>
 
-            <div className="bg-[#fffdf9] border border-[#eadaaf] rounded-xl p-3 text-[10px] text-[#6e634c] leading-relaxed">
-              <strong className="text-[#8b6508]">טיפ לצילום:</strong> צלמי מהקדימה, מהצד ומהגב — על קולב או תלויה. תאורה טבעית עובדת הכי טוב!
+            <div className="bg-[#fffafb] border border-[#ead8dc] rounded-xl p-3 text-[10px] text-[#6e5e62] leading-relaxed">
+              <strong className="text-[#6b2340]">טיפ לצילום:</strong> צלמי מהקדימה, מהצד ומהגב — על קולב או תלויה. תאורה טבעית עובדת הכי טוב!
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-[#8b6508] mb-2">העלאת תמונות של השמלה *</label>
+              <label className="block text-xs font-bold text-[#6b2340] mb-2">העלאת תמונות של השמלה *</label>
               <DressImageRightsNotice />
               <button
                 type="button"
                 onClick={() => addFileInputRef.current?.click()}
-                className="w-full p-6 border-2 border-dashed border-[#d4af37] rounded-2xl bg-[#fffdf8] hover:bg-[#f4ebd4] transition-colors text-center mt-2"
+                className="w-full p-6 border-2 border-dashed border-[#6b2340] rounded-2xl bg-[#fffafb] hover:bg-[#f3e9ec] transition-colors text-center mt-2"
               >
                 <span className="text-3xl block mb-2">📷</span>
-                <span className="text-xs font-bold text-[#8b6508] block">לחצי כאן לצירוף תמונות</span>
-                <span className="text-[10px] text-[#9a7b4f] mt-1 block">ניתן להעלות מספר תמונות (JPG, PNG)</span>
+                <span className="text-xs font-bold text-[#6b2340] block">לחצי כאן לצירוף תמונות</span>
+                <span className="text-[10px] text-[#7a5e64] mt-1 block">ניתן להעלות מספר תמונות (JPG, PNG)</span>
               </button>
               <input
                 ref={addFileInputRef}
@@ -2005,13 +2005,13 @@ function AccountPageContent() {
                 className="hidden"
               />
               {addImagePreviews.length > 0 && (
-                <div className="flex gap-2 flex-wrap mt-3 bg-neutral-50 p-3 rounded-xl border border-[#eadaaf]">
+                <div className="flex gap-2 flex-wrap mt-3 bg-neutral-50 p-3 rounded-xl border border-[#ead8dc]">
                   {addImagePreviews.map((img, index) => (
                     <div key={`${img}-${index}`} className="relative">
                       <DressImageFill
                         src={img}
                         alt={`תצוגה ${index + 1}`}
-                        className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl border-2 border-[#decfa8]"
+                        className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl border-2 border-[#e3cfd3]"
                       />
                       <button
                         type="button"
@@ -2023,7 +2023,7 @@ function AccountPageContent() {
                       </button>
                     </div>
                   ))}
-                  <p className="w-full text-[10px] text-[#9a7b4f] mt-1">{addImagePreviews.length} תמונות נבחרו</p>
+                  <p className="w-full text-[10px] text-[#7a5e64] mt-1">{addImagePreviews.length} תמונות נבחרו</p>
                 </div>
               )}
             </div>
@@ -2031,7 +2031,7 @@ function AccountPageContent() {
             <button
               type="submit"
               disabled={addSubmitting}
-              className="w-full py-3 rounded-xl text-xs font-black shadow-md cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.98] bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white border border-[#c9a227] hover:from-[#b8860b] hover:to-[#8b6508] disabled:opacity-60 disabled:pointer-events-none"
+              className="w-full py-3 rounded-xl text-xs font-black shadow-md cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.98] bg-gradient-to-r from-[#6b2340] to-[#4a152c] text-white border border-[#8a3a55] hover:from-[#4a152c] hover:to-[#6b2340] disabled:opacity-60 disabled:pointer-events-none"
             >
               {addSubmitting ? 'שולחת...' : 'שלחי לאישור'}
             </button>
@@ -2126,19 +2126,19 @@ function AccountPageContent() {
       {editSuccessNotice && section === 'rentals' && (
         <div className="fixed inset-0 bg-neutral-900/60 backdrop-blur-md z-[85] flex items-center justify-center p-4">
           <div
-            className="bg-white rounded-2xl max-w-md w-full p-6 sm:p-8 shadow-2xl border-2 border-[#d4af37] relative text-center"
+            className="bg-white rounded-2xl max-w-md w-full p-6 sm:p-8 shadow-2xl border-2 border-[#6b2340] relative text-center"
             dir="rtl"
           >
             <span className="text-4xl block mb-3">✨</span>
-            <h3 className="text-xl font-black text-[#3d2f24] mb-2">
+            <h3 className="text-xl font-black text-[#2c2426] mb-2">
               {editSuccessNotice.isPendingSubmission
                 ? 'השמלה עודכנה!'
                 : editSuccessNotice.pendingApproval
                   ? 'העדכון נשלח לאישור!'
                   : 'השמלה עודכנה!'}
             </h3>
-            <p className="text-sm text-[#6e634c] font-bold mb-1">{editSuccessNotice.dressName}</p>
-            <p className="text-sm text-[#5c5037] leading-relaxed mb-4">
+            <p className="text-sm text-[#6e5e62] font-bold mb-1">{editSuccessNotice.dressName}</p>
+            <p className="text-sm text-[#6e5e62] leading-relaxed mb-4">
               {editSuccessNotice.isPendingSubmission
                 ? 'השינויים נשמרו. השמלה עדיין ממתינה לאישור ההנהלה — נעדכן אותך כשתופיע בקטלוג.'
                 : editSuccessNotice.pendingApproval
@@ -2153,7 +2153,7 @@ function AccountPageContent() {
             <button
               type="button"
               onClick={() => setEditSuccessNotice(null)}
-              className="w-full py-3.5 bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white text-sm font-black rounded-xl shadow-md"
+              className="w-full py-3.5 bg-gradient-to-r from-[#6b2340] to-[#4a152c] text-white text-sm font-black rounded-xl shadow-md"
             >
               חזרה לשמלות שלי
             </button>
@@ -2174,7 +2174,7 @@ export default function AccountPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center bg-[#faf8f5]">
-        <p className="text-[#8b6508] text-sm">טוען...</p>
+        <p className="text-[#6b2340] text-sm">טוען...</p>
       </div>
     }>
       <AccountPageContent />
