@@ -66,30 +66,30 @@ export default function DressRateModal({
 
   return (
     <div className="fixed inset-0 bg-neutral-900/60 backdrop-blur-md z-[80] flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative border-2 border-[#6b2340]" dir="rtl">
+      <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative border-2 border-[#d4af37]" dir="rtl">
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-4 left-4 bg-neutral-100 hover:bg-[#6b2340] text-[#6b2340] hover:text-white w-8 h-8 rounded-full flex items-center justify-center border font-bold cursor-pointer"
+          className="absolute top-4 left-4 bg-neutral-100 hover:bg-[#d4af37] text-[#b8860b] hover:text-white w-8 h-8 rounded-full flex items-center justify-center border font-bold cursor-pointer"
         >
           ✕
         </button>
         <h3 className="text-lg font-black text-neutral-950 mb-1">דרגי את השמלה</h3>
-        <p className="text-xs text-[#6e5e62] mb-4">{dress.name}</p>
+        <p className="text-xs text-[#6e634c] mb-4">{dress.name}</p>
         {showBackToDetails && (
           <button
             type="button"
             onClick={onClose}
-            className="mb-3 text-[11px] font-bold text-[#6b2340] hover:underline cursor-pointer"
+            className="mb-3 text-[11px] font-bold text-[#8b6508] hover:underline cursor-pointer"
           >
             ← חזרה לפרטים מלאים
           </button>
         )}
 
         {success ? (
-          <div className="bg-gradient-to-l from-[#fffafb] to-[#f3e9ec] border border-[#d4b4bb] rounded-xl p-5 text-center space-y-2">
+          <div className="bg-gradient-to-l from-[#fffdf9] to-[#f4ebd4] border border-[#e6c687] rounded-xl p-5 text-center space-y-2">
             <p className="text-2xl">⭐</p>
-            <p className="text-sm font-bold text-[#2c2426]">{success}</p>
+            <p className="text-sm font-bold text-[#3d2f24]">{success}</p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="flex flex-col gap-3">
@@ -100,9 +100,9 @@ export default function DressRateModal({
               placeholder="שמך"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="p-2.5 bg-neutral-50 border border-[#e3cfd3] rounded-xl text-xs"
+              className="p-2.5 bg-neutral-50 border border-[#decfa8] rounded-xl text-xs"
             />
-            <div className="flex gap-1 bg-neutral-50 p-2 rounded-xl border border-[#e3cfd3]">
+            <div className="flex gap-1 bg-neutral-50 p-2 rounded-xl border border-[#decfa8]">
               {[1, 2, 3, 4, 5].map((s) => (
                 <button
                   key={s}
@@ -119,12 +119,12 @@ export default function DressRateModal({
               placeholder="ספרי על החוויה (אופציונלי)"
               value={text}
               onChange={(e) => setText(e.target.value)}
-              className="p-2.5 bg-neutral-50 border border-[#e3cfd3] rounded-xl text-xs resize-none"
+              className="p-2.5 bg-neutral-50 border border-[#decfa8] rounded-xl text-xs resize-none"
             />
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-gradient-to-r from-[#6b2340] to-[#4a152c] text-white text-xs font-black rounded-xl disabled:opacity-60"
+              className="w-full py-3 bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white text-xs font-black rounded-xl disabled:opacity-60"
             >
               {loading ? 'שולחת...' : 'שליחת דירוג'}
             </button>

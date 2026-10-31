@@ -31,7 +31,7 @@ import {
 } from '@/lib/auth-dismiss';
 
 const AUTH_INPUT_CLASS =
-  'w-full p-2.5 bg-white border border-[#e3cfd3] rounded-xl text-sm text-[#2c261a] placeholder:text-[#7a5e64] caret-[#6b2340] focus:outline-none focus:border-[#6b2340]';
+  'w-full p-2.5 bg-white border border-[#decfa8] rounded-xl text-sm text-[#2c261a] placeholder:text-[#9a7b4f] caret-[#8b6508] focus:outline-none focus:border-[#d4af37]';
 
 export type AuthModalOptions = {
   reason?: AuthModalReason;
@@ -66,13 +66,13 @@ function ModalShell({
   return (
     <div className="fixed inset-0 bg-neutral-900/60 backdrop-blur-md z-[60] flex items-center justify-center p-4 overflow-y-auto">
       <div
-        className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative border-2 border-[#6b2340] max-h-[90vh] overflow-y-auto"
+        className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative border-2 border-[#d4af37] max-h-[90vh] overflow-y-auto"
         style={{ direction: 'rtl' }}
       >
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-4 left-4 bg-neutral-100 hover:bg-[#6b2340] text-[#6b2340] hover:text-white w-8 h-8 rounded-full flex items-center justify-center border shadow-sm font-bold transition-all"
+          className="absolute top-4 left-4 bg-neutral-100 hover:bg-[#d4af37] text-[#b8860b] hover:text-white w-8 h-8 rounded-full flex items-center justify-center border shadow-sm font-bold transition-all"
           aria-label="סגירה"
         >
           ✕
@@ -287,12 +287,12 @@ function AuthModalProviderInner({ children }: { children: ReactNode }) {
       {open && view === 'prompt' && (
         <ModalShell onClose={closeAuthModal}>
           <div className="text-center mb-6 pt-2">
-            <span className="text-[10px] tracking-[0.2em] text-[#6b2340] font-black block mb-1">
+            <span className="text-[10px] tracking-[0.2em] text-[#b8860b] font-black block mb-1">
               {copy.eyebrow}
             </span>
             <h3 className="text-xl font-black text-neutral-950">{copy.title}</h3>
-            <div className="w-12 h-px bg-[#6b2340] mx-auto mt-2" />
-            <p className="text-sm text-[#6e5e62] mt-4 leading-relaxed">{copy.body}</p>
+            <div className="w-12 h-px bg-[#d4af37] mx-auto mt-2" />
+            <p className="text-sm text-[#5c5037] mt-4 leading-relaxed">{copy.body}</p>
           </div>
 
           <div className="flex flex-col gap-3">
@@ -302,7 +302,7 @@ function AuthModalProviderInner({ children }: { children: ReactNode }) {
                 setError('');
                 setView('login');
               }}
-              className="w-full py-3.5 bg-gradient-to-r from-[#6b2340] to-[#4a152c] text-white rounded-xl font-black text-sm shadow-lg"
+              className="w-full py-3.5 bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white rounded-xl font-black text-sm shadow-lg"
             >
               התחברות →
             </button>
@@ -312,14 +312,14 @@ function AuthModalProviderInner({ children }: { children: ReactNode }) {
                 setError('');
                 setView('register');
               }}
-              className="w-full py-3.5 bg-white border-2 border-[#6b2340] text-[#6b2340] rounded-xl font-black text-sm hover:bg-[#fffafb] transition-colors"
+              className="w-full py-3.5 bg-white border-2 border-[#d4af37] text-[#8b6508] rounded-xl font-black text-sm hover:bg-[#fffdf8] transition-colors"
             >
               הרשמה מהירה — חינם
             </button>
             <button
               type="button"
               onClick={closeAuthModal}
-              className="w-full py-2 text-xs text-[#7a5e64] hover:text-[#6b2340] transition-colors"
+              className="w-full py-2 text-xs text-[#9a7b4f] hover:text-[#8b6508] transition-colors"
             >
               המשיכי לגלוש בלי חשבון
             </button>
@@ -330,16 +330,16 @@ function AuthModalProviderInner({ children }: { children: ReactNode }) {
       {open && view === 'login' && (
         <ModalShell onClose={closeAuthModal}>
           <div className="text-center mb-5 pt-2">
-            <span className="text-[10px] tracking-[0.2em] text-[#6b2340] font-black block mb-1">
+            <span className="text-[10px] tracking-[0.2em] text-[#b8860b] font-black block mb-1">
               ✦ התחברות ✦
             </span>
             <h3 className="text-xl font-black text-neutral-950">שמחים שחזרת</h3>
-            <div className="w-12 h-px bg-[#6b2340] mx-auto mt-2" />
+            <div className="w-12 h-px bg-[#d4af37] mx-auto mt-2" />
           </div>
 
           <form onSubmit={handleLogin} noValidate className="flex flex-col gap-3">
             <div>
-              <label className="block text-xs font-black text-[#6b2340] mb-1">שם משתמש</label>
+              <label className="block text-xs font-black text-[#8b6508] mb-1">שם משתמש</label>
               <input
                 type="text"
                 required
@@ -351,7 +351,7 @@ function AuthModalProviderInner({ children }: { children: ReactNode }) {
               />
             </div>
             <div>
-              <label className="block text-xs font-black text-[#6b2340] mb-1">סיסמה</label>
+              <label className="block text-xs font-black text-[#8b6508] mb-1">סיסמה</label>
               <input
                 type="password"
                 required
@@ -368,12 +368,12 @@ function AuthModalProviderInner({ children }: { children: ReactNode }) {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-gradient-to-r from-[#6b2340] to-[#4a152c] text-white rounded-xl font-black text-sm shadow-lg disabled:opacity-60"
+              className="w-full py-3 bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white rounded-xl font-black text-sm shadow-lg disabled:opacity-60"
             >
               {loading ? 'מתחברת...' : 'כניסה →'}
             </button>
 
-            <p className="text-center text-xs text-[#6e5e62]">
+            <p className="text-center text-xs text-[#6e634c]">
               אין לך חשבון?{' '}
               <button
                 type="button"
@@ -381,7 +381,7 @@ function AuthModalProviderInner({ children }: { children: ReactNode }) {
                   setError('');
                   setView('register');
                 }}
-                className="text-[#6b2340] font-bold underline"
+                className="text-[#b8860b] font-bold underline"
               >
                 הרשמה
               </button>
@@ -392,7 +392,7 @@ function AuthModalProviderInner({ children }: { children: ReactNode }) {
                 setError('');
                 setView('prompt');
               }}
-              className="text-center text-xs text-[#7a5e64] hover:text-[#6b2340]"
+              className="text-center text-xs text-[#9a7b4f] hover:text-[#8b6508]"
             >
               ← חזרה
             </button>
@@ -403,12 +403,12 @@ function AuthModalProviderInner({ children }: { children: ReactNode }) {
       {open && view === 'register' && (
         <ModalShell onClose={closeAuthModal}>
           <div className="text-center mb-5 pt-2">
-            <span className="text-[10px] tracking-[0.2em] text-[#6b2340] font-black block mb-1">
+            <span className="text-[10px] tracking-[0.2em] text-[#b8860b] font-black block mb-1">
               ✦ הרשמה ✦
             </span>
             <h3 className="text-xl font-black text-neutral-950">יצירת חשבון חדש</h3>
-            <div className="w-12 h-px bg-[#6b2340] mx-auto mt-2" />
-            <p className="text-[11px] text-[#6e5e62] mt-2">הטלפון יקשר את השמלות וההזמנות שלך</p>
+            <div className="w-12 h-px bg-[#d4af37] mx-auto mt-2" />
+            <p className="text-[11px] text-[#6e634c] mt-2">הטלפון יקשר את השמלות וההזמנות שלך</p>
           </div>
 
           <form onSubmit={handleRegister} noValidate className="flex flex-col gap-2.5">
@@ -420,7 +420,7 @@ function AuthModalProviderInner({ children }: { children: ReactNode }) {
                 className={AUTH_INPUT_CLASS}
                 dir="ltr"
               />
-              <p className="text-[10px] text-[#7a5e64] mt-1">שם משתמש ייחודי</p>
+              <p className="text-[10px] text-[#9a7b4f] mt-1">שם משתמש ייחודי</p>
             </div>
             <input
               type="password"
@@ -474,7 +474,7 @@ function AuthModalProviderInner({ children }: { children: ReactNode }) {
               {loading ? 'נרשמת...' : 'יצירת חשבון →'}
             </button>
 
-            <p className="text-center text-xs text-[#6e5e62]">
+            <p className="text-center text-xs text-[#6e634c]">
               יש לך חשבון?{' '}
               <button
                 type="button"
@@ -482,7 +482,7 @@ function AuthModalProviderInner({ children }: { children: ReactNode }) {
                   setError('');
                   setView('login');
                 }}
-                className="text-[#6b2340] font-bold underline"
+                className="text-[#b8860b] font-bold underline"
               >
                 התחברות
               </button>
@@ -493,7 +493,7 @@ function AuthModalProviderInner({ children }: { children: ReactNode }) {
                 setError('');
                 setView('prompt');
               }}
-              className="text-center text-xs text-[#7a5e64] hover:text-[#6b2340]"
+              className="text-center text-xs text-[#9a7b4f] hover:text-[#8b6508]"
             >
               ← חזרה
             </button>

@@ -12,8 +12,8 @@ type Props = {
 };
 
 const styles: Record<SiteToastVariant, string> = {
-  success: 'bg-[#fffafb] border-[#6b2340] text-[#2c2426]',
-  info: 'bg-white border-[#e3cfd3] text-[#2c2426]',
+  success: 'bg-[#fffdf8] border-[#d4af37] text-[#3d2f24]',
+  info: 'bg-white border-[#decfa8] text-[#3d2f24]',
   error: 'bg-red-50 border-red-200 text-red-800',
 };
 
@@ -42,14 +42,14 @@ export default function SiteToast({
       style={{ direction: 'rtl' }}
     >
       <div className={`flex items-start gap-3 rounded-xl px-3 py-2.5 border ${styles[variant]}`}>
-        <span className="shrink-0 w-6 h-6 rounded-full bg-[#f3e9ec] text-[#6b2340] text-xs font-black flex items-center justify-center">
+        <span className="shrink-0 w-6 h-6 rounded-full bg-[#f4ebd4] text-[#8b6508] text-xs font-black flex items-center justify-center">
           {icons[variant]}
         </span>
         <p className="text-xs sm:text-sm leading-relaxed font-medium">{message}</p>
         <button
           type="button"
           onClick={onClose}
-          className="shrink-0 text-[#7a5e64] hover:text-[#6b2340] text-sm font-bold"
+          className="shrink-0 text-[#9a7b4f] hover:text-[#8b6508] text-sm font-bold"
           aria-label="סגור"
         >
           ✕

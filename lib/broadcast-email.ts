@@ -127,15 +127,15 @@ export function buildBroadcastEmailHtml(params: {
     params.audience === 'opt_in'
       ? `<p style="font-size:12px;color:#9a7b4f;line-height:1.6;margin:24px 0 0;padding-top:16px;border-top:1px solid #ede3c8;">
           ${escapeHtml(MARKETING_EMAIL_BROADCAST_FOOTER)}
-          <a href="${getAppUrl()}/account?section=profile" style="color:#6b2340;"> לביטול — אזור אישי → פרטי חשבון</a>
+          <a href="${getAppUrl()}/account?section=profile" style="color:#8b6508;"> לביטול — אזור אישי → פרטי חשבון</a>
         </p>`
       : `<p style="font-size:12px;color:#9a7b4f;line-height:1.6;margin:24px 0 0;padding-top:16px;border-top:1px solid #ede3c8;">
           מייל תפעולי מ«שמלה בקליק» — נשלח לכל המשתמשות הרשומות עם כתובת מייל.
         </p>`;
 
   return `
-    <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #ead8dc;border-radius:16px;background:#fffdf8;">
-      <p style="font-size:11px;font-weight:bold;color:#6b2340;margin:0 0 8px;letter-spacing:0.05em;">✦ שמלה בקליק ✦</p>
+    <div dir="rtl" style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #eadaaf;border-radius:16px;background:#fffdf8;">
+      <p style="font-size:11px;font-weight:bold;color:#b8860b;margin:0 0 8px;letter-spacing:0.05em;">✦ שמלה בקליק ✦</p>
       <h2 style="color:#3d2f24;margin:0 0 16px;font-size:20px;">${escapeHtml(params.subject)}</h2>
       ${greeting}
       ${plainTextToHtml(params.body)}

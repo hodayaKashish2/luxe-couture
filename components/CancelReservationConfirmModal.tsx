@@ -30,14 +30,14 @@ export default function CancelReservationConfirmModal({
   return (
     <div className="fixed inset-0 bg-neutral-900/60 backdrop-blur-md z-[85] flex items-center justify-center p-4">
       <div
-        className="bg-white rounded-2xl max-w-md w-full p-6 sm:p-8 shadow-2xl border-2 border-[#6b2340] relative"
+        className="bg-white rounded-2xl max-w-md w-full p-6 sm:p-8 shadow-2xl border-2 border-[#d4af37] relative"
         dir="rtl"
       >
         <button
           type="button"
           onClick={onClose}
           disabled={loading}
-          className="absolute top-4 left-4 bg-neutral-100 hover:bg-[#6b2340] text-[#6b2340] w-8 h-8 rounded-full flex items-center justify-center border font-bold disabled:opacity-50"
+          className="absolute top-4 left-4 bg-neutral-100 hover:bg-[#d4af37] text-[#b8860b] w-8 h-8 rounded-full flex items-center justify-center border font-bold disabled:opacity-50"
           aria-label="סגירה"
         >
           ✕
@@ -46,16 +46,16 @@ export default function CancelReservationConfirmModal({
         <div className="text-center space-y-4 pt-2">
           <span className="text-4xl block">⚠️</span>
           <div>
-            <p className="text-[10px] tracking-widest text-[#7a5e64] font-bold">✦ ביטול הזמנה ✦</p>
-            <h3 className="text-xl font-black text-[#2c2426] mt-1">לבטל את ההזמנה?</h3>
+            <p className="text-[10px] tracking-widest text-[#9a7b4f] font-bold">✦ ביטול הזמנה ✦</p>
+            <h3 className="text-xl font-black text-[#3d2f24] mt-1">לבטל את ההזמנה?</h3>
           </div>
 
-          <div className="bg-[#fffafb] border border-[#e3cfd3] rounded-xl p-4 text-right space-y-2">
-            <p className="text-sm font-bold text-[#2c2426]">{dressName}</p>
-            <p className="text-xs text-[#6b2340] font-bold">📅 {formatHebrewDate(eventDate)}</p>
+          <div className="bg-[#fffdf8] border border-[#decfa8] rounded-xl p-4 text-right space-y-2">
+            <p className="text-sm font-bold text-[#3d2f24]">{dressName}</p>
+            <p className="text-xs text-[#8b6508] font-bold">📅 {formatHebrewDate(eventDate)}</p>
           </div>
 
-          <p className="text-sm text-[#6e5e62] leading-relaxed">
+          <p className="text-sm text-[#5c5037] leading-relaxed">
             התאריך ישוחרר לשוכרות אחרות, ותישלח אלייך ולמשכירה הודעת אישור במייל.
           </p>
 
@@ -72,7 +72,7 @@ export default function CancelReservationConfirmModal({
               type="button"
               onClick={onClose}
               disabled={loading}
-              className="flex-1 py-3 px-4 border-2 border-[#e3cfd3] text-[#6b2340] text-xs font-black rounded-xl hover:bg-[#fffafb] disabled:opacity-60"
+              className="flex-1 py-3 px-4 border-2 border-[#decfa8] text-[#8b6508] text-xs font-black rounded-xl hover:bg-[#fffdf8] disabled:opacity-60"
             >
               לא, להשאיר
             </button>

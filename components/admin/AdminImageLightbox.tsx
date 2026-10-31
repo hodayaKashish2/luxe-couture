@@ -17,7 +17,7 @@ export default function AdminImageLightbox({ src, label, onClose }: AdminImageLi
       <button
         type="button"
         onClick={onClose}
-        className="absolute top-4 left-4 w-10 h-10 rounded-full bg-white/90 text-[#2c2426] font-bold text-lg shadow-lg"
+        className="absolute top-4 left-4 w-10 h-10 rounded-full bg-white/90 text-[#3d2f24] font-bold text-lg shadow-lg"
         aria-label="סגירה"
       >
         ✕

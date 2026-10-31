@@ -26,7 +26,7 @@ type Props = {
 };
 
 const actionBtnClass =
-  'cursor-pointer transition-all duration-200 hover:border-[#6b2340] hover:bg-[#fffafb] hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98]';
+  'cursor-pointer transition-all duration-200 hover:border-[#d4af37] hover:bg-[#fffdf8] hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98]';
 
 export default function DressDetailsModal({
   dress,
@@ -61,20 +61,20 @@ export default function DressDetailsModal({
       onClick={onClose}
     >
       <div
-        className="relative bg-white w-full sm:max-w-5xl rounded-t-2xl sm:rounded-2xl shadow-2xl border-2 border-[#6b2340] max-h-[94vh] overflow-y-auto md:overflow-hidden flex flex-col md:flex-row"
+        className="relative bg-white w-full sm:max-w-5xl rounded-t-2xl sm:rounded-2xl shadow-2xl border-2 border-[#d4af37] max-h-[94vh] overflow-y-auto md:overflow-hidden flex flex-col md:flex-row"
         onClick={(e) => e.stopPropagation()}
         dir="rtl"
       >
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-3 left-3 sm:top-4 sm:left-4 z-30 bg-white hover:bg-[#6b2340] text-[#6b2340] hover:text-white w-9 h-9 rounded-full flex items-center justify-center border-2 border-[#e3cfd3] shadow-md font-bold transition-all cursor-pointer"
+          className="absolute top-3 left-3 sm:top-4 sm:left-4 z-30 bg-white hover:bg-[#d4af37] text-[#b8860b] hover:text-white w-9 h-9 rounded-full flex items-center justify-center border-2 border-[#ebd4a8] shadow-md font-bold transition-all cursor-pointer"
           aria-label="סגירה"
         >
           ✕
         </button>
 
-        <div className="relative w-full md:w-3/5 shrink-0 flex flex-col bg-[#faf7f5] border-b md:border-b-0 md:border-l border-[#ead8dc] md:min-h-[70vh]">
+        <div className="relative w-full md:w-3/5 shrink-0 flex flex-col bg-[#faf8f3] border-b md:border-b-0 md:border-l border-[#f0e2c3] md:min-h-[70vh]">
           <div className="relative w-full h-[min(50vh,26rem)] sm:h-[min(55vh,30rem)] md:h-auto md:flex-1 md:min-h-[55vh] overflow-hidden">
             {images.length > 0 ? (
               <>
@@ -84,7 +84,7 @@ export default function DressDetailsModal({
                   className="absolute inset-0 h-full w-full"
                   fillMode="contain"
                 />
-                <span className="absolute top-3 right-3 sm:top-4 sm:right-4 z-20 bg-gradient-to-r from-[#6b2340] to-[#4a152c] text-white text-[10px] font-black px-3 py-1 rounded-full shadow-md pointer-events-none border border-[#8a3a55]">
+                <span className="absolute top-3 right-3 sm:top-4 sm:right-4 z-20 bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white text-[10px] font-black px-3 py-1 rounded-full shadow-md pointer-events-none border border-[#c9a227]">
                   מידה {dress.size}
                 </span>
 
@@ -98,19 +98,19 @@ export default function DressDetailsModal({
                 />
               </>
             ) : (
-              <div className="absolute inset-0 flex items-center justify-center text-6xl text-[#e3cfd3]">👗</div>
+              <div className="absolute inset-0 flex items-center justify-center text-6xl text-[#decfa8]">👗</div>
             )}
           </div>
 
           {images.length > 1 && (
-            <div className="shrink-0 flex gap-2 p-3 justify-center overflow-x-auto border-t border-[#ead8dc] bg-white/70">
+            <div className="shrink-0 flex gap-2 p-3 justify-center overflow-x-auto border-t border-[#f0e2c3] bg-white/70">
               {images.map((img, idx) => (
                 <button
                   key={`thumb-${img}-${idx}`}
                   type="button"
                   onClick={() => setImageIndex(idx)}
-                  className={`shrink-0 w-16 h-16 rounded-lg border-2 overflow-hidden bg-[#faf7f5] cursor-pointer transition-all hover:scale-105 ${
-                    idx === imageIndex ? 'border-[#6b2340] ring-2 ring-[#6b2340]/40' : 'border-[#ead8dc] hover:border-[#6b2340]'
+                  className={`shrink-0 w-16 h-16 rounded-lg border-2 overflow-hidden bg-[#faf8f3] cursor-pointer transition-all hover:scale-105 ${
+                    idx === imageIndex ? 'border-[#d4af37] ring-2 ring-[#d4af37]/40' : 'border-[#eadaaf] hover:border-[#d4af37]'
                   }`}
                 >
                   <DressImageFill src={img} alt="" className="h-full w-full" />
@@ -120,17 +120,17 @@ export default function DressDetailsModal({
           )}
         </div>
 
-        <div className="w-full md:w-2/5 flex flex-col md:overflow-y-auto md:max-h-[70vh] bg-gradient-to-b from-[#fffafb] to-[#faf7f5]">
+        <div className="w-full md:w-2/5 flex flex-col md:overflow-y-auto md:max-h-[70vh] bg-gradient-to-b from-[#fffdf9] to-[#faf6eb]">
           <div className="p-5 sm:p-6 space-y-4 flex-1">
             <div>
-              <p className="text-[10px] text-[#6b2340] font-black tracking-widest mb-1">✦ פרטי שמלה ✦</p>
-              <h2 className="text-xl sm:text-2xl font-black text-[#2c2426] leading-tight">{dress.name}</h2>
+              <p className="text-[10px] text-[#b8860b] font-black tracking-widest mb-1">✦ פרטי שמלה ✦</p>
+              <h2 className="text-xl sm:text-2xl font-black text-[#3d2f24] leading-tight">{dress.name}</h2>
             </div>
 
             {description && (
-              <div className="bg-white border border-[#ead8dc] rounded-xl p-4">
-                <p className="text-[10px] font-black text-[#6b2340] mb-1">תיאור</p>
-                <p className="text-sm text-[#6e5e62] leading-relaxed">{description}</p>
+              <div className="bg-white border border-[#eadaaf] rounded-xl p-4">
+                <p className="text-[10px] font-black text-[#8b6508] mb-1">תיאור</p>
+                <p className="text-sm text-[#5c5037] leading-relaxed">{description}</p>
               </div>
             )}
 
@@ -138,14 +138,14 @@ export default function DressDetailsModal({
               {rows.map((row) => (
                 <div
                   key={row.label}
-                  className="flex justify-between items-center py-2.5 px-3 rounded-xl bg-white border border-[#ead8dc]"
+                  className="flex justify-between items-center py-2.5 px-3 rounded-xl bg-white border border-[#ede3c8]"
                 >
-                  <span className="text-xs text-[#6b2340] font-bold">{row.label}</span>
+                  <span className="text-xs text-[#8b6508] font-bold">{row.label}</span>
                   <span
                     className={`text-sm ${
                       row.value === DRESS_DETAIL_NOT_SPECIFIED
-                        ? 'font-bold text-[#7a5e64]'
-                        : 'font-black text-[#2c2426]'
+                        ? 'font-bold text-[#9a7b4f]'
+                        : 'font-black text-[#3d2f24]'
                     }`}
                   >
                     {row.value}
@@ -156,30 +156,30 @@ export default function DressDetailsModal({
 
             <DressRatingsSection dress={dress} />
 
-            <div className="flex justify-between items-center pt-2 border-t-2 border-dotted border-[#ead8dc]">
-              <span className="text-sm font-bold text-[#6b2340]">מחיר השכרה</span>
-              <span className="text-3xl font-black text-[#2c2426]">₪{dress.price}</span>
+            <div className="flex justify-between items-center pt-2 border-t-2 border-dotted border-[#eadaaf]">
+              <span className="text-sm font-bold text-[#8b6508]">מחיר השכרה</span>
+              <span className="text-3xl font-black text-[#3d2f24]">₪{dress.price}</span>
             </div>
 
             {dress.owner_name && (
-              <p className="text-xs text-center text-[#6e5e62]">
-                משכירה: <strong className="text-[#6b2340]">{dress.owner_name}</strong>
+              <p className="text-xs text-center text-[#6e634c]">
+                משכירה: <strong className="text-[#8b6508]">{dress.owner_name}</strong>
               </p>
             )}
           </div>
 
           {(onReserve || onToggleCart || onToggleFavorite || onCoordinate || onRate || onShare) && (
-            <div className="p-5 sm:p-6 pt-0 space-y-2 border-t border-[#ead8dc] bg-white/60">
+            <div className="p-5 sm:p-6 pt-0 space-y-2 border-t border-[#f0e2c3] bg-white/60">
               {onCoordinate && (
                 <>
                   <button
                     type="button"
                     onClick={onCoordinate}
-                    className={`w-full py-2.5 border-2 border-[#e3cfd3] bg-white text-[#6b2340] text-xs font-bold rounded-xl ${actionBtnClass}`}
+                    className={`w-full py-2.5 border-2 border-[#decfa8] bg-white text-[#8b6508] text-xs font-bold rounded-xl ${actionBtnClass}`}
                   >
                     📅 תיאום ומדידה עם המשכירה
                   </button>
-                  <p className="text-[10px] text-center text-[#7a5e64] leading-relaxed px-1 -mt-1">
+                  <p className="text-[10px] text-center text-[#9a7b4f] leading-relaxed px-1 -mt-1">
                     {COORDINATE_BUTTON_HINT}
                   </p>
                 </>
@@ -189,12 +189,12 @@ export default function DressDetailsModal({
                   <button
                     type="button"
                     onClick={onReserve}
-                    className={`w-full py-3.5 bg-gradient-to-r from-[#2c261a] to-[#4a3f2b] hover:from-[#6b2340] hover:to-[#4a152c] text-white text-sm font-black rounded-xl shadow-md ${actionBtnClass}`}
+                    className={`w-full py-3.5 bg-gradient-to-r from-[#2c261a] to-[#4a3f2b] hover:from-[#d4af37] hover:to-[#b8860b] text-white text-sm font-black rounded-xl shadow-md ${actionBtnClass}`}
                   >
                     {reserveButtonLabel}
                   </button>
                   {reserveButtonHint && (
-                    <p className="text-[11px] text-center text-[#6e5e62] leading-relaxed px-1">
+                    <p className="text-[11px] text-center text-[#6e634c] leading-relaxed px-1">
                       {reserveButtonHint}
                     </p>
                   )}
@@ -207,8 +207,8 @@ export default function DressDetailsModal({
                     onClick={onToggleCart}
                     className={`py-2.5 rounded-xl text-xs font-bold border ${actionBtnClass} ${
                       isInCart
-                        ? 'bg-[#f3e9ec] border-[#6b2340] text-[#6b2340]'
-                        : 'bg-white border-[#e3cfd3] text-[#6b2340]'
+                        ? 'bg-[#f4ebd4] border-[#d4af37] text-[#b8860b]'
+                        : 'bg-white border-[#decfa8] text-[#8b6508]'
                     }`}
                   >
                     {isInCart ? '🛒 בסל' : '➕ לסל'}
@@ -220,8 +220,8 @@ export default function DressDetailsModal({
                     onClick={onToggleFavorite}
                     className={`py-2.5 rounded-xl text-xs font-bold border ${actionBtnClass} ${
                       isFavorite
-                        ? 'bg-[#f3e9ec] border-[#6b2340] text-[#6b2340]'
-                        : 'bg-white border-[#e3cfd3] text-[#6b2340]'
+                        ? 'bg-[#f4ebd4] border-[#d4af37] text-[#b8860b]'
+                        : 'bg-white border-[#decfa8] text-[#8b6508]'
                     }`}
                   >
                     {isFavorite ? '❤️ במועדפים' : '🤍 הוסיפי למועדפים'}
@@ -235,7 +235,7 @@ export default function DressDetailsModal({
                     <button
                       type="button"
                       onClick={onRate}
-                      className={`py-2.5 rounded-xl text-xs font-bold border border-[#e3cfd3] bg-white text-[#6b2340] ${actionBtnClass}`}
+                      className={`py-2.5 rounded-xl text-xs font-bold border border-[#decfa8] bg-white text-[#8b6508] ${actionBtnClass}`}
                     >
                       ⭐ דרגי
                     </button>
@@ -244,7 +244,7 @@ export default function DressDetailsModal({
                     <button
                       type="button"
                       onClick={onShare}
-                      className={`py-2.5 rounded-xl text-xs font-bold border border-[#e3cfd3] bg-white text-[#6b2340] ${actionBtnClass}`}
+                      className={`py-2.5 rounded-xl text-xs font-bold border border-[#decfa8] bg-white text-[#8b6508] ${actionBtnClass}`}
                     >
                       📤 שתפי
                     </button>

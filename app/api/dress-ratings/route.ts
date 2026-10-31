@@ -193,14 +193,14 @@ export async function POST(request: Request) {
     await sendAdminEmail(
       `⭐ דירוג חדש לשמלה: ${dress.name}`,
       `
-        <div dir="rtl" style="font-family:sans-serif;max-width:640px;margin:0 auto;padding:24px;border:1px solid #ead8dc;border-radius:16px;background:#fffdf8;">
+        <div dir="rtl" style="font-family:sans-serif;max-width:640px;margin:0 auto;padding:24px;border:1px solid #eadaaf;border-radius:16px;background:#fffdf8;">
           <h2 style="color:#3d2f24;margin-top:0;">דירוג חדש לאישור</h2>
           <p><strong>שמלה:</strong> ${dress.name}</p>
           <p><strong>שם:</strong> ${customerName}</p>
           <p><strong>דירוג:</strong> ${starsHtml} (${stars}/5)</p>
-          ${reviewText ? `<blockquote style="margin:0;padding:12px 16px;background:#faf6eb;border-right:3px solid #6b2340;font-style:italic;">"${reviewText}"</blockquote>` : '<p style="color:#9a7b4f;">(ללא טקסט)</p>'}
+          ${reviewText ? `<blockquote style="margin:0;padding:12px 16px;background:#faf6eb;border-right:3px solid #d4af37;font-style:italic;">"${reviewText}"</blockquote>` : '<p style="color:#9a7b4f;">(ללא טקסט)</p>'}
           <p style="margin-top:24px;">
-            <a href="${approveUrl}" style="display:inline-block;background:#6b2340;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
+            <a href="${approveUrl}" style="display:inline-block;background:#b8860b;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
               ✅ אשרי ופרסמי דירוג
             </a>
           </p>

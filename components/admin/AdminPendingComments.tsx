@@ -75,7 +75,7 @@ export default function AdminPendingComments({
     <section className="space-y-6">
       <div>
         <h2 className="font-bold text-lg">תגובות ממתינות ({totalPending})</h2>
-        <p className="text-xs text-[#6e5e62] mt-1">
+        <p className="text-xs text-[#6e634c] mt-1">
           רק תגובות לאתר ודירוגים על שמלות שממתינים לאישור
         </p>
       </div>
@@ -89,9 +89,9 @@ export default function AdminPendingComments({
       ) : (
         <>
           <div>
-            <h3 className="text-sm font-bold text-[#6b2340] mb-2">תגובות לאתר ({reviewsTotal})</h3>
+            <h3 className="text-sm font-bold text-[#8b6508] mb-2">תגובות לאתר ({reviewsTotal})</h3>
             {siteReviews.length === 0 ? (
-              <p className="text-xs text-[#6e5e62]">אין תגובות ממתינות לאתר</p>
+              <p className="text-xs text-[#6e634c]">אין תגובות ממתינות לאתר</p>
             ) : (
               <div className="space-y-2">
                 {siteReviews.map((review) => (
@@ -110,7 +110,7 @@ export default function AdminPendingComments({
                       <button
                         type="button"
                         onClick={() => onApprove('review', review.id)}
-                        className="px-3 py-1.5 bg-[#6b2340] text-white text-xs rounded-lg font-bold"
+                        className="px-3 py-1.5 bg-[#b8860b] text-white text-xs rounded-lg font-bold"
                       >
                         אשר
                       </button>
@@ -145,11 +145,11 @@ export default function AdminPendingComments({
           </div>
 
           <div>
-            <h3 className="text-sm font-bold text-[#6b2340] mb-2">
+            <h3 className="text-sm font-bold text-[#8b6508] mb-2">
               דירוגים על שמלות ({ratingsTotal})
             </h3>
             {dressRatings.length === 0 ? (
-              <p className="text-xs text-[#6e5e62]">אין דירוגים ממתינים</p>
+              <p className="text-xs text-[#6e634c]">אין דירוגים ממתינים</p>
             ) : (
               <div className="space-y-2">
                 {dressRatings.map((rating) => (
@@ -158,7 +158,7 @@ export default function AdminPendingComments({
                     title={rating.dress_name}
                     subtitle={`${rating.customer_name} · ${'⭐'.repeat(rating.stars)}`}
                     badge={
-                      <span className="text-[9px] font-bold text-[#6b2340] bg-[#f6eef1] px-2 py-0.5 rounded-full">
+                      <span className="text-[9px] font-bold text-[#8b6508] bg-[#fff8e8] px-2 py-0.5 rounded-full">
                         שמלה
                       </span>
                     }
@@ -166,13 +166,13 @@ export default function AdminPendingComments({
                     {rating.review_text ? (
                       <p className="text-xs italic mb-3">&quot;{rating.review_text}&quot;</p>
                     ) : (
-                      <p className="text-xs text-[#7a5e64] mb-3">(ללא טקסט)</p>
+                      <p className="text-xs text-[#9a7b4f] mb-3">(ללא טקסט)</p>
                     )}
                     <div className="flex flex-wrap gap-2">
                       <button
                         type="button"
                         onClick={() => onApprove('dress_rating', rating.id)}
-                        className="px-3 py-1.5 bg-[#6b2340] text-white text-xs rounded-lg font-bold"
+                        className="px-3 py-1.5 bg-[#b8860b] text-white text-xs rounded-lg font-bold"
                       >
                         אשרי ופרסמי
                       </button>

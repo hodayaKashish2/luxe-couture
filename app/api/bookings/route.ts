@@ -470,7 +470,7 @@ export async function POST(request: Request) {
         ? `📅 שריון חדש: ${dressName}`
         : `📨 בקשת שריון חדשה (ממתין למשכירה): ${dressName}`,
       `
-        <div dir="rtl" style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px;border:1px solid #ead8dc;border-radius:12px;">
+        <div dir="rtl" style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px;border:1px solid #eadaaf;border-radius:12px;">
           <h2>${legacyMode ? 'שריון חדש באתר' : 'בקשת שריון — ממתין לאישור משכירה'}</h2>
           <p><strong>שמלה:</strong> ${dressName}</p>
           <p><strong>שוכרת:</strong> ${name} · ${phone}</p>

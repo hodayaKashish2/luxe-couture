@@ -3,12 +3,12 @@ import { OWNER_FORM_NOTICE } from '@/lib/commission';
 /** באנר קצר למשכירות — בטופס פרסום שמלה בלבד */
 export default function OwnerPlatformNotice() {
   return (
-    <div className="bg-gradient-to-l from-[#fffafb] to-[#f3e9ec] border border-[#d4b4bb] rounded-xl p-4 text-[11px] text-[#6e5e62] leading-relaxed">
-      <p className="font-black text-[#6b2340] text-center mb-2">✦ {OWNER_FORM_NOTICE.headline} ✦</p>
+    <div className="bg-gradient-to-l from-[#fffdf9] to-[#f4ebd4] border border-[#e6c687] rounded-xl p-4 text-[11px] text-[#5c5037] leading-relaxed">
+      <p className="font-black text-[#8b6508] text-center mb-2">✦ {OWNER_FORM_NOTICE.headline} ✦</p>
       <ul className="space-y-1.5">
         {OWNER_FORM_NOTICE.bullets.map((line) => (
           <li key={line} className="flex gap-2">
-            <span className="text-[#6b2340] shrink-0">✓</span>
+            <span className="text-[#d4af37] shrink-0">✓</span>
             <span>{line}</span>
           </li>
         ))}

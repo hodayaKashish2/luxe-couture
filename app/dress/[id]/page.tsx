@@ -27,14 +27,14 @@ function DressShareSkeleton() {
       aria-busy="true"
       aria-label="טוענת שמלה"
     >
-      <div className="bg-white rounded-t-2xl sm:rounded-2xl max-w-4xl w-full max-h-[92vh] border-2 border-[#6b2340] overflow-hidden animate-pulse flex flex-col md:flex-row">
-        <div className="w-full md:w-1/2 min-h-[280px] md:min-h-[420px] bg-[#f3e9ec]" />
+      <div className="bg-white rounded-t-2xl sm:rounded-2xl max-w-4xl w-full max-h-[92vh] border-2 border-[#d4af37] overflow-hidden animate-pulse flex flex-col md:flex-row">
+        <div className="w-full md:w-1/2 min-h-[280px] md:min-h-[420px] bg-[#f4ebd4]" />
         <div className="w-full md:w-1/2 p-4 sm:p-6 space-y-3">
-          <div className="h-6 bg-[#f3e9ec] rounded w-2/3" />
-          <div className="h-4 bg-[#f3e9ec] rounded w-1/2" />
-          <div className="h-4 bg-[#f3e9ec] rounded w-3/4" />
-          <div className="h-10 bg-[#f3e9ec] rounded-xl w-full mt-6" />
-          <div className="h-10 bg-[#f3e9ec] rounded-xl w-full" />
+          <div className="h-6 bg-[#f4ebd4] rounded w-2/3" />
+          <div className="h-4 bg-[#f4ebd4] rounded w-1/2" />
+          <div className="h-4 bg-[#f4ebd4] rounded w-3/4" />
+          <div className="h-10 bg-[#f4ebd4] rounded-xl w-full mt-6" />
+          <div className="h-10 bg-[#f4ebd4] rounded-xl w-full" />
         </div>
       </div>
     </div>
@@ -146,13 +146,13 @@ export default function DressSharePage({ params }: { params: Promise<{ id: strin
 
   if (notFound || !dress) {
     return (
-      <main className="min-h-screen bg-[#faf7f5] flex items-center justify-center p-4" dir="rtl">
-        <div className="text-center bg-white rounded-2xl border border-[#ead8dc] p-8 max-w-md w-full shadow-sm">
-          <p className="text-lg font-bold text-[#2c2426] mb-2">השמלה לא נמצאה</p>
-          <p className="text-sm text-[#6e5e62] mb-6">ייתכן שהשמלה הוסרה מהאתר או שהקישור אינו תקין.</p>
+      <main className="min-h-screen bg-[#fbf8f0] flex items-center justify-center p-4" dir="rtl">
+        <div className="text-center bg-white rounded-2xl border border-[#eadaaf] p-8 max-w-md w-full shadow-sm">
+          <p className="text-lg font-bold text-[#3d2f24] mb-2">השמלה לא נמצאה</p>
+          <p className="text-sm text-[#6e634c] mb-6">ייתכן שהשמלה הוסרה מהאתר או שהקישור אינו תקין.</p>
           <Link
             href="/"
-            className="inline-block px-6 py-3 bg-gradient-to-r from-[#6b2340] to-[#4a152c] text-white rounded-xl text-sm font-bold"
+            className="inline-block px-6 py-3 bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white rounded-xl text-sm font-bold"
           >
             לקטלוג השמלות
           </Link>

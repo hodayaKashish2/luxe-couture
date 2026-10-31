@@ -61,10 +61,10 @@ export default function OwnerBookingRequestsPanel({
 
   return (
     <>
-      <div className="bg-[#f6eef1] rounded-2xl border-2 border-[#6b2340]/50 overflow-hidden shadow-sm">
-        <div className="px-4 py-3 bg-gradient-to-l from-[#faf6eb] to-[#fffdf8] border-b border-[#ead8dc]">
-          <p className="text-sm font-black text-[#2c2426]">📨 בקשות שריון שממתינות לתשובתך</p>
-          <p className="text-[10px] text-[#6e5e62] mt-1 leading-relaxed">
+      <div className="bg-[#fff8eb] rounded-2xl border-2 border-[#d4af37]/50 overflow-hidden shadow-sm">
+        <div className="px-4 py-3 bg-gradient-to-l from-[#faf6eb] to-[#fffdf8] border-b border-[#eadaaf]">
+          <p className="text-sm font-black text-[#3d2f24]">📨 בקשות שריון שממתינות לתשובתך</p>
+          <p className="text-[10px] text-[#6e634c] mt-1 leading-relaxed">
             יש לך עד 48 שעות להגיב. הביטול האוטומטי עלול להתרחש עם סטייה — לעיתים כבר לאחר כ-45 שעות. אחרי 24 שעות תישלח תזכורת.
           </p>
         </div>
@@ -73,14 +73,14 @@ export default function OwnerBookingRequestsPanel({
             <li key={b.id} className="px-4 py-4 space-y-3">
               <div className="flex flex-wrap justify-between gap-2">
                 <div>
-                  <p className="text-sm font-black text-[#2c2426]">{b.dress_name}</p>
-                  <p className="text-xs text-[#6b2340] font-bold mt-0.5">📅 {formatHebrewDate(b.event_date)}</p>
+                  <p className="text-sm font-black text-[#3d2f24]">{b.dress_name}</p>
+                  <p className="text-xs text-[#8b6508] font-bold mt-0.5">📅 {formatHebrewDate(b.event_date)}</p>
                 </div>
-                <span className="text-[10px] h-fit bg-[#f3e9ec] text-[#6b2340] px-2.5 py-1 rounded-full font-black">
+                <span className="text-[10px] h-fit bg-[#f4ebd4] text-[#8b6508] px-2.5 py-1 rounded-full font-black">
                   ממתין לאישורך
                 </span>
               </div>
-              <div className="text-xs text-[#6e5e62] space-y-0.5">
+              <div className="text-xs text-[#5c5037] space-y-0.5">
                 <p>
                   <span className="font-bold">שוכרת:</span> {b.customer_name || 'לא צוין'}
                 </p>

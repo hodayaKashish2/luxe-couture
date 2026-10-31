@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Frank_Ruhl_Libre, Geist_Mono, Heebo } from "next/font/google";
+import { Frank_Ruhl_Libre, Geist, Geist_Mono } from "next/font/google";
 import AuthProvider from "@/components/AuthProvider";
 import { AuthModalProvider } from "@/components/AuthModalProvider";
 import { LuxeStorageProvider } from "@/components/LuxeStorageProvider";
@@ -21,9 +21,9 @@ export const viewport: Viewport = {
   maximumScale: 5,
 };
 
-const heebo = Heebo({
-  variable: "--font-heebo",
-  subsets: ["hebrew", "latin"],
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
 });
 
 const geistMono = Geist_Mono({
@@ -65,7 +65,7 @@ export default function RootLayout({
   return (
     <html
       lang="he"
-      className={`${heebo.variable} ${geistMono.variable} ${frankRuhlLibre.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${frankRuhlLibre.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <SiteStructuredData />

@@ -24,23 +24,23 @@ export default function AdminCollapsibleSection({
   return (
     <section
       className={`rounded-2xl border overflow-hidden ${
-        tone === 'alert' ? 'border-amber-300 bg-amber-50/80' : 'border-[#ead8dc] bg-white'
+        tone === 'alert' ? 'border-amber-300 bg-amber-50/80' : 'border-[#eadaaf] bg-white'
       }`}
     >
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className="w-full flex items-center gap-3 p-4 text-right hover:bg-[#fffafb]/80 transition-colors"
+        className="w-full flex items-center gap-3 p-4 text-right hover:bg-[#fffdf8]/80 transition-colors"
       >
-        <span className="text-xs text-[#7a5e64] shrink-0">{open ? '▲' : '▼'}</span>
+        <span className="text-xs text-[#9a7b4f] shrink-0">{open ? '▲' : '▼'}</span>
         <h2
           className={`flex-1 font-black text-base ${
-            tone === 'alert' ? 'text-amber-900' : 'text-[#2c2426]'
+            tone === 'alert' ? 'text-amber-900' : 'text-[#3d2f24]'
           }`}
         >
           {title}
           {count != null && count > 0 && (
-            <span className="mr-2 text-sm font-bold text-[#6b2340]">({count})</span>
+            <span className="mr-2 text-sm font-bold text-[#8b6508]">({count})</span>
           )}
         </h2>
         {action && (
@@ -53,7 +53,7 @@ export default function AdminCollapsibleSection({
           </span>
         )}
       </button>
-      {open && <div className="p-4 pt-0 border-t border-[#ead8dc]/60">{children}</div>}
+      {open && <div className="p-4 pt-0 border-t border-[#eadaaf]/60">{children}</div>}
     </section>
   );
 }

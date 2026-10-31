@@ -75,8 +75,8 @@ export function buildCatalogPrintHtml(
     body {
       margin: 0;
       font-family: Arial, 'Segoe UI', Tahoma, sans-serif;
-      background: #faf7f5;
-      color: #2a1f22;
+      background: #fbf8f0;
+      color: #3d2f24;
       direction: rtl;
     }
     .catalog-back-bar {
@@ -88,37 +88,37 @@ export function buildCatalogPrintHtml(
       justify-content: space-between;
       gap: 8px;
       padding: 8px 12px;
-      background: linear-gradient(90deg, #faf7f5, #f6eef1);
-      border-bottom: 1px solid #ead8dc;
-      box-shadow: 0 1px 4px rgba(107, 35, 64, 0.12);
+      background: linear-gradient(90deg, #fffdf9, #faf6eb);
+      border-bottom: 1px solid #e6c687;
+      box-shadow: 0 1px 4px rgba(212, 175, 55, 0.12);
     }
     .catalog-back-bar a {
-      color: #6b2340;
+      color: #8b6508;
       font-size: 11px;
       font-weight: 800;
       text-decoration: none;
     }
     .catalog-back-bar span {
-      color: #6e5e62;
+      color: #6e634c;
       font-size: 9px;
       font-weight: 600;
     }
     .page-header {
       padding: 10px 12px 8px;
       text-align: center;
-      border-bottom: 1px solid #ead8dc;
-      background: linear-gradient(180deg, #faf7f5, #f6eef1);
+      border-bottom: 1px solid #e6c687;
+      background: linear-gradient(180deg, #fffdf9, #faf6eb);
     }
     .page-header h1 {
       margin: 0 0 2px;
       font-size: 16px;
       font-weight: 800;
-      color: #6b2340;
+      color: #8b6508;
     }
     .page-header p {
       margin: 0;
       font-size: 8px;
-      color: #6e5e62;
+      color: #6e634c;
       line-height: 1.35;
     }
     .grid {
@@ -165,14 +165,14 @@ export function buildCatalogPrintHtml(
       top: 3px;
       right: 3px;
       z-index: 1;
-      background: linear-gradient(90deg, #6b2340, #6b2340);
+      background: linear-gradient(90deg, #d4af37, #b8860b);
       color: #fff;
       font-size: 6px;
       font-weight: 800;
       line-height: 1;
       padding: 2px 4px;
       border-radius: 3px;
-      border: 1px solid #8a3a55;
+      border: 1px solid #c9a227;
     }
     .dress-body {
       padding: 3px 4px 4px;
@@ -213,17 +213,17 @@ export function buildCatalogPrintHtml(
     .meta-city {
       background: #f4ebd4;
       color: #5c4510;
-      border-color: #e3cfd3;
+      border-color: #decfa8;
     }
     .meta-rent {
-      background: linear-gradient(90deg, #6b2340, #6b2340);
+      background: linear-gradient(90deg, #d4af37, #b8860b);
       color: #fff;
-      border-color: #8a3a55;
+      border-color: #c9a227;
     }
     .meta-sale {
       background: #fff;
-      color: #6b2340;
-      border-color: #6b2340;
+      color: #b8860b;
+      border-color: #d4af37;
     }
     .dress-price {
       margin: 0;

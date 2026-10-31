@@ -15,8 +15,8 @@ function HighlightSection({
   children: React.ReactNode;
 }) {
   return (
-    <section className="bg-gradient-to-l from-[#fffafb] to-[#f3e9ec] border border-[#d4b4bb] rounded-xl p-5">
-      <h2 className="mb-2 text-lg font-bold text-[#2c2426]">{title}</h2>
+    <section className="bg-gradient-to-l from-[#fffdf9] to-[#f4ebd4] border border-[#e6c687] rounded-xl p-5">
+      <h2 className="font-[family-name:var(--font-luxury)] text-lg text-[#3d2f24] mb-2">{title}</h2>
       {children}
     </section>
   );
@@ -29,7 +29,7 @@ export default function PrivacyPage() {
       subtitle={`${SITE_NAME} — איסוף, שימוש ושמירה על מידע אישי`}
     >
       <section>
-        <h2 className="font-bold text-[#2c2426] mb-2">1. כללי</h2>
+        <h2 className="font-bold text-[#3d2f24] mb-2">1. כללי</h2>
         <p className="text-xs leading-relaxed">
           מדיניות פרטיות זו מסבירה כיצד {SITE_NAME} (&quot;האתר&quot;, &quot;אנחנו&quot;) אוסף,
           משתמש, שומר ומשתף מידע אישי. השימוש באתר מהווה הסכמה למדיניות זו ולתקנון האתר. אם אינך
@@ -38,7 +38,7 @@ export default function PrivacyPage() {
       </section>
 
       <section>
-        <h2 className="font-bold text-[#2c2426] mb-2">2. איזה מידע נאסף?</h2>
+        <h2 className="font-bold text-[#3d2f24] mb-2">2. איזה מידע נאסף?</h2>
         <ul className="text-xs space-y-1.5 list-disc pr-5">
           <li>פרטי זיהוי וקשר: שם, טלפון, אימייל, שם משתמש</li>
           <li>פרטי שמלה: תיאור, מחיר, מידה, עיר, צבע, תמונות, תאריכים</li>
@@ -50,7 +50,7 @@ export default function PrivacyPage() {
       </section>
 
       <section>
-        <h2 className="font-bold text-[#2c2426] mb-2">3. למה משתמשים במידע?</h2>
+        <h2 className="font-bold text-[#3d2f24] mb-2">3. למה משתמשים במידע?</h2>
         <ul className="text-xs space-y-1.5 list-disc pr-5">
           <li>תפעול פלטפורמת התיווך: פרסום, הזמנה, תשלום ויצירת קשר בין צדדים</li>
           <li>אישור תוכן, מניעת הונאה וניהול בקשות</li>
@@ -84,7 +84,7 @@ export default function PrivacyPage() {
       </HighlightSection>
 
       <section>
-        <h2 className="font-bold text-[#2c2426] mb-2">6. שמירת מידע</h2>
+        <h2 className="font-bold text-[#3d2f24] mb-2">6. שמירת מידע</h2>
         <p className="text-xs leading-relaxed">
           מידע נשמר כל עוד נדרש לתפעול האתר, לעמידה בדין, ליישוב מחלוקות או לאכיפת תנאים. לאחר מכן
           יימחק או יאנונם — ככל שניתן וסביר. גיבויים ולוגים עשויים להישמר זמן נוסף לצרכי אבטחה
@@ -93,7 +93,7 @@ export default function PrivacyPage() {
       </section>
 
       <section>
-        <h2 className="font-bold text-[#2c2426] mb-2">7. זכויותייך</h2>
+        <h2 className="font-bold text-[#3d2f24] mb-2">7. זכויותייך</h2>
         <p className="text-xs leading-relaxed mb-2">
           בכפוף לחוק הגנת הפרטיות, התשמ&quot;א-1981, ולתקנות הרלוונטיות, עשויה להיות לך זכות לעיין,
           לתקן או לבקש מחיקת מידע אישי — בכפוף לחובות שמירה על פי דין ולצרכים תפעוליים לגיטימיים.
@@ -105,7 +105,7 @@ export default function PrivacyPage() {
       </section>
 
       <section>
-        <h2 className="font-bold text-[#2c2426] mb-2">8. עוגיות ו-localStorage</h2>
+        <h2 className="font-bold text-[#3d2f24] mb-2">8. עוגיות ו-localStorage</h2>
         <p className="text-xs leading-relaxed">
           האתר שומר מועדפים, סל ומידע התחברות מקומי בדפדפן (localStorage) לנוחותך. אין שימוש
           בעוגיות פרסום או מעקב צד שלישי למטרות שיווק. ניתן למחוק נתונים אלה מהגדרות הדפדפן.
@@ -113,7 +113,7 @@ export default function PrivacyPage() {
       </section>
 
       <section>
-        <h2 className="font-bold text-[#2c2426] mb-2">9. קטינות</h2>
+        <h2 className="font-bold text-[#3d2f24] mb-2">9. קטינות</h2>
         <p className="text-xs leading-relaxed">
           האתר אינו מיועד לקטינים מתחת לגיל 18. אם נודע לנו שנאסף מידע מקטין שלא כדין — נפעל
           למחיקתו בהקדם האפשרי.
@@ -121,7 +121,7 @@ export default function PrivacyPage() {
       </section>
 
       <section>
-        <h2 className="font-bold text-[#2c2426] mb-2">10. שינויים במדיניות</h2>
+        <h2 className="font-bold text-[#3d2f24] mb-2">10. שינויים במדיניות</h2>
         <p className="text-xs leading-relaxed">
           מפעילת האתר רשאית לעדכן מדיניות זו בכל עת. עדכון יפורסם באתר ויחייב ממועד פרסומו.
           המשך שימוש לאחר עדכון מהווה הסכמה לנוסח המעודכן.
@@ -129,7 +129,7 @@ export default function PrivacyPage() {
       </section>
 
       <section>
-        <h2 className="font-bold text-[#2c2426] mb-2">11. יצירת קשר</h2>
+        <h2 className="font-bold text-[#3d2f24] mb-2">11. יצירת קשר</h2>
         <p className="text-xs leading-relaxed">
           לשאלות, בקשות מחיקה או עדכון מידע: {CONTACT_EMAIL}
         </p>

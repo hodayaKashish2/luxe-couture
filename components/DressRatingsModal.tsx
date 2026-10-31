@@ -58,16 +58,16 @@ export default function DressRatingsModal({ dress, onClose }: Props) {
       onClick={onClose}
     >
       <div
-        className="bg-white w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl shadow-2xl border-2 border-[#6b2340] max-h-[85vh] flex flex-col"
+        className="bg-white w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl shadow-2xl border-2 border-[#d4af37] max-h-[85vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
         dir="rtl"
       >
-        <div className="shrink-0 flex items-start justify-between gap-3 p-4 border-b border-[#ead8dc]">
+        <div className="shrink-0 flex items-start justify-between gap-3 p-4 border-b border-[#f0e6cc]">
           <div className="min-w-0">
-            <p className="text-[10px] text-[#6b2340] font-black tracking-widest mb-1">✦ דירוגים ✦</p>
-            <h3 className="text-base font-black text-[#2c2426] truncate">{dress.name}</h3>
+            <p className="text-[10px] text-[#b8860b] font-black tracking-widest mb-1">✦ דירוגים ✦</p>
+            <h3 className="text-base font-black text-[#3d2f24] truncate">{dress.name}</h3>
             {dress.rating_count > 0 && (
-              <p className="text-xs text-[#6b2340] mt-1">
+              <p className="text-xs text-[#8b6508] mt-1">
                 ⭐ {dress.rating_avg} · {dress.rating_count} דירוגים
               </p>
             )}
@@ -75,7 +75,7 @@ export default function DressRatingsModal({ dress, onClose }: Props) {
           <button
             type="button"
             onClick={onClose}
-            className="shrink-0 w-8 h-8 rounded-full bg-neutral-100 text-[#6b2340] font-bold"
+            className="shrink-0 w-8 h-8 rounded-full bg-neutral-100 text-[#8b6508] font-bold"
             aria-label="סגור"
           >
             ✕
@@ -83,25 +83,25 @@ export default function DressRatingsModal({ dress, onClose }: Props) {
         </div>
 
         <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-3">
-          {loading && <p className="text-sm text-[#6b2340] text-center py-6">טוענת דירוגים...</p>}
+          {loading && <p className="text-sm text-[#8b6508] text-center py-6">טוענת דירוגים...</p>}
           {!loading && error && <p className="text-sm text-red-700 text-center py-6">{error}</p>}
           {!loading && !error && ratings.length === 0 && (
-            <p className="text-sm text-[#6e5e62] text-center py-6">עדיין אין דירוגים עם טקסט לשמלה זו.</p>
+            <p className="text-sm text-[#6e634c] text-center py-6">עדיין אין דירוגים עם טקסט לשמלה זו.</p>
           )}
           {!loading &&
             !error &&
             ratings.map((rating) => (
               <article
                 key={rating.id}
-                className="bg-[#fffafb] border border-[#ead8dc] rounded-xl p-3 space-y-2"
+                className="bg-[#fffdf9] border border-[#eadaaf] rounded-xl p-3 space-y-2"
               >
                 <div className="flex items-center justify-between gap-2">
-                  <p className="text-xs font-black text-[#2c2426]">{rating.customer_name}</p>
-                  <p className="text-xs text-[#6b2340] font-bold" aria-label={`${rating.stars} כוכבים`}>
+                  <p className="text-xs font-black text-[#3d2f24]">{rating.customer_name}</p>
+                  <p className="text-xs text-[#b8860b] font-bold" aria-label={`${rating.stars} כוכבים`}>
                     {'⭐'.repeat(rating.stars)}
                   </p>
                 </div>
-                <p className="text-sm text-[#6e5e62] leading-relaxed whitespace-pre-wrap">
+                <p className="text-sm text-[#5c5037] leading-relaxed whitespace-pre-wrap">
                   {rating.review_text?.trim() || 'ללא טקסט — רק דירוג כוכבים'}
                 </p>
               </article>
