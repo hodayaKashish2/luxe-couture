@@ -93,6 +93,8 @@ function AuthModalProviderInner({ children }: { children: ReactNode }) {
 
   const [loginUsername, setLoginUsername] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
+  const [forgotIdentifier, setForgotIdentifier] = useState('');
+  const [forgotMessage, setForgotMessage] = useState('');
   const [registerForm, setRegisterForm] = useState(emptyRegisterForm);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -102,6 +104,8 @@ function AuthModalProviderInner({ children }: { children: ReactNode }) {
   const resetForms = useCallback(() => {
     setLoginUsername('');
     setLoginPassword('');
+    setForgotIdentifier('');
+    setForgotMessage('');
     setRegisterForm(emptyRegisterForm);
     setError('');
     setLoading(false);
@@ -246,6 +250,34 @@ function AuthModalProviderInner({ children }: { children: ReactNode }) {
     }
   }
 
+  async function handleForgot(e: React.FormEvent) {
+    e.preventDefault();
+    setError('');
+    setForgotMessage('');
+
+    const identifier = forgotIdentifier.trim();
+    if (!identifier) {
+      setError('הזיני שם משתמש או אימייל');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifier }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'שגיאה');
+      setForgotMessage(data.message || 'שלחנו קישור לאיפוס אל המייל.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'שגיאה');
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault();
     setError('');
@@ -373,6 +405,18 @@ function AuthModalProviderInner({ children }: { children: ReactNode }) {
               {loading ? 'מתחברת...' : 'כניסה →'}
             </button>
 
+            <button
+              type="button"
+              onClick={() => {
+                setError('');
+                setForgotMessage('');
+                setView('forgot');
+              }}
+              className="text-center text-xs text-[#b8860b] font-bold underline"
+            >
+              שכחתי סיסמה
+            </button>
+
             <p className="text-center text-xs text-[#6e634c]">
               אין לך חשבון?{' '}
               <button
@@ -395,6 +439,62 @@ function AuthModalProviderInner({ children }: { children: ReactNode }) {
               className="text-center text-xs text-[#9a7b4f] hover:text-[#8b6508]"
             >
               ← חזרה
+            </button>
+          </form>
+        </ModalShell>
+      )}
+
+      {open && view === 'forgot' && (
+        <ModalShell onClose={closeAuthModal}>
+          <div className="text-center mb-5 pt-2">
+            <span className="text-[10px] tracking-[0.2em] text-[#b8860b] font-black block mb-1">
+              ✦ איפוס סיסמה ✦
+            </span>
+            <h3 className="text-xl font-black text-neutral-950">שכחת את הסיסמה?</h3>
+            <div className="w-12 h-px bg-[#d4af37] mx-auto mt-2" />
+            <p className="text-[11px] text-[#6e634c] mt-2 leading-relaxed">
+              הזיני שם משתמש או אימייל. נשלח קישור לכתובת של החשבון הזה.
+              אם למייל יש כמה חשבונות, צריך את שם המשתמש.
+            </p>
+          </div>
+
+          <form onSubmit={handleForgot} noValidate className="flex flex-col gap-3">
+            <div>
+              <label className="block text-xs font-black text-[#8b6508] mb-1">שם משתמש או אימייל</label>
+              <input
+                type="text"
+                required
+                autoComplete="username"
+                value={forgotIdentifier}
+                onChange={(e) => setForgotIdentifier(e.target.value)}
+                className={AUTH_INPUT_CLASS}
+                dir="ltr"
+              />
+            </div>
+
+            {error && <FormError message={error} />}
+            {forgotMessage && (
+              <p className="text-xs font-bold text-[#8b6508] leading-relaxed">{forgotMessage}</p>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white rounded-xl font-black text-sm shadow-lg disabled:opacity-60"
+            >
+              {loading ? 'שולחת...' : 'שליחת קישור למייל'}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setError('');
+                setForgotMessage('');
+                setView('login');
+              }}
+              className="text-center text-xs text-[#9a7b4f] hover:text-[#8b6508]"
+            >
+              ← חזרה להתחברות
             </button>
           </form>
         </ModalShell>
