@@ -13,9 +13,9 @@ const AUTH_REASONS = new Set<AuthModalReason>([
   'general',
 ]);
 
-const AUTH_VIEWS = new Set(['prompt', 'login', 'register']);
+const AUTH_VIEWS = new Set(['prompt', 'login', 'register', 'forgot']);
 
-export type AuthModalView = 'prompt' | 'login' | 'register';
+export type AuthModalView = 'prompt' | 'login' | 'register' | 'forgot';
 
 export function stripAuthParams(pathWithQuery: string): string {
   const [path, query = ''] = pathWithQuery.split('?');
