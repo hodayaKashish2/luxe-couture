@@ -562,6 +562,7 @@ function AuthModalProviderInner({ children }: { children: ReactNode }) {
                 setRegisterForm({ ...registerForm, marketing_emails_opt_in })
               }
               compact
+              variant="terms"
             />
 
             {error && <FormError message={error} />}

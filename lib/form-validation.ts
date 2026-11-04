@@ -131,6 +131,7 @@ export function validateRegisterForm(form: {
   display_name: string;
   phone: string;
   email: string;
+  marketing_emails_opt_in?: boolean;
 }): string | null {
   const username = form.username.trim();
   const password = form.password;
@@ -148,6 +149,9 @@ export function validateRegisterForm(form: {
   if (!email) return 'נא להזין כתובת אימייל';
   if (!isValidEmail(email)) {
     return 'כתובת האימייל לא נראית תקינה — ודאי שיש @ וסיומת (למשל name@gmail.com)';
+  }
+  if (!form.marketing_emails_opt_in) {
+    return 'כדי להירשם צריך לאשר את תנאי השימוש';
   }
 
   return null;

@@ -78,6 +78,7 @@ function RegisterForm() {
             checked={form.marketing_emails_opt_in}
             onChange={(marketing_emails_opt_in) => setForm({ ...form, marketing_emails_opt_in })}
             compact
+            variant="terms"
           />
 
           {error && <FormError message={error} />}

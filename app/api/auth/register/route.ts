@@ -46,6 +46,9 @@ export async function POST(request: Request) {
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return NextResponse.json({ error: 'יש להזין כתובת אימייל תקינה' }, { status: 400 });
     }
+    if (!marketingOptIn) {
+      return NextResponse.json({ error: 'כדי להירשם צריך לאשר את תנאי השימוש' }, { status: 400 });
+    }
 
     const supabase = getSupabaseAdmin();
 

@@ -1,5 +1,7 @@
 'use client';
 
+import { useId } from 'react';
+import Link from 'next/link';
 import {
   MARKETING_EMAIL_OPT_IN_BODY,
   MARKETING_EMAIL_OPT_IN_FOOTER,
@@ -11,17 +13,51 @@ type Props = {
   checked: boolean;
   onChange: (checked: boolean) => void;
   compact?: boolean;
+  variant?: 'marketing' | 'terms';
 };
 
-export default function MarketingEmailOptInCheckbox({ checked, onChange, compact = false }: Props) {
+export default function MarketingEmailOptInCheckbox({
+  checked,
+  onChange,
+  compact = false,
+  variant = 'marketing',
+}: Props) {
+  const inputId = useId();
+  const boxClass = `flex gap-3 rounded-xl border-2 transition-colors ${
+    checked
+      ? 'border-[#d4af37] bg-[#fff9eb]'
+      : 'border-[#eadaaf] bg-[#fffdf8] hover:border-[#decfa8]'
+  } ${compact ? 'p-3' : 'p-3.5'}`;
+
+  if (variant === 'terms') {
+    const textClass = `text-[#3d2f24] leading-relaxed ${compact ? 'text-xs' : 'text-sm'}`;
+    return (
+      <div className={boxClass}>
+        <input
+          id={inputId}
+          type="checkbox"
+          checked={checked}
+          onChange={(e) => onChange(e.target.checked)}
+          className="mt-1 shrink-0 w-4 h-4 accent-[#b8860b] cursor-pointer"
+        />
+        <span className={textClass}>
+          <label htmlFor={inputId} className="cursor-pointer">
+            אני מאשרת את{' '}
+          </label>
+          <Link href="/terms" className="font-bold underline text-[#8b6508]">
+            תנאי השימוש
+          </Link>
+          <label htmlFor={inputId} className="cursor-pointer">
+            {' '}
+            באתר
+          </label>
+        </span>
+      </div>
+    );
+  }
+
   return (
-    <label
-      className={`flex gap-3 cursor-pointer rounded-xl border-2 transition-colors ${
-        checked
-          ? 'border-[#d4af37] bg-[#fff9eb]'
-          : 'border-[#eadaaf] bg-[#fffdf8] hover:border-[#decfa8]'
-      } ${compact ? 'p-3' : 'p-3.5'}`}
-    >
+    <label className={`${boxClass} cursor-pointer`}>
       <input
         type="checkbox"
         checked={checked}
