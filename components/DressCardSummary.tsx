@@ -14,7 +14,7 @@ export default function DressCardSummary({ dress, onShowDetails }: Props) {
       <div className="flex flex-wrap gap-1.5 text-[10px]">
         <RentalCountBadge dress={dress} />
         {dress.city && (
-          <span className="bg-[#f4ebd4] text-[#8b6508] px-2.5 py-0.5 rounded-full font-bold">
+          <span className="bg-[#f6eef1] text-[#6b2340] px-2.5 py-0.5 rounded-full font-bold">
             📍 {dress.city}
           </span>
         )}
@@ -23,11 +23,11 @@ export default function DressCardSummary({ dress, onShowDetails }: Props) {
             {listingTypeLabel(dress.listing_type)}
           </span>
         ) : (
-          <span className="bg-[#f4ebd4] text-[#8b6508] px-2.5 py-0.5 rounded-full font-bold">
+          <span className="bg-[#f6eef1] text-[#6b2340] px-2.5 py-0.5 rounded-full font-bold">
             {listingTypeLabel(dress.listing_type)}
           </span>
         )}
-        <span className="bg-neutral-100 text-[#6e634c] px-2.5 py-0.5 rounded-full">
+        <span className="bg-neutral-100 text-[#6e5e62] px-2.5 py-0.5 rounded-full">
           {dressKindLabel(dress.event_type)}
         </span>
       </div>
@@ -37,7 +37,7 @@ export default function DressCardSummary({ dress, onShowDetails }: Props) {
           e.stopPropagation();
           onShowDetails();
         }}
-        className="text-[11px] font-bold text-[#b8860b] hover:text-[#8b6508] underline underline-offset-2 cursor-pointer transition-colors hover:drop-shadow-sm"
+        className="text-[11px] font-bold text-[#4a152c] hover:text-[#6b2340] underline underline-offset-2 cursor-pointer transition-colors hover:drop-shadow-sm"
       >
         ℹ️ פרטים מלאים
       </button>

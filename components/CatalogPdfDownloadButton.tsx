@@ -12,7 +12,7 @@ type CatalogPdfDownloadButtonProps = {
 };
 
 export default function CatalogPdfDownloadButton({
-  className = 'text-[11px] font-bold text-[#b8860b] underline underline-offset-[3px] transition-colors hover:text-[#8b6508] disabled:opacity-60',
+  className = 'text-[11px] font-bold text-[#4a152c] underline underline-offset-[3px] transition-colors hover:text-[#6b2340] disabled:opacity-60',
   label = '📥 הורד קטלוג PDF',
   busyLabel = 'מייצר PDF...',
   onError,
@@ -66,7 +66,7 @@ export default function CatalogPdfDownloadButton({
           <button
             type="button"
             onClick={openPreview}
-            className="mt-1 block w-full font-bold text-[#8b6508] underline"
+            className="mt-1 block w-full font-bold text-[#6b2340] underline"
           >
             פתחי תצוגה מקדימה להדפסה
           </button>

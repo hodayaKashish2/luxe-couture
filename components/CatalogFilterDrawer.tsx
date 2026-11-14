@@ -56,14 +56,14 @@ export default function CatalogFilterDrawer({
         aria-labelledby="catalog-filter-title"
         className="lg:hidden fixed z-50 flex flex-col bg-white shadow-2xl inset-y-0 right-0 w-[min(100vw,20rem)] sm:w-72 max-h-[100dvh]"
       >
-        <div className="shrink-0 flex items-center justify-between gap-2 px-4 py-3 border-b border-[#f0e6cc] bg-[#fffdf8]">
-          <h2 id="catalog-filter-title" className="text-sm font-black text-[#3d2f24]">
+        <div className="shrink-0 flex items-center justify-between gap-2 px-4 py-3 border-b border-[#ead8dc] bg-[#fffafb]">
+          <h2 id="catalog-filter-title" className="text-sm font-black text-[#2c2426]">
             סינון
           </h2>
           <button
             type="button"
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-neutral-100 text-[#8b6508] font-bold flex items-center justify-center"
+            className="w-8 h-8 rounded-full bg-neutral-100 text-[#6b2340] font-bold flex items-center justify-center"
             aria-label="סגור"
           >
             ✕
@@ -74,11 +74,11 @@ export default function CatalogFilterDrawer({
           <CatalogFilterPanel {...filterProps} />
         </div>
 
-        <div className="shrink-0 px-4 py-3 border-t border-[#f0e6cc] bg-[#fffdf8] space-y-2">
+        <div className="shrink-0 px-4 py-3 border-t border-[#ead8dc] bg-[#fffafb] space-y-2">
           <button
             type="button"
             onClick={onClose}
-            className="w-full py-2.5 bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white rounded-xl text-xs font-black"
+            className="w-full py-2.5 bg-gradient-to-r from-[#6b2340] to-[#4a152c] text-white rounded-xl text-xs font-black"
           >
             הצג {isLoading ? 'תוצאות' : `${resultCount} שמלות`}
           </button>
@@ -88,7 +88,7 @@ export default function CatalogFilterDrawer({
               onClick={() => {
                 onClear();
               }}
-              className="w-full py-2 text-[11px] font-bold text-[#b8860b]"
+              className="w-full py-2 text-[11px] font-bold text-[#6b2340]"
             >
               נקה סינון ({activeFilterCount})
             </button>

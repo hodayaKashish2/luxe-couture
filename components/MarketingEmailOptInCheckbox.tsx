@@ -25,12 +25,12 @@ export default function MarketingEmailOptInCheckbox({
   const inputId = useId();
   const boxClass = `flex gap-3 rounded-xl border-2 transition-colors ${
     checked
-      ? 'border-[#d4af37] bg-[#fff9eb]'
-      : 'border-[#eadaaf] bg-[#fffdf8] hover:border-[#decfa8]'
+      ? 'border-[#6b2340] bg-[#f6eef1]'
+      : 'border-[#ead8dc] bg-[#fffafb] hover:border-[#e3cfd3]'
   } ${compact ? 'p-3' : 'p-3.5'}`;
 
   if (variant === 'terms') {
-    const textClass = `text-[#3d2f24] leading-relaxed ${compact ? 'text-xs' : 'text-sm'}`;
+    const textClass = `text-[#2a1f22] leading-relaxed ${compact ? 'text-xs' : 'text-sm'}`;
     return (
       <div className={boxClass}>
         <input
@@ -38,13 +38,13 @@ export default function MarketingEmailOptInCheckbox({
           type="checkbox"
           checked={checked}
           onChange={(e) => onChange(e.target.checked)}
-          className="mt-1 shrink-0 w-4 h-4 accent-[#b8860b] cursor-pointer"
+          className="mt-1 shrink-0 w-4 h-4 accent-[#4a152c] cursor-pointer"
         />
         <span className={textClass}>
           <label htmlFor={inputId} className="cursor-pointer">
             אני מאשרת את{' '}
           </label>
-          <Link href="/terms" className="font-bold underline text-[#8b6508]">
+          <Link href="/terms" className="font-bold underline text-[#6b2340]">
             תנאי השימוש
           </Link>
           <label htmlFor={inputId} className="cursor-pointer">
@@ -62,16 +62,16 @@ export default function MarketingEmailOptInCheckbox({
         type="checkbox"
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
-        className="mt-1 shrink-0 w-4 h-4 accent-[#b8860b] cursor-pointer"
+        className="mt-1 shrink-0 w-4 h-4 accent-[#4a152c] cursor-pointer"
       />
       <span className="min-w-0">
-        <span className={`block font-black text-[#3d2f24] ${compact ? 'text-xs' : 'text-sm'}`}>
+        <span className={`block font-black text-[#2a1f22] ${compact ? 'text-xs' : 'text-sm'}`}>
           {MARKETING_EMAIL_OPT_IN_TITLE}
         </span>
-        <span className={`block text-[#6e634c] leading-relaxed mt-1 ${compact ? 'text-[10px]' : 'text-[11px]'}`}>
+        <span className={`block text-[#6e5e62] leading-relaxed mt-1 ${compact ? 'text-[10px]' : 'text-[11px]'}`}>
           {MARKETING_EMAIL_OPT_IN_BODY}
         </span>
-        <span className={`block text-[#9a7b4f] mt-1.5 ${compact ? 'text-[9px]' : 'text-[10px]'}`}>
+        <span className={`block text-[#7a5e64] mt-1.5 ${compact ? 'text-[9px]' : 'text-[10px]'}`}>
           {MARKETING_EMAIL_OPT_IN_FOOTER}
         </span>
         <span className={`block text-[#b8a888] mt-1 leading-snug ${compact ? 'text-[8px]' : 'text-[9px]'}`}>

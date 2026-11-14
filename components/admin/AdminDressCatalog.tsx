@@ -116,18 +116,18 @@ export default function AdminDressCatalog({
 
   return (
     <div className="space-y-4">
-      <div className="bg-white rounded-2xl border border-[#eadaaf] p-4 space-y-3">
+      <div className="bg-white rounded-2xl border border-[#ead8dc] p-4 space-y-3">
         <form onSubmit={applySearch} className="flex flex-col sm:flex-row gap-2">
           <input
             type="search"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder="חיפוש לפי שם, משכירה, עיר, טלפון או מספר..."
-            className="flex-1 p-2.5 border border-[#decfa8] rounded-xl text-sm"
+            className="flex-1 p-2.5 border border-[#e3cfd3] rounded-xl text-sm"
           />
           <button
             type="submit"
-            className="px-4 py-2.5 bg-[#2c261a] text-white rounded-xl text-sm font-bold shrink-0"
+            className="px-4 py-2.5 bg-[#2a1f22] text-white rounded-xl text-sm font-bold shrink-0"
           >
             חפשי
           </button>
@@ -141,7 +141,7 @@ export default function AdminDressCatalog({
                 setFeatured('all');
                 setPage(1);
               }}
-              className="px-4 py-2.5 border border-[#decfa8] rounded-xl text-sm shrink-0"
+              className="px-4 py-2.5 border border-[#e3cfd3] rounded-xl text-sm shrink-0"
             >
               נקי
             </button>
@@ -155,7 +155,7 @@ export default function AdminDressCatalog({
               setSort(e.target.value as AdminDressSort);
               setPage(1);
             }}
-            className="text-xs border border-[#decfa8] rounded-lg px-2 py-2 bg-[#fffdf8]"
+            className="text-xs border border-[#e3cfd3] rounded-lg px-2 py-2 bg-[#fffafb]"
           >
             <option value="newest">חדשות ראשונות</option>
             <option value="oldest">ישנות ראשונות</option>
@@ -171,7 +171,7 @@ export default function AdminDressCatalog({
               setCity(e.target.value);
               setPage(1);
             }}
-            className="text-xs border border-[#decfa8] rounded-lg px-2 py-2 bg-[#fffdf8]"
+            className="text-xs border border-[#e3cfd3] rounded-lg px-2 py-2 bg-[#fffafb]"
           >
             <option value="">כל הערים</option>
             {cities.map((c) => (
@@ -187,7 +187,7 @@ export default function AdminDressCatalog({
               setFeatured(e.target.value as 'all' | 'yes' | 'no');
               setPage(1);
             }}
-            className="text-xs border border-[#decfa8] rounded-lg px-2 py-2 bg-[#fffdf8]"
+            className="text-xs border border-[#e3cfd3] rounded-lg px-2 py-2 bg-[#fffafb]"
           >
             <option value="all">כל השמלות</option>
             <option value="yes">רק חשיפה מועדפת</option>
@@ -200,11 +200,11 @@ export default function AdminDressCatalog({
         <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3">{error}</p>
       )}
 
-      <div className="bg-white rounded-2xl border border-[#eadaaf] overflow-hidden">
+      <div className="bg-white rounded-2xl border border-[#ead8dc] overflow-hidden">
         {loading ? (
-          <p className="p-6 text-sm text-[#6e634c]">טוען שמלות...</p>
+          <p className="p-6 text-sm text-[#6e5e62]">טוען שמלות...</p>
         ) : items.length === 0 ? (
-          <p className="p-6 text-sm text-[#6e634c]">לא נמצאו שמלות לפי הסינון</p>
+          <p className="p-6 text-sm text-[#6e5e62]">לא נמצאו שמלות לפי הסינון</p>
         ) : (
           <>
             <div className={ADMIN_DRESS_GRID_CLASS}>
@@ -220,7 +220,7 @@ export default function AdminDressCatalog({
                     onSelect={() => setDetailDress(dress)}
                     badge={
                       isFeatured ? (
-                        <span className="text-[8px] font-bold text-[#8b6508] bg-[#fff8e8] px-1 py-0.5 rounded-full shrink-0">
+                        <span className="text-[8px] font-bold text-[#6b2340] bg-[#f6eef1] px-1 py-0.5 rounded-full shrink-0">
                           ★
                         </span>
                       ) : undefined
@@ -236,7 +236,7 @@ export default function AdminDressCatalog({
                 subtitle="קטלוג — שמלה מאושרת"
                 onClose={() => setDetailDress(null)}
               >
-                <p className="w-full text-xs text-[#8b6508] mb-1">
+                <p className="w-full text-xs text-[#6b2340] mb-1">
                   {(detailDress.featured_boost || 0) > 0 ? 'חשיפה מועדפת פעילה' : 'ללא חשיפה מועדפת'}
                 </p>
                 <button
@@ -245,7 +245,7 @@ export default function AdminDressCatalog({
                     setEditingDress(detailDress);
                     setDetailDress(null);
                   }}
-                  className="px-3 py-2 text-sm rounded-xl border border-[#d4af37] text-[#8b6508] font-bold"
+                  className="px-3 py-2 text-sm rounded-xl border border-[#6b2340] text-[#6b2340] font-bold"
                 >
                   ✏️ עריכה
                 </button>
@@ -253,7 +253,7 @@ export default function AdminDressCatalog({
                   type="button"
                   disabled={busyId === detailDress.id}
                   onClick={() => runAction(detailDress.id, 'toggle_featured')}
-                  className="px-3 py-2 text-sm rounded-xl border border-[#decfa8] font-bold disabled:opacity-50"
+                  className="px-3 py-2 text-sm rounded-xl border border-[#e3cfd3] font-bold disabled:opacity-50"
                 >
                   {(detailDress.featured_boost || 0) > 0 ? 'בטל חשיפה מועדפת' : 'הפעל חשיפה מועדפת'}
                 </button>
@@ -261,7 +261,7 @@ export default function AdminDressCatalog({
                   type="button"
                   disabled={busyId === detailDress.id}
                   onClick={() => runAction(detailDress.id, 'extend_featured')}
-                  className="px-3 py-2 text-sm rounded-xl border border-[#decfa8] disabled:opacity-50"
+                  className="px-3 py-2 text-sm rounded-xl border border-[#e3cfd3] disabled:opacity-50"
                 >
                   הארכת חשיפה +30 יום
                 </button>
@@ -289,7 +289,7 @@ export default function AdminDressCatalog({
               />
             )}
 
-            <div className="p-4 border-t border-[#eadaaf]">
+            <div className="p-4 border-t border-[#ead8dc]">
               <AdminPagination
                 page={page}
                 totalPages={totalPages}

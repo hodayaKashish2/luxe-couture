@@ -56,12 +56,12 @@ export default function AdminRejectReasonModal({
         onSubmit={(e) => void handleSubmit(e)}
       >
         <div className="px-4 py-3 border-b border-red-100 bg-red-50">
-          <h2 className="font-black text-lg text-[#3d2f24]">{title}</h2>
-          <p className="text-xs text-[#6e634c] mt-1 leading-relaxed">{description}</p>
+          <h2 className="font-black text-lg text-[#2c2426]">{title}</h2>
+          <p className="text-xs text-[#6e5e62] mt-1 leading-relaxed">{description}</p>
         </div>
 
         <div className="p-4 space-y-3">
-          <label className="block text-xs font-bold text-[#8b6508]">
+          <label className="block text-xs font-bold text-[#6b2340]">
             סיבת הדחייה (תישלח ללקוחה במייל)
           </label>
           <textarea
@@ -72,17 +72,17 @@ export default function AdminRejectReasonModal({
             minLength={3}
             disabled={busy}
             placeholder="לדוגמה: התמונות לא ברורות מספיק / חסר מידה / התוכן לא מתאים..."
-            className="w-full p-3 border border-[#decfa8] rounded-xl text-sm text-[#2c261a] resize-y focus:outline-none focus:border-[#d4af37] disabled:opacity-60"
+            className="w-full p-3 border border-[#e3cfd3] rounded-xl text-sm text-[#2a1f22] resize-y focus:outline-none focus:border-[#6b2340] disabled:opacity-60"
           />
           {error && <p className="text-xs text-red-600 font-bold">{error}</p>}
         </div>
 
-        <div className="px-4 py-3 border-t border-[#f0e8d0] bg-[#fffdf8] flex flex-wrap gap-2 justify-end">
+        <div className="px-4 py-3 border-t border-[#f0e8d0] bg-[#fffafb] flex flex-wrap gap-2 justify-end">
           <button
             type="button"
             onClick={onCancel}
             disabled={busy}
-            className="px-4 py-2 text-sm font-bold text-[#6e634c] rounded-xl disabled:opacity-50"
+            className="px-4 py-2 text-sm font-bold text-[#6e5e62] rounded-xl disabled:opacity-50"
           >
             ביטול
           </button>

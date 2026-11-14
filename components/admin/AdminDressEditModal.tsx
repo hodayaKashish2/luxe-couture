@@ -227,14 +227,14 @@ export default function AdminDressEditModal({
       onClick={onBackdropClick}
     >
       <div
-        className="w-full max-w-3xl max-h-[92vh] overflow-y-auto rounded-2xl border-2 border-[#d4af37] bg-[#fffdf8] shadow-2xl"
+        className="w-full max-w-3xl max-h-[92vh] overflow-y-auto rounded-2xl border-2 border-[#6b2340] bg-[#fffafb] shadow-2xl"
         onMouseDown={onPanelMouseDown}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-[#eadaaf] bg-[#fffdf8] px-4 py-3">
+        <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-[#ead8dc] bg-[#fffafb] px-4 py-3">
           <div className="min-w-0">
-            <p className="font-black text-lg text-[#3d2f24] truncate">✏️ עריכת שמלה</p>
-            <p className="text-xs text-[#8b6508] font-bold truncate">
+            <p className="font-black text-lg text-[#2c2426] truncate">✏️ עריכת שמלה</p>
+            <p className="text-xs text-[#6b2340] font-bold truncate">
               {dressName} · #{dressId}
               {status ? ` · ${STATUS_LABELS[status] || status}` : ''}
             </p>
@@ -242,7 +242,7 @@ export default function AdminDressEditModal({
           <button
             type="button"
             onClick={onClose}
-            className="w-9 h-9 shrink-0 rounded-full border border-[#eadaaf] bg-white font-bold text-[#3d2f24] hover:bg-[#f4ebd4]"
+            className="w-9 h-9 shrink-0 rounded-full border border-[#ead8dc] bg-white font-bold text-[#2c2426] hover:bg-[#f3e9ec]"
             aria-label="סגירה"
           >
             ✕
@@ -251,7 +251,7 @@ export default function AdminDressEditModal({
 
         <form onSubmit={handleSubmit} className="p-4 sm:p-5 space-y-4">
           {loading ? (
-            <p className="text-sm text-[#6e634c] animate-pulse py-8 text-center">טוען פרטי שמלה...</p>
+            <p className="text-sm text-[#6e5e62] animate-pulse py-8 text-center">טוען פרטי שמלה...</p>
           ) : (
             <>
               {hasPendingUpdate && (
@@ -269,7 +269,7 @@ export default function AdminDressEditModal({
                   placeholder="שם השמלה *"
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  className="p-2.5 border border-[#decfa8] rounded-xl text-xs col-span-1 sm:col-span-2 bg-white"
+                  className="p-2.5 border border-[#e3cfd3] rounded-xl text-xs col-span-1 sm:col-span-2 bg-white"
                 />
                 <input
                   required
@@ -277,15 +277,15 @@ export default function AdminDressEditModal({
                   placeholder="מחיר *"
                   value={form.price}
                   onChange={(e) => setForm({ ...form, price: e.target.value })}
-                  className="p-2.5 border border-[#decfa8] rounded-xl text-xs bg-white"
+                  className="p-2.5 border border-[#e3cfd3] rounded-xl text-xs bg-white"
                 />
                 <div>
-                  <label className="block text-xs font-bold text-[#8b6508] mb-1">מידה *</label>
+                  <label className="block text-xs font-bold text-[#6b2340] mb-1">מידה *</label>
                   <DressSizeInput
                     required
                     value={form.size}
                     onChange={(size) => setForm({ ...form, size })}
-                    className="p-2.5 border border-[#decfa8] rounded-xl text-xs w-full bg-white"
+                    className="p-2.5 border border-[#e3cfd3] rounded-xl text-xs w-full bg-white"
                   />
                 </div>
                 <input
@@ -293,19 +293,19 @@ export default function AdminDressEditModal({
                   placeholder="עיר *"
                   value={form.city}
                   onChange={(e) => setForm({ ...form, city: e.target.value })}
-                  className="p-2.5 border border-[#decfa8] rounded-xl text-xs bg-white"
+                  className="p-2.5 border border-[#e3cfd3] rounded-xl text-xs bg-white"
                 />
                 <input
                   placeholder="צבע"
                   value={form.color}
                   onChange={(e) => setForm({ ...form, color: e.target.value })}
-                  className="p-2.5 border border-[#decfa8] rounded-xl text-xs bg-white"
+                  className="p-2.5 border border-[#e3cfd3] rounded-xl text-xs bg-white"
                 />
                 <select
                   required
                   value={form.listing_type}
                   onChange={(e) => setForm({ ...form, listing_type: e.target.value })}
-                  className="p-2.5 border border-[#decfa8] rounded-xl text-xs w-full bg-white"
+                  className="p-2.5 border border-[#e3cfd3] rounded-xl text-xs w-full bg-white"
                 >
                   {LISTING_TYPE_OPTIONS.map((o) => (
                     <option key={o.value} value={o.value}>
@@ -317,7 +317,7 @@ export default function AdminDressEditModal({
                   required
                   value={form.event_type}
                   onChange={(e) => setForm({ ...form, event_type: e.target.value })}
-                  className="p-2.5 border border-[#decfa8] rounded-xl text-xs w-full bg-white"
+                  className="p-2.5 border border-[#e3cfd3] rounded-xl text-xs w-full bg-white"
                 >
                   {DRESS_KIND_OPTIONS.map((o) => (
                     <option key={o.value} value={o.value}>
@@ -329,7 +329,7 @@ export default function AdminDressEditModal({
                   required
                   value={form.dress_style}
                   onChange={(e) => setForm({ ...form, dress_style: e.target.value })}
-                  className="p-2.5 border border-[#decfa8] rounded-xl text-xs w-full bg-white"
+                  className="p-2.5 border border-[#e3cfd3] rounded-xl text-xs w-full bg-white"
                 >
                   <option value="">{DRESS_STYLE_PLACEHOLDER}</option>
                   {DRESS_STYLE_OPTIONS.map((o) => (
@@ -342,7 +342,7 @@ export default function AdminDressEditModal({
                   required
                   value={form.dress_length}
                   onChange={(e) => setForm({ ...form, dress_length: e.target.value })}
-                  className="p-2.5 border border-[#decfa8] rounded-xl text-xs w-full bg-white"
+                  className="p-2.5 border border-[#e3cfd3] rounded-xl text-xs w-full bg-white"
                 >
                   {DRESS_LENGTH_OPTIONS.map((o) => (
                     <option key={o.value} value={o.value}>
@@ -356,14 +356,14 @@ export default function AdminDressEditModal({
                   placeholder="פיקדון (₪)"
                   value={form.deposit}
                   onChange={(e) => setForm({ ...form, deposit: e.target.value })}
-                  className="p-2.5 border border-[#decfa8] rounded-xl text-xs bg-white"
+                  className="p-2.5 border border-[#e3cfd3] rounded-xl text-xs bg-white"
                 />
                 <select
                   value={form.includes_dry_cleaning}
                   onChange={(e) =>
                     setForm({ ...form, includes_dry_cleaning: e.target.value as 'yes' | 'no' })
                   }
-                  className="p-2.5 border border-[#decfa8] rounded-xl text-xs w-full bg-white"
+                  className="p-2.5 border border-[#e3cfd3] rounded-xl text-xs w-full bg-white"
                 >
                   <option value="no">לא כולל ניקוי יבש</option>
                   <option value="yes">כולל ניקוי יבש</option>
@@ -373,23 +373,23 @@ export default function AdminDressEditModal({
                   value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
                   rows={3}
-                  className="p-2.5 border border-[#decfa8] rounded-xl text-xs col-span-1 sm:col-span-2 resize-none bg-white"
+                  className="p-2.5 border border-[#e3cfd3] rounded-xl text-xs col-span-1 sm:col-span-2 resize-none bg-white"
                 />
               </div>
 
-              <div className="rounded-xl border border-[#eadaaf] bg-white p-3 space-y-2">
-                <p className="text-xs font-black text-[#8b6508]">פרטי משכירה</p>
+              <div className="rounded-xl border border-[#ead8dc] bg-white p-3 space-y-2">
+                <p className="text-xs font-black text-[#6b2340]">פרטי משכירה</p>
                 <input
                   placeholder="שם משכירה"
                   value={ownerName}
                   onChange={(e) => setOwnerName(e.target.value)}
-                  className="w-full p-2.5 border border-[#decfa8] rounded-xl text-xs bg-white"
+                  className="w-full p-2.5 border border-[#e3cfd3] rounded-xl text-xs bg-white"
                 />
                 <input
                   placeholder="טלפון משכירה"
                   value={ownerPhone}
                   onChange={(e) => setOwnerPhone(e.target.value)}
-                  className="w-full p-2.5 border border-[#decfa8] rounded-xl text-xs bg-white"
+                  className="w-full p-2.5 border border-[#e3cfd3] rounded-xl text-xs bg-white"
                   dir="ltr"
                 />
                 <input
@@ -397,30 +397,30 @@ export default function AdminDressEditModal({
                   placeholder="אימייל משכירה"
                   value={ownerEmail}
                   onChange={(e) => setOwnerEmail(e.target.value)}
-                  className="w-full p-2.5 border border-[#decfa8] rounded-xl text-xs bg-white"
+                  className="w-full p-2.5 border border-[#e3cfd3] rounded-xl text-xs bg-white"
                   dir="ltr"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#8b6508] mb-2">תמונות השמלה</label>
-                <p className="text-[10px] text-[#9a7b4f] mb-2">
+                <label className="block text-xs font-bold text-[#6b2340] mb-2">תמונות השמלה</label>
+                <p className="text-[10px] text-[#7a5e64] mb-2">
                   ניתן למחוק תמונות קיימות או להוסיף חדשות (עד 6 סה״כ)
                 </p>
 
                 {(existingImages.length > 0 || newPreviews.length > 0) && (
-                  <div className="flex gap-2 flex-wrap mb-3 bg-neutral-50 p-3 rounded-xl border border-[#eadaaf]">
+                  <div className="flex gap-2 flex-wrap mb-3 bg-neutral-50 p-3 rounded-xl border border-[#ead8dc]">
                     {existingImages.map((img) => (
                       <div key={img} className="relative">
                         <DressImageFill
                           src={img}
                           alt=""
-                          className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl border-2 border-[#decfa8]"
+                          className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl border-2 border-[#e3cfd3]"
                         />
                         <button
                           type="button"
                           onClick={() => removeExistingImage(img)}
-                          className="absolute -top-1.5 -left-1.5 w-5 h-5 rounded-full bg-[#2c261a] text-white text-[10px] font-bold flex items-center justify-center shadow-md hover:bg-red-700"
+                          className="absolute -top-1.5 -left-1.5 w-5 h-5 rounded-full bg-[#2a1f22] text-white text-[10px] font-bold flex items-center justify-center shadow-md hover:bg-red-700"
                           aria-label="מחקי תמונה"
                         >
                           ✕
@@ -432,15 +432,15 @@ export default function AdminDressEditModal({
                         <DressImageFill
                           src={img}
                           alt=""
-                          className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl border-2 border-[#d4af37]"
+                          className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl border-2 border-[#6b2340]"
                         />
-                        <span className="absolute bottom-1 right-1 text-[8px] bg-[#d4af37] text-white px-1 rounded">
+                        <span className="absolute bottom-1 right-1 text-[8px] bg-[#6b2340] text-white px-1 rounded">
                           חדש
                         </span>
                         <button
                           type="button"
                           onClick={() => removeNewImage(index)}
-                          className="absolute -top-1.5 -left-1.5 w-5 h-5 rounded-full bg-[#2c261a] text-white text-[10px] font-bold flex items-center justify-center shadow-md hover:bg-red-700"
+                          className="absolute -top-1.5 -left-1.5 w-5 h-5 rounded-full bg-[#2a1f22] text-white text-[10px] font-bold flex items-center justify-center shadow-md hover:bg-red-700"
                           aria-label="מחקי תמונה חדשה"
                         >
                           ✕
@@ -453,9 +453,9 @@ export default function AdminDressEditModal({
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="w-full p-4 border-2 border-dashed border-[#d4af37] rounded-xl bg-[#fffdf8] hover:bg-[#f4ebd4] transition-colors text-center"
+                  className="w-full p-4 border-2 border-dashed border-[#6b2340] rounded-xl bg-[#fffafb] hover:bg-[#f3e9ec] transition-colors text-center"
                 >
-                  <span className="text-xs font-bold text-[#8b6508]">➕ הוספת תמונות</span>
+                  <span className="text-xs font-bold text-[#6b2340]">➕ הוספת תמונות</span>
                 </button>
                 <input
                   ref={fileInputRef}
@@ -471,14 +471,14 @@ export default function AdminDressEditModal({
                 <button
                   type="submit"
                   disabled={saving}
-                  className="flex-1 min-w-[140px] py-3 bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white rounded-xl text-xs font-black shadow-md disabled:opacity-60"
+                  className="flex-1 min-w-[140px] py-3 bg-gradient-to-r from-[#6b2340] to-[#4a152c] text-white rounded-xl text-xs font-black shadow-md disabled:opacity-60"
                 >
                   {saving ? 'שומר...' : 'שמרי שינויים'}
                 </button>
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-4 py-3 border border-[#decfa8] rounded-xl text-xs font-bold text-[#6e634c]"
+                  className="px-4 py-3 border border-[#e3cfd3] rounded-xl text-xs font-bold text-[#6e5e62]"
                 >
                   ביטול
                 </button>

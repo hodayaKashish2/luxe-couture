@@ -17,7 +17,7 @@ export default function ContactPage() {
       <div className="space-y-3 text-xs">
         <p>
           <strong>WhatsApp / טלפון:</strong>{' '}
-          <a href={WHATSAPP_LINK} target="_blank" rel="noopener noreferrer" className="text-[#25D366] hover:underline font-bold">
+          <a href={WHATSAPP_LINK} target="_blank" rel="noopener noreferrer" className="font-bold text-[#6b2340] hover:underline">
             {CONTACT_PHONE}
           </a>
         </p>
@@ -26,20 +26,20 @@ export default function ContactPage() {
             href={WHATSAPP_LINK}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#25D366] text-white rounded-xl text-xs font-bold"
+            className="inline-flex items-center gap-2 rounded-xl bg-[#6b2340] px-4 py-2.5 text-xs font-bold text-white"
           >
             💬 שלחי הודעה ב-WhatsApp
           </a>
         </p>
         <p>
           <strong>אימייל:</strong>{' '}
-          <a href={`mailto:${CONTACT_EMAIL}`} className="text-[#b8860b] hover:underline">
+          <a href={`mailto:${CONTACT_EMAIL}`} className="text-[#6b2340] hover:underline">
             {CONTACT_EMAIL}
           </a>
         </p>
       </div>
 
-      <p className="text-xs text-[#9a7b4f] pt-2">
+      <p className="text-xs text-[#7a5e64] pt-2">
         זמן מענה משוער: עד 24 שעות בימי חול.
       </p>
     </ContentPage>

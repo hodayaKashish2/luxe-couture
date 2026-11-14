@@ -12,7 +12,7 @@ type CatalogFilterSidebarProps = CatalogFilterPanelProps & {
 const WRAPPER_BASE = 'hidden lg:block shrink-0 self-stretch min-h-0';
 
 const PANEL =
-  'flex flex-col bg-white border border-[#eadaaf] rounded-xl shadow-sm sticky top-4 z-40 max-h-[calc(100dvh-2rem)]';
+  'flex flex-col bg-white border border-[#ead8dc] rounded-xl shadow-sm sticky top-4 z-40 max-h-[calc(100dvh-2rem)]';
 
 export default function CatalogFilterSidebar({
   collapsed,
@@ -28,7 +28,7 @@ export default function CatalogFilterSidebar({
           <button
             type="button"
             onClick={onToggleCollapse}
-            className="h-full w-full flex flex-col items-center justify-center gap-3 py-6 bg-[#fffdf8] text-[#8b6508] hover:bg-[#f4ebd4] transition-colors rounded-xl"
+            className="h-full w-full flex flex-col items-center justify-center gap-3 py-6 bg-[#fffafb] text-[#6b2340] hover:bg-[#f6eef1] transition-colors rounded-xl"
             aria-label="פתח סינון"
             title="פתח סינון"
           >
@@ -42,7 +42,7 @@ export default function CatalogFilterSidebar({
               סינון
             </span>
             {activeFilterCount > 0 && (
-              <span className="bg-[#d4af37] text-white text-[10px] font-black w-6 h-6 rounded-full flex items-center justify-center">
+              <span className="bg-[#6b2340] text-white text-[10px] font-black w-6 h-6 rounded-full flex items-center justify-center">
                 {activeFilterCount}
               </span>
             )}
@@ -55,17 +55,17 @@ export default function CatalogFilterSidebar({
   return (
     <div className={`${WRAPPER_BASE} w-56 xl:w-60`}>
       <aside className={PANEL}>
-        <div className="shrink-0 flex items-center justify-between gap-2 px-3 py-2.5 border-b border-[#f0e6cc] bg-[#fffdf8] rounded-t-xl">
+        <div className="shrink-0 flex items-center justify-between gap-2 px-3 py-2.5 border-b border-[#f0e6cc] bg-[#fffafb] rounded-t-xl">
           <div className="min-w-0">
-            <h2 className="text-sm font-black text-[#3d2f24]">סינון</h2>
+            <h2 className="text-sm font-black text-[#2a1f22]">סינון</h2>
             {activeFilterCount > 0 && (
-              <p className="text-[10px] text-[#9a7b4f]">{activeFilterCount} פעילים</p>
+              <p className="text-[10px] text-[#7a5e64]">{activeFilterCount} פעילים</p>
             )}
           </div>
           <button
             type="button"
             onClick={onToggleCollapse}
-            className="shrink-0 w-7 h-7 rounded-lg bg-neutral-100 text-[#8b6508] font-bold flex items-center justify-center hover:bg-[#f4ebd4] transition-colors"
+            className="shrink-0 w-7 h-7 rounded-lg bg-neutral-100 text-[#6b2340] font-bold flex items-center justify-center hover:bg-[#f6eef1] transition-colors"
             aria-label="מזער סינון"
             title="מזער"
           >
@@ -78,7 +78,7 @@ export default function CatalogFilterSidebar({
         </div>
 
         {activeFilterCount > 0 && (
-          <div className="shrink-0 px-3 py-2.5 border-t border-[#f0e6cc] bg-[#fffdf8] rounded-b-xl">
+          <div className="shrink-0 px-3 py-2.5 border-t border-[#f0e6cc] bg-[#fffafb] rounded-b-xl">
             <button
               type="button"
               onClick={(e) => {
@@ -86,7 +86,7 @@ export default function CatalogFilterSidebar({
                 e.stopPropagation();
                 onClear();
               }}
-              className="w-full py-2 text-[11px] font-bold text-[#b8860b] hover:bg-[#faf8f3] rounded-lg transition-colors"
+              className="w-full py-2 text-[11px] font-bold text-[#4a152c] hover:bg-[#faf8f3] rounded-lg transition-colors"
             >
               נקה סינון
             </button>

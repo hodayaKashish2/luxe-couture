@@ -16,7 +16,7 @@ export default function DressCatalogMeta({ city, listingType }: Props) {
   return (
     <div className="flex flex-wrap items-center gap-0.5 min-w-0">
       {trimmedCity && (
-        <span className="inline-flex items-center gap-0.5 max-w-[72%] truncate rounded-full border border-[#decfa8]/80 bg-[#f4ebd4]/90 px-1.5 py-px text-[9px] sm:text-[10px] font-semibold text-[#6e5530] leading-none">
+        <span className="inline-flex items-center gap-0.5 max-w-[72%] truncate rounded-full border border-[#e3cfd3]/80 bg-[#f6eef1]/90 px-1.5 py-px text-[9px] sm:text-[10px] font-semibold text-[#6e5530] leading-none">
           <span aria-hidden className="text-[8px] sm:text-[9px]">
             📍
           </span>
@@ -27,8 +27,8 @@ export default function DressCatalogMeta({ city, listingType }: Props) {
         <span
           className={`inline-flex shrink-0 items-center rounded-full border px-1.5 py-px text-[9px] sm:text-[10px] font-bold leading-none ${
             type === 'sale'
-              ? 'border-[#d4af37] bg-white text-[#b8860b]'
-              : 'border-[#c9a227] bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white'
+              ? 'border-[#6b2340] bg-white text-[#4a152c]'
+              : 'border-[#6b2340] bg-gradient-to-r from-[#6b2340] to-[#4a152c] text-white'
           }`}
         >
           {typeLabel}

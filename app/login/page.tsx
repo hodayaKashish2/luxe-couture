@@ -10,7 +10,7 @@ import { notifySiteAuthChange } from '@/lib/site-auth-events';
 import { persistSiteSession } from '@/lib/site-session';
 
 const FIELD_CLASS =
-  'w-full p-3 border-2 border-[#decfa8] rounded-xl text-sm text-[#2c261a] placeholder:text-[#9a7b4f] caret-[#8b6508] focus:border-[#d4af37] focus:outline-none bg-white';
+  'w-full p-3 border-2 border-[#e3cfd3] rounded-xl text-sm text-[#2a1f22] placeholder:text-[#7a5e64] caret-[#6b2340] focus:border-[#6b2340] focus:outline-none bg-white';
 
 function LoginForm() {
   const router = useRouter();
@@ -120,28 +120,28 @@ function LoginForm() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#fbf8f0] via-[#f3ebd6] to-[#e8dcbd] flex items-center justify-center p-4" dir="rtl">
+    <div className="min-h-screen bg-gradient-to-b from-[#faf7f5] via-[#f3e9ec] to-[#ead8dc] flex items-center justify-center p-4" dir="rtl">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <img src="/logo.svg" alt="" className="w-16 h-16 mx-auto mb-4 drop-shadow-lg" />
-          <h1 className="font-[family-name:var(--font-luxury)] text-3xl text-[#3d2f24]">
+          <h1 className="font-[family-name:var(--font-luxury)] text-3xl text-[#2a1f22]">
             {SITE_NAME}
           </h1>
-          <p className="text-sm text-[#6e634c] mt-2">התחברי כדי לשמור מועדפים, לפרסם שמלה ולגשת לאזור האישי</p>
+          <p className="text-sm text-[#6e5e62] mt-2">התחברי כדי לשמור מועדפים, לפרסם שמלה ולגשת לאזור האישי</p>
         </div>
 
         {resetToken && !resetDone ? (
           <form
             onSubmit={handleReset}
             noValidate
-            className="bg-white/95 rounded-2xl border-2 border-[#e6c687] shadow-xl p-6 sm:p-8 space-y-4"
+            className="bg-white/95 rounded-2xl border-2 border-[#d4b4bb] shadow-xl p-6 sm:p-8 space-y-4"
           >
-            <h2 className="text-lg font-black text-[#3d2f24] text-center">סיסמה חדשה</h2>
-            <p className="text-xs text-[#6e634c] text-center leading-relaxed">
+            <h2 className="text-lg font-black text-[#2a1f22] text-center">סיסמה חדשה</h2>
+            <p className="text-xs text-[#6e5e62] text-center leading-relaxed">
               הקישור מהמייל תקף ל-20 דקות, ורק לחשבון שנשלח אליו.
             </p>
             <div>
-              <label className="block text-xs font-black text-[#8b6508] mb-1.5">סיסמה חדשה</label>
+              <label className="block text-xs font-black text-[#6b2340] mb-1.5">סיסמה חדשה</label>
               <input
                 type="password"
                 required
@@ -153,7 +153,7 @@ function LoginForm() {
               />
             </div>
             <div>
-              <label className="block text-xs font-black text-[#8b6508] mb-1.5">אימות סיסמה</label>
+              <label className="block text-xs font-black text-[#6b2340] mb-1.5">אימות סיסמה</label>
               <input
                 type="password"
                 required
@@ -165,11 +165,11 @@ function LoginForm() {
               />
             </div>
             {error && <FormError message={error} />}
-            {info && <p className="text-xs font-bold text-[#8b6508] leading-relaxed">{info}</p>}
+            {info && <p className="text-xs font-bold text-[#6b2340] leading-relaxed">{info}</p>}
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3.5 bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white rounded-xl font-black text-sm shadow-lg disabled:opacity-60"
+              className="w-full py-3.5 bg-gradient-to-r from-[#6b2340] to-[#4a152c] text-white rounded-xl font-black text-sm shadow-lg disabled:opacity-60"
             >
               {loading ? 'שומרת...' : 'שמירת סיסמה'}
             </button>
@@ -178,14 +178,14 @@ function LoginForm() {
           <form
             onSubmit={handleForgot}
             noValidate
-            className="bg-white/95 rounded-2xl border-2 border-[#e6c687] shadow-xl p-6 sm:p-8 space-y-4"
+            className="bg-white/95 rounded-2xl border-2 border-[#d4b4bb] shadow-xl p-6 sm:p-8 space-y-4"
           >
-            <h2 className="text-lg font-black text-[#3d2f24] text-center">שכחתי סיסמה</h2>
-            <p className="text-xs text-[#6e634c] text-center leading-relaxed">
+            <h2 className="text-lg font-black text-[#2a1f22] text-center">שכחתי סיסמה</h2>
+            <p className="text-xs text-[#6e5e62] text-center leading-relaxed">
               הזיני שם משתמש או אימייל. אם למייל יש כמה חשבונות, הזיני את שם המשתמש של החשבון הנכון.
             </p>
             <div>
-              <label className="block text-xs font-black text-[#8b6508] mb-1.5">שם משתמש או אימייל</label>
+              <label className="block text-xs font-black text-[#6b2340] mb-1.5">שם משתמש או אימייל</label>
               <input
                 type="text"
                 required
@@ -197,11 +197,11 @@ function LoginForm() {
               />
             </div>
             {error && <FormError message={error} />}
-            {info && <p className="text-xs font-bold text-[#8b6508] leading-relaxed">{info}</p>}
+            {info && <p className="text-xs font-bold text-[#6b2340] leading-relaxed">{info}</p>}
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3.5 bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white rounded-xl font-black text-sm shadow-lg disabled:opacity-60"
+              className="w-full py-3.5 bg-gradient-to-r from-[#6b2340] to-[#4a152c] text-white rounded-xl font-black text-sm shadow-lg disabled:opacity-60"
             >
               {loading ? 'שולחת...' : 'שליחת קישור למייל'}
             </button>
@@ -212,7 +212,7 @@ function LoginForm() {
                 setError('');
                 setInfo('');
               }}
-              className="w-full text-center text-xs text-[#9a7b4f]"
+              className="w-full text-center text-xs text-[#7a5e64]"
             >
               ← חזרה להתחברות
             </button>
@@ -221,10 +221,10 @@ function LoginForm() {
         <form
           onSubmit={handleSubmit}
           noValidate
-          className="bg-white/95 rounded-2xl border-2 border-[#e6c687] shadow-xl p-6 sm:p-8 space-y-4"
+          className="bg-white/95 rounded-2xl border-2 border-[#d4b4bb] shadow-xl p-6 sm:p-8 space-y-4"
         >
           <div>
-            <label className="block text-xs font-black text-[#8b6508] mb-1.5">שם משתמש</label>
+            <label className="block text-xs font-black text-[#6b2340] mb-1.5">שם משתמש</label>
             <input
               type="text"
               required
@@ -236,7 +236,7 @@ function LoginForm() {
             />
           </div>
           <div>
-            <label className="block text-xs font-black text-[#8b6508] mb-1.5">סיסמה</label>
+            <label className="block text-xs font-black text-[#6b2340] mb-1.5">סיסמה</label>
             <input
               type="password"
               required
@@ -249,12 +249,12 @@ function LoginForm() {
           </div>
 
           {error && <FormError message={error} />}
-          {info && <p className="text-xs font-bold text-[#8b6508] leading-relaxed">{info}</p>}
+          {info && <p className="text-xs font-bold text-[#6b2340] leading-relaxed">{info}</p>}
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3.5 bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-white rounded-xl font-black text-sm shadow-lg disabled:opacity-60"
+            className="w-full py-3.5 bg-gradient-to-r from-[#6b2340] to-[#4a152c] text-white rounded-xl font-black text-sm shadow-lg disabled:opacity-60"
           >
             {loading ? 'מתחברת...' : 'התחברות →'}
           </button>
@@ -266,14 +266,14 @@ function LoginForm() {
               setError('');
               setInfo('');
             }}
-            className="w-full text-center text-xs font-bold text-[#b8860b] underline"
+            className="w-full text-center text-xs font-bold text-[#4a152c] underline"
           >
             שכחתי סיסמה
           </button>
 
-          <p className="text-center text-xs text-[#6e634c]">
+          <p className="text-center text-xs text-[#6e5e62]">
             אין לך חשבון?{' '}
-            <Link href={`/register?next=${encodeURIComponent(next)}`} className="text-[#b8860b] font-bold underline">
+            <Link href={`/register?next=${encodeURIComponent(next)}`} className="text-[#4a152c] font-bold underline">
               הרשמה
             </Link>
           </p>
@@ -286,7 +286,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-[#8b6508]">טוען...</div>}>
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-[#6b2340]">טוען...</div>}>
       <LoginForm />
     </Suspense>
   );

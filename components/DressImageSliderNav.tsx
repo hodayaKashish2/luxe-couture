@@ -36,8 +36,8 @@ export default function DressImageSliderNav({
         }}
         className={`${navBtnClass} ${
           isModal
-            ? 'left-2 sm:left-3 w-9 h-9 sm:w-10 sm:h-10 text-xl bg-white/95 text-[#b8860b] border-[#e8cc92] hover:bg-[#d4af37] hover:text-white'
-            : 'left-1.5 sm:left-2 w-7 h-7 sm:w-8 sm:h-8 text-base bg-white/95 text-[#b8860b] border-[#e8cc92] hover:bg-[#fffdf8]'
+            ? 'left-2 sm:left-3 w-9 h-9 sm:w-10 sm:h-10 text-xl bg-white/95 text-[#6b2340] border-[#e3cfd3] hover:bg-[#6b2340] hover:text-white'
+            : 'left-1.5 sm:left-2 w-7 h-7 sm:w-8 sm:h-8 text-base bg-white/90 text-[#6b2340] border-white/70 opacity-100 sm:opacity-0 sm:group-hover:opacity-100'
         }`}
         aria-label="תמונה קודמת"
       >
@@ -52,8 +52,8 @@ export default function DressImageSliderNav({
         }}
         className={`${navBtnClass} ${
           isModal
-            ? 'right-2 sm:right-3 w-9 h-9 sm:w-10 sm:h-10 text-xl bg-white/95 text-[#b8860b] border-[#e8cc92] hover:bg-[#d4af37] hover:text-white'
-            : 'right-1.5 sm:right-2 w-7 h-7 sm:w-8 sm:h-8 text-base bg-white/95 text-[#b8860b] border-[#e8cc92] hover:bg-[#fffdf8]'
+            ? 'right-2 sm:right-3 w-9 h-9 sm:w-10 sm:h-10 text-xl bg-white/95 text-[#6b2340] border-[#e3cfd3] hover:bg-[#6b2340] hover:text-white'
+            : 'right-1.5 sm:right-2 w-7 h-7 sm:w-8 sm:h-8 text-base bg-white/90 text-[#6b2340] border-white/70 opacity-100 sm:opacity-0 sm:group-hover:opacity-100'
         }`}
         aria-label="תמונה הבאה"
       >
@@ -64,7 +64,7 @@ export default function DressImageSliderNav({
         className={`absolute left-1/2 -translate-x-1/2 z-50 flex gap-1.5 ${
           isModal
             ? 'bottom-3 bg-white/95 px-3 py-1.5 rounded-full shadow-md border border-[#e0cba0] gap-2'
-            : 'bottom-2 bg-black/35 px-1.5 py-0.5 rounded-full'
+            : 'bottom-3 bg-black/30 px-1.5 py-0.5 rounded-full opacity-100 sm:opacity-0 sm:group-hover:opacity-100'
         }`}
         onClick={(e) => e.stopPropagation()}
       >
@@ -80,8 +80,8 @@ export default function DressImageSliderNav({
             className={`rounded-full transition-all cursor-pointer ${
               isModal
                 ? idx === currentIndex
-                  ? 'bg-[#d4af37] w-3 h-3'
-                  : 'bg-[#e5d9bd] w-2 h-2 hover:bg-[#d4af37]/60'
+                  ? 'bg-[#6b2340] w-3 h-3'
+                  : 'bg-[#e3cfd3] w-2 h-2 hover:bg-[#6b2340]/60'
                 : idx === currentIndex
                   ? 'bg-white w-2.5 h-1'
                   : 'bg-white/50 w-1 h-1 hover:bg-white/80'

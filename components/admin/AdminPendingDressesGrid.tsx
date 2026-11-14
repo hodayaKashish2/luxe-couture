@@ -36,7 +36,7 @@ export default function AdminPendingDressesGrid({
   }
 
   if (dresses.length === 0) {
-    return <p className="text-xs text-[#6e634c]">אין שמלות ממתינות 🎉</p>;
+    return <p className="text-xs text-[#6e5e62]">אין שמלות ממתינות 🎉</p>;
   }
 
   return (
@@ -68,7 +68,7 @@ export default function AdminPendingDressesGrid({
               setEditingDress(detailDress);
               setDetailDress(null);
             }}
-            className="px-4 py-2 text-sm rounded-xl border border-[#d4af37] text-[#8b6508] font-bold"
+            className="px-4 py-2 text-sm rounded-xl border border-[#6b2340] text-[#6b2340] font-bold"
           >
             ✏️ עריכה
           </button>
@@ -76,7 +76,7 @@ export default function AdminPendingDressesGrid({
             type="button"
             disabled={busyId === detailDress.id}
             onClick={() => runApprove(detailDress.id)}
-            className="px-4 py-2 text-sm rounded-xl bg-[#b8860b] text-white font-bold disabled:opacity-50"
+            className="px-4 py-2 text-sm rounded-xl bg-[#6b2340] text-white font-bold disabled:opacity-50"
           >
             ✓ אשר
           </button>

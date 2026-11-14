@@ -126,11 +126,11 @@ function BroadcastPanel({
   const disabled = busy !== null || count === 0;
 
   return (
-    <section className="bg-white border border-[#eadaaf] rounded-2xl p-5 space-y-4">
+    <section className="bg-white border border-[#ead8dc] rounded-2xl p-5 space-y-4">
       <div>
-        <h3 className="font-black text-[#3d2f24] text-lg">{title}</h3>
-        <p className="text-xs text-[#6e634c] mt-1 leading-relaxed">{description}</p>
-        <p className="text-sm font-bold text-[#8b6508] mt-2">נמענות ברשימה: {count}</p>
+        <h3 className="font-black text-[#2c2426] text-lg">{title}</h3>
+        <p className="text-xs text-[#6e5e62] mt-1 leading-relaxed">{description}</p>
+        <p className="text-sm font-bold text-[#6b2340] mt-2">נמענות ברשימה: {count}</p>
         {warning && (
           <p className="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mt-2 leading-relaxed">
             {warning}
@@ -140,23 +140,23 @@ function BroadcastPanel({
 
       <div className="space-y-3">
         <div>
-          <label className="block text-xs font-bold text-[#8b6508] mb-1">נושא המייל</label>
+          <label className="block text-xs font-bold text-[#6b2340] mb-1">נושא המייל</label>
           <input
             value={form.subject}
             onChange={(e) => setForm({ ...form, subject: e.target.value })}
             placeholder="למשל: שמלות חדשות השבוע בקטלוג"
-            className="w-full p-2.5 border border-[#decfa8] rounded-xl text-sm bg-white"
+            className="w-full p-2.5 border border-[#e3cfd3] rounded-xl text-sm bg-white"
             disabled={disabled}
           />
         </div>
         <div>
-          <label className="block text-xs font-bold text-[#8b6508] mb-1">תוכן המייל</label>
+          <label className="block text-xs font-bold text-[#6b2340] mb-1">תוכן המייל</label>
           <textarea
             value={form.body}
             onChange={(e) => setForm({ ...form, body: e.target.value })}
             placeholder="כתבי כאן את ההודעה — שורות רגילות, בלי HTML"
             rows={6}
-            className="w-full p-2.5 border border-[#decfa8] rounded-xl text-sm bg-white resize-y min-h-[120px]"
+            className="w-full p-2.5 border border-[#e3cfd3] rounded-xl text-sm bg-white resize-y min-h-[120px]"
             disabled={disabled}
           />
         </div>
@@ -164,18 +164,18 @@ function BroadcastPanel({
 
       {error && <FormError message={error} />}
       {progress && (
-        <p className="text-xs font-bold text-[#8b6508]">
+        <p className="text-xs font-bold text-[#6b2340]">
           שולח… {progress.sent + progress.failed} / {progress.total}
         </p>
       )}
-      {resultMsg && <p className="text-xs text-[#2c261a] bg-[#f4ebd4] border border-[#decfa8] rounded-xl px-3 py-2">{resultMsg}</p>}
+      {resultMsg && <p className="text-xs text-[#2a1f22] bg-[#f3e9ec] border border-[#e3cfd3] rounded-xl px-3 py-2">{resultMsg}</p>}
 
       <div className="flex flex-wrap gap-2">
         <button
           type="button"
           onClick={handleTest}
           disabled={disabled || !form.subject.trim() || !form.body.trim()}
-          className="px-4 py-2.5 rounded-xl border-2 border-[#decfa8] bg-white text-xs font-bold text-[#8b6508] disabled:opacity-50"
+          className="px-4 py-2.5 rounded-xl border-2 border-[#e3cfd3] bg-white text-xs font-bold text-[#6b2340] disabled:opacity-50"
         >
           {busy === 'test' ? 'שולחת בדיקה…' : 'שלחי לעצמך לבדיקה'}
         </button>
@@ -183,7 +183,7 @@ function BroadcastPanel({
           type="button"
           onClick={handleSend}
           disabled={disabled || !form.subject.trim() || !form.body.trim()}
-          className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#2c261a] to-[#4a3f2b] text-white text-xs font-black disabled:opacity-50"
+          className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#2a1f22] to-[#4a3f2b] text-white text-xs font-black disabled:opacity-50"
         >
           {busy === 'send' ? 'שולחת…' : audience === 'all' ? 'שלחי לכל הרשומות' : 'שלחי למאשרות'}
         </button>
@@ -219,7 +219,7 @@ export default function AdminBroadcastEmail({ token }: Props) {
   }, [loadStats]);
 
   if (loading) {
-    return <p className="text-sm text-[#6e634c]">טוען רשימות תפוצה…</p>;
+    return <p className="text-sm text-[#6e5e62]">טוען רשימות תפוצה…</p>;
   }
 
   if (error) {
@@ -231,8 +231,8 @@ export default function AdminBroadcastEmail({ token }: Props) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="font-black text-xl text-[#3d2f24]">מיילים לרשימות תפוצה</h2>
-        <p className="text-xs text-[#6e634c] mt-1 leading-relaxed">
+        <h2 className="font-black text-xl text-[#2c2426]">מיילים לרשימות תפוצה</h2>
+        <p className="text-xs text-[#6e5e62] mt-1 leading-relaxed">
           שתי רשימות נפרדות — עדכונים למאשרות, והודעות חשובות לכל הרשומות.
         </p>
       </div>

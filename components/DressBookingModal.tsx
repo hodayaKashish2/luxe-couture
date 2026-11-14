@@ -259,11 +259,11 @@ export default function DressBookingModal({
 
   return (
     <div className="fixed inset-0 bg-neutral-900/60 backdrop-blur-md z-[70] flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[92vh] sm:max-h-[85vh] overflow-hidden shadow-2xl relative flex flex-col md:flex-row border-2 border-[#d4af37]">
+      <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[92vh] sm:max-h-[85vh] overflow-hidden shadow-2xl relative flex flex-col md:flex-row border-2 border-[#6b2340]">
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-4 left-4 z-30 bg-white hover:bg-[#d4af37] text-[#b8860b] hover:text-white w-8 h-8 rounded-full flex items-center justify-center border-2 border-[#ebd4a8] shadow-md font-bold transition-all"
+          className="absolute top-4 left-4 z-30 bg-white hover:bg-[#6b2340] text-[#6b2340] hover:text-white w-8 h-8 rounded-full flex items-center justify-center border-2 border-[#e3cfd3] shadow-md font-bold transition-all"
         >
           ✕
         </button>
@@ -276,7 +276,7 @@ export default function DressBookingModal({
                 onClick={() =>
                   setModalImageIndex((prev) => (prev - 1 + dress.images.length) % dress.images.length)
                 }
-                className="absolute left-3 top-1/2 -translate-y-1/2 z-20 bg-white/95 text-[#b8860b] w-8 h-8 rounded-full flex items-center justify-center shadow-md font-black"
+                className="absolute left-3 top-1/2 -translate-y-1/2 z-20 bg-white/95 text-[#6b2340] w-8 h-8 rounded-full flex items-center justify-center shadow-md font-black"
                 aria-label="תמונה קודמת"
               >
                 ‹
@@ -284,7 +284,7 @@ export default function DressBookingModal({
               <button
                 type="button"
                 onClick={() => setModalImageIndex((prev) => (prev + 1) % dress.images.length)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 z-20 bg-white/95 text-[#b8860b] w-8 h-8 rounded-full flex items-center justify-center shadow-md font-black"
+                className="absolute right-3 top-1/2 -translate-y-1/2 z-20 bg-white/95 text-[#6b2340] w-8 h-8 rounded-full flex items-center justify-center shadow-md font-black"
                 aria-label="תמונה הבאה"
               >
                 ›
@@ -297,11 +297,11 @@ export default function DressBookingModal({
             className="absolute inset-0 h-full w-full"
           />
           {!dress.images.length && (
-            <div className="absolute inset-0 flex items-center justify-center text-5xl text-[#decfa8]">👗</div>
+            <div className="absolute inset-0 flex items-center justify-center text-5xl text-[#e3cfd3]">👗</div>
           )}
         </div>
 
-        <div className="w-full md:w-1/2 p-6 flex flex-col justify-between overflow-y-auto bg-gradient-to-b from-[#fffdf9] to-[#faf6eb]">
+        <div className="w-full md:w-1/2 p-6 flex flex-col justify-between overflow-y-auto bg-gradient-to-b from-[#fffafb] to-[#faf7f5]">
           {isOrdered ? (
             <div className="text-center my-auto py-10">
               <span className="text-3xl block mb-2">{orderOutcome === 'payment_reported' ? '✅' : '✨ ✨ ✨'}</span>
@@ -310,7 +310,7 @@ export default function DressBookingModal({
                   ? 'דיווח התשלום התקבל בהצלחה!'
                   : 'ההזמנה והתשלום אושרו!'}
               </h3>
-              <p className="mt-2 text-[#5c5037] text-xs font-medium leading-relaxed">
+              <p className="mt-2 text-[#6e5e62] text-xs font-medium leading-relaxed">
                 {orderOutcome === 'payment_reported' ? (
                   <>תודה! קיבלנו את דיווח התשלום — בקרוב תישלח אלייך הודעת אישור ל-<strong>{orderEmail}</strong>.</>
                 ) : (
@@ -337,7 +337,7 @@ export default function DressBookingModal({
           ) : (
             <form onSubmit={handlePlaceOrder} className="flex flex-col gap-3">
               <div>
-                <span className="text-[9px] tracking-widest bg-gradient-to-r from-[#b8860b] to-[#d4af37] bg-clip-text text-transparent font-black block mb-1">
+                <span className="text-[9px] tracking-widest bg-gradient-to-r from-[#4a152c] to-[#6b2340] bg-clip-text text-transparent font-black block mb-1">
                   ✦ הזמנת שמלה ✦
                 </span>
                 <h3 className="text-xl font-bold text-neutral-950 tracking-wide">{dress.name}</h3>
@@ -345,14 +345,14 @@ export default function DressBookingModal({
                   <button
                     type="button"
                     onClick={() => onViewDetails(dress)}
-                    className="mt-2 text-[11px] font-bold text-[#b8860b] underline"
+                    className="mt-2 text-[11px] font-bold text-[#6b2340] underline"
                   >
                     ℹ️ פרטים מלאים
                   </button>
                 )}
-                <div className="mt-3 bg-gradient-to-r from-[#fdfcf7] to-[#f4ebd4] p-3 rounded-xl border border-[#decfa8] shadow-sm">
+                <div className="mt-3 bg-gradient-to-r from-[#fffafb] to-[#f3e9ec] p-3 rounded-xl border border-[#e3cfd3] shadow-sm">
                   <div className="flex justify-between items-center">
-                    <span className="text-xs text-[#5c5037] font-bold">סה״כ לתשלום:</span>
+                    <span className="text-xs text-[#6e5e62] font-bold">סה״כ לתשלום:</span>
                     <span className="text-base font-black text-neutral-950">₪{dress.price}</span>
                   </div>
                 </div>
@@ -364,7 +364,7 @@ export default function DressBookingModal({
                 required
                 value={orderName}
                 onChange={(e) => setOrderName(e.target.value)}
-                className="p-3 bg-white border border-[#decfa8] rounded-xl text-xs font-medium focus:outline-none focus:border-[#d4af37]"
+                className="p-3 bg-white border border-[#e3cfd3] rounded-xl text-xs font-medium focus:outline-none focus:border-[#6b2340]"
               />
               <input
                 type="tel"
@@ -372,7 +372,7 @@ export default function DressBookingModal({
                 required
                 value={orderPhone}
                 onChange={(e) => setOrderPhone(e.target.value)}
-                className="p-3 bg-white border border-[#decfa8] rounded-xl text-xs font-medium focus:outline-none focus:border-[#d4af37]"
+                className="p-3 bg-white border border-[#e3cfd3] rounded-xl text-xs font-medium focus:outline-none focus:border-[#6b2340]"
               />
               <input
                 type="email"
@@ -380,19 +380,19 @@ export default function DressBookingModal({
                 required
                 value={orderEmail}
                 onChange={(e) => setOrderEmail(e.target.value)}
-                className="p-3 bg-white border border-[#decfa8] rounded-xl text-xs font-medium text-left focus:outline-none focus:border-[#d4af37]"
+                className="p-3 bg-white border border-[#e3cfd3] rounded-xl text-xs font-medium text-left focus:outline-none focus:border-[#6b2340]"
                 dir="ltr"
               />
 
               <div className="flex flex-col">
-                <label className="text-[10px] text-[#8b6508] font-black mb-1">תאריך האירוע</label>
+                <label className="text-[10px] text-[#6b2340] font-black mb-1">תאריך האירוע</label>
                 <input
                   type="date"
                   required
                   min={todayDateString()}
                   value={orderDate}
                   onChange={(e) => handleDateChange(e.target.value)}
-                  className="p-3 bg-white border border-[#decfa8] rounded-xl text-xs text-right font-medium focus:outline-none focus:border-[#d4af37]"
+                  className="p-3 bg-white border border-[#e3cfd3] rounded-xl text-xs text-right font-medium focus:outline-none focus:border-[#6b2340]"
                 />
                 {dateError && (
                   <p className="text-[11px] text-red-600 font-bold mt-1 bg-red-50 p-2 rounded-lg border border-red-200">
@@ -407,7 +407,7 @@ export default function DressBookingModal({
                 </p>
               )}
 
-              <p className="text-[10px] text-[#6e634c] leading-relaxed bg-[#faf6eb] border border-[#ede3c8] rounded-xl p-3">
+              <p className="text-[10px] text-[#6e5e62] leading-relaxed bg-[#faf7f5] border border-[#ead8dc] rounded-xl p-3">
                 {FINAL_OWNER_APPROVAL_HINT}
               </p>
 
@@ -417,7 +417,7 @@ export default function DressBookingModal({
                 className={`w-full text-white text-xs font-black py-3.5 rounded-xl mt-1 transition-all duration-300 shadow-lg ${
                   dateError || isSubmittingBooking
                     ? 'bg-neutral-300 cursor-not-allowed shadow-none'
-                    : 'bg-gradient-to-r from-[#d4af37] via-[#b8860b] to-[#d4af37] hover:from-[#b8860b] hover:to-[#8b6508]'
+                    : 'bg-gradient-to-r from-[#6b2340] via-[#4a152c] to-[#6b2340] hover:from-[#4a152c] hover:to-[#6b2340]'
                 }`}
               >
                 {isSubmittingBooking ? 'שולחת בקשה...' : FINAL_OWNER_APPROVAL_BUTTON_LABEL}

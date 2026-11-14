@@ -22,7 +22,7 @@ export default function AdminBookingsGrid({
 
   if (bookings.length === 0) {
     return (
-      <p className="text-xs text-[#6e634c] p-4">
+      <p className="text-xs text-[#6e5e62] p-4">
         {variant === 'pending_payment' ? 'אין הזמנות ממתינות לתשלום 🎉' : 'לא נמצאו הזמנות'}
       </p>
     );
@@ -55,7 +55,7 @@ export default function AdminBookingsGrid({
               line2={
                 <>
                   <span className="block">העברה מ:</span>
-                  <span dir="ltr" className="block font-bold text-[#3d2f24] break-all">
+                  <span dir="ltr" className="block font-bold text-[#2c2426] break-all">
                     {booking.customer_phone}
                   </span>
                 </>
@@ -67,26 +67,26 @@ export default function AdminBookingsGrid({
                 </span>
               }
             >
-              <p className="text-[9px] font-bold text-[#3d2f24] pt-1">{booking.customer_name}</p>
-              <p className="text-[9px] text-[#6e634c]" dir="ltr">
+              <p className="text-[9px] font-bold text-[#2c2426] pt-1">{booking.customer_name}</p>
+              <p className="text-[9px] text-[#6e5e62]" dir="ltr">
                 {booking.customer_email}
               </p>
               {booking.amount_total != null && (
-                <p className="text-[10px] font-black text-[#8b6508]">₪{booking.amount_total}</p>
+                <p className="text-[10px] font-black text-[#6b2340]">₪{booking.amount_total}</p>
               )}
               {booking.payment_method && (
-                <p className="text-[9px] text-[#6e634c]">
+                <p className="text-[9px] text-[#6e5e62]">
                   {PAYMENT_METHOD_LABELS[booking.payment_method] || booking.payment_method}
                 </p>
               )}
-              <p className="text-[9px] text-[#9a7b4f]">
+              <p className="text-[9px] text-[#7a5e64]">
                 {new Date(booking.created_at).toLocaleDateString('he-IL')}
               </p>
               <button
                 type="button"
                 disabled={disabled}
                 onClick={() => approve(booking.id)}
-                className="w-full mt-1 px-2 py-1.5 bg-[#b8860b] text-white text-[9px] rounded-lg font-black disabled:opacity-50"
+                className="w-full mt-1 px-2 py-1.5 bg-[#6b2340] text-white text-[9px] rounded-lg font-black disabled:opacity-50"
               >
                 אשרי תשלום
               </button>
@@ -109,24 +109,24 @@ export default function AdminBookingsGrid({
               </span>
             }
           >
-            <p className="text-[9px] text-[#6e634c] pt-1" dir="ltr">
+            <p className="text-[9px] text-[#6e5e62] pt-1" dir="ltr">
               {booking.customer_phone}
             </p>
-            <p className="text-[9px] text-[#6e634c]" dir="ltr">
+            <p className="text-[9px] text-[#6e5e62]" dir="ltr">
               {booking.customer_email}
             </p>
             {booking.amount_total != null && (
-              <p className="text-[10px] font-black text-[#8b6508]">₪{booking.amount_total}</p>
+              <p className="text-[10px] font-black text-[#6b2340]">₪{booking.amount_total}</p>
             )}
             {booking.payment_method && (
-              <p className="text-[9px] text-[#6e634c]">
+              <p className="text-[9px] text-[#6e5e62]">
                 {PAYMENT_METHOD_LABELS[booking.payment_method] || booking.payment_method}
               </p>
             )}
-            <p className="text-[9px] text-[#9a7b4f]">
+            <p className="text-[9px] text-[#7a5e64]">
               {BOOKING_STATUS_LABELS[booking.status] || booking.status}
             </p>
-            <p className="text-[9px] text-[#9a7b4f]">
+            <p className="text-[9px] text-[#7a5e64]">
               נוצר: {new Date(booking.created_at).toLocaleDateString('he-IL')}
             </p>
           </AdminBookingGridCard>
